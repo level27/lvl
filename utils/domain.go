@@ -1,0 +1,84 @@
+package utils
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"text/tabwriter"
+	"text/template"
+
+	"bitbucket.org/level27/lvl/types"
+	"github.com/spf13/viper"
+)
+
+//Domain gets a system from the API
+func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
+	var domain types.Domain
+
+	switch method {
+	case "GET":
+		endpoint := fmt.Sprintf("domains/%s", id)
+		c.invokeAPI("GET", endpoint, nil, &domain)
+	case "CREATE":
+		endpoint := "domains"
+		c.invokeAPI("POST", endpoint, data, &domain)
+	case "UPDATE":
+		endpoint := fmt.Sprintf("domains/%s", id)
+		c.invokeAPI("PUT", endpoint, data, &domain)
+	case "DELETE":
+		endpoint := fmt.Sprintf("domains/%s", id)
+		c.invokeAPI("DELETE", endpoint, nil, nil)
+	}
+
+	return domain
+}
+
+//Domain gets a domain from the API
+func (c *Client) Domains(filter string, number string) types.Domains {
+	var domains types.Domains
+
+	endpoint := "domains?limit=" + number + "&filter=" + filter
+	c.invokeAPI("GET", endpoint, nil, &domains)
+
+	return domains
+}
+
+func (c *Client) DomainGet(id []string) {
+	w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
+	fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
+
+	if len(id) == 0 {
+		numberToGet := viper.GetString("number")
+		domainFilter := viper.GetString("filter")
+		domains := c.Domains(domainFilter, numberToGet).Data
+		for _, domain := range domains {
+			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
+		}
+	} else if len(id) == 1 {
+		domainID := id[0]
+		domain := c.Domain("GET", domainID, nil).Data
+
+		fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
+
+	} else {
+		log.Fatalf("ERROR! We expect 0 or 1 parameter")
+	}
+
+	w.Flush()
+}
+
+func (c *Client) DomainDescribe(id []string) {
+	if len(id) == 1 {
+		domainID := id[0]
+		domain := c.Domain("GET", domainID, nil).Data
+
+		tmpl := template.Must(template.ParseFiles("templates/domain.tmpl"))
+		err := tmpl.Execute(os.Stdout, domain)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		fmt.Println("ERROR!")
+	}
+}

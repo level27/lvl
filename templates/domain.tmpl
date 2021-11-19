@@ -1,0 +1,55 @@
+ID:                    {{.ID}}
+Name:                  {{.Name}}
+Fullname:              {{.Fullname}}
+TTL:                   {{.TTL}}
+EPPCode                {{.EppCode}}
+Status:                {{.Status}}
+DSNSEC Status:         {{.DnssecStatus}}
+RegistrationIsHandled: {{.RegistrationIsHandled}}
+Provider:              {{.Provider.Name}}
+DNS Servers:
+{{- if not .DNSIsHandled}}
+{{- if .Nameserver1}}
+  {{.Nameserver1}}  {{.NameserverIP1}}  {{.NameserverIpv61}}
+{{- end -}}
+{{- if .Nameserver2 }}
+  {{.Nameserver2}}  {{.NameserverIP2}}  {{.NameserverIpv62}}
+{{- end -}}
+{{- if .Nameserver3}}
+  {{.Nameserver3}}  {{.NameserverIP3}}  {{.NameserverIpv63}}
+{{- end -}}
+{{- if .Nameserver4 }}
+  {{.Nameserver4}}  {{.NameserverIP4}}  {{.NameserverIpv64}}
+{{- end}}
+{{- else}}
+  dns1.level27.eu
+  dns2.level27.eu
+  dns3.level27.net
+{{- end}}
+Organisation:
+  ID:       {{.Organisation.ID}}
+  Name:     {{.Organisation.Name}}
+  Reseller: {{.Organisation.Reseller}}
+DomainType:
+  ID:          {{.Domaintype.ID}}
+  Extension:   {{.Domaintype.Extension}}
+  RenewPeriod: {{.Domaintype.RenewPeriod}}
+DomaincontactLicensee:
+  ID:               {{.DomaincontactLicensee.ID}}
+  Fullname:         {{.DomaincontactLicensee.Fullname}}
+  Country
+    ID:     {{.DomaincontactLicensee.Country.ID}}
+    Name:   {{.DomaincontactLicensee.Country.Name}}
+{{- if .Mailgroup.ID}}
+MailGroup:
+  ID: {{.Mailgroup.ID}}
+  Name: {{.Mailgroup.Name}}
+{{- end}}
+{{- if .Teams}}
+Teams ({{.CountTeams}}):
+{{- range .Teams}}
+  {{.Name}}
+    ID: {{.ID}}
+    OrganisationID: {{.OrganisationId}}
+{{- end}}
+{{- end}}
