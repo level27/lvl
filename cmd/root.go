@@ -29,6 +29,7 @@ import (
 
 var cfgFile string
 var apiKey string
+var apiUrl string
 var level27Client *utils.Client
 
 // rootCmd represents the base command when called without any subcommands
@@ -68,6 +69,8 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 
+	viper.SetDefault("apiUrl", "https://api.level27.eu/v1")
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -86,7 +89,8 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		apiKey = viper.GetString("apiKey")
-		level27Client = utils.NewAPIClient("https://api.level27.eu/v1", apiKey)
+		apiUrl = viper.GetString("apiUrl")
+		level27Client = utils.NewAPIClient(apiUrl, apiKey)
 	} else {
 		// config file is not found we create it
 		fmt.Println(cfgFile)

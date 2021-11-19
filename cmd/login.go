@@ -38,7 +38,7 @@ var loginCmd = &cobra.Command{
 		username, password, _ := credentials()
 
 		fmt.Printf("Logging in using: %s\n", username)
-		client := utils.NewAPIClient("https://api.level27.eu/v1", "")
+		client := utils.NewAPIClient(apiUrl, "")
 		login = client.Login(username, password)
 
 		fmt.Println(login.Hash)
