@@ -25,7 +25,7 @@ import (
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 // loginCmd represents the login command
@@ -71,7 +71,7 @@ func credentials() (string, string, error) {
 	}
 
 	fmt.Print("Enter Password: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", "", err
 	}
