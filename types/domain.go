@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type structDomain struct {
+type StructDomain struct {
 	ID                    int    `json:"id"`
 	Name                  string `json:"name"`
 	Fullname              string `json:"fullname"`
@@ -99,12 +99,12 @@ type structDomain struct {
 
 // Domain represents a single domain
 type Domain struct {
-	Data structDomain `json:"domain"`
+	Data StructDomain `json:"domain"`
 }
 
 // Domains represents an array of domains
 type Domains struct {
-	Data []structDomain `json:"domains"`
+	Data []StructDomain `json:"domains"`
 }
 
 func (d Domain) String() string {
