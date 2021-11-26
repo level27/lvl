@@ -15,7 +15,11 @@ limitations under the License.
 */
 package main
 
-import "bitbucket.org/level27/lvl/cmd"
+import (
+	"bitbucket.org/level27/lvl/cmd"
+	// Need these imports due to the nested command structure, otherwise init() won't run on them.
+	_ "bitbucket.org/level27/lvl/cmd/get"
+)
 
 func main() {
 	cmd.Execute()

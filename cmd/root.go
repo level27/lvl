@@ -30,10 +30,13 @@ import (
 var cfgFile string
 var apiKey string
 var apiUrl string
-var level27Client *utils.Client
+var Level27Client *utils.Client
+
+// NOTE: subcommands like get add themselves to root in their init().
+// This requires importing them manually in main.go
 
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+var RootCmd = &cobra.Command{
 	Use:   "lvl",
 	Short: "CLI tool to manage Level27 entities",
 	Long:  `lvl is a CLI tool that empowers users.`,
@@ -45,7 +48,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+	cobra.CheckErr(RootCmd.Execute())
 }
 
 func init() {
@@ -54,16 +57,16 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
-	rootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
+	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
-	viper.BindPFlag("apikey", rootCmd.PersistentFlags().Lookup("apikey"))
-	viper.BindPFlag("toggle", rootCmd.PersistentFlags().Lookup("toggle"))
+	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+	viper.BindPFlag("apikey", RootCmd.PersistentFlags().Lookup("apikey"))
+	viper.BindPFlag("toggle", RootCmd.PersistentFlags().Lookup("toggle"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -90,7 +93,7 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		apiKey = viper.GetString("apiKey")
 		apiUrl = viper.GetString("apiUrl")
-		level27Client = utils.NewAPIClient(apiUrl, apiKey)
+		Level27Client = utils.NewAPIClient(apiUrl, apiKey)
 	} else {
 		// config file is not found we create it
 		fmt.Println(cfgFile)

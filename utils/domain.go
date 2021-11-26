@@ -2,14 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"strconv"
-	"text/tabwriter"
 	"text/template"
 
 	"bitbucket.org/level27/lvl/types"
-	"github.com/spf13/viper"
 )
 
 //Domain gets a system from the API
@@ -42,30 +38,6 @@ func (c *Client) Domains(filter string, number string) types.Domains {
 	c.invokeAPI("GET", endpoint, nil, &domains)
 
 	return domains
-}
-
-func (c *Client) DomainGet(id []string) {
-	w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
-
-	if len(id) == 0 {
-		numberToGet := viper.GetString("number")
-		domainFilter := viper.GetString("filter")
-		domains := c.Domains(domainFilter, numberToGet).Data
-		for _, domain := range domains {
-			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
-		}
-	} else if len(id) == 1 {
-		domainID := id[0]
-		domain := c.Domain("GET", domainID, nil).Data
-
-		fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
-
-	} else {
-		log.Fatalf("ERROR! We expect 0 or 1 parameter")
-	}
-
-	w.Flush()
 }
 
 func (c *Client) DomainDescribe(id []string) {
