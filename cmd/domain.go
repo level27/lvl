@@ -1,4 +1,4 @@
-package get
+package cmd
 
 import (
 	"fmt"
@@ -6,22 +6,18 @@ import (
 	"strconv"
 	"text/tabwriter"
 
-	"bitbucket.org/level27/lvl/cmd"
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var domainGetCmd = &cobra.Command{
-	Use:   "domain [IDs to retrieve]",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var domainCmd = &cobra.Command{
+	Use:   "domain",
+	Short: "Commands for working with domains",
+}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Args: cobra.ArbitraryArgs,
+var domainGetCmd = &cobra.Command{
+	Use: "get",
+
 	Run: func(ccmd *cobra.Command, args []string) {
 		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
 		fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
@@ -35,17 +31,27 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var domainDescribeCmd = &cobra.Command{
+	Use:   "describe",
+	Short: "Get detailed info about a domain",
+	Run: func(cmd *cobra.Command, args []string) {
+		Level27Client.DomainDescribe(args)
+	},
+}
+
 func init() {
-	GetCmd.AddCommand(domainGetCmd)
+	RootCmd.AddCommand(domainCmd)
+
+	domainCmd.AddCommand(domainGetCmd)
+	addCommonGetFlags(domainGetCmd)
+
+	domainCmd.AddCommand(domainDescribeCmd)
 }
 
 func getDomains(ids []string) []types.StructDomain {
-	c := cmd.Level27Client
+	c := Level27Client
 	if len(ids) == 0 {
-		numberToGet := viper.GetString("number")
-		domainFilter := viper.GetString("filter")
-	
-		return c.Domains(domainFilter, numberToGet).Data
+		return c.Domains(optFilter, optNumber).Data
 	} else {
 		domains := make([]types.StructDomain, len(ids))
 		for idx, id := range ids {

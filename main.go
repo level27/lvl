@@ -17,8 +17,6 @@ package main
 
 import (
 	"bitbucket.org/level27/lvl/cmd"
-	// Need these imports due to the nested command structure, otherwise init() won't run on them.
-	_ "bitbucket.org/level27/lvl/cmd/get"
 )
 
 func main() {

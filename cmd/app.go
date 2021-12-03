@@ -1,4 +1,4 @@
-package get
+package cmd
 
 import (
 	"fmt"
@@ -6,21 +6,17 @@ import (
 	"strconv"
 	"text/tabwriter"
 
-	"bitbucket.org/level27/lvl/cmd"
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var appGetCmd = &cobra.Command{
-	Use:   "app [IDs to retrieve]",
-	Short: "Get available apps",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var appCmd = &cobra.Command{
+	Use: "app",
+	Short: "Commands to manage apps",
+}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+var appGetCmd = &cobra.Command{
+	Use:   "get",
 	Args: cobra.ArbitraryArgs,
 	Run: func(acmd *cobra.Command, args []string) {
 		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
@@ -36,16 +32,16 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	GetCmd.AddCommand(appGetCmd)
+	RootCmd.AddCommand(appCmd)
+
+	appCmd.AddCommand(appGetCmd)
+	addCommonGetFlags(appGetCmd)
 }
 
 func getApps(ids []string) []types.StructApp {
-	c := cmd.Level27Client
+	c := Level27Client
 	if len(ids) == 0 {
-		numberToGet := viper.GetString("number")
-		appFilter := viper.GetString("filter")
-	
-		return c.Apps(appFilter, numberToGet).Data
+		return c.Apps(optFilter, optNumber).Data
 	} else {
 		apps := make([]types.StructApp, len(ids))
 		for idx, id := range ids {
