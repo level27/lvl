@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -59,7 +58,7 @@ type errorResponse struct {
 	} `json:"errors"`
 }
 
-func (er errorResponse) String() string {
+func (er errorResponse) Error() string {
 	s := fmt.Sprintf("%s\n", er.Message)
 	fields := reflect.TypeOf(er.Errors.Children)
 	values := reflect.ValueOf(er.Errors.Children)
@@ -113,12 +112,16 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+
 		jsonParsed, err := gabs.ParseJSON(body)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Printf("client.go: ERROR: %v", jsonParsed)
+		// log.Printf("client.go: ERROR: %v", jsonParsed)
 		for key, child := range jsonParsed.Search("errors", "children").ChildrenMap() {
 			if child.Data().(map[string]interface{})["errors"] != nil {
 				errorMessages := child.Data().(map[string]interface{})["errors"].([]interface{})
@@ -133,7 +136,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		
 		var errRes errorResponse
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
-			return nil, errors.New(errRes.String())
+			return nil, errRes
 		}
 
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
@@ -142,25 +145,26 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
+		return nil, err
 	}
 
 	return body, nil
 }
 
-func (c *Client) invokeAPI(method string, endpoint string, data interface{}, result interface{}) {
+func (c *Client) invokeAPI(method string, endpoint string, data interface{}, result interface{}) error {
 	body, err := c.sendRequest(method, endpoint, data)
 
 	if err != nil {
-		log.Printf("client.go: API error - %v", err)
-	}
-
-	if method == "PUT" || method == "DELETE" || method == "PATCH" {
-
+		return err
 	}
 
 	err = json.Unmarshal(body, &result)
-	if err != nil {
-	}
 
+	return err
+}
+
+func AssertApiError(e error) {
+	if e != nil {
+		log.Fatalf("client.go: API error - %s\n", e.Error())
+	}
 }

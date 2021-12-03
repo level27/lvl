@@ -80,7 +80,7 @@ type StructDomain struct {
 	} `json:"domaincontactLicensee"`
 	DomaincontactOnsite interface{} `json:"domaincontactOnsite"`
 	Mailgroup           struct {
-		ID   string `json:"id"`
+		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"mailgroup"`
 	ExtraFields   []interface{} `json:"extraFields"`
