@@ -12,20 +12,23 @@ import (
 func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
 	var domain types.Domain
 
+	var err error
 	switch method {
 	case "GET":
 		endpoint := fmt.Sprintf("domains/%s", id)
-		c.invokeAPI("GET", endpoint, nil, &domain)
+		err = c.invokeAPI("GET", endpoint, nil, &domain)
 	case "CREATE":
 		endpoint := "domains"
-		c.invokeAPI("POST", endpoint, data, &domain)
+		err = c.invokeAPI("POST", endpoint, data, &domain)
 	case "UPDATE":
 		endpoint := fmt.Sprintf("domains/%s", id)
-		c.invokeAPI("PUT", endpoint, data, &domain)
+		err = c.invokeAPI("PUT", endpoint, data, &domain)
 	case "DELETE":
 		endpoint := fmt.Sprintf("domains/%s", id)
-		c.invokeAPI("DELETE", endpoint, nil, nil)
+		err = c.invokeAPI("DELETE", endpoint, nil, nil)
 	}
+
+	AssertApiError(err)
 
 	return domain
 }
@@ -35,7 +38,8 @@ func (c *Client) Domains(filter string, number string) types.Domains {
 	var domains types.Domains
 
 	endpoint := "domains?limit=" + number + "&filter=" + filter
-	c.invokeAPI("GET", endpoint, nil, &domains)
+	err := c.invokeAPI("GET", endpoint, nil, &domains)
+	AssertApiError(err)
 
 	return domains
 }

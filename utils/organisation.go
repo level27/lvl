@@ -33,7 +33,8 @@ func (c *Client) Organisations(filter string, number string) types.Organisations
 	var organisations types.Organisations
 
 	endpoint := "organisations?limit=" + number + "&filter=" + filter
-	c.invokeAPI("GET", endpoint, nil, &organisations)
+	err := c.invokeAPI("GET", endpoint, nil, &organisations)
+	AssertApiError(err)
 
 	return organisations
 }

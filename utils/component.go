@@ -32,7 +32,8 @@ func (c *Client) Components(filter string, number string, category string, cType
 	var components types.Components
 
 	endpoint := "appcomponents/" + category + "?limit=" + number + "&filter=" + filter + "&type=" + cType
-	c.invokeAPI("GET", endpoint, nil, &components)
+	err := c.invokeAPI("GET", endpoint, nil, &components)
+	AssertApiError(err)
 
 	return components
 }
