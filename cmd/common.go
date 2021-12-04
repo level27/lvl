@@ -15,9 +15,16 @@ limitations under the License.
 */
 package cmd
 
-var optAll = false
+import (
+	"github.com/spf13/cobra"
+)
 
+var optNumber = "20"
+var optFilter = ""
 
-// domainCmd represents the domain command
+func addCommonGetFlags(cmd *cobra.Command) {
+	pf := cmd.Flags()
 
-
+	pf.StringVarP(&optNumber, "number", "n", optNumber, "How many things should we retrieve from the API?")
+	pf.StringVarP(&optFilter, "filter", "f", optFilter, "How to filter API results?")
+}
