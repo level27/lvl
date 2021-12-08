@@ -133,7 +133,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 				}
 			}
 		}
-		
+
 		var errRes errorResponse
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return nil, errRes
@@ -158,7 +158,9 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 		return err
 	}
 
-	err = json.Unmarshal(body, &result)
+	if result != nil {
+		err = json.Unmarshal(body, &result)
+	}
 
 	return err
 }

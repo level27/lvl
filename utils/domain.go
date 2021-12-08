@@ -66,10 +66,10 @@ func (c *Client) DomainDescribe(id []string) {
 func (c *Client) DomainDelete(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
+		// Ask for user confirmation to delete domain
 		var userResponse string
-	
-		fmt.Printf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
-		_, err := fmt.Scanln(&userResponse)
+		log.Printf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
+		_, err := fmt.Scan(&userResponse)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -80,13 +80,14 @@ func (c *Client) DomainDelete(id []string) {
 		case "n", "no":
 			log.Fatal("Delete canceled")
 		default:
-			fmt.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
 			domID := []string{domainID}
 			c.DomainDelete(domID)
 		}
 
 	} else {
 		fmt.Println("ERROR: wrong or invalid ID")
+		
 	}
 }
 
