@@ -19,9 +19,10 @@ func init() {
 
 	// domain command
 	RootCmd.AddCommand(domainCmd)
-	addCommonGetFlags(domainGetCmd)
+
 	// Get (list of all domains)
 	domainCmd.AddCommand(domainGetCmd)
+	addCommonGetFlags(domainGetCmd)
 
 	// Get details from a specific domain
 	domainCmd.AddCommand(domainDescribeCmd)
@@ -31,7 +32,10 @@ func init() {
 
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
-
+	domainCreateCmd.Flags().StringVarP(&domainCreateName, "name", "n", "", "the name of the domain")
+	domainCreateCmd.Flags().StringVarP(&domainCreateType, "type", "t", "", "the type of the domain")
+	domainCreateCmd.Flags().StringVarP(&domainCreateLicensee, "licensee", "l", "", "the licensee of the domain")
+	domainCreateCmd.Flags().StringVarP(&domainCreateOrganisation, "organisation", "o", "", "the organisation of the domain")
 }
 
 //GET LIST OF ALL DOMAINS [lvl domain get]
@@ -64,24 +68,6 @@ func getDomains(ids []string) []types.StructDomain {
 	}
 }
 
-// CREATE DOMAIN [lvl domain get]
-var domainCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create new a new domain",
-
-	Run: func(ccmd *cobra.Command, args []string) {
-		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
-
-		domains := getDomains(args)
-		for _, domain := range domains {
-			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
-		}
-
-		w.Flush()
-	},
-}
-
 // DESCRIBE DOMAIN (get detailed info from specific domain) - [lvl domain describe <id>]
 var domainDescribeCmd = &cobra.Command{
 	Use:   "describe",
@@ -94,8 +80,23 @@ var domainDescribeCmd = &cobra.Command{
 // DELETE DOMAIN [lvl domain delete <id>]
 var domainRemoveCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Delete a specific domain",
+	Short: "Delete a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		Level27Client.DomainDelete(args)
+	},
+}
+
+// CREATE DOMAIN [lvl domain create ]
+var domainCreateName string
+var domainCreateType string
+var domainCreateLicensee string
+var domainCreateOrganisation string
+
+var domainCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new domain",
+
+	Run: func(ccmd *cobra.Command, args []string) {
+		Level27Client.DomainCreate(args)
 	},
 }
