@@ -44,6 +44,10 @@ func (c *Client) Domains(filter string, number string) types.Domains {
 	return domains
 }
 
+
+
+
+// Describe (Get details from a specific domain)
 func (c *Client) DomainDescribe(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
