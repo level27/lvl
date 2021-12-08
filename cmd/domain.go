@@ -19,22 +19,24 @@ func init() {
 
 	// domain command
 	RootCmd.AddCommand(domainCmd)
+	addCommonGetFlags(domainGetCmd)
 	// Get (list of all domains)
 	domainCmd.AddCommand(domainGetCmd)
-	addCommonGetFlags(domainGetCmd)
+
 	// Get details from a specific domain
 	domainCmd.AddCommand(domainDescribeCmd)
+
+	// Delete (single domain)
+	domainCmd.AddCommand(domainRemoveCmd)
+
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
-	
+
 }
 
-
-
-
-//GET LIST OF ALL DOMAINS [lvl domain get] 
+//GET LIST OF ALL DOMAINS [lvl domain get]
 var domainGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "Get a list of all current domains",
 	Run: func(ccmd *cobra.Command, args []string) {
 		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
@@ -44,11 +46,10 @@ var domainGetCmd = &cobra.Command{
 		for _, domain := range domains {
 			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
 		}
-	
+
 		w.Flush()
 	},
 }
-
 
 func getDomains(ids []string) []types.StructDomain {
 	c := Level27Client
@@ -63,10 +64,9 @@ func getDomains(ids []string) []types.StructDomain {
 	}
 }
 
-
 // CREATE DOMAIN [lvl domain get]
 var domainCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create new a new domain",
 
 	Run: func(ccmd *cobra.Command, args []string) {
@@ -77,11 +77,10 @@ var domainCreateCmd = &cobra.Command{
 		for _, domain := range domains {
 			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
 		}
-	
+
 		w.Flush()
 	},
 }
-
 
 // DESCRIBE DOMAIN (get detailed info from specific domain) - [lvl domain describe <id>]
 var domainDescribeCmd = &cobra.Command{
@@ -89,5 +88,14 @@ var domainDescribeCmd = &cobra.Command{
 	Short: "Get detailed info about a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		Level27Client.DomainDescribe(args)
+	},
+}
+
+// DELETE DOMAIN [lvl domain delete <id>]
+var domainRemoveCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete a specific domain",
+	Run: func(cmd *cobra.Command, args []string) {
+		Level27Client.DomainDelete(args)
 	},
 }

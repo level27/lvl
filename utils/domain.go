@@ -44,10 +44,7 @@ func (c *Client) Domains(filter string, number string) types.Domains {
 	return domains
 }
 
-
-
-
-// Describe (Get details from a specific domain)
+// DESCRIBE DOMAIN (get detailed info from specific domain) - [lvl domain describe <id>]
 func (c *Client) DomainDescribe(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
@@ -61,4 +58,21 @@ func (c *Client) DomainDescribe(id []string) {
 	} else {
 		fmt.Println("ERROR!")
 	}
+}
+
+// DELETE DOMAIN
+func (c *Client) DomainDelete(id []string) {
+	if len(id) == 1 {
+		domainID := id[0]
+		c.Domain("DELETE", domainID, nil)
+		
+
+	} else {
+		fmt.Println("ERROR: wrong or invalid ID")
+	}
+}
+
+// CREATE DOMAIN [lvl domain create <id>]
+func (c *Client) DomainCreate(name string) {
+
 }
