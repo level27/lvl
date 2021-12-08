@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"text/template"
 
 	"bitbucket.org/level27/lvl/types"
@@ -64,8 +66,24 @@ func (c *Client) DomainDescribe(id []string) {
 func (c *Client) DomainDelete(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
-		c.Domain("DELETE", domainID, nil)
+		var userResponse string
 		
+		fmt.Println("Are you sure you want to delete domain with ID: ",domainID,"?", "type [y]es or [n]o:")
+		_, err := fmt.Scanln(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			c.Domain("DELETE", domainID, nil)
+		case "n", "no":
+			log.Fatal("Delete canceled")
+		default:
+			fmt.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+			domID := []string{domainID}
+			c.DomainDelete(domID)
+		}
 
 	} else {
 		fmt.Println("ERROR: wrong or invalid ID")
