@@ -70,7 +70,7 @@ var domainRecordCreatePriority int
 
 var domainRecordCreateCmd = &cobra.Command{
 	Use: "create [domain]",
-	Short: "Get a list of all records configured for a domain",
+	Short: "Create a new record for a domain",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
