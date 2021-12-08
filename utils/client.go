@@ -158,8 +158,10 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 		return err
 	}
 
-	err = json.Unmarshal(body, &result)
-
+	if result != nil {
+		err = json.Unmarshal(body, &result)
+	}
+	
 	return err
 }
 

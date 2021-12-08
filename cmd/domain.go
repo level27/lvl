@@ -87,6 +87,24 @@ var domainRecordCreateCmd = &cobra.Command{
 	},
 }
 
+var domainRecordDeleteCmd = &cobra.Command{
+	Use: "delete [domain] [record]",
+	Short: "Delete a record for a domain",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		domainId, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
+
+		recordId, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
+
+		Level27Client.DomainRecordDelete(domainId, recordId)
+	},
+}
 
 func init() {
 	RootCmd.AddCommand(domainCmd)
@@ -96,9 +114,13 @@ func init() {
 
 	domainCmd.AddCommand(domainDescribeCmd)
 
+	// RECORDS
 	domainCmd.AddCommand(domainRecordCmd)
+
+	// Record list
 	domainRecordCmd.AddCommand(domainRecordListCmd)
 
+	// Record create
 	flags := domainRecordCreateCmd.Flags() 
 	flags.StringVarP(&domainRecordCreateType, "type", "t", "", "Type of the domain record")
 	flags.StringVarP(&domainRecordCreateName, "name", "n", "", "Name of the domain record")
@@ -107,6 +129,9 @@ func init() {
 	domainRecordCreateCmd.MarkFlagRequired("type")
 	domainRecordCreateCmd.MarkFlagRequired("content")
 	domainRecordCmd.AddCommand(domainRecordCreateCmd)
+
+	// Record delete
+	domainRecordCmd.AddCommand(domainRecordDeleteCmd)
 }
 
 func getDomains(ids []string) []types.StructDomain {
