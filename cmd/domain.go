@@ -39,6 +39,29 @@ var domainDescribeCmd = &cobra.Command{
 	},
 }
 
+var domainRecordCmd = &cobra.Command{
+	Use:   "record",
+	Short: "Commands for managing domain records",
+}
+
+var domainRecordListCmd = &cobra.Command{
+	Use: "list [domain]",
+	Short: "Get a list of all records configured for a domain",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		records := Level27Client.DomainRecords(args[0])
+		
+		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
+		fmt.Fprintln(w, "ID\tTYPE\tNAME\tCONTENT\t")
+
+		for _, record := range records {
+			fmt.Fprintf(w, "%d\t%s\t%s\t%s\t\n", record.ID, record.Type, record.Name, record.Content)
+		}
+	
+		w.Flush()
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(domainCmd)
 
@@ -46,6 +69,9 @@ func init() {
 	addCommonGetFlags(domainGetCmd)
 
 	domainCmd.AddCommand(domainDescribeCmd)
+
+	domainCmd.AddCommand(domainRecordCmd)
+	domainRecordCmd.AddCommand(domainRecordListCmd)
 }
 
 func getDomains(ids []string) []types.StructDomain {

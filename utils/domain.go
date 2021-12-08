@@ -58,3 +58,15 @@ func (c *Client) DomainDescribe(id []string) {
 		fmt.Println("ERROR!")
 	}
 }
+
+func (c *Client) DomainRecords(id string) []types.DomainRecord {
+	var records struct {
+		Records []types.DomainRecord `json:"records"`
+	}
+
+	endpoint := fmt.Sprintf("domains/%s/records", id)
+	err := c.invokeAPI("GET", endpoint, nil, &records)
+	AssertApiError(err)
+
+	return records.Records
+}

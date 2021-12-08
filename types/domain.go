@@ -160,19 +160,17 @@ func (d DomainRequest) String() string {
 
 // DomainRecord represents a single Domainrecord
 type DomainRecord struct {
-	Record struct {
-		ID                 int    `json:"id"`
-		Name               string `json:"name"`
-		Content            string `json:"content"`
-		Priority           int    `json:"priority"`
-		Type               string `json:"type"`
-		SystemHasNetworkIP struct {
-			ID int `json:"id"`
-		} `json:"systemHasNetworkIp"`
-		URL            int `json:"url"`
-		SslCertificate int `json:"sslCertificate"`
-		Mailgroup      int `json:"mailgroup"`
-	} `json:"record"`
+	ID                 int    `json:"id"`
+	Name               string `json:"name"`
+	Content            string `json:"content"`
+	Priority           int    `json:"priority"`
+	Type               string `json:"type"`
+	SystemHasNetworkIP struct {
+		ID int `json:"id"`
+	} `json:"systemHasNetworkIp"`
+	// URL            int `json:"url"`
+	// SslCertificate int `json:"sslCertificate"`
+	// Mailgroup      int `json:"mailgroup"`
 }
 
 // DomainRecordRequest represents a API reqest to Level27
