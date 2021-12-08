@@ -70,3 +70,14 @@ func (c *Client) DomainRecords(id string) []types.DomainRecord {
 
 	return records.Records
 }
+
+func (c *Client) DomainRecordCreate(id int, req types.DomainRecordRequest) types.DomainRecord {
+	record := types.DomainRecord{}
+
+	endpoint := fmt.Sprintf("domains/%d/records", id)
+	err := c.invokeAPI("POST", endpoint, &req, &record)
+
+	AssertApiError(err)
+
+	return record
+}

@@ -175,10 +175,10 @@ type DomainRecord struct {
 
 // DomainRecordRequest represents a API reqest to Level27
 type DomainRecordRequest struct {
-	Name     string
-	Type     string
-	Content  string
-	Priority int
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Content  string `json:"content"`
+	Priority int `json:"priority"`
 }
 
 func (d DomainRecordRequest) String() string {
