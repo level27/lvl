@@ -67,8 +67,8 @@ func (c *Client) DomainDelete(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
 		var userResponse string
-		
-		fmt.Println("Are you sure you want to delete domain with ID: ",domainID,"?", "type [y]es or [n]o:")
+	
+		fmt.Printf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
 		_, err := fmt.Scanln(&userResponse)
 		if err != nil {
 			log.Fatal(err)
