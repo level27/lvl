@@ -68,7 +68,9 @@ func (c *Client) DomainDelete(id []string) {
 		domainID := id[0]
 		// Ask for user confirmation to delete domain
 		var userResponse string
-		log.Printf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
+		
+		question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
+		fmt.Print(question)
 		_, err := fmt.Scan(&userResponse)
 		if err != nil {
 			log.Fatal(err)
