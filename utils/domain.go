@@ -97,14 +97,13 @@ func (c *Client) DomainDelete(id []string) {
 
 // CREATE DOMAIN [lvl domain create <id>]
 func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
-	var id string
-	if len(args) == 1 {
-		id = args[0]
-	} else {
-		id = ""
+	id := ""
+	if req.Action == ""{
+		req.Action = "none"
 	}
-	fmt.Println(req)
-	c.Domain("CREATE", id, req)
+
+	
+	c.Domain("CREATE", id , req)
 
 }
 

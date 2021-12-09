@@ -129,7 +129,7 @@ var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExterna
 var domainCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new domain",
-
+	Args: cobra.ExactArgs(0),
 	Run: func(ccmd *cobra.Command, args []string) {
 		Level27Client.DomainCreate(args, types.DomainRequest{
 			Name:        domainCreateName,
