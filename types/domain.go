@@ -136,23 +136,23 @@ type DomainRequest struct {
 	Name                  string
 	Action                string
 	Domaintype            int
-	Domaincontactlicensee string
-	Organisation          string
+	Domaincontactlicensee int
+	Organisation          int
 	Handledns             bool
 }
 
 func (d DomainRequest) String() string {
-	licensee := fmt.Sprintf("%s", d.Domaincontactlicensee)
-	if d.Domaincontactlicensee == "" {
-		licensee = "0"
-	}
+	// licensee := fmt.Sprintf("%s", d.Domaincontactlicensee)
+	// if d.Domaincontactlicensee == "" {
+	// 	licensee = "0"
+	// }
 
 	s := "{"
 	s += fmt.Sprintf("\"name\": \"%s\",", d.Name)
 	s += fmt.Sprintf("\"action\": \"%s\",", d.Action)
 	s += fmt.Sprintf("\"domaintype\": %d,", d.Domaintype)
-	s += fmt.Sprintf("\"domaincontactLicensee\": %s,", licensee)
-	s += fmt.Sprintf("\"organisation\": \"%s\",", d.Organisation)
+	s += fmt.Sprintf("\"domaincontactLicensee\": %v,", d.Domaincontactlicensee)
+	s += fmt.Sprintf("\"organisation\": \"%v\",", d.Organisation)
 	s += fmt.Sprintf("\"handleDns\": %t", d.Handledns)
 	s += "}"
 	return s

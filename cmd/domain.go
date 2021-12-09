@@ -37,7 +37,7 @@ func init() {
 	domainCreateCmd.Flags().StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (Required)")	
 	domainCreateCmd.Flags().IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain (Required)")
 	domainCreateCmd.Flags().IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (Required)")
-	domainCreateCmd.Flags().StringVarP(&domainCreateOrganisation, "organisation", "o", "", "the organisation of the domain (Required)")
+	domainCreateCmd.Flags().IntVarP(&domainCreateOrganisation, "organisation", "o", 0, "the organisation of the domain (Required)")
 	domainCreateCmd.MarkFlagRequired("name")
 	domainCreateCmd.MarkFlagRequired("type")
 	domainCreateCmd.MarkFlagRequired("licensee")
@@ -150,8 +150,8 @@ var domainRemoveCmd = &cobra.Command{
 
 // CREATE DOMAIN [lvl domain create ]
 // required flag vars
-var domainCreateType,domainCreateLicensee int
-var domainCreateName,domainCreateOrganisation string
+var domainCreateType,domainCreateLicensee,domainCreateOrganisation int
+var domainCreateName string
 // non-required flag vars
 var domainCreateNs1,domainCreateNs2,domainCreateNs3,domainCreateNs4 string
 var domainCreateNsIp1,domainCreateNsIp2,domainCreateNsIp3,domainCreateNsIp4 string
@@ -163,16 +163,18 @@ var domainCreateExtraFields,domainCreateExternalCreated,domainCreateExternalExpi
 var domainCreateConvertDomainRecords, domainCreateAutoTeams,domainCreateExternalInfo string
 
 
-
-
-
-
 var domainCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new domain",
 
 	Run: func(ccmd *cobra.Command, args []string) {
-		Level27Client.DomainCreate(args)
+		Level27Client.DomainCreate(args, types.DomainRequest{
+			Name: domainCreateName,
+			Action: "none",
+			Domaintype: domainCreateType,
+			Domaincontactlicensee: domainCreateLicensee,
+			Organisation: domainCreateOrganisation,
+		})
 	},
 }
 
