@@ -133,12 +133,36 @@ type DomainExtension struct {
 
 // DomainRequest represents a single DomainRequest
 type DomainRequest struct {
-	Name                  string
-	Action                string
-	Domaintype            int
-	Domaincontactlicensee int
-	Organisation          int
-	Handledns             bool
+	Name                      string
+	NameServer1               string
+	NameServer2               string
+	NameServer3               string
+	NameServer4               string
+	NameServer1Ip             string
+	NameServer2Ip             string
+	NameServer3Ip             string
+	NameServer4Ip             string
+	NameServer1Ipv6           string
+	NameServer2Ipv6           string
+	NameServer3Ipv6           string
+	NameServer4Ipv6           string
+	TTL                       int
+	Action                    string
+	EppCode                   string
+	Handledns                 bool
+	ExtraFields               string
+	Domaintype                int
+	Domaincontactlicensee     int
+	DomainContactOnSite       int
+	Organisation              int
+	AutoRecordTemplate        string
+	AutoRecordTemplateReplace bool
+	DomainProvider            int
+	DtExternalCreated         string
+	DtExternalExpires         string
+	ConvertDomainRecords      string
+	AutoTeams                 string
+	ExternalInfo              string
 }
 
 func (d DomainRequest) String() string {
@@ -149,6 +173,10 @@ func (d DomainRequest) String() string {
 
 	s := "{"
 	s += fmt.Sprintf("\"name\": \"%s\",", d.Name)
+	s += fmt.Sprintf("\"nameserver1\": \"%s\",", d.NameServer1)
+	s += fmt.Sprintf("\"nameserver2\": \"%s\",", d.NameServer2)
+	s += fmt.Sprintf("\"nameserver3\": \"%s\",", d.NameServer3)
+	s += fmt.Sprintf("\"nameserver4\": \"%s\",", d.NameServer4)
 	s += fmt.Sprintf("\"action\": \"%s\",", d.Action)
 	s += fmt.Sprintf("\"domaintype\": %d,", d.Domaintype)
 	s += fmt.Sprintf("\"domaincontactLicensee\": %v,", d.Domaincontactlicensee)
@@ -178,7 +206,7 @@ type DomainRecordRequest struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	Content  string `json:"content"`
-	Priority int `json:"priority"`
+	Priority int    `json:"priority"`
 }
 
 func (d DomainRecordRequest) String() string {
