@@ -33,11 +33,52 @@ func init() {
 
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
-	domainCreateCmd.Flags().StringVarP(&domainCreateName, "name", "n", "", "the name of the domain")
-	domainCreateCmd.Flags().StringVarP(&domainCreateType, "type", "t", "", "the type of the domain")
-	domainCreateCmd.Flags().StringVarP(&domainCreateLicensee, "licensee", "l", "", "the licensee of the domain")
-	domainCreateCmd.Flags().StringVarP(&domainCreateOrganisation, "organisation", "o", "", "the organisation of the domain")
+	//required flags
+	domainCreateCmd.Flags().StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (Required)")	
+	domainCreateCmd.Flags().IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain (Required)")
+	domainCreateCmd.Flags().IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (Required)")
+	domainCreateCmd.Flags().StringVarP(&domainCreateOrganisation, "organisation", "o", "", "the organisation of the domain (Required)")
+	domainCreateCmd.MarkFlagRequired("name")
+	domainCreateCmd.MarkFlagRequired("type")
+	domainCreateCmd.MarkFlagRequired("licensee")
+	domainCreateCmd.MarkFlagRequired("organisation")
 
+	// optional flags
+	domainCreateCmd.Flags().StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNs2, "nameserver2", "", "", "Nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNs3, "nameserver3", "", "", "Nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNs4, "nameserver4", "", "", "Nameserver")
+
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIp1, "nameserverIp1", "", "", "IP address for nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIp2, "nameserverIp2", "", "", "IP address for nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIp3, "nameserverIp3", "", "", "IP address for nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIp4, "nameserverIp4", "", "", "IP address for nameserver")
+
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIpv61, "nameserverIpv61", "", "", "IPv6 address for nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIpv62, "nameserverIpv62", "", "", "IPv6 address for nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIpv63, "nameserverIpv63", "", "", "IPv6 address for nameserver")
+	domainCreateCmd.Flags().StringVarP(&domainCreateNsIpv64, "nameserverIpv64", "", "", "IPv6 address for nameserver")
+
+	domainCreateCmd.Flags().IntVarP(&domainCreateTtl, "ttl", "", 28800, "Time to live: amount of time (in seconds) the DNS-records stay in the cache")
+	domainCreateCmd.Flags().StringVarP(&domainCreateEpCode, "eppCode", "", "", "eppCode")
+	domainCreateCmd.Flags().BoolVarP(&domainCreateHandleDns, "handleDNS", "", false, "should dns be handled by lvl27")
+	domainCreateCmd.Flags().StringVarP(&domainCreateExtraFields, "extra fields", "", "", "extra fields (json, non-editable)")
+
+	domainCreateCmd.Flags().IntVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
+	domainCreateCmd.Flags().StringVarP(&domainCreateAutoRecordTemplate, "autorecordTemplate", "", "", "AutorecordTemplate")
+	domainCreateCmd.Flags().BoolVarP(&domainCreateAutoRecordTemplateRep, "autorecordTemplateReplace", "", false, "autorecordTemplate replace")
+	
+	domainCreateCmd.Flags().IntVarP(&domainCreateDomainProvider, "domainProvider", "", 0, "The id of a domain provider (admin only)")
+	domainCreateCmd.Flags().StringVarP(&domainCreateExternalCreated, "dtExternallCreated", "", "", "Creation timestamp (admin only)")
+	domainCreateCmd.Flags().StringVarP(&domainCreateExternalExpires, "dtExternallExpires", "", "", "Expire date timestamp (admin only)")
+	
+	domainCreateCmd.Flags().StringVarP(&domainCreateConvertDomainRecords, "convertDomainrecords", "", "", "Domainrecord json (admin only)")
+	domainCreateCmd.Flags().StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
+	domainCreateCmd.Flags().StringVarP(&domainCreateExternalInfo, "externalInfo", "", "", "Required when billableItemInfo for an organisation exist in db")
+	
+
+
+	
 
 	// ----------------- RECORDS ------------------------
 	domainCmd.AddCommand(domainRecordCmd)
@@ -108,10 +149,23 @@ var domainRemoveCmd = &cobra.Command{
 }
 
 // CREATE DOMAIN [lvl domain create ]
-var domainCreateName string
-var domainCreateType string
-var domainCreateLicensee string
-var domainCreateOrganisation string
+// required flag vars
+var domainCreateType,domainCreateLicensee int
+var domainCreateName,domainCreateOrganisation string
+// non-required flag vars
+var domainCreateNs1,domainCreateNs2,domainCreateNs3,domainCreateNs4 string
+var domainCreateNsIp1,domainCreateNsIp2,domainCreateNsIp3,domainCreateNsIp4 string
+var domainCreateNsIpv61,domainCreateNsIpv62,domainCreateNsIpv63,domainCreateNsIpv64 string
+var domainCreateTtl,domainCreateContactOnSite,domainCreateDomainProvider int
+var domainCreateEpCode, domainCreateAutoRecordTemplate string
+var domainCreateHandleDns,domainCreateAutoRecordTemplateRep bool
+var domainCreateExtraFields,domainCreateExternalCreated,domainCreateExternalExpires string
+var domainCreateConvertDomainRecords, domainCreateAutoTeams,domainCreateExternalInfo string
+
+
+
+
+
 
 var domainCreateCmd = &cobra.Command{
 	Use:   "create",
