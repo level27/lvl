@@ -55,6 +55,13 @@ func init() {
 	domainRecordCreateCmd.MarkFlagRequired("content")
 	domainRecordCmd.AddCommand(domainRecordCreateCmd)
 
+	// Record update 
+	flags = domainRecordUpdateCmd.Flags()
+	flags.StringVarP(&domainRecordUpdateName, "name", "n", "", "Name of the domain record")
+	flags.StringVarP(&domainRecordUpdateContent, "content", "c", "", "Content of the domain record")
+	flags.IntVarP(&domainRecordUpdatePriority, "priority", "p", 0, "Priority of the domain record")
+	domainRecordCmd.AddCommand(domainRecordUpdateCmd)
+
 	// Record delete
 	domainRecordCmd.AddCommand(domainRecordDeleteCmd)
 }
@@ -195,8 +202,46 @@ var domainRecordDeleteCmd = &cobra.Command{
 	},
 }
 
+var domainRecordUpdateName string
+var domainRecordUpdateContent string
+var domainRecordUpdatePriority int
 
+var domainRecordUpdateCmd = &cobra.Command{
+	Use: "update [domain] [record]",
+	Short: "Update a record for a domain",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		domainId, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
 
+		recordId, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
 
+		// Merge data with existing so we don't bulldoze anything.
+		data := Level27Client.DomainRecord(domainId, recordId)
+		request := types.DomainRecordRequest{
+			Type: data.Type,
+			Name: data.Name,
+			Content: data.Content,
+			Priority: data.Priority,
+		}
+		
+		if cmd.Flags().Changed("name") {
+			request.Name = domainRecordUpdateName
+		}
 
+		if cmd.Flags().Changed("content") {
+			request.Content = domainRecordUpdateContent
+		}
 
+		if cmd.Flags().Changed("priority") {
+			request.Priority = domainRecordUpdatePriority
+		}
+
+		Level27Client.DomainRecordUpdate(domainId, recordId, request)
+	},
+}
