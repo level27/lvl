@@ -7,11 +7,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"time"
 
 	"github.com/Jeffail/gabs/v2"
 )
+
+var TraceRequests bool
 
 // Client defines the API Client structure
 type Client struct {
@@ -80,9 +83,6 @@ type successResponse struct {
 
 func (c *Client) sendRequest(method string, endpoint string, data interface{}) ([]byte, error) {
 
-	//log.Printf("client.go: Send %s request > %s/%s", method, c.BaseURL, endpoint)
-	//log.Printf("client.go: Body: %v", data)
-
 	reqData := bytes.NewBuffer([]byte(nil))
 	if data != nil {
 		jsonDat, err := json.Marshal(data)
@@ -92,7 +92,16 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		reqData = bytes.NewBuffer(jsonDat)
 	}
 
-	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", c.BaseURL, endpoint), reqData)
+	fullUrl := fmt.Sprintf("%s/%s", c.BaseURL, endpoint)
+
+	if (TraceRequests) {
+		fmt.Fprintf(os.Stderr, "Request: %s %s\n", method, fullUrl)
+		if reqData.Len() != 0 {
+			fmt.Fprintf(os.Stderr, "Request Body: %s\n", string(reqData.Bytes()))
+		}
+	}
+
+	req, err := http.NewRequest(method, fullUrl, reqData)
 	if err != nil {
 		log.Fatalf("error creating HTTP request: %v", err)
 		return nil, err
@@ -110,16 +119,24 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 
 	defer res.Body.Close()
 
+	if TraceRequests {
+		fmt.Fprintf(os.Stderr, "Response: %d %s\n", res.StatusCode, http.StatusText(res.StatusCode))
+	}
+
 	if method == "UPDATE" && res.StatusCode == http.StatusNoContent {
 		return nil, nil
 	}
 
-	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
+	if TraceRequests && len(body) != 0 {
+		fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(body))
+	}
+
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		jsonParsed, err := gabs.ParseJSON(body)
 		if err != nil {
 			return nil, err
@@ -146,12 +163,6 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
 	return body, nil
 }
 
@@ -165,7 +176,7 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 	if result != nil {
 		err = json.Unmarshal(body, &result)
 	}
-	
+
 	return err
 }
 

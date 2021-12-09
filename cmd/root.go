@@ -59,6 +59,7 @@ func init() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
 	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
+	RootCmd.PersistentFlags().BoolVar(&utils.TraceRequests, "trace", false, "Do detailed network request logging")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
