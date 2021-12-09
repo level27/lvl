@@ -85,7 +85,11 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 
 	reqData := bytes.NewBuffer([]byte(nil))
 	if data != nil {
-		reqData = bytes.NewBuffer([]byte(fmt.Sprintf("%v", data)))
+		jsonDat, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+		reqData = bytes.NewBuffer(jsonDat)
 	}
 
 	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", c.BaseURL, endpoint), reqData)

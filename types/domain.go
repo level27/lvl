@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type StructDomain struct {
@@ -133,29 +132,12 @@ type DomainExtension struct {
 
 // DomainRequest represents a single DomainRequest
 type DomainRequest struct {
-	Name                  string
-	Action                string
-	Domaintype            int
-	Domaincontactlicensee string
-	Organisation          string
-	Handledns             bool
-}
-
-func (d DomainRequest) String() string {
-	licensee := fmt.Sprintf("%s", d.Domaincontactlicensee)
-	if d.Domaincontactlicensee == "" {
-		licensee = "0"
-	}
-
-	s := "{"
-	s += fmt.Sprintf("\"name\": \"%s\",", d.Name)
-	s += fmt.Sprintf("\"action\": \"%s\",", d.Action)
-	s += fmt.Sprintf("\"domaintype\": %d,", d.Domaintype)
-	s += fmt.Sprintf("\"domaincontactLicensee\": %s,", licensee)
-	s += fmt.Sprintf("\"organisation\": \"%s\",", d.Organisation)
-	s += fmt.Sprintf("\"handleDns\": %t", d.Handledns)
-	s += "}"
-	return s
+	Name                  string `json:"name"`
+	Action                string `json:"action"`
+	Domaintype            int `json:"domaintype"`
+	Domaincontactlicensee string `json:"domaincontactLicensee"`
+	Organisation          string `json:"organisation"`
+	Handledns             bool `json:"handleDns"`
 }
 
 // DomainRecord represents a single Domainrecord
@@ -179,21 +161,6 @@ type DomainRecordRequest struct {
 	Type     string `json:"type"`
 	Content  string `json:"content"`
 	Priority int `json:"priority"`
-}
-
-func (d DomainRecordRequest) String() string {
-	name := fmt.Sprintf("\"%s\"", d.Name)
-	if d.Name == "" {
-		name = "null"
-	}
-
-	s := "{"
-	s += fmt.Sprintf("\"name\": %s,", name)
-	s += fmt.Sprintf("\"type\": \"%s\",", d.Type)
-	s += fmt.Sprintf("\"content\": \"%s\",", d.Content)
-	s += fmt.Sprintf("\"priority\": %d", d.Priority)
-	s += "}"
-	return s
 }
 
 // DomainContact is an object to define domain contacts at Level27
