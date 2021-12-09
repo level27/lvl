@@ -133,7 +133,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 				}
 			}
 		}
-		
+
 		var errRes errorResponse
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return nil, errRes

@@ -13,12 +13,56 @@ import (
 
 var domainCmd = &cobra.Command{
 	Use:   "domain",
-	Short: "Commands for working with domains",
+	Short: "Commands for managing domains",
 }
 
-var domainGetCmd = &cobra.Command{
-	Use: "get",
+func init() {
 
+	// ----------------- DOMAINS ------------------------
+	RootCmd.AddCommand(domainCmd)
+
+	// Get (list of all domains)
+	domainCmd.AddCommand(domainGetCmd)
+	addCommonGetFlags(domainGetCmd)
+
+	// Get details from a specific domain
+	domainCmd.AddCommand(domainDescribeCmd)
+
+	// Delete (single domain)
+	domainCmd.AddCommand(domainRemoveCmd)
+
+	// Create (single domain)
+	domainCmd.AddCommand(domainCreateCmd)
+	domainCreateCmd.Flags().StringVarP(&domainCreateName, "name", "n", "", "the name of the domain")
+	domainCreateCmd.Flags().StringVarP(&domainCreateType, "type", "t", "", "the type of the domain")
+	domainCreateCmd.Flags().StringVarP(&domainCreateLicensee, "licensee", "l", "", "the licensee of the domain")
+	domainCreateCmd.Flags().StringVarP(&domainCreateOrganisation, "organisation", "o", "", "the organisation of the domain")
+
+
+	// ----------------- RECORDS ------------------------
+	domainCmd.AddCommand(domainRecordCmd)
+
+	// Record list
+	domainRecordCmd.AddCommand(domainRecordListCmd)
+
+	// Record create
+	flags := domainRecordCreateCmd.Flags() 
+	flags.StringVarP(&domainRecordCreateType, "type", "t", "", "Type of the domain record")
+	flags.StringVarP(&domainRecordCreateName, "name", "n", "", "Name of the domain record")
+	flags.StringVarP(&domainRecordCreateContent, "content", "c", "", "Content of the domain record")
+	flags.IntVarP(&domainRecordCreatePriority, "priority", "p", 0, "Priority of the domain record")
+	domainRecordCreateCmd.MarkFlagRequired("type")
+	domainRecordCreateCmd.MarkFlagRequired("content")
+	domainRecordCmd.AddCommand(domainRecordCreateCmd)
+
+	// Record delete
+	domainRecordCmd.AddCommand(domainRecordDeleteCmd)
+}
+
+//GET LIST OF ALL DOMAINS [lvl domain get]
+var domainGetCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get a list of all current domains",
 	Run: func(ccmd *cobra.Command, args []string) {
 		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
 		fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
@@ -27,11 +71,25 @@ var domainGetCmd = &cobra.Command{
 		for _, domain := range domains {
 			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
 		}
-	
+
 		w.Flush()
 	},
 }
 
+func getDomains(ids []string) []types.StructDomain {
+	c := Level27Client
+	if len(ids) == 0 {
+		return c.Domains(optFilter, optNumber).Data
+	} else {
+		domains := make([]types.StructDomain, len(ids))
+		for idx, id := range ids {
+			domains[idx] = c.Domain("GET", id, nil).Data
+		}
+		return domains
+	}
+}
+
+// DESCRIBE DOMAIN (get detailed info from specific domain) - [lvl domain describe <id>]
 var domainDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Get detailed info about a domain",
@@ -40,11 +98,39 @@ var domainDescribeCmd = &cobra.Command{
 	},
 }
 
+// DELETE DOMAIN [lvl domain delete <id>]
+var domainRemoveCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete a domain",
+	Run: func(cmd *cobra.Command, args []string) {
+		Level27Client.DomainDelete(args)
+	},
+}
+
+// CREATE DOMAIN [lvl domain create ]
+var domainCreateName string
+var domainCreateType string
+var domainCreateLicensee string
+var domainCreateOrganisation string
+
+var domainCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new domain",
+
+	Run: func(ccmd *cobra.Command, args []string) {
+		Level27Client.DomainCreate(args)
+	},
+}
+
+// ----------------- RECORDS ------------------------
+
 var domainRecordCmd = &cobra.Command{
 	Use:   "record",
 	Short: "Commands for managing domain records",
 }
 
+
+// GET DOMAIN/RECORDS
 var domainRecordListCmd = &cobra.Command{
 	Use: "list [domain]",
 	Short: "Get a list of all records configured for a domain",
@@ -63,6 +149,7 @@ var domainRecordListCmd = &cobra.Command{
 	},
 }
 
+// CREATE DOMAIN/RECORD
 var domainRecordCreateType string
 var domainRecordCreateName string
 var domainRecordCreateContent string
@@ -87,6 +174,8 @@ var domainRecordCreateCmd = &cobra.Command{
 	},
 }
 
+
+// DELETE DOMAIN/RECORD
 var domainRecordDeleteCmd = &cobra.Command{
 	Use: "delete [domain] [record]",
 	Short: "Delete a record for a domain",
@@ -106,43 +195,8 @@ var domainRecordDeleteCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	RootCmd.AddCommand(domainCmd)
 
-	domainCmd.AddCommand(domainGetCmd)
-	addCommonGetFlags(domainGetCmd)
 
-	domainCmd.AddCommand(domainDescribeCmd)
 
-	// RECORDS
-	domainCmd.AddCommand(domainRecordCmd)
 
-	// Record list
-	domainRecordCmd.AddCommand(domainRecordListCmd)
 
-	// Record create
-	flags := domainRecordCreateCmd.Flags() 
-	flags.StringVarP(&domainRecordCreateType, "type", "t", "", "Type of the domain record")
-	flags.StringVarP(&domainRecordCreateName, "name", "n", "", "Name of the domain record")
-	flags.StringVarP(&domainRecordCreateContent, "content", "c", "", "Content of the domain record")
-	flags.IntVarP(&domainRecordCreatePriority, "priority", "p", 0, "Priority of the domain record")
-	domainRecordCreateCmd.MarkFlagRequired("type")
-	domainRecordCreateCmd.MarkFlagRequired("content")
-	domainRecordCmd.AddCommand(domainRecordCreateCmd)
-
-	// Record delete
-	domainRecordCmd.AddCommand(domainRecordDeleteCmd)
-}
-
-func getDomains(ids []string) []types.StructDomain {
-	c := Level27Client
-	if len(ids) == 0 {
-		return c.Domains(optFilter, optNumber).Data
-	} else {
-		domains := make([]types.StructDomain, len(ids))
-		for idx, id := range ids {
-			domains[idx] = c.Domain("GET", id, nil).Data
-		}
-		return domains
-	}
-}

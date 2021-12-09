@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"text/template"
 
 	"bitbucket.org/level27/lvl/types"
@@ -44,6 +46,9 @@ func (c *Client) Domains(filter string, number string) types.Domains {
 	return domains
 }
 
+// ------------------ /DOMAINS --------------------------
+
+// DESCRIBE DOMAIN (get detailed info from specific domain) - [lvl domain describe <id>]
 func (c *Client) DomainDescribe(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
@@ -59,6 +64,48 @@ func (c *Client) DomainDescribe(id []string) {
 	}
 }
 
+// DELETE DOMAIN
+func (c *Client) DomainDelete(id []string) {
+	if len(id) == 1 {
+		domainID := id[0]
+		// Ask for user confirmation to delete domain
+		var userResponse string
+
+		question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
+		fmt.Print(question)
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			c.Domain("DELETE", domainID, nil)
+		case "n", "no":
+			log.Fatal("Delete canceled")
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+			domID := []string{domainID}
+			c.DomainDelete(domID)
+		}
+
+	} else {
+		fmt.Println("ERROR: wrong or invalid ID")
+
+	}
+}
+
+// CREATE DOMAIN [lvl domain create <id>]
+func (c *Client) DomainCreate(name []string) {
+	log.Println(name)
+	for _, arg := range name{
+		fmt.Println(arg)
+	}
+}
+
+
+// ------------------ /DOMAIN/RECORDS ----------------------
+// GET
 func (c *Client) DomainRecords(id string) []types.DomainRecord {
 	var records struct {
 		Records []types.DomainRecord `json:"records"`
@@ -71,6 +118,7 @@ func (c *Client) DomainRecords(id string) []types.DomainRecord {
 	return records.Records
 }
 
+// CREATE
 func (c *Client) DomainRecordCreate(id int, req types.DomainRecordRequest) types.DomainRecord {
 	record := types.DomainRecord{}
 
@@ -82,6 +130,7 @@ func (c *Client) DomainRecordCreate(id int, req types.DomainRecordRequest) types
 	return record
 }
 
+// DELETE
 func (c *Client) DomainRecordDelete(domainId int, recordId int) {
 	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
