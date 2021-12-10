@@ -118,6 +118,18 @@ func (c *Client) DomainRecords(id string) []types.DomainRecord {
 	return records.Records
 }
 
+func (c *Client) DomainRecord(domainId int, recordId int) types.DomainRecord {
+	var records struct {
+		Record types.DomainRecord `json:"record"`
+	}
+
+	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
+	err := c.invokeAPI("GET", endpoint, nil, &records)
+	AssertApiError(err)
+
+	return records.Record
+}
+
 // CREATE
 func (c *Client) DomainRecordCreate(id int, req types.DomainRecordRequest) types.DomainRecord {
 	record := types.DomainRecord{}
@@ -134,6 +146,13 @@ func (c *Client) DomainRecordCreate(id int, req types.DomainRecordRequest) types
 func (c *Client) DomainRecordDelete(domainId int, recordId int) {
 	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err)
+}
+
+func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.DomainRecordRequest) {
+	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
+	err := c.invokeAPI("PUT", endpoint, &req, nil)
 
 	AssertApiError(err)
 }
