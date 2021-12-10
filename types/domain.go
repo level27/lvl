@@ -152,16 +152,16 @@ type DomainRequest struct {
 	ExtraFields               string `json:"extraFields"`
 	Domaintype                int    `json:"domaintype"`
 	Domaincontactlicensee     int    `json:"domaincontactLicensee"`
-	DomainContactOnSite       int    `json:"domaincontactOnsite"`
+	DomainContactOnSite       *int    `json:"domaincontactOnsite"`
 	Organisation              int    `json:"organisation"`
 	AutoRecordTemplate        string `json:"autorecordTemplate"`
 	AutoRecordTemplateReplace bool   `json:"autorecordTemplateReplace"`
-	DomainProvider            int    `json:"domainprovider"`
-	DtExternalCreated         string `json:"dtExternalCreated"`
-	DtExternalExpires         string `json:"dtExternalExpires"`
-	ConvertDomainRecords      string `json:"convertDomainrecords"`
+	//DomainProvider            *int    `json:"domainProvider"`
+	// DtExternalCreated         string `json:"dtExternalCreated"`
+	// DtExternalExpires         string `json:"dtExternalExpires"`
+	// ConvertDomainRecords      string `json:"convertDomainrecords"`
 	AutoTeams                 string `json:"autoTeams"`
-	ExternalInfo              string `json:"ExternalInfo"`
+	ExternalInfo              string `json:"externalInfo"`
 }
 
 func (d DomainRequest) String() string {

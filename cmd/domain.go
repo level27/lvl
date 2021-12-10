@@ -126,11 +126,12 @@ var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
 var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
-var domainCreateTtl, domainCreateDomainProvider, domainCreateContactOnSite int
+var domainCreateTtl, domainCreateDomainProvider int
 var domainCreateEppCode, domainCreateAutoRecordTemplate string
 var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
 var domainCreateExtraFields, domainCreateExternalCreated, domainCreateExternalExpires string
 var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
+var domainCreateContactOnSite int
 
 // CREATE DOMAIN [lvl domain create (action:create/none)]
 var domainCreateCmd = &cobra.Command{
@@ -138,6 +139,7 @@ var domainCreateCmd = &cobra.Command{
 	Short: "Create a new domain",
 	Args:  cobra.ExactArgs(0),
 	Run: func(ccmd *cobra.Command, args []string) {
+
 		Level27Client.DomainCreate(args, types.DomainRequest{
 			Name:        domainCreateName,
 			NameServer1: domainCreateNs1,
@@ -162,16 +164,16 @@ var domainCreateCmd = &cobra.Command{
 			ExtraFields:               domainCreateExtraFields,
 			Domaintype:                domainCreateType,
 			Domaincontactlicensee:     domainCreateLicensee,
-			DomainContactOnSite:       domainCreateContactOnSite,
+			DomainContactOnSite:       &domainCreateContactOnSite,
 			Organisation:              domainCreateOrganisation,
 			AutoRecordTemplate:        domainCreateAutoRecordTemplate,
 			AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
-			DomainProvider:            domainCreateDomainProvider,
-			DtExternalCreated:         domainCreateExternalCreated,
-			DtExternalExpires:         domainCreateExternalExpires,
-			ConvertDomainRecords:      domainCreateConvertDomainRecords,
-			AutoTeams:                 domainCreateAutoTeams,
-			ExternalInfo:              domainCreateExternalInfo,
+			//DomainProvider:            &domainCreateDomainProvider,
+			// DtExternalCreated:         domainCreateExternalCreated,
+			// DtExternalExpires:         domainCreateExternalExpires,
+			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
+			AutoTeams:    domainCreateAutoTeams,
+			ExternalInfo: domainCreateExternalInfo,
 		})
 	},
 }

@@ -131,7 +131,11 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 	if req.Action == "" {
 		req.Action = "none"
 	}
-
+	if *req.DomainContactOnSite == 0 {
+		req.DomainContactOnSite = nil 
+	}
+	
+	fmt.Println(req)
 
 	c.Domain("CREATE", nil, req)
 
