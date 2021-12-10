@@ -174,6 +174,7 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 	}
 
 	if result != nil {
+
 		err = json.Unmarshal(body, &result)
 	}
 

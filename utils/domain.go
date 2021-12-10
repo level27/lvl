@@ -58,7 +58,7 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 
 		err = c.invokeAPI("DELETE", endpoint, nil, nil)
 	}
-
+	
 	domainStatusCode(err)
 	AssertApiError(err)
 
@@ -127,13 +127,13 @@ func (c *Client) DomainDelete(id []string) {
 
 // CREATE DOMAIN [lvl domain create <parmeters>]
 func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
-	id := ""
+
 	if req.Action == "" {
 		req.Action = "none"
 	}
 
-	fmt.Println(req)
-	c.Domain("CREATE", id, req)
+
+	c.Domain("CREATE", nil, req)
 
 }
 

@@ -126,8 +126,8 @@ var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
 var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
-var domainCreateTtl, domainCreateDomainProvider int
-var domainCreateEppCode, domainCreateAutoRecordTemplate, domainCreateContactOnSite string
+var domainCreateTtl, domainCreateDomainProvider, domainCreateContactOnSite int
+var domainCreateEppCode, domainCreateAutoRecordTemplate string
 var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
 var domainCreateExtraFields, domainCreateExternalCreated, domainCreateExternalExpires string
 var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string

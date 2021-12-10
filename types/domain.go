@@ -152,7 +152,7 @@ type DomainRequest struct {
 	ExtraFields               string `json:"extraFields"`
 	Domaintype                int    `json:"domaintype"`
 	Domaincontactlicensee     int    `json:"domaincontactLicensee"`
-	DomainContactOnSite       string    `json:"domaincontactOnsite"`
+	DomainContactOnSite       int    `json:"domaincontactOnsite"`
 	Organisation              int    `json:"organisation"`
 	AutoRecordTemplate        string `json:"autorecordTemplate"`
 	AutoRecordTemplateReplace bool   `json:"autorecordTemplateReplace"`
@@ -168,41 +168,6 @@ func (d DomainRequest) String() string {
 	
 	s, _ := json.Marshal(d)
 	return string(s)
-
-	// s := "{"
-	// s += fmt.Sprintf("\"name\": \"%s\",", d.Name)
-	// s += fmt.Sprintf("\"nameserver1\": \"%s\",", d.NameServer1)
-	// s += fmt.Sprintf("\"nameserver2\": \"%s\",", d.NameServer2)
-	// s += fmt.Sprintf("\"nameserver3\": \"%s\",", d.NameServer3)
-	// s += fmt.Sprintf("\"nameserver4\": \"%s\",", d.NameServer4)
-	// s += fmt.Sprintf("\"nameserverIp1\": \"%s\",", d.NameServer1Ip)
-	// s += fmt.Sprintf("\"nameserverIp2\": \"%s\",", d.NameServer2Ip)
-	// s += fmt.Sprintf("\"nameserverIp3\": \"%s\",", d.NameServer3Ip)
-	// s += fmt.Sprintf("\"nameserverIp4\": \"%s\",", d.NameServer4Ip)
-	// s += fmt.Sprintf("\"nameserverIpv61\": \"%s\",", d.NameServer1Ipv6)
-	// s += fmt.Sprintf("\"nameserverIpv62\": \"%s\",", d.NameServer2Ipv6)
-	// s += fmt.Sprintf("\"nameserverIpv63\": \"%s\",", d.NameServer3Ipv6)
-	// s += fmt.Sprintf("\"nameserverIpv64\": \"%s\",", d.NameServer4Ipv6)
-	// s += fmt.Sprintf("\"action\": \"%s\",", d.Action)
-	// s += fmt.Sprintf("\"ttl\": \"%v\",", d.TTL)
-	// s += fmt.Sprintf("\"eppCode\": \"%s\",", d.EppCode)
-	// s += fmt.Sprintf("\"handleDns\": \"%t\",", d.Handledns)
-	// s += fmt.Sprintf("\"extraFields\": \"%s\",", d.ExtraFields)
-	// s += fmt.Sprintf("\"domaintype\": \"%d\",", d.Domaintype)
-	// s += fmt.Sprintf("\"domaincontactLicensee\": \"%v\",", d.Domaincontactlicensee)
-	// s += fmt.Sprintf("\"domaincontactOnsite\": \"%v\",", d.DomainContactOnSite)
-	// s += fmt.Sprintf("\"organisation\": \"%v\",", d.Organisation)
-	// s += fmt.Sprintf("\"autoRecordTemplate\": \"%s\",", d.AutoRecordTemplate)
-	// s += fmt.Sprintf("\"autoRecordTemplateReplace\": \"%v\",", d.AutoRecordTemplateReplace)
-	// s += fmt.Sprintf("\"domainprovider\": \"%v\",", d.DomainProvider)
-	// s += fmt.Sprintf("\"dtExternalCreated\": \"%s\",", d.DtExternalCreated)
-	// s += fmt.Sprintf("\"dtExternalExpires\": \"%s\",", d.DtExternalExpires)
-	// s += fmt.Sprintf("\"convertDomainRecords\": \"%s\",", d.ConvertDomainRecords)
-	// s += fmt.Sprintf("\"autoTeams\": \"%s\",", d.AutoTeams)
-	// s += fmt.Sprintf("\"externalInfo\": \"%s\",", d.ExternalInfo)
-
-	// s += "}"
-	// return s
 }
 
 // DomainRecord represents a single Domainrecord
