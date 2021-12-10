@@ -33,10 +33,10 @@ func addCommonGetFlags(cmd *cobra.Command) {
 func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command := cmd.Flags()
 
-	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (Required)")
-	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain (Required)")
-	command.IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (Required)")
-	command.IntVarP(&domainCreateOrganisation, "organisation", "o", 0, "the organisation of the domain (Required)")
+	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (REQUIRED)")
+	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain (REQUIRED)")
+	command.IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
+	command.IntVarP(&domainCreateOrganisation, "organisation", "o", 0, "the organisation of the domain (REQUIRED)")
 
 	command.StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
 	command.StringVarP(&domainCreateNs2, "nameserver2", "", "", "Nameserver")
@@ -70,4 +70,5 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
 	command.StringVarP(&domainCreateExternalInfo, "externalInfo", "", "", "Required when billableItemInfo for an organisation exist in db")
 
+	command.SortFlags = false
 }

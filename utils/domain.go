@@ -21,6 +21,7 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("GET", endpoint, nil, &domain)
 	case "CREATE":
 		endpoint := "domains"
+		fmt.Println(data)
 		err = c.invokeAPI("POST", endpoint, data, &domain)
 	case "UPDATE":
 		endpoint := fmt.Sprintf("domains/%s", id)
@@ -95,14 +96,14 @@ func (c *Client) DomainDelete(id []string) {
 	}
 }
 
-// CREATE DOMAIN [lvl domain create <id>]
+// CREATE DOMAIN [lvl domain create <parmeters>]
 func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 	id := ""
 	if req.Action == ""{
 		req.Action = "none"
 	}
 
-	
+	fmt.Println(req)	
 	c.Domain("CREATE", id , req)
 
 }
