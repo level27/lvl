@@ -4,11 +4,38 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
 	"bitbucket.org/level27/lvl/types"
 )
+
+func domainStatusCode(e error) {
+	if e != nil {
+		splittedError := strings.Split(e.Error(), " ")
+		var result string
+		switch splittedError[len(splittedError)-1] {
+		case "204":
+			result = "Request succesfully processed"
+		case "400":
+			result = "Bad request"
+		case "403":
+			result = "You do not have acces to this domain"
+		case "404":
+			result = "Domain not found"
+		case "500":
+			result = "You have no proper rights to acces the controller"
+		default:
+			result = "No Status code received"
+		}
+
+		log.Println(result)
+	} else {
+		log.Println("Request succesfully processed")
+	}
+
+}
 
 //Domain gets a system from the API
 func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
@@ -21,15 +48,18 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("GET", endpoint, nil, &domain)
 	case "CREATE":
 		endpoint := "domains"
+		fmt.Println(data)
 		err = c.invokeAPI("POST", endpoint, data, &domain)
 	case "UPDATE":
 		endpoint := fmt.Sprintf("domains/%s", id)
 		err = c.invokeAPI("PUT", endpoint, data, &domain)
 	case "DELETE":
 		endpoint := fmt.Sprintf("domains/%s", id)
+
 		err = c.invokeAPI("DELETE", endpoint, nil, nil)
 	}
 
+	domainStatusCode(err)
 	AssertApiError(err)
 
 	return domain
@@ -66,12 +96,15 @@ func (c *Client) DomainDescribe(id []string) {
 
 // DELETE DOMAIN
 func (c *Client) DomainDelete(id []string) {
-	if len(id) == 1 {
-		domainID := id[0]
-		// Ask for user confirmation to delete domain
-		var userResponse string
 
-		question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainID)
+	// looping over all given args and checking for valid domainId's
+	for _, value := range id{
+		
+		domainId, err := strconv.Atoi(value)
+		if err == nil  {
+			var userResponse string
+
+		question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
 		fmt.Print(question)
 		_, err := fmt.Scan(&userResponse)
 		if err != nil {
@@ -80,29 +113,36 @@ func (c *Client) DomainDelete(id []string) {
 
 		switch strings.ToLower(userResponse) {
 		case "y", "yes":
-			c.Domain("DELETE", domainID, nil)
+			c.Domain("DELETE", value, nil)
 		case "n", "no":
-			log.Fatal("Delete canceled")
+			log.Printf("Delete canceled for domain: %v", value)
 		default:
 			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
-			domID := []string{domainID}
+			domID := []string{value}
 			c.DomainDelete(domID)
 		}
-
-	} else {
-		fmt.Println("ERROR: wrong or invalid ID")
-
+		}else{
+			log.Printf("Wrong or invalid domain ID: %v.\n", value)
+		}
 	}
+
 }
 
-// CREATE DOMAIN [lvl domain create <id>]
-func (c *Client) DomainCreate(name []string) {
-	log.Println(name)
-	for _, arg := range name{
-		fmt.Println(arg)
-	}
-}
+// CREATE DOMAIN [lvl domain create <parmeters>]
+func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 
+	if req.Action == "" {
+		req.Action = "none"
+	}
+	if *req.DomainContactOnSite == 0 {
+		req.DomainContactOnSite = nil
+	}
+
+	fmt.Println(req)
+
+	c.Domain("CREATE", nil, req)
+
+}
 
 // ------------------ /DOMAIN/RECORDS ----------------------
 // GET

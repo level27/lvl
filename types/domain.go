@@ -132,12 +132,42 @@ type DomainExtension struct {
 
 // DomainRequest represents a single DomainRequest
 type DomainRequest struct {
-	Name                  string `json:"name"`
-	Action                string `json:"action"`
-	Domaintype            int `json:"domaintype"`
-	Domaincontactlicensee string `json:"domaincontactLicensee"`
-	Organisation          string `json:"organisation"`
-	Handledns             bool `json:"handleDns"`
+	Name                      string `json:"name"`
+	NameServer1               string `json:"nameserver1"`
+	NameServer2               string `json:"nameserver2"`
+	NameServer3               string `json:"nameserver3"`
+	NameServer4               string `json:"nameserver4"`
+	NameServer1Ip             string `json:"nameserverIp1"`
+	NameServer2Ip             string `json:"nameserverIp2"`
+	NameServer3Ip             string `json:"nameserverIp3"`
+	NameServer4Ip             string `json:"nameserverIp4"`
+	NameServer1Ipv6           string `json:"nameserverIpv61"`
+	NameServer2Ipv6           string `json:"nameserverIpv62"`
+	NameServer3Ipv6           string `json:"nameserverIpv63"`
+	NameServer4Ipv6           string `json:"nameserverIpv64"`
+	TTL                       int    `json:"ttl"`
+	Action                    string `json:"action"`
+	EppCode                   string `json:"eppCode"`
+	Handledns                 bool   `json:"handleDns"`
+	ExtraFields               string `json:"extraFields"`
+	Domaintype                int    `json:"domaintype"`
+	Domaincontactlicensee     int    `json:"domaincontactLicensee"`
+	DomainContactOnSite       *int    `json:"domaincontactOnsite"`
+	Organisation              int    `json:"organisation"`
+	AutoRecordTemplate        string `json:"autorecordTemplate"`
+	AutoRecordTemplateReplace bool   `json:"autorecordTemplateReplace"`
+	//DomainProvider            *int    `json:"domainProvider"`
+	// DtExternalCreated         string `json:"dtExternalCreated"`
+	// DtExternalExpires         string `json:"dtExternalExpires"`
+	// ConvertDomainRecords      string `json:"convertDomainrecords"`
+	AutoTeams                 string `json:"autoTeams"`
+	ExternalInfo              string `json:"externalInfo"`
+}
+
+func (d DomainRequest) String() string {
+	
+	s, _ := json.Marshal(d)
+	return string(s)
 }
 
 // DomainRecord represents a single Domainrecord
@@ -160,7 +190,7 @@ type DomainRecordRequest struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	Content  string `json:"content"`
-	Priority int `json:"priority"`
+	Priority int    `json:"priority"`
 }
 
 // DomainContact is an object to define domain contacts at Level27
