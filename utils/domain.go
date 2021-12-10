@@ -10,6 +10,29 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
+func domainStatusCode(e error) {
+
+	splittedError := strings.Split(e.Error(), " ")
+	var result string
+	switch splittedError[len(splittedError)-1] {
+	case "204":
+		result = "Request succesfully processed"
+	case "400":
+		result = "Bad request"
+	case "403":
+		result = "You do not have acces to this domain"
+	case "404":
+		result = "Domain not found"
+	case "500":
+		result = "You have no proper rights to acces the controller"
+	default:
+		result = "No Status code received"
+	}
+
+	log.Println(result)
+
+}
+
 //Domain gets a system from the API
 func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
 	var domain types.Domain
@@ -28,9 +51,11 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("PUT", endpoint, data, &domain)
 	case "DELETE":
 		endpoint := fmt.Sprintf("domains/%s", id)
+
 		err = c.invokeAPI("DELETE", endpoint, nil, nil)
 	}
 
+	domainStatusCode(err)
 	AssertApiError(err)
 
 	return domain
@@ -99,12 +124,12 @@ func (c *Client) DomainDelete(id []string) {
 // CREATE DOMAIN [lvl domain create <parmeters>]
 func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 	id := ""
-	if req.Action == ""{
+	if req.Action == "" {
 		req.Action = "none"
 	}
 
-	fmt.Println(req)	
-	c.Domain("CREATE", id , req)
+	fmt.Println(req)
+	c.Domain("CREATE", id, req)
 
 }
 

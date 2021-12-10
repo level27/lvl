@@ -138,7 +138,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return nil, errRes
 		}
-
+		
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 	}
 
