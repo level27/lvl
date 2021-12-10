@@ -230,21 +230,6 @@ type DomainRecordRequest struct {
 	Priority int    `json:"priority"`
 }
 
-func (d DomainRecordRequest) String() string {
-	name := fmt.Sprintf("\"%s\"", d.Name)
-	if d.Name == "" {
-		name = "null"
-	}
-
-	s := "{"
-	s += fmt.Sprintf("\"name\": %s,", name)
-	s += fmt.Sprintf("\"type\": \"%s\",", d.Type)
-	s += fmt.Sprintf("\"content\": \"%s\",", d.Content)
-	s += fmt.Sprintf("\"priority\": %d", d.Priority)
-	s += "}"
-	return s
-}
-
 // DomainContact is an object to define domain contacts at Level27
 type DomainContact struct {
 	Domaincontact struct {

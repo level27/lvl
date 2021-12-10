@@ -1,0 +1,4 @@
+root = true
+
+[*.go]
+trim_trailing_whitespace = true
