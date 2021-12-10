@@ -58,7 +58,7 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.BoolVarP(&domainCreateHandleDns, "handleDNS", "", true, "should dns be handled by lvl27")
 	command.StringVarP(&domainCreateExtraFields, "extra fields", "", "", "extra fields (json, non-editable)")
 
-	command.IntVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
+	command.StringVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", "", "the unique id of a domaincontact with type onsite")
 	command.StringVarP(&domainCreateAutoRecordTemplate, "autorecordTemplate", "", "", "AutorecordTemplate")
 	command.BoolVarP(&domainCreateAutoRecordTemplateRep, "autorecordTemplateReplace", "", false, "autorecordTemplate replace")
 
