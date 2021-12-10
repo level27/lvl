@@ -11,8 +11,8 @@ import (
 )
 
 func domainStatusCode(e error) {
-
-	splittedError := strings.Split(e.Error(), " ")
+	if e != nil {
+		splittedError := strings.Split(e.Error(), " ")
 	var result string
 	switch splittedError[len(splittedError)-1] {
 	case "204":
@@ -29,7 +29,11 @@ func domainStatusCode(e error) {
 		result = "No Status code received"
 	}
 
-	log.Println(result)
+	log.Println(result)	
+	}else{
+		log.Println("Request succesfully processed")
+	}
+	
 
 }
 
