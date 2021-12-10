@@ -97,7 +97,8 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 	if (TraceRequests) {
 		fmt.Fprintf(os.Stderr, "Request: %s %s\n", method, fullUrl)
 		if reqData.Len() != 0 {
-			fmt.Fprintf(os.Stderr, "Request Body: %s\n", string(reqData.Bytes()))
+			colored, _ := colorJson(reqData.Bytes())
+			fmt.Fprintf(os.Stderr, "Request Body: %s\n", string(colored))
 		}
 	}
 
@@ -133,7 +134,11 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 	}
 
 	if TraceRequests && len(body) != 0 {
-		fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(body))
+		bodyPrint := body
+		if json.Valid(bodyPrint) {
+			bodyPrint, _ = colorJson(bodyPrint)
+		}
+		fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(bodyPrint))
 	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
