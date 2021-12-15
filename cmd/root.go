@@ -27,6 +27,7 @@ import (
 
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
@@ -49,7 +50,7 @@ var RootCmd = &cobra.Command{
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		outputSet := viper.GetString("output")
-		if outputSet != "text" && outputSet != "json" {
+		if outputSet != "text" && outputSet != "json" && output != "yaml" {
 			return fmt.Errorf("invalid output mode specified: '%s'", outputSet)
 		}
 
@@ -142,6 +143,8 @@ func outputFormatTable(objects interface{}, titles []string, fields []string) {
 		outputFormatTableText(objects, titles, fields)
 	case "json":
 		outputFormatTableJson(objects)
+	case "yaml":
+		outputFormatTableYaml(objects)
 	}
 }
 
@@ -157,6 +160,8 @@ func outputFormatTemplate(object interface{}, templatePath string) {
 		outputFormatTemplateText(object, templatePath)
 	case "json":
 		outputFormatTemplateJson(object)
+	case "yaml":
+		outputFormatTemplateYaml(object)
 	}
 }
 
@@ -197,6 +202,11 @@ func outputFormatTableJson(objects interface{}) {
 	fmt.Println(string(b))
 }
 
+func outputFormatTableYaml(objects interface{}) {
+	b, _ := yaml.Marshal(roundTripJson(objects))
+	fmt.Println(string(b))
+}
+
 func outputFormatTemplateText(object interface{}, templatePath string) {
 	tmpl := template.Must(template.ParseFiles(templatePath))
 	err := tmpl.Execute(os.Stdout, object)
@@ -211,4 +221,20 @@ func outputFormatTemplateJson(object interface{}) {
 		panic(err)
 	}
 	fmt.Println(string(b))
+}
+
+func outputFormatTemplateYaml(object interface{}) {
+	b, err := yaml.Marshal(roundTripJson(object))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(b))
+}
+
+func roundTripJson(obj interface{}) interface{} {
+	// Round-trip through JSON so we use the JSON (camelcased) key names in the YAML without having to re-define them
+	bJson, _ := json.Marshal(obj)
+	var interf interface{}
+	json.Unmarshal(bJson, &interf)
+	return interf
 }
