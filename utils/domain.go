@@ -11,32 +11,6 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
-func domainStatusCode(e error) {
-	if e != nil {
-		splittedError := strings.Split(e.Error(), " ")
-		var result string
-		switch splittedError[len(splittedError)-1] {
-		case "204":
-			result = "Request succesfully processed"
-		case "400":
-			result = "Bad request"
-		case "403":
-			result = "You do not have acces to this domain"
-		case "404":
-			result = "Domain not found"
-		case "500":
-			result = "You have no proper rights to acces the controller"
-		default:
-			result = "No Status code received"
-		}
-
-		log.Println(result)
-	} else {
-		log.Println("Request succesfully processed")
-	}
-
-}
-
 //Domain gets a system from the API
 func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
 	var domain types.Domain
@@ -48,7 +22,6 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("GET", endpoint, nil, &domain)
 	case "CREATE":
 		endpoint := "domains"
-		fmt.Println(data)
 		err = c.invokeAPI("POST", endpoint, data, &domain)
 	case "UPDATE":
 		endpoint := fmt.Sprintf("domains/%s", id)
@@ -59,8 +32,7 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("DELETE", endpoint, nil, nil)
 	}
 
-	domainStatusCode(err)
-	AssertApiError(err)
+	AssertApiError(err, "domain")
 
 	return domain
 }
@@ -71,7 +43,7 @@ func (c *Client) Domains(filter string, number string) types.Domains {
 
 	endpoint := "domains?limit=" + number + "&filter=" + filter
 	err := c.invokeAPI("GET", endpoint, nil, &domains)
-	AssertApiError(err)
+	AssertApiError(err, "domains")
 
 	return domains
 }
@@ -98,30 +70,30 @@ func (c *Client) DomainDescribe(id []string) {
 func (c *Client) DomainDelete(id []string) {
 
 	// looping over all given args and checking for valid domainId's
-	for _, value := range id{
-		
+	for _, value := range id {
+
 		domainId, err := strconv.Atoi(value)
-		if err == nil  {
+		if err == nil {
 			var userResponse string
 
-		question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
-		fmt.Print(question)
-		_, err := fmt.Scan(&userResponse)
-		if err != nil {
-			log.Fatal(err)
-		}
+			question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
+			fmt.Print(question)
+			_, err := fmt.Scan(&userResponse)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		switch strings.ToLower(userResponse) {
-		case "y", "yes":
-			c.Domain("DELETE", value, nil)
-		case "n", "no":
-			log.Printf("Delete canceled for domain: %v", value)
-		default:
-			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
-			domID := []string{value}
-			c.DomainDelete(domID)
-		}
-		}else{
+			switch strings.ToLower(userResponse) {
+			case "y", "yes":
+				c.Domain("DELETE", value, nil)
+			case "n", "no":
+				log.Printf("Delete canceled for domain: %v", value)
+			default:
+				log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+				domID := []string{value}
+				c.DomainDelete(domID)
+			}
+		} else {
 			log.Printf("Wrong or invalid domain ID: %v.\n", value)
 		}
 	}
@@ -138,10 +110,22 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 		req.DomainContactOnSite = nil
 	}
 
-	fmt.Println(req)
+	test := c.Domain("CREATE", nil, req)
+
+	log.Printf("domain created: '%v' - ID: '%v'", test.Data.Fullname, test.Data.ID)
+
+}
+
+// TRANSFER DOMAIN [lvl domain transfer <parameters>] 
+func (c *Client) DomainTransfer(args []string, req types.DomainRequest){
+	if req.Action ==""{
+		req.Action = "transfer"
+	}
+	if *req.DomainContactOnSite == 0 {
+		req.DomainContactOnSite = nil
+	}
 
 	c.Domain("CREATE", nil, req)
-
 }
 
 // ------------------ /DOMAIN/RECORDS ----------------------
@@ -153,7 +137,7 @@ func (c *Client) DomainRecords(id string) []types.DomainRecord {
 
 	endpoint := fmt.Sprintf("domains/%s/records", id)
 	err := c.invokeAPI("GET", endpoint, nil, &records)
-	AssertApiError(err)
+	AssertApiError(err, "domain record")
 
 	return records.Records
 }
@@ -165,7 +149,7 @@ func (c *Client) DomainRecord(domainId int, recordId int) types.DomainRecord {
 
 	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
 	err := c.invokeAPI("GET", endpoint, nil, &records)
-	AssertApiError(err)
+	AssertApiError(err, "domain record")
 
 	return records.Record
 }
@@ -177,7 +161,7 @@ func (c *Client) DomainRecordCreate(id int, req types.DomainRecordRequest) types
 	endpoint := fmt.Sprintf("domains/%d/records", id)
 	err := c.invokeAPI("POST", endpoint, &req, &record)
 
-	AssertApiError(err)
+	AssertApiError(err, "domain record")
 
 	return record
 }
@@ -187,12 +171,12 @@ func (c *Client) DomainRecordDelete(domainId int, recordId int) {
 	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
 
-	AssertApiError(err)
+	AssertApiError(err, "domain record")
 }
 
 func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.DomainRecordRequest) {
 	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
 	err := c.invokeAPI("PUT", endpoint, &req, nil)
 
-	AssertApiError(err)
+	AssertApiError(err, "domain record")
 }

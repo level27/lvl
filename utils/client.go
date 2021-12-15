@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/Jeffail/gabs/v2"
@@ -99,7 +100,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 
 	fullUrl := fmt.Sprintf("%s/%s", c.BaseURL, endpoint)
 
-	if (TraceRequests) {
+	if TraceRequests {
 		fmt.Fprintf(os.Stderr, "Request: %s %s\n", method, fullUrl)
 		if reqData.Len() != 0 {
 			colored, err := colorJson(reqData.Bytes())
@@ -198,8 +199,37 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 	return err
 }
 
-func AssertApiError(e error) {
+func AssertApiError(e error, directory string) {
+	TranslateStatusCode(e, directory)
 	if e != nil {
+		
 		log.Fatalf("client.go: API error - %s\n", e.Error())
 	}
+}
+
+func TranslateStatusCode(e error, directory string) {
+	if e != nil {
+		splittedError := strings.Split(e.Error(), " ")
+		var result string
+		status := splittedError[len(splittedError)-1]
+		switch status {
+		case "204":
+			result = fmt.Sprintf("Status: %v. Request succesfully executed", status)
+		case "400":
+			result = fmt.Sprintf("Status: %v. Bad request", status)
+		case "403":
+			result = fmt.Sprintf("Status: %v. You do not have acces to this %v", status, directory)
+		case "404":
+			result = fmt.Sprintf("Status: %v. %v not found", status, directory)
+		case "500":
+			result = fmt.Sprintf("Status: %v. You have no proper rights to acces the controller", status)
+		default:
+			result = "No Status code received"
+		}
+
+		log.Println(result)
+	} else {
+		log.Println("Request succesfully executed")
+	}
+
 }
