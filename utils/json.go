@@ -7,7 +7,7 @@ import (
 )
 
 func colorJson(jsonData []byte) ([]byte, error) {
-	var colorJsonMap map[string]interface{}
+	var colorJsonMap interface{}
 	err := json.Unmarshal(jsonData, &colorJsonMap)
 	if err != nil {
 		return nil, err
