@@ -85,11 +85,16 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 
 	reqData := bytes.NewBuffer([]byte(nil))
 	if data != nil {
-		jsonDat, err := json.Marshal(data)
-		if err != nil {
-			return nil, err
+		str, ok := data.(string)
+		if ok {
+			reqData = bytes.NewBuffer([]byte(str))
+		} else {
+			jsonDat, err := json.Marshal(data)
+			if err != nil {
+				return nil, err
+			}
+			reqData = bytes.NewBuffer(jsonDat)
 		}
-		reqData = bytes.NewBuffer(jsonDat)
 	}
 
 	fullUrl := fmt.Sprintf("%s/%s", c.BaseURL, endpoint)
@@ -97,7 +102,15 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 	if (TraceRequests) {
 		fmt.Fprintf(os.Stderr, "Request: %s %s\n", method, fullUrl)
 		if reqData.Len() != 0 {
-			fmt.Fprintf(os.Stderr, "Request Body: %s\n", string(reqData.Bytes()))
+			colored, err := colorJson(reqData.Bytes())
+			var str string
+			if err == nil {
+				str = string(colored)
+			} else {
+				str = string(reqData.String())
+			}
+
+			fmt.Fprintf(os.Stderr, "Request Body: %s\n", str)
 		}
 	}
 
@@ -133,7 +146,11 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 	}
 
 	if TraceRequests && len(body) != 0 {
-		fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(body))
+		bodyPrint := body
+		if json.Valid(bodyPrint) {
+			bodyPrint, _ = colorJson(bodyPrint)
+		}
+		fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(bodyPrint))
 	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
@@ -159,7 +176,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return nil, errRes
 		}
-		
+
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 	}
 
