@@ -133,7 +133,7 @@ type DomainExtension struct {
 // DomainRequest represents a single DomainRequest
 type DomainRequest struct {
 	Name                      string `json:"name"`
-	NameServer1               string `json:"nameserver1"`
+	NameServer1               *string `json:"nameserver1"`
 	NameServer2               string `json:"nameserver2"`
 	NameServer3               string `json:"nameserver3"`
 	NameServer4               string `json:"nameserver4"`

@@ -139,11 +139,11 @@ var domainCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new domain",
 	Args:  cobra.ExactArgs(0),
-	Run: func(ccmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
-		Level27Client.DomainCreate(args, types.DomainRequest{
+		requestData := types.DomainRequest{
 			Name:        domainCreateName,
-			NameServer1: domainCreateNs1,
+			NameServer1: &domainCreateNs1,
 			NameServer2: domainCreateNs2,
 			NameServer3: domainCreateNs3,
 			NameServer4: domainCreateNs4,
@@ -175,7 +175,18 @@ var domainCreateCmd = &cobra.Command{
 			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
 			AutoTeams:    domainCreateAutoTeams,
 			ExternalInfo: domainCreateExternalInfo,
-		})
+		}
+
+		if cmd.Flags().Changed("action") {
+
+			if requestData.Action == "create" {
+				
+				cmd.MarkFlagRequired("nameserver1")
+				Level27Client.DomainCreate(args, requestData)
+			}
+		}
+
+
 	},
 }
 
