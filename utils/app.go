@@ -33,7 +33,7 @@ func (c *Client) Apps(filter string, number string) types.Apps {
 
 	endpoint := "apps"
 	err := c.invokeAPI("GET", endpoint, nil, &apps)
-	AssertApiError(err)
+	AssertApiError(err, "app")
 
 	return apps
 }
