@@ -68,7 +68,7 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 //Domain gets a domain from the API
 func (c *Client) Domains(filter string, number string) []types.Domain {
 	var domains struct {
-		Data []types.Domain `json:"domain"`
+		Data []types.Domain `json:"domains"`
 	}
 
 	endpoint := "domains?limit=" + number + "&filter=" + filter
