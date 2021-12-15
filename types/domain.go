@@ -82,7 +82,7 @@ type Domain struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"mailgroup"`
-	ExtraFields   []interface{} `json:"extraFields"`
+	ExtraFields   interface{}   `json:"extraFields"`
 	HandleMailDNS bool          `json:"handleMailDns"`
 	DtExpires     int           `json:"dtExpires"`
 	BillingStatus string        `json:"billingStatus"`
