@@ -24,6 +24,7 @@ func init() {
 
 	// Get (list of all domains)
 	domainCmd.AddCommand(domainGetCmd)
+	
 	addCommonGetFlags(domainGetCmd)
 
 	// Get details from a specific domain
@@ -41,6 +42,18 @@ func init() {
 	domainCreateCmd.MarkFlagRequired("type")
 	domainCreateCmd.MarkFlagRequired("licensee")
 	domainCreateCmd.MarkFlagRequired("organisation")
+
+	// TRANSFER (single domain)
+	domainCmd.AddCommand(domainTransferCmd)
+	addDomainCommonPostFlags(domainTransferCmd)
+	// required flags 
+	domainTransferCmd.MarkFlagRequired("name")
+	domainTransferCmd.MarkFlagRequired("type")
+	domainTransferCmd.MarkFlagRequired("licensee")
+	domainTransferCmd.MarkFlagRequired("organisation")
+	domainTransferCmd.MarkFlagRequired("eppCode")
+
+
 
 	// ----------------- RECORDS ------------------------
 	domainCmd.AddCommand(domainRecordCmd)
@@ -176,17 +189,68 @@ var domainCreateCmd = &cobra.Command{
 			AutoTeams:    domainCreateAutoTeams,
 			ExternalInfo: domainCreateExternalInfo,
 		}
+		
 
 		if cmd.Flags().Changed("action") {
 
 			if requestData.Action == "create" {
-				
-				cmd.MarkFlagRequired("nameserver1")
 				Level27Client.DomainCreate(args, requestData)
+
+			}else if requestData.Action == "none" {
+				Level27Client.DomainCreate(args, requestData)
+			}else{
+				log.Printf("given action: '%v' is not recognized.", requestData.Action)
 			}
+		}else{
+			Level27Client.DomainCreate(args, requestData)
 		}
 
 
+	},
+}
+
+// TRANSFER DOMAIN
+var domainTransferCmd = &cobra.Command{
+	Use: "transfer",
+	Short: "Command for transfering a domain",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		requestData := types.DomainRequest{
+			Name:        domainCreateName,
+			NameServer1: &domainCreateNs1,
+			NameServer2: domainCreateNs2,
+			NameServer3: domainCreateNs3,
+			NameServer4: domainCreateNs4,
+
+			NameServer1Ip: domainCreateNsIp1,
+			NameServer2Ip: domainCreateNsIp2,
+			NameServer3Ip: domainCreateNsIp3,
+			NameServer4Ip: domainCreateNsIp4,
+
+			NameServer1Ipv6: domainCreateNsIpv61,
+			NameServer2Ipv6: domainCreateNsIpv62,
+			NameServer3Ipv6: domainCreateNsIpv63,
+			NameServer4Ipv6: domainCreateNsIpv64,
+
+			TTL:                       domainCreateTtl,
+			Action:                    domainCreateAction,
+			EppCode:                   domainCreateEppCode,
+			Handledns:                 domainCreateHandleDns,
+			ExtraFields:               domainCreateExtraFields,
+			Domaintype:                domainCreateType,
+			Domaincontactlicensee:     domainCreateLicensee,
+			DomainContactOnSite:       &domainCreateContactOnSite,
+			Organisation:              domainCreateOrganisation,
+			AutoRecordTemplate:        domainCreateAutoRecordTemplate,
+			AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
+			//DomainProvider:            &domainCreateDomainProvider,
+			// DtExternalCreated:         domainCreateExternalCreated,
+			// DtExternalExpires:         domainCreateExternalExpires,
+			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
+			AutoTeams:    domainCreateAutoTeams,
+			ExternalInfo: domainCreateExternalInfo,
+		}
+		Level27Client.DomainTransfer(args, requestData )
 	},
 }
 
