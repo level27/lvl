@@ -24,18 +24,19 @@ func init() {
 
 	// Get (list of all domains)
 	domainCmd.AddCommand(domainGetCmd)
-	
+
 	addCommonGetFlags(domainGetCmd)
 
 	// Get details from a specific domain
 	domainCmd.AddCommand(domainDescribeCmd)
 
 	// Delete (single domain)
-	domainCmd.AddCommand(domainRemoveCmd)
+	domainCmd.AddCommand(domainDeleteCmd)
 
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
 	domainCreateCmd.Flags().StringVarP(&domainCreateAction, "action", "a", "", "Specify the action you want to commit")
+	domainCreateCmd.Flags().StringVarP(&domainCreateExternalInfo, "externalInfo", "", "", "Required when billableItemInfo for an organisation exist in db")
 	addDomainCommonPostFlags(domainCreateCmd)
 	//Required flags
 	domainCreateCmd.MarkFlagRequired("name")
@@ -46,14 +47,21 @@ func init() {
 	// TRANSFER (single domain)
 	domainCmd.AddCommand(domainTransferCmd)
 	addDomainCommonPostFlags(domainTransferCmd)
-	// required flags 
+	// required flags
 	domainTransferCmd.MarkFlagRequired("name")
 	domainTransferCmd.MarkFlagRequired("type")
 	domainTransferCmd.MarkFlagRequired("licensee")
 	domainTransferCmd.MarkFlagRequired("organisation")
 	domainTransferCmd.MarkFlagRequired("eppCode")
 
-
+	// UPDATE (single domain)
+	domainCmd.AddCommand(domainUpdateCmd)
+	addDomainCommonPostFlags(domainUpdateCmd)
+	//required flags
+	domainUpdateCmd.MarkFlagRequired("name")
+	domainUpdateCmd.MarkFlagRequired("type")
+	domainUpdateCmd.MarkFlagRequired("licensee")
+	domainUpdateCmd.MarkFlagRequired("organisation")
 
 	// ----------------- RECORDS ------------------------
 	domainCmd.AddCommand(domainRecordCmd)
@@ -122,21 +130,18 @@ var domainDescribeCmd = &cobra.Command{
 }
 
 // DELETE DOMAIN [lvl domain delete <id>]
-var domainRemoveCmd = &cobra.Command{
+var domainDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a domain",
-	Long: "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
+	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
 	Run: func(cmd *cobra.Command, args []string) {
 		Level27Client.DomainDelete(args)
 	},
 }
 
-// CREATE DOMAIN
-// required flag vars
+//flag vars needed for all post or put requests on Domain level [Domains/]
 var domainCreateType, domainCreateLicensee, domainCreateOrganisation int
 var domainCreateName string
-
-// non-required flag vars
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
 var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
@@ -147,6 +152,51 @@ var domainCreateExtraFields, domainCreateExternalCreated, domainCreateExternalEx
 var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
 var domainCreateContactOnSite int
 
+// change given flag data into request data to put or post
+func getDomainRequestData() types.DomainRequest {
+	requestData := types.DomainRequest{
+		Name:        domainCreateName,
+		NameServer1: &domainCreateNs1,
+		NameServer2: domainCreateNs2,
+		NameServer3: domainCreateNs3,
+		NameServer4: domainCreateNs4,
+
+		NameServer1Ip: domainCreateNsIp1,
+		NameServer2Ip: domainCreateNsIp2,
+		NameServer3Ip: domainCreateNsIp3,
+		NameServer4Ip: domainCreateNsIp4,
+
+		NameServer1Ipv6: domainCreateNsIpv61,
+		NameServer2Ipv6: domainCreateNsIpv62,
+		NameServer3Ipv6: domainCreateNsIpv63,
+		NameServer4Ipv6: domainCreateNsIpv64,
+
+		TTL:                       domainCreateTtl,
+		Action:                    domainCreateAction,
+		EppCode:                   domainCreateEppCode,
+		Handledns:                 domainCreateHandleDns,
+		ExtraFields:               domainCreateExtraFields,
+		Domaintype:                domainCreateType,
+		Domaincontactlicensee:     domainCreateLicensee,
+		DomainContactOnSite:       &domainCreateContactOnSite,
+		Organisation:              domainCreateOrganisation,
+		AutoRecordTemplate:        domainCreateAutoRecordTemplate,
+		AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
+		//DomainProvider:            &domainCreateDomainProvider,
+		// DtExternalCreated:         domainCreateExternalCreated,
+		// DtExternalExpires:         domainCreateExternalExpires,
+		// ConvertDomainRecords:      domainCreateConvertDomainRecords,
+		AutoTeams:    domainCreateAutoTeams,
+		ExternalInfo: domainCreateExternalInfo,
+	}
+
+	if *requestData.DomainContactOnSite == 0 {
+		requestData.DomainContactOnSite = nil
+	}
+
+	return requestData
+}
+
 // CREATE DOMAIN [lvl domain create (action:create/none)]
 var domainCreateCmd = &cobra.Command{
 	Use:   "create",
@@ -154,68 +204,43 @@ var domainCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		requestData := types.DomainRequest{
-			Name:        domainCreateName,
-			NameServer1: &domainCreateNs1,
-			NameServer2: domainCreateNs2,
-			NameServer3: domainCreateNs3,
-			NameServer4: domainCreateNs4,
-
-			NameServer1Ip: domainCreateNsIp1,
-			NameServer2Ip: domainCreateNsIp2,
-			NameServer3Ip: domainCreateNsIp3,
-			NameServer4Ip: domainCreateNsIp4,
-
-			NameServer1Ipv6: domainCreateNsIpv61,
-			NameServer2Ipv6: domainCreateNsIpv62,
-			NameServer3Ipv6: domainCreateNsIpv63,
-			NameServer4Ipv6: domainCreateNsIpv64,
-
-			TTL:                       domainCreateTtl,
-			Action:                    domainCreateAction,
-			EppCode:                   domainCreateEppCode,
-			Handledns:                 domainCreateHandleDns,
-			ExtraFields:               domainCreateExtraFields,
-			Domaintype:                domainCreateType,
-			Domaincontactlicensee:     domainCreateLicensee,
-			DomainContactOnSite:       &domainCreateContactOnSite,
-			Organisation:              domainCreateOrganisation,
-			AutoRecordTemplate:        domainCreateAutoRecordTemplate,
-			AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
-			//DomainProvider:            &domainCreateDomainProvider,
-			// DtExternalCreated:         domainCreateExternalCreated,
-			// DtExternalExpires:         domainCreateExternalExpires,
-			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
-			AutoTeams:    domainCreateAutoTeams,
-			ExternalInfo: domainCreateExternalInfo,
-		}
-		
+		requestData := getDomainRequestData()
 
 		if cmd.Flags().Changed("action") {
 
 			if requestData.Action == "create" {
 				Level27Client.DomainCreate(args, requestData)
 
-			}else if requestData.Action == "none" {
+			} else if requestData.Action == "none" {
 				Level27Client.DomainCreate(args, requestData)
-			}else{
+			} else {
 				log.Printf("given action: '%v' is not recognized.", requestData.Action)
 			}
-		}else{
+		} else {
 			Level27Client.DomainCreate(args, requestData)
 		}
-
 
 	},
 }
 
 // TRANSFER DOMAIN
 var domainTransferCmd = &cobra.Command{
-	Use: "transfer",
+	Use:   "transfer",
 	Short: "Command for transfering a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		requestData := types.DomainRequest{
+		requestData := getDomainRequestData()
+		Level27Client.DomainTransfer(args, requestData)
+	},
+}
+
+// UPDATE DOMAIN
+var domainUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Command for updating an existing domain",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		requestData := types.DomainUpdateRequest{
 			Name:        domainCreateName,
 			NameServer1: &domainCreateNs1,
 			NameServer2: domainCreateNs2,
@@ -247,14 +272,18 @@ var domainTransferCmd = &cobra.Command{
 			// DtExternalCreated:         domainCreateExternalCreated,
 			// DtExternalExpires:         domainCreateExternalExpires,
 			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
-			AutoTeams:    domainCreateAutoTeams,
-			ExternalInfo: domainCreateExternalInfo,
+			AutoTeams: domainCreateAutoTeams,
 		}
-		Level27Client.DomainTransfer(args, requestData )
+
+		if *requestData.DomainContactOnSite == 0 {
+			requestData.DomainContactOnSite = nil
+		}
+
+		Level27Client.DomainUpdate(args, requestData)
 	},
 }
 
-// ----------------- RECORDS ------------------------
+// ------------------------------------- RECORDS ----------------------------------------
 
 var domainRecordCmd = &cobra.Command{
 	Use:   "record",

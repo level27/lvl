@@ -68,7 +68,6 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 
 	// command.StringVarP(&domainCreateConvertDomainRecords, "convertDomainrecords", "", "", "Domainrecord json (admin only)")
 	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
-	command.StringVarP(&domainCreateExternalInfo, "externalInfo", "", "", "Required when billableItemInfo for an organisation exist in db")
 
 	command.SortFlags = false
 }

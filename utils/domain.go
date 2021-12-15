@@ -25,7 +25,7 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("POST", endpoint, data, &domain)
 	case "UPDATE":
 		endpoint := fmt.Sprintf("domains/%s", id)
-		err = c.invokeAPI("PUT", endpoint, data, &domain)
+		err = c.invokeAPI("PUT", endpoint, data, nil)
 	case "DELETE":
 		endpoint := fmt.Sprintf("domains/%s", id)
 
@@ -55,7 +55,7 @@ func (c *Client) DomainDescribe(id []string) {
 	if len(id) == 1 {
 		domainID := id[0]
 		domain := c.Domain("GET", domainID, nil).Data
-
+		fmt.Println(domain.Nameserver1, domain.Nameserver2)
 		tmpl := template.Must(template.ParseFiles("templates/domain.tmpl"))
 		err := tmpl.Execute(os.Stdout, domain)
 		if err != nil {
@@ -106,28 +106,33 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 	if req.Action == "" {
 		req.Action = "none"
 	}
-	if *req.DomainContactOnSite == 0 {
-		req.DomainContactOnSite = nil
-	}
+	
 
 	test := c.Domain("CREATE", nil, req)
-
+	fmt.Printf("handle dns: %v ", test.Data.DNSIsHandled)
 	log.Printf("domain created: '%v' - ID: '%v'", test.Data.Fullname, test.Data.ID)
 
 }
 
-// TRANSFER DOMAIN [lvl domain transfer <parameters>] 
-func (c *Client) DomainTransfer(args []string, req types.DomainRequest){
-	if req.Action ==""{
+// TRANSFER DOMAIN [lvl domain transfer <parameters>]
+func (c *Client) DomainTransfer(args []string, req types.DomainRequest) {
+	if req.Action == "" {
 		req.Action = "transfer"
-	}
-	if *req.DomainContactOnSite == 0 {
-		req.DomainContactOnSite = nil
 	}
 
 	c.Domain("CREATE", nil, req)
 }
 
+// UPDATE DOMAIN [lvl update <parameters>]
+func (c *Client) DomainUpdate(args []string, req types.DomainUpdateRequest){
+	req.Action = "none"
+	var id string
+	if len(args) == 1{
+		id = args[0]
+	}
+
+	c.Domain("UPDATE", id, req)
+}
 // ------------------ /DOMAIN/RECORDS ----------------------
 // GET
 func (c *Client) DomainRecords(id string) []types.DomainRecord {

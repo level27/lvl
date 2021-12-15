@@ -164,6 +164,34 @@ type DomainRequest struct {
 	ExternalInfo              string `json:"externalInfo"`
 }
 
+// request for updating a single domain
+type DomainUpdateRequest struct {
+	Name                      string `json:"name"`
+	NameServer1               *string `json:"nameserver1"`
+	NameServer2               string `json:"nameserver2"`
+	NameServer3               string `json:"nameserver3"`
+	NameServer4               string `json:"nameserver4"`
+	NameServer1Ip             string `json:"nameserverIp1"`
+	NameServer2Ip             string `json:"nameserverIp2"`
+	NameServer3Ip             string `json:"nameserverIp3"`
+	NameServer4Ip             string `json:"nameserverIp4"`
+	NameServer1Ipv6           string `json:"nameserverIpv61"`
+	NameServer2Ipv6           string `json:"nameserverIpv62"`
+	NameServer3Ipv6           string `json:"nameserverIpv63"`
+	NameServer4Ipv6           string `json:"nameserverIpv64"`
+	TTL                       int    `json:"ttl"`
+	Action                    string `json:"action"`
+	EppCode                   string `json:"eppCode"`
+	Handledns                 bool   `json:"handleDns"`
+	ExtraFields               string `json:"extraFields"`
+	Domaintype                int    `json:"domaintype"`
+	Domaincontactlicensee     int    `json:"domaincontactLicensee"`
+	DomainContactOnSite       *int    `json:"domaincontactOnsite"`
+	Organisation              int    `json:"organisation"`
+	AutoRecordTemplate        string `json:"autorecordTemplate"`
+	AutoRecordTemplateReplace bool   `json:"autorecordTemplateReplace"`
+	AutoTeams                 string `json:"autoTeams"`
+}
 func (d DomainRequest) String() string {
 	
 	s, _ := json.Marshal(d)
