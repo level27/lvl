@@ -1,3 +1,11 @@
 vendor/
 
+# macOS
+.DS_Store
+# Linux/KDE
+.desktop
+# Windows
+Thumbs.db
+ehthumbs.db
+
 *.exe

@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"strconv"
-	"text/tabwriter"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
@@ -95,26 +92,21 @@ var domainGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a list of all current domains",
 	Run: func(ccmd *cobra.Command, args []string) {
-		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
-
-		domains := getDomains(args)
-		for _, domain := range domains {
-			fmt.Fprintln(w, strconv.Itoa(domain.ID)+"\t"+domain.Fullname+"\t"+domain.Status+"\t")
-		}
-
-		w.Flush()
+		outputFormatTable(
+			getDomains(args),
+			[]string{"ID", "NAME", "STATUS"},
+			[]string{"ID", "Fullname", "Status"})
 	},
 }
 
-func getDomains(ids []string) []types.StructDomain {
+func getDomains(ids []string) []types.Domain {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.Domains(optFilter, optNumber).Data
+		return c.Domains(optFilter, optNumber)
 	} else {
-		domains := make([]types.StructDomain, len(ids))
+		domains := make([]types.Domain, len(ids))
 		for idx, id := range ids {
-			domains[idx] = c.Domain("GET", id, nil).Data
+			domains[idx] = c.Domain("GET", id, nil)
 		}
 		return domains
 	}
@@ -124,8 +116,12 @@ func getDomains(ids []string) []types.StructDomain {
 var domainDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Get detailed info about a domain",
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		Level27Client.DomainDescribe(args)
+		domainID := args[0]
+		domain := Level27Client.Domain("GET", domainID, nil)
+
+		outputFormatTemplate(domain, "templates/domain.tmpl")
 	},
 }
 
@@ -298,14 +294,7 @@ var domainRecordListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		records := Level27Client.DomainRecords(args[0])
 
-		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-		fmt.Fprintln(w, "ID\tTYPE\tNAME\tCONTENT\t")
-
-		for _, record := range records {
-			fmt.Fprintf(w, "%d\t%s\t%s\t%s\t\n", record.ID, record.Type, record.Name, record.Content)
-		}
-
-		w.Flush()
+		outputFormatTable(records, []string{"ID", "TYPE", "NAME", "CONTENT"}, []string{"ID", "Type", "Name", "Content"})
 	},
 }
 

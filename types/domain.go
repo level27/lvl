@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-type StructDomain struct {
+type Domain struct {
 	ID                    int    `json:"id"`
 	Name                  string `json:"name"`
 	Fullname              string `json:"fullname"`
@@ -96,16 +96,6 @@ type StructDomain struct {
 	CountTeams int `json:"countTeams"`
 }
 
-// Domain represents a single domain
-type Domain struct {
-	Data StructDomain `json:"domain"`
-}
-
-// Domains represents an array of domains
-type Domains struct {
-	Data []StructDomain `json:"domains"`
-}
-
 func (d Domain) String() string {
 	return "domain"
 }
@@ -193,7 +183,7 @@ type DomainUpdateRequest struct {
 	AutoTeams                 string `json:"autoTeams"`
 }
 func (d DomainRequest) String() string {
-	
+
 	s, _ := json.Marshal(d)
 	return string(s)
 }

@@ -1,34 +1,21 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"strconv"
-	"text/tabwriter"
-
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
 )
 
 var organisationCmd = &cobra.Command{
-	Use: "organisation",
+	Use:   "organisation",
 	Short: "Commands for managing organisations",
 }
 
 var organisationGetCmd = &cobra.Command{
-	Use:   "get",
-	
+	Use: "get",
+
 	Args: cobra.ArbitraryArgs,
 	Run: func(ccmd *cobra.Command, args []string) {
-		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\t")
-
-		organisations := getOrganisations(args)
-		for _, organisation := range organisations {
-			fmt.Fprintln(w, strconv.Itoa(organisation.ID)+"\t"+organisation.Name+"\t")
-		}
-
-		w.Flush()
+		outputFormatTable(getOrganisations(args), []string{"ID", "NAME"}, []string{"ID", "Name"})
 	},
 }
 
