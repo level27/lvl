@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"text/tabwriter"
-
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
 )
@@ -17,19 +13,14 @@ var componentCmd = &cobra.Command{
 }
 
 var componentGetCmd = &cobra.Command{
-	Use:   "get",
+	Use: "get",
 
 	Args: cobra.NoArgs,
 	Run: func(ccmd *cobra.Command, args []string) {
-		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-		fmt.Fprintln(w, "ID\tTYPE\tNAME\tSTATUS\t")
-
-		components := getComponents(args)
-		for _, component := range components {
-			fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", component.ID, component.AppComponentType, component.Name, component.Status)
-		}
-
-		w.Flush()
+		outputFormatTable(
+			getComponents(args),
+			[]string{"ID", "TYPE", "NAME", "STATUS"},
+			[]string{"ID", "AppComponentType", "Name", "Status"})
 	},
 }
 

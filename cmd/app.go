@@ -1,33 +1,23 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"strconv"
-	"text/tabwriter"
-
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
 )
 
 var appCmd = &cobra.Command{
-	Use: "app",
+	Use:   "app",
 	Short: "Commands to manage apps",
 }
 
 var appGetCmd = &cobra.Command{
-	Use:   "get",
+	Use:  "get",
 	Args: cobra.ArbitraryArgs,
 	Run: func(acmd *cobra.Command, args []string) {
-		w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tSTATUS\t")
-
-		apps := getApps(args)
-		for _, app := range apps {
-			fmt.Fprintln(w, strconv.Itoa(app.ID)+"\t"+app.Name+"\t"+app.Status+"\t")
-		}
-	
-		w.Flush()
+		outputFormatTable(
+			getApps(args),
+			[]string{"ID", "NAME", "STATUS"},
+			[]string{"ID", "Name", "Status"})
 	},
 }
 

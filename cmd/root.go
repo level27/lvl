@@ -16,9 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"reflect"
+	"strings"
+	"text/tabwriter"
+	"text/template"
 
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
@@ -30,6 +35,7 @@ import (
 var cfgFile string
 var apiKey string
 var apiUrl string
+var output string
 var Level27Client *utils.Client
 
 // NOTE: subcommands like get add themselves to root in their init().
@@ -40,6 +46,16 @@ var RootCmd = &cobra.Command{
 	Use:   "lvl",
 	Short: "CLI tool to manage Level27 entities",
 	Long:  `lvl is a CLI tool that empowers users.`,
+
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		outputSet := viper.GetString("output")
+		if outputSet != "text" && outputSet != "json" {
+			return fmt.Errorf("invalid output mode specified: '%s'", outputSet)
+		}
+
+		return nil
+	},
+
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -60,14 +76,12 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
 	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
 	RootCmd.PersistentFlags().BoolVar(&utils.TraceRequests, "trace", false, "Do detailed network request logging")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "Specifies output mode for commands. Accepted values are text or json.")
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("apikey", RootCmd.PersistentFlags().Lookup("apikey"))
 	viper.BindPFlag("toggle", RootCmd.PersistentFlags().Lookup("toggle"))
+	viper.BindPFlag("output", RootCmd.PersistentFlags().Lookup("output"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -111,4 +125,90 @@ func initConfig() {
 			}
 		}
 	}
+}
+
+// Output formatting functions
+
+// Output tabular data from the CLI. Respects the --output flag.
+// objects must be a slice of some set of objects.
+// titles is the list of table headers,
+// and fields contains the corresponding fields to read from the objects to fill said columns.
+// When outputting as a structured format like JSON, the titles and fields are unused,
+// and the slice is simply serialized directly.
+func outputFormatTable(objects interface{}, titles []string, fields []string) {
+	outputMode := viper.GetString("output")
+	switch outputMode {
+	case "text":
+		outputFormatTableText(objects, titles, fields)
+	case "json":
+		outputFormatTableJson(objects)
+	}
+}
+
+// Output templated data from the CLI (such as a describe output). Respects the --output flag.
+// object must be the object to output
+// templatePath must be the path to the go template formatting it under text mode.
+// When outputting as a structured format like JSON,
+// the template path is unused and the object is simply serialized directly.
+func outputFormatTemplate(object interface{}, templatePath string) {
+	outputMode := viper.GetString("output")
+	switch outputMode {
+	case "text":
+		outputFormatTemplateText(object, templatePath)
+	case "json":
+		outputFormatTemplateJson(object)
+	}
+}
+
+func outputFormatTableText(objects interface{}, titles []string, fields []string) {
+	// Have to use reflection for this because no generics in go (yet).
+	s := reflect.ValueOf(objects)
+
+	if s.Kind() != reflect.Slice {
+		panic("outputFormatTable must be given a slice!")
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 4, 8, 4, ' ', 0)
+	defer w.Flush()
+
+	fmt.Fprintln(w, strings.Join(titles, "\t"))
+
+	for i := 0; i < s.Len(); i++ {
+		val := s.Index(i)
+
+		first := true
+		for _, fieldName := range fields {
+			fld := val.FieldByName(fieldName)
+
+			if !first {
+				fmt.Fprintf(w, "\t");
+			}
+
+			first = false;
+			fmt.Fprintf(w, "%v", fld.Interface())
+		}
+
+		fmt.Fprintf(w, "\n")
+	}
+}
+
+func outputFormatTableJson(objects interface{}) {
+	b, _ := json.Marshal(objects)
+	fmt.Println(string(b))
+}
+
+func outputFormatTemplateText(object interface{}, templatePath string) {
+	tmpl := template.Must(template.ParseFiles(templatePath))
+	err := tmpl.Execute(os.Stdout, object)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func outputFormatTemplateJson(object interface{}) {
+	b, err := json.Marshal(object)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(b))
 }
