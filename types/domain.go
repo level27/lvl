@@ -280,9 +280,17 @@ func (d DomainContactRequest) String() string {
 	return string(s)
 }
 
-// ------------------------------------------ ACCESS ---------------------------------------
+// ------------------------------------------ ACCESS ---------------------------------------------
 
 // type to add acces to a domain
 type DomainAccessRequest struct{
 	Organisation		int `json:"organisation"`
+}
+
+// ------------------------------------------ NOTIFICATIONS ---------------------------------------
+
+type DomainNotificationPostRequest struct{
+	Type				string `json:"type"`
+	Group				string `json:"group"`
+	Params 				string `json:"params"`
 }
