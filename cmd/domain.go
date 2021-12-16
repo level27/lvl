@@ -494,7 +494,6 @@ var domainAccessRemoveCmd = &cobra.Command{
 	},
 }
 
-
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 // MAIN COMMAND
 var domainNotificationCmd = &cobra.Command{
@@ -506,18 +505,18 @@ var domainNotificationCmd = &cobra.Command{
 var domainNotificationPostType, domainNotificationPostGroup, domainNotificationPostParams string
 
 var domainNotificationsCreateCmd = &cobra.Command{
-	Use: "create [domain] [flags]",
+	Use:   "create [domain] [flags]",
 	Short: "Send a notification for a domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		id , err := strconv.Atoi(args[0])
-		if err != nil{
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
 
 		Level27Client.DomainNotificationAdd(id, types.DomainNotificationPostRequest{
-			Type: domainNotificationPostType,
-			Group: domainNotificationPostGroup,
+			Type:   domainNotificationPostType,
+			Group:  domainNotificationPostGroup,
 			Params: domainNotificationPostParams,
 		})
 
