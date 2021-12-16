@@ -210,3 +210,12 @@ func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.Domain
 		AssertApiError(err, "Access")
 
 	}
+
+	//remove acces from a domain
+
+	func (c *Client) DomainAccesRemove(domainId int, organisationId int){
+		endpoint := fmt.Sprintf("domains/%v/acls/%v", domainId, organisationId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+		AssertApiError(err, "Access")
+	}

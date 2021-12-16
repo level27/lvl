@@ -98,15 +98,18 @@ func init() {
 	domainAccessCmd.AddCommand(domainAccessAddCmd)
 
 	flags = domainAccessAddCmd.Flags()
-	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation"  )
+	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
+	domainAccessAddCmd.MarkFlagRequired("organisation")
 
-	
+	// REMOVE ACCESS
+	domainAccessCmd.AddCommand(domainAccessRemoveCmd)
+	flags = domainAccessRemoveCmd.Flags()
+	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
+	domainAccessRemoveCmd.MarkFlagRequired("organisation")
+
 }
 
-
-
-
-	// --------------------------------------------------- DOMAINS --------------------------------------------------------
+// --------------------------------------------------- DOMAINS --------------------------------------------------------
 //GET LIST OF ALL DOMAINS [lvl domain get]
 var domainGetCmd = &cobra.Command{
 	Use:   "get",
@@ -136,7 +139,7 @@ func getDomains(ids []string) []types.Domain {
 var domainDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Get detailed info about a domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		domainID := args[0]
 		domain := Level27Client.Domain("GET", domainID, nil)
@@ -213,12 +216,12 @@ func getDomainRequestData() types.DomainRequest {
 
 	return requestData
 }
+
 // get all possible domain extensions en their ID
 func getDomainExtensions() {
-	
 
 	res := Level27Client.Extension()
-	
+
 	fmt.Println(res[0])
 }
 
@@ -260,7 +263,7 @@ var domainTransferCmd = &cobra.Command{
 	},
 }
 
-//INTERNAL TRANSFER 
+//INTERNAL TRANSFER
 var domainInternalTransferCmd = &cobra.Command{
 	Use:   "internaltransfer",
 	Short: "Internal transfer (available only for dnsbe domains)",
@@ -320,7 +323,7 @@ var domainUpdateCmd = &cobra.Command{
 	},
 }
 
-	// --------------------------------------------------- RECORDS --------------------------------------------------------
+// --------------------------------------------------- RECORDS --------------------------------------------------------
 
 var domainRecordCmd = &cobra.Command{
 	Use:   "record",
@@ -428,7 +431,7 @@ var domainRecordUpdateCmd = &cobra.Command{
 	},
 }
 
-	// --------------------------------------------------- ACCESS --------------------------------------------------------
+// --------------------------------------------------- ACCESS --------------------------------------------------------
 var domainAccessCmd = &cobra.Command{
 	Use:   "access",
 	Short: "Commands for managing the access of a domain",
@@ -439,7 +442,7 @@ var domainAccessAddOrganisation int
 
 var domainAccessAddCmd = &cobra.Command{
 	Use:   "add [domain] [flags]",
-	Short: "Add access to an existing domain",
+	Short: "Add organisation access to a domain",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
@@ -450,5 +453,30 @@ var domainAccessAddCmd = &cobra.Command{
 		Level27Client.DomainAccesAdd(id, types.DomainAccessRequest{
 			Organisation: domainAccessAddOrganisation,
 		})
+	},
+}
+
+// REMOVE ACCESS FROM DOMAIN
+var domainAccessRemoveCmd = &cobra.Command{
+	Use:   "delete [domain] [flags]",
+	Short: "Remove organisation acces from a domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
+
+		var orgId int
+
+		if cmd.Flags().Changed("organisation") {
+			value := cmd.Flag("organisation").Value.String()
+			orgId, err = strconv.Atoi(value)
+			if err != nil {
+				log.Fatal("no valid organisation ID")
+			}
+			Level27Client.DomainAccesRemove(id, orgId)
+		}
+
 	},
 }
