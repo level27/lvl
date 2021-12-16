@@ -10,6 +10,22 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
+//gets extensions for domains
+func(c *Client) Extension() []types.DomainProvider{
+	var extensions struct{
+		Data []types.DomainProvider `json:"providers"`
+	}
+
+	endpoint := "domains/providers"
+	err := c.invokeAPI("GET", endpoint, nil,&extensions)
+	fmt.Println("dit zijn de providers ")
+	fmt.Println(err)
+	AssertApiError(err, "extension")
+
+
+	return extensions.Data
+}
+
 //Domain gets a system from the API
 func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
 	var domain struct {
@@ -29,8 +45,10 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 		err = c.invokeAPI("PUT", endpoint, data, nil)
 	case "DELETE":
 		endpoint := fmt.Sprintf("domains/%s", id)
-
 		err = c.invokeAPI("DELETE", endpoint, nil, nil)
+	case "TRANSFER":
+		endpoint := fmt.Sprintf("domains/%s/internaltransfer", id)
+		err = c.invokeAPI("POST", endpoint, data, &domain)
 	}
 
 	AssertApiError(err, "domain")
@@ -110,6 +128,14 @@ func (c *Client) DomainTransfer(args []string, req types.DomainRequest) {
 	c.Domain("CREATE", nil, req)
 }
 
+// INTERNAL TRANSFER 
+func (c *Client) DomainInternalTransfer(args []string, req types.DomainRequest){
+	 
+	res :=c.Domain("TRANSFER", args[0], req)
+	
+	fmt.Println(res)
+}
+
 // UPDATE DOMAIN [lvl update <parameters>]
 func (c *Client) DomainUpdate(args []string, req types.DomainUpdateRequest){
 	req.Action = "none"
@@ -172,9 +198,31 @@ func (c *Client) DomainRecordDelete(domainId int, recordId int) {
 	AssertApiError(err, "domain record")
 }
 
+// UPDATE
 func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.DomainRecordRequest) {
 	endpoint := fmt.Sprintf("domains/%d/records/%d", domainId, recordId)
 	err := c.invokeAPI("PUT", endpoint, &req, nil)
 
 	AssertApiError(err, "domain record")
 }
+
+	// --------------------------------------------------- ACCESS --------------------------------------------------------
+	//add access to a domain
+
+	func (c *Client) DomainAccesAdd(domainId int, req types.DomainAccessRequest){
+		endpoint := fmt.Sprintf("domains/%v/acls", domainId)
+
+		err := c.invokeAPI("POST", endpoint, &req,nil)
+
+		AssertApiError(err, "Access")
+
+	}
+
+	//remove acces from a domain
+
+	func (c *Client) DomainAccesRemove(domainId int, organisationId int){
+		endpoint := fmt.Sprintf("domains/%v/acls/%v", domainId, organisationId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+		AssertApiError(err, "Access")
+	}
