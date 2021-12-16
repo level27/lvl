@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -66,12 +67,12 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 }
 
 //Domain gets a domain from the API
-func (c *Client) Domains(filter string, number string) []types.Domain {
+func (c *Client) Domains(filter string, number int) []types.Domain {
 	var domains struct {
 		Data []types.Domain `json:"domains"`
 	}
 
-	endpoint := "domains?limit=" + number + "&filter=" + filter
+	endpoint := fmt.Sprintf("domains?limit=%d&filter=%s", number, url.QueryEscape(filter))
 	err := c.invokeAPI("GET", endpoint, nil, &domains)
 	AssertApiError(err)
 
@@ -132,12 +133,18 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 
 // ------------------ /DOMAIN/RECORDS ----------------------
 // GET
-func (c *Client) DomainRecords(id string) []types.DomainRecord {
+func (c *Client) DomainRecords(id int, recordType string, limit int, filter string) []types.DomainRecord {
 	var records struct {
 		Records []types.DomainRecord `json:"records"`
 	}
 
-	endpoint := fmt.Sprintf("domains/%s/records", id)
+	endpoint := fmt.Sprintf("domains/%d/records?limit=%d", id, limit)
+	if recordType != "" {
+		endpoint += fmt.Sprintf("&type=%s", recordType)
+	}
+	if filter != "" {
+		endpoint += fmt.Sprintf("&filter=%s", url.QueryEscape(filter))
+	}
 	err := c.invokeAPI("GET", endpoint, nil, &records)
 	AssertApiError(err)
 

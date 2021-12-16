@@ -28,7 +28,7 @@ func (c *Client) App(method string, id interface{}, data interface{}) types.App 
 	return app
 }
 
-func (c *Client) Apps(filter string, number string) types.Apps {
+func (c *Client) Apps(filter string, number int) types.Apps {
 	var apps types.Apps
 
 	endpoint := "apps"
