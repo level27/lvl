@@ -1,17 +1,13 @@
 package utils
 
 import (
-	"fmt"
-
 	"bitbucket.org/level27/lvl/types"
 )
 
-func (c *Client) Login(username string, password string) types.Login {
-
+func (c *Client) Login(username string, password string) (types.Login, error) {
 	var login types.Login
-	endpoint := "login"
-	data := fmt.Sprintf("{\"username\":\"%s\", \"password\":\"%s\"}", username, password)
-	c.invokeAPI("POST", endpoint, data, &login)
 
-	return login
+	err := c.invokeAPI("POST", "login", &types.LoginRequest{Username: username, Password: password}, &login)
+
+	return login, err
 }

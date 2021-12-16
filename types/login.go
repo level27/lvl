@@ -27,3 +27,8 @@ type Login struct {
 	} `json:"user"`
 	Hash string `json:"hash"`
 }
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
