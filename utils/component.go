@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"fmt"
+	"net/url"
+
 	"bitbucket.org/level27/lvl/types"
 )
 
@@ -28,10 +31,10 @@ func (c *Client) Component(method string, category string, id interface{}, data 
 }
 */
 
-func (c *Client) Components(filter string, number string, category string, cType string) types.Components {
+func (c *Client) Components(filter string, number int, category string, cType string) types.Components {
 	var components types.Components
 
-	endpoint := "appcomponents/" + category + "?limit=" + number + "&filter=" + filter + "&type=" + cType
+	endpoint := fmt.Sprintf("appcomponents/%s?limit=%d&filter=%s&type=%s", category, number, url.QueryEscape(filter), cType)
 	err := c.invokeAPI("GET", endpoint, nil, &components)
 	AssertApiError(err, "component")
 

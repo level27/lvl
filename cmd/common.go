@@ -19,13 +19,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var optNumber = "20"
+var optNumber = 20
 var optFilter = ""
 
 func addCommonGetFlags(cmd *cobra.Command) {
 	pf := cmd.Flags()
 
-	pf.StringVarP(&optNumber, "number", "n", optNumber, "How many things should we retrieve from the API?")
+	pf.IntVarP(&optNumber, "number", "n", optNumber, "How many things should we retrieve from the API?")
 	pf.StringVarP(&optFilter, "filter", "f", optFilter, "How to filter API results?")
 }
 

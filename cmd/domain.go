@@ -64,7 +64,9 @@ func init() {
 	domainCmd.AddCommand(domainRecordCmd)
 
 	// Record list
-	domainRecordCmd.AddCommand(domainRecordListCmd)
+	domainRecordCmd.AddCommand(domainRecordGetCmd)
+	addCommonGetFlags(domainRecordGetCmd)
+	domainRecordGetCmd.Flags().StringVarP(&recordGetType, "type", "t", "", "Type of records to filter")
 
 	// Record create
 	flags := domainRecordCreateCmd.Flags()
@@ -286,16 +288,36 @@ var domainRecordCmd = &cobra.Command{
 	Short: "Commands for managing domain records",
 }
 
+var recordGetType string
+
 // GET DOMAIN/RECORDS
-var domainRecordListCmd = &cobra.Command{
-	Use:   "list [domain]",
+var domainRecordGetCmd = &cobra.Command{
+	Use:   "get [domain]",
 	Short: "Get a list of all records configured for a domain",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		records := Level27Client.DomainRecords(args[0])
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
+		recordIds, err := convertStringsToIds(args[1:])
+		cobra.CheckErr(err)
+
+		records := getDomainRecords(domainId, recordIds)
 
 		outputFormatTable(records, []string{"ID", "TYPE", "NAME", "CONTENT"}, []string{"ID", "Type", "Name", "Content"})
 	},
+}
+
+func getDomainRecords(domainId int, ids []int) []types.DomainRecord {
+	c := Level27Client
+	if len(ids) == 0 {
+		return c.DomainRecords(domainId, recordGetType, optNumber, optFilter)
+	} else {
+		domains := make([]types.DomainRecord, len(ids))
+		for idx, id := range ids {
+			domains[idx] = c.DomainRecord(domainId, id)
+		}
+		return domains
+	}
 }
 
 // CREATE DOMAIN/RECORD
