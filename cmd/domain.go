@@ -109,6 +109,19 @@ func init() {
 	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
 	domainAccessRemoveCmd.MarkFlagRequired("organisation")
 
+	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+	domainCmd.AddCommand(domainNotificationCmd)
+
+	// CREATE NOTIFICATION
+	domainNotificationCmd.AddCommand(domainNotificationsCreateCmd)
+	flags = domainNotificationsCreateCmd.Flags()
+	flags.StringVarP(&domainNotificationPostType, "type", "t", "", "The notification type")
+	flags.StringVarP(&domainNotificationPostGroup, "group", "g", "", "The notification group")
+	flags.StringVarP(&domainNotificationPostParams, "params", "p", "", "Additional parameters (json)")
+	flags.SortFlags = false
+	domainNotificationCmd.MarkFlagRequired("type")
+	domainNotificationCmd.MarkFlagRequired("group")
+
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -499,6 +512,36 @@ var domainAccessRemoveCmd = &cobra.Command{
 			}
 			Level27Client.DomainAccesRemove(id, orgId)
 		}
+
+	},
+}
+
+
+// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+// MAIN COMMAND
+var domainNotificationCmd = &cobra.Command{
+	Use:   "notification",
+	Short: "Commands for managing domain notifications",
+}
+
+// CREATE NOTIFICATION
+var domainNotificationPostType, domainNotificationPostGroup, domainNotificationPostParams string
+
+var domainNotificationsCreateCmd = &cobra.Command{
+	Use: "create [domain] [flags]",
+	Short: "Send a notification for a domain",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id , err := strconv.Atoi(args[0])
+		if err != nil{
+			log.Fatal("no valid domain ID")
+		}
+
+		Level27Client.DomainNotificationAdd(id, types.DomainNotificationPostRequest{
+			Type: domainNotificationPostType,
+			Group: domainNotificationPostGroup,
+			Params: domainNotificationPostParams,
+		})
 
 	},
 }

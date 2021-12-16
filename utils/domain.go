@@ -226,3 +226,13 @@ func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.Domain
 
 		AssertApiError(err, "Access")
 	}
+
+
+	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+
+	func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificationPostRequest){
+		enpoint := fmt.Sprintf("domains/%v/notifications", domainId)
+		err := c.invokeAPI("POST", enpoint, req, nil)
+
+		AssertApiError(err, "notifications")
+	}
