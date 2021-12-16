@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/Jeffail/gabs/v2"
@@ -62,7 +63,9 @@ type errorResponse struct {
 }
 
 func (er errorResponse) Error() string {
-	s := fmt.Sprintf("%s\n", er.Message)
+	var sb strings.Builder
+	sb.WriteString(er.Message)
+
 	fields := reflect.TypeOf(er.Errors.Children)
 	values := reflect.ValueOf(er.Errors.Children)
 
@@ -71,9 +74,12 @@ func (er errorResponse) Error() string {
 	for i := 0; i < num; i++ {
 		field := fields.Field(i)
 		value := values.Field(i)
-		s += fmt.Sprintf("%v = %v\n", field.Name, value)
+		if value.Field(0).Len() > 0 {
+			sb.WriteString(fmt.Sprintf("\n%v = %v", field.Name, value))
+		}
 	}
-	return s
+
+	return sb.String()
 }
 
 type successResponse struct {
