@@ -25,6 +25,7 @@ import (
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/term"
 )
 
@@ -37,11 +38,12 @@ var loginCmd = &cobra.Command{
 		var login types.Login
 		username, password, _ := credentials()
 
-		fmt.Printf("Logging in using: %s\n", username)
 		client := utils.NewAPIClient(apiUrl, "")
-		login = client.Login(username, password)
+		login, err := client.Login(username, password)
+		cobra.CheckErr(err)
+		fmt.Printf("Successfully logged in using: %s\n", username)
 
-		fmt.Println(login.Hash)
+		// fmt.Println(login.Hash)
 		utils.SaveConfig("apikey", login.Hash)
 		utils.SaveConfig("user_id", login.User.ID)
 	},
@@ -64,18 +66,34 @@ func init() {
 func credentials() (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Enter Username: ")
+	lastUsername := viper.GetString("last_username")
+	prompt := "Enter Username"
+	if lastUsername != "" {
+		prompt += fmt.Sprintf(" (empty for %s)", lastUsername)
+	}
+	prompt += ": "
+
+	fmt.Print(prompt)
 	username, err := reader.ReadString('\n')
+	username = strings.TrimSpace(username)
+	if username == "" && lastUsername != "" {
+		username = lastUsername
+	}
+
+	utils.SaveConfig("last_username", username)
+
 	if err != nil {
 		return "", "", err
 	}
 
 	fmt.Print("Enter Password: ")
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	// So that the next line of output doesn't overlap the password prompt's former spot
+	fmt.Println()
 	if err != nil {
 		return "", "", err
 	}
 
-	password := string(bytePassword)
+	password := strings.TrimSpace(string(bytePassword))
 	return strings.TrimSpace(username), strings.TrimSpace(password), nil
 }
