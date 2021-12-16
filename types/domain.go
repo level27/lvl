@@ -102,6 +102,7 @@ func (d Domain) String() string {
 
 // DomainProvider represents a single DomainProvider
 type DomainProvider struct {
+
 	Providers []struct {
 		ID              int    `json:"id"`
 		Name            string `json:"name"`
@@ -187,6 +188,7 @@ func (d DomainRequest) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
 }
+// ------------------------------------------ RECORDS ---------------------------------------
 
 // DomainRecord represents a single Domainrecord
 type DomainRecord struct {
@@ -276,4 +278,11 @@ type DomainContactRequest struct {
 func (d DomainContactRequest) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
+}
+
+// ------------------------------------------ ACCESS ---------------------------------------
+
+// type to add acces to a domain
+type DomainAccessRequest struct{
+	Organisation		int `json:"organisation"`
 }

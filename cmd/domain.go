@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -16,7 +17,7 @@ var domainCmd = &cobra.Command{
 
 func init() {
 
-	// ----------------- DOMAINS ------------------------
+	// ---------------------------------------------------- DOMAINS -------------------------------------------------------
 	RootCmd.AddCommand(domainCmd)
 
 	// Get (list of all domains)
@@ -51,6 +52,10 @@ func init() {
 	domainTransferCmd.MarkFlagRequired("organisation")
 	domainTransferCmd.MarkFlagRequired("eppCode")
 
+	// INTERNAL TRANSFER
+	domainCmd.AddCommand(domainInternalTransferCmd)
+	addDomainCommonPostFlags(domainInternalTransferCmd)
+
 	// UPDATE (single domain)
 	domainCmd.AddCommand(domainUpdateCmd)
 	addDomainCommonPostFlags(domainUpdateCmd)
@@ -60,7 +65,7 @@ func init() {
 	domainUpdateCmd.MarkFlagRequired("licensee")
 	domainUpdateCmd.MarkFlagRequired("organisation")
 
-	// ----------------- RECORDS ------------------------
+	// ------------------------------------------------- RECORDS ---------------------------------------------------------
 	domainCmd.AddCommand(domainRecordCmd)
 
 	// Record list
@@ -85,8 +90,23 @@ func init() {
 
 	// Record delete
 	domainRecordCmd.AddCommand(domainRecordDeleteCmd)
+
+	// --------------------------------------------------- ACCESS --------------------------------------------------------
+	domainCmd.AddCommand(domainAccessCmd)
+
+	// ADD ACCESS
+	domainAccessCmd.AddCommand(domainAccessAddCmd)
+
+	flags = domainAccessAddCmd.Flags()
+	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation"  )
+
+	
 }
 
+
+
+
+	// --------------------------------------------------- DOMAINS --------------------------------------------------------
 //GET LIST OF ALL DOMAINS [lvl domain get]
 var domainGetCmd = &cobra.Command{
 	Use:   "get",
@@ -148,6 +168,7 @@ var domainCreateExtraFields, domainCreateExternalCreated, domainCreateExternalEx
 var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
 var domainCreateContactOnSite int
 
+// common functions for managing domains
 // change given flag data into request data to put or post
 func getDomainRequestData() types.DomainRequest {
 	requestData := types.DomainRequest{
@@ -192,6 +213,14 @@ func getDomainRequestData() types.DomainRequest {
 
 	return requestData
 }
+// get all possible domain extensions en their ID
+func getDomainExtensions() {
+	
+
+	res := Level27Client.Extension()
+	
+	fmt.Println(res[0])
+}
 
 // CREATE DOMAIN [lvl domain create (action:create/none)]
 var domainCreateCmd = &cobra.Command{
@@ -199,22 +228,23 @@ var domainCreateCmd = &cobra.Command{
 	Short: "Create a new domain",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		getDomainExtensions()
 
-		requestData := getDomainRequestData()
+		// requestData := getDomainRequestData()
 
-		if cmd.Flags().Changed("action") {
+		// if cmd.Flags().Changed("action") {
 
-			if requestData.Action == "create" {
-				Level27Client.DomainCreate(args, requestData)
+		// 	if requestData.Action == "create" {
+		// 		Level27Client.DomainCreate(args, requestData)
 
-			} else if requestData.Action == "none" {
-				Level27Client.DomainCreate(args, requestData)
-			} else {
-				log.Printf("given action: '%v' is not recognized.", requestData.Action)
-			}
-		} else {
-			Level27Client.DomainCreate(args, requestData)
-		}
+		// 	} else if requestData.Action == "none" {
+		// 		Level27Client.DomainCreate(args, requestData)
+		// 	} else {
+		// 		log.Printf("given action: '%v' is not recognized.", requestData.Action)
+		// 	}
+		// } else {
+		// 	Level27Client.DomainCreate(args, requestData)
+		// }
 
 	},
 }
@@ -223,6 +253,17 @@ var domainCreateCmd = &cobra.Command{
 var domainTransferCmd = &cobra.Command{
 	Use:   "transfer",
 	Short: "Command for transfering a domain",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		requestData := getDomainRequestData()
+		Level27Client.DomainTransfer(args, requestData)
+	},
+}
+
+//INTERNAL TRANSFER 
+var domainInternalTransferCmd = &cobra.Command{
+	Use:   "internaltransfer",
+	Short: "Internal transfer (available only for dnsbe domains)",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		requestData := getDomainRequestData()
@@ -279,7 +320,7 @@ var domainUpdateCmd = &cobra.Command{
 	},
 }
 
-// ------------------------------------- RECORDS ----------------------------------------
+	// --------------------------------------------------- RECORDS --------------------------------------------------------
 
 var domainRecordCmd = &cobra.Command{
 	Use:   "record",
@@ -384,5 +425,30 @@ var domainRecordUpdateCmd = &cobra.Command{
 		}
 
 		Level27Client.DomainRecordUpdate(domainId, recordId, request)
+	},
+}
+
+	// --------------------------------------------------- ACCESS --------------------------------------------------------
+var domainAccessCmd = &cobra.Command{
+	Use:   "access",
+	Short: "Commands for managing the access of a domain",
+}
+
+// ADD ACCESS TO A DOMAIN
+var domainAccessAddOrganisation int
+
+var domainAccessAddCmd = &cobra.Command{
+	Use:   "add [domain] [flags]",
+	Short: "Add access to an existing domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
+
+		Level27Client.DomainAccesAdd(id, types.DomainAccessRequest{
+			Organisation: domainAccessAddOrganisation,
+		})
 	},
 }
