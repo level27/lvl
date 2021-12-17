@@ -58,12 +58,20 @@ func init() {
 
 	// UPDATE (single domain)
 	domainCmd.AddCommand(domainUpdateCmd)
-	addDomainCommonPostFlags(domainUpdateCmd)
-	//required flags
-	domainUpdateCmd.MarkFlagRequired("name")
-	domainUpdateCmd.MarkFlagRequired("type")
-	domainUpdateCmd.MarkFlagRequired("licensee")
-	domainUpdateCmd.MarkFlagRequired("organisation")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserver1", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserver2", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserver3", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIp1", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIp2", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIp3", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv61", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv62", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv63", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "ttl", "")
+	settingBool(domainUpdateCmd, domainUpdateSettings, "handleDns", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "domaincontactLicensee", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "domaincontactOnSite", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "organisation", "")
 
 	// ------------------------------------------------- RECORDS ---------------------------------------------------------
 	domainCmd.AddCommand(domainRecordCmd)
@@ -288,53 +296,23 @@ var domainInternalTransferCmd = &cobra.Command{
 		Level27Client.DomainTransfer(args, requestData)
 	},
 }
+var domainUpdateSettings map[string] interface{} = make(map[string]interface{})
 
 // UPDATE DOMAIN
 var domainUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Command for updating an existing domain",
+	Args: cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		requestData := types.DomainUpdateRequest{
-			Name:        domainCreateName,
-			NameServer1: &domainCreateNs1,
-			NameServer2: domainCreateNs2,
-			NameServer3: domainCreateNs3,
-			NameServer4: domainCreateNs4,
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
 
-			NameServer1Ip: domainCreateNsIp1,
-			NameServer2Ip: domainCreateNsIp2,
-			NameServer3Ip: domainCreateNsIp3,
-			NameServer4Ip: domainCreateNsIp4,
-
-			NameServer1Ipv6: domainCreateNsIpv61,
-			NameServer2Ipv6: domainCreateNsIpv62,
-			NameServer3Ipv6: domainCreateNsIpv63,
-			NameServer4Ipv6: domainCreateNsIpv64,
-
-			TTL:                       domainCreateTtl,
-			Action:                    domainCreateAction,
-			EppCode:                   domainCreateEppCode,
-			Handledns:                 domainCreateHandleDns,
-			ExtraFields:               domainCreateExtraFields,
-			Domaintype:                domainCreateType,
-			Domaincontactlicensee:     domainCreateLicensee,
-			DomainContactOnSite:       &domainCreateContactOnSite,
-			Organisation:              domainCreateOrganisation,
-			AutoRecordTemplate:        domainCreateAutoRecordTemplate,
-			AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
-			//DomainProvider:            &domainCreateDomainProvider,
-			// DtExternalCreated:         domainCreateExternalCreated,
-			// DtExternalExpires:         domainCreateExternalExpires,
-			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
-			AutoTeams: domainCreateAutoTeams,
+		if len(domainUpdateSettings) == 0 {
+			fmt.Println("No options specified!")
 		}
 
-		if *requestData.DomainContactOnSite == 0 {
-			requestData.DomainContactOnSite = nil
-		}
-
-		Level27Client.DomainUpdate(args, requestData)
+		Level27Client.DomainUpdate(domainId, domainUpdateSettings)
 	},
 }
 
