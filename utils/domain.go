@@ -111,7 +111,7 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 	if req.Action == "" {
 		req.Action = "none"
 	}
-	
+
 
 	test := c.Domain("CREATE", nil, req)
 	fmt.Printf("handle dns: %v ", test.DNSIsHandled)
@@ -128,24 +128,21 @@ func (c *Client) DomainTransfer(args []string, req types.DomainRequest) {
 	c.Domain("CREATE", nil, req)
 }
 
-// INTERNAL TRANSFER 
+// INTERNAL TRANSFER
 func (c *Client) DomainInternalTransfer(args []string, req types.DomainRequest){
-	 
+
 	res :=c.Domain("TRANSFER", args[0], req)
-	
+
 	fmt.Println(res)
 }
 
 // UPDATE DOMAIN [lvl update <parameters>]
-func (c *Client) DomainUpdate(args []string, req types.DomainUpdateRequest){
-	req.Action = "none"
-	var id string
-	if len(args) == 1{
-		id = args[0]
-	}
-
-	c.Domain("UPDATE", id, req)
+func (c *Client) DomainUpdate(id int, data map[string]interface{}){
+	endpoint := fmt.Sprintf("domains/%d", id)
+	err := c.invokeAPI("PATCH", endpoint, data, nil)
+	AssertApiError(err, "domain update")
 }
+
 // ------------------ /DOMAIN/RECORDS ----------------------
 // GET
 func (c *Client) DomainRecords(id int, recordType string, limit int, filter string) []types.DomainRecord {
