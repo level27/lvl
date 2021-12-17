@@ -44,7 +44,8 @@ var loginCmd = &cobra.Command{
 		cobra.CheckErr(err)
 		fmt.Println()
 		fmt.Println()
-		figure.NewColorFigure("LEVEL27 CLI", "basic", "cyan", true).Print()
+		loginFigure := figure.NewColorFigure("LEVEL27 CLI", "basic", "cyan", true)
+		loginFigure.Print()
 		fmt.Printf("Successfully logged in using: %s\n", username)
 
 		// fmt.Println(login.Hash)

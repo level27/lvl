@@ -222,10 +222,21 @@ func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.Domain
 
 
 	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
-
+	// CREATE A NOTIFICATION
 	func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificationPostRequest){
 		enpoint := fmt.Sprintf("domains/%v/notifications", domainId)
 		err := c.invokeAPI("POST", enpoint, req, nil)
 
 		AssertApiError(err, "notifications")
+	}
+
+	// GET LIST OF ALL NOTIFICATIONS FOR DOMAIN
+	func (c *Client) DomainNotificationGet(domainId int ) []types.DomainNotification{
+		var notifications struct {
+			Notifications []types.DomainNotification `json:"notifications"`
+		}
+		endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
+		err := c.invokeAPI("GET", endpoint, nil , &notifications)
+		AssertApiError(err, "notifications")
+		return notifications.Notifications
 	}
