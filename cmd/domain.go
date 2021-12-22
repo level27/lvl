@@ -131,12 +131,15 @@ func init() {
 	flags.SortFlags = false
 	addCommonGetFlags(domainNotificationsGetCmd)
 
-	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+	// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
 	domainCmd.AddCommand(domainBillableItemCmd)
 
 	// GET BILLABLEITEMS
-	domainBillableItemCmd.AddCommand(domainBillableItemsGet)
-	addCommonGetFlags(domainBillableItemsGet)
+	domainBillableItemCmd.AddCommand(domainBillableItemsGetCmd)
+	addCommonGetFlags(domainBillableItemsGetCmd)
+
+	// CREATE BILLABLEITEM
+	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -568,7 +571,7 @@ var domainBillableItemCmd = &cobra.Command{
 }
 
 // GET BILLABLEITEM
-var domainBillableItemsGet = &cobra.Command{
+var domainBillableItemsGetCmd = &cobra.Command{
 	Use:   "get [domain]",
 	Short: "get a list of all billableItems for a domain",
 	Args:  cobra.ExactArgs(1),
@@ -597,4 +600,12 @@ var domainBillableItemsGet = &cobra.Command{
 	},
 }
 
-//
+// CREATE A BILLABLEITEM (ADMIN ONLY)
+var domainBillCreateCmd = &cobra.Command{
+	Use: "create [domain] [flags]",
+	Short: "Create a billableitem (admin only)",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
