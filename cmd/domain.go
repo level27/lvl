@@ -151,6 +151,8 @@ func init() {
 
 	// CREATE BILLABLEITEM
 	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
+	flags = domainBillCreateCmd.Flags()
+	flags.StringVarP(&externalInfo,"externalinfo","e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -194,9 +196,10 @@ var domainDescribeCmd = &cobra.Command{
 
 // DELETE DOMAIN [lvl domain delete <id>]
 var domainDeleteCmd = &cobra.Command{
-	Use:   "delete",
+	Use:   "delete [domainId]",
 	Short: "Delete a domain",
 	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		Level27Client.DomainDelete(args)
 	},
@@ -603,11 +606,19 @@ var domainBillableItemsGetCmd = &cobra.Command{
 }
 
 // CREATE A BILLABLEITEM (ADMIN ONLY)
+var externalInfo string
 var domainBillCreateCmd = &cobra.Command{
 	Use: "create [domain] [flags]",
 	Short: "Create a billableitem (admin only)",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		request := types.DomainBillPostRequest{
+			ExternalInfo: externalInfo,
+		}
+		Level27Client.DomainBillableItemCreate(id, request)
 	},
 }
