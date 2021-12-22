@@ -288,8 +288,15 @@ type DomainAccessRequest struct {
 	Organisation int `json:"organisation"`
 }
 
+// ------------------------------------------ NOTIFICATIONS ---------------------------------------------
 type DomainNotificationPostRequest struct {
 	Type   string `json:"type"`
 	Group  string `json:"group"`
 	Params string `json:"params"`
+}
+
+// ------------------------------------------ BILLABLEITEMS ---------------------------------------------
+
+type DomainBillPostRequest struct {
+	ExternalInfo string `json:"externalInfo"`
 }
