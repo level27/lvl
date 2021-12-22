@@ -24,6 +24,7 @@ import (
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
+	"github.com/common-nighthawk/go-figure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -41,6 +42,10 @@ var loginCmd = &cobra.Command{
 		client := utils.NewAPIClient(apiUrl, "")
 		login, err := client.Login(username, password)
 		cobra.CheckErr(err)
+		fmt.Println()
+		fmt.Println()
+		loginFigure := figure.NewColorFigure("LEVEL27 CLI", "basic", "cyan", true)
+		loginFigure.Print()
 		fmt.Printf("Successfully logged in using: %s\n", username)
 
 		// fmt.Println(login.Hash)

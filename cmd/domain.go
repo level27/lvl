@@ -117,6 +117,7 @@ func init() {
 	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
 	domainAccessRemoveCmd.MarkFlagRequired("organisation")
 
+/*
 	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 	domainCmd.AddCommand(domainNotificationCmd)
 
@@ -127,8 +128,17 @@ func init() {
 	flags.StringVarP(&domainNotificationPostGroup, "group", "g", "", "The notification group")
 	flags.StringVarP(&domainNotificationPostParams, "params", "p", "", "Additional parameters (json)")
 	flags.SortFlags = false
-	domainNotificationCmd.MarkFlagRequired("type")
-	domainNotificationCmd.MarkFlagRequired("group")
+	domainNotificationsCreateCmd.MarkFlagRequired("type")
+	domainNotificationsCreateCmd.MarkFlagRequired("group")
+
+	// GET NOTIFICATIONS
+	var notificationsOrderBy string
+	domainNotificationCmd.AddCommand(domainNotificationsGetCmd)
+	flags = domainNotificationsGetCmd.Flags()
+	flags.StringVarP(&notificationsOrderBy, "orderby", "","", "The field you want to order the results on" )
+	flags.SortFlags = false
+	addCommonGetFlags(domainNotificationsGetCmd)
+*/
 
 }
 
@@ -187,12 +197,14 @@ var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
 var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
-var domainCreateTtl, domainCreateDomainProvider int
+var domainCreateTtl int
 var domainCreateEppCode, domainCreateAutoRecordTemplate string
 var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
-var domainCreateExtraFields, domainCreateExternalCreated, domainCreateExternalExpires string
-var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
+var domainCreateExtraFields string
+var domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
 var domainCreateContactOnSite int
+// var domainCreateConvertDomainRecords, domainCreateExternalCreated, domainCreateExternalExpires string
+// var  domainCreateDomainProvider int
 
 // common functions for managing domains
 // change given flag data into request data to put or post
@@ -240,7 +252,7 @@ func getDomainRequestData() types.DomainRequest {
 	return requestData
 }
 
-// get all possible domain extensions en their ID
+// get all possible domain extensions and their ID
 func getDomainExtensions() {
 
 	res := Level27Client.Extension()
@@ -256,21 +268,21 @@ var domainCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		getDomainExtensions()
 
-		// requestData := getDomainRequestData()
+		requestData := getDomainRequestData()
 
-		// if cmd.Flags().Changed("action") {
+		if cmd.Flags().Changed("action") {
 
-		// 	if requestData.Action == "create" {
-		// 		Level27Client.DomainCreate(args, requestData)
+			if requestData.Action == "create" {
+				Level27Client.DomainCreate(args, requestData)
 
-		// 	} else if requestData.Action == "none" {
-		// 		Level27Client.DomainCreate(args, requestData)
-		// 	} else {
-		// 		log.Printf("given action: '%v' is not recognized.", requestData.Action)
-		// 	}
-		// } else {
-		// 	Level27Client.DomainCreate(args, requestData)
-		// }
+			} else if requestData.Action == "none" {
+				Level27Client.DomainCreate(args, requestData)
+			} else {
+				log.Printf("given action: '%v' is not recognized.", requestData.Action)
+			}
+		} else {
+			Level27Client.DomainCreate(args, requestData)
+		}
 
 	},
 }
@@ -278,7 +290,7 @@ var domainCreateCmd = &cobra.Command{
 // TRANSFER DOMAIN
 var domainTransferCmd = &cobra.Command{
 	Use:   "transfer",
-	Short: "Command for transfering a domain",
+	Short: "Transfer a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		requestData := getDomainRequestData()
@@ -320,7 +332,7 @@ var domainUpdateCmd = &cobra.Command{
 
 var domainRecordCmd = &cobra.Command{
 	Use:   "record",
-	Short: "Commands for managing domain records",
+	Short: "Manage domain records",
 }
 
 var recordGetType string
@@ -447,7 +459,7 @@ var domainRecordUpdateCmd = &cobra.Command{
 // --------------------------------------------------- ACCESS --------------------------------------------------------
 var domainAccessCmd = &cobra.Command{
 	Use:   "access",
-	Short: "Commands for managing the access of a domain",
+	Short: "Manage the access of a domain",
 }
 
 // ADD ACCESS TO A DOMAIN
@@ -494,32 +506,51 @@ var domainAccessRemoveCmd = &cobra.Command{
 	},
 }
 
-
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+/*
 // MAIN COMMAND
 var domainNotificationCmd = &cobra.Command{
-	Use:   "notification",
-	Short: "Commands for managing domain notifications",
+	Use:   "notifications",
+	Short: "Manage domain notifications",
 }
 
 // CREATE NOTIFICATION
 var domainNotificationPostType, domainNotificationPostGroup, domainNotificationPostParams string
 
 var domainNotificationsCreateCmd = &cobra.Command{
-	Use: "create [domain] [flags]",
+	Use:   "create [domain] [flags]",
 	Short: "Send a notification for a domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		id , err := strconv.Atoi(args[0])
-		if err != nil{
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
 
 		Level27Client.DomainNotificationAdd(id, types.DomainNotificationPostRequest{
-			Type: domainNotificationPostType,
-			Group: domainNotificationPostGroup,
+			Type:   domainNotificationPostType,
+			Group:  domainNotificationPostGroup,
 			Params: domainNotificationPostParams,
 		})
 
 	},
 }
+
+// GET NOTIFICATIONS
+var domainNotificationsGetCmd = &cobra.Command{
+	Use: "get",
+	Short: "get a list of all notifications from a domain",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+
+		notifications := Level27Client.DomainNotificationGet(id)
+		fmt.Print(notifications)
+
+	},
+}
+*/
+// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
