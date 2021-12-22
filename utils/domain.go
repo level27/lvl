@@ -18,10 +18,7 @@ func(c *Client) Extension() []types.DomainProvider{
 
 	endpoint := "domains/providers"
 	err := c.invokeAPI("GET", endpoint, nil,&extensions)
-	fmt.Println("dit zijn de providers ")
-	fmt.Println(err)
 	AssertApiError(err, "extension")
-
 
 	return extensions.Data
 }

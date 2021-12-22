@@ -36,7 +36,8 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command := cmd.Flags()
 
 	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (REQUIRED)")
-	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain (REQUIRED)")
+	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain")
+	command.MarkHidden("type")
 	command.IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
 	command.IntVarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
 
