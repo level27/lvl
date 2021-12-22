@@ -107,6 +107,7 @@ func init() {
 	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
 	domainAccessRemoveCmd.MarkFlagRequired("organisation")
 
+/*
 	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 	domainCmd.AddCommand(domainNotificationCmd)
 
@@ -127,7 +128,7 @@ func init() {
 	flags.StringVarP(&notificationsOrderBy, "orderby", "","", "The field you want to order the results on" )
 	flags.SortFlags = false
 	addCommonGetFlags(domainNotificationsGetCmd)
-
+*/
 
 }
 
@@ -506,6 +507,7 @@ var domainAccessRemoveCmd = &cobra.Command{
 }
 
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+/*
 // MAIN COMMAND
 var domainNotificationCmd = &cobra.Command{
 	Use:   "notifications",
@@ -550,5 +552,5 @@ var domainNotificationsGetCmd = &cobra.Command{
 
 	},
 }
-
+*/
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
