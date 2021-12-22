@@ -12,10 +12,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require (
-	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/rodaine/table v1.0.1 // indirect
-)
+require github.com/mattn/go-runewidth v0.0.9 // indirect
 
 require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be

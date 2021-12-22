@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
-	"github.com/spf13/cobra"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 )
 
 // MAIN COMMAND
@@ -492,7 +492,7 @@ var domainAccessAddCmd = &cobra.Command{
 // REMOVE ACCESS FROM DOMAIN
 var domainAccessRemoveCmd = &cobra.Command{
 	Use:   "delete [domain] [flags]",
-	Short: "Remove organisation acces from a domain",
+	Short: "Remove organisation access from a domain",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
@@ -580,10 +580,21 @@ var domainBillableItemsGet = &cobra.Command{
 		billableItem := Level27Client.DomainBillableItemsGet(id)
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID","DESCRIPTION","TOTAL PRICE"})
-		table.Append([]string{strconv.Itoa(billableItem.BillableItem.ID), billableItem.BillableItem.Description, fmt.Sprint(billableItem.BillableItem.TotalPrice)})
+		table.SetHeader([]string{"DESCRIPTION", "PRICE", "STATUS"})
+		
+		for _, item := range billableItem.BillableItem.Details{
+			
+			price, err := strconv.Atoi(item.ProductPrice.Price)
+			if err != nil{
+				price = 0
+			}
+			pricefl := float64(price) / 100
+			table.Append([]string{item.Product.Description, fmt.Sprintf("%v %v",item.ProductPrice.Currency, fmt.Sprintf("%.2f",pricefl)), strconv.Itoa(item.ProductPrice.Status)})
+		}
+
 		table.Render()
-	
 
 	},
 }
+
+//

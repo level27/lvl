@@ -14,7 +14,7 @@ type BillableItem struct {
 	DtExpires           interface{} `json:"dtExpires"`
 	DtNextRenewal       int         `json:"dtNextRenewal"`
 	DocumentsExist      bool        `json:"documentsExist"`
-	TotalPrice          interface{} `json:"totalPrice"`
+	TotalPrice          int         `json:"totalPrice"`
 	Details             []struct {
 		ManuallyAdded        interface{} `json:"manuallyAdded"`
 		AllowToSkipInvoicing bool        `json:"allowToSkipInvoicing"`
@@ -29,12 +29,12 @@ type BillableItem struct {
 			AllowQuantityChange bool   `json:"allowQuantityChange"`
 		} `json:"product"`
 		ProductPrice struct {
-			ID       int         `json:"id"`
-			Period   int         `json:"perion"`
-			Currency string      `json:"currency"`
-			Price    interface{} `json:"price"`
-			Timing   string      `json:"timing"`
-			Status   int         `json:"status"`
+			ID       int    `json:"id"`
+			Period   int    `json:"perion"`
+			Currency string `json:"currency"`
+			Price    string    `json:"price"`
+			Timing   string `json:"timing"`
+			Status   int    `json:"status"`
 		} `json:"productPrice"`
 		Type int `json:"Type"`
 	} `json:"details"`
