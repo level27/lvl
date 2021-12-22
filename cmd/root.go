@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"text/template"
@@ -81,7 +82,6 @@ func init() {
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("apikey", RootCmd.PersistentFlags().Lookup("apikey"))
-	viper.BindPFlag("toggle", RootCmd.PersistentFlags().Lookup("toggle"))
 	viper.BindPFlag("output", RootCmd.PersistentFlags().Lookup("output"))
 }
 
@@ -237,4 +237,26 @@ func roundTripJson(obj interface{}) interface{} {
 	var interf interface{}
 	json.Unmarshal(bJson, &interf)
 	return interf
+}
+
+func convertStringToId(id string) (int, error) {
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, fmt.Errorf("'%s' is not a valid ID", id)
+	}
+
+	return intId, nil
+}
+
+func convertStringsToIds(ids []string) ([]int, error) {
+	ints := make([]int, len(ids))
+	for idx, id := range ids {
+		intId, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, fmt.Errorf("'%s' is not a valid ID", id)
+		}
+		ints[idx] = intId
+	}
+
+	return ints, nil
 }
