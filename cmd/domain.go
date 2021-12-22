@@ -58,18 +58,28 @@ func init() {
 
 	// UPDATE (single domain)
 	domainCmd.AddCommand(domainUpdateCmd)
-	addDomainCommonPostFlags(domainUpdateCmd)
-	//required flags
-	domainUpdateCmd.MarkFlagRequired("name")
-	domainUpdateCmd.MarkFlagRequired("type")
-	domainUpdateCmd.MarkFlagRequired("licensee")
-	domainUpdateCmd.MarkFlagRequired("organisation")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserver1", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserver2", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserver3", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIp1", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIp2", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIp3", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv61", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv62", "")
+	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv63", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "ttl", "")
+	settingBool(domainUpdateCmd, domainUpdateSettings, "handleDns", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "domaincontactLicensee", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "domaincontactOnSite", "")
+	settingInt(domainUpdateCmd, domainUpdateSettings, "organisation", "")
 
 	// ------------------------------------------------- RECORDS ---------------------------------------------------------
 	domainCmd.AddCommand(domainRecordCmd)
 
 	// Record list
-	domainRecordCmd.AddCommand(domainRecordListCmd)
+	domainRecordCmd.AddCommand(domainRecordGetCmd)
+	addCommonGetFlags(domainRecordGetCmd)
+	domainRecordGetCmd.Flags().StringVarP(&recordGetType, "type", "t", "", "Type of records to filter")
 
 	// Record create
 	flags := domainRecordCreateCmd.Flags()
@@ -298,53 +308,23 @@ var domainInternalTransferCmd = &cobra.Command{
 		Level27Client.DomainTransfer(args, requestData)
 	},
 }
+var domainUpdateSettings map[string] interface{} = make(map[string]interface{})
 
 // UPDATE DOMAIN
 var domainUpdateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Update an existing domain",
+	Short: "Command for updating an existing domain",
+	Args: cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		requestData := types.DomainUpdateRequest{
-			Name:        domainCreateName,
-			NameServer1: &domainCreateNs1,
-			NameServer2: domainCreateNs2,
-			NameServer3: domainCreateNs3,
-			NameServer4: domainCreateNs4,
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
 
-			NameServer1Ip: domainCreateNsIp1,
-			NameServer2Ip: domainCreateNsIp2,
-			NameServer3Ip: domainCreateNsIp3,
-			NameServer4Ip: domainCreateNsIp4,
-
-			NameServer1Ipv6: domainCreateNsIpv61,
-			NameServer2Ipv6: domainCreateNsIpv62,
-			NameServer3Ipv6: domainCreateNsIpv63,
-			NameServer4Ipv6: domainCreateNsIpv64,
-
-			TTL:                       domainCreateTtl,
-			Action:                    domainCreateAction,
-			EppCode:                   domainCreateEppCode,
-			Handledns:                 domainCreateHandleDns,
-			ExtraFields:               domainCreateExtraFields,
-			Domaintype:                domainCreateType,
-			Domaincontactlicensee:     domainCreateLicensee,
-			DomainContactOnSite:       &domainCreateContactOnSite,
-			Organisation:              domainCreateOrganisation,
-			AutoRecordTemplate:        domainCreateAutoRecordTemplate,
-			AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
-			//DomainProvider:            &domainCreateDomainProvider,
-			// DtExternalCreated:         domainCreateExternalCreated,
-			// DtExternalExpires:         domainCreateExternalExpires,
-			// ConvertDomainRecords:      domainCreateConvertDomainRecords,
-			AutoTeams: domainCreateAutoTeams,
+		if len(domainUpdateSettings) == 0 {
+			fmt.Println("No options specified!")
 		}
 
-		if *requestData.DomainContactOnSite == 0 {
-			requestData.DomainContactOnSite = nil
-		}
-
-		Level27Client.DomainUpdate(args, requestData)
+		Level27Client.DomainUpdate(domainId, domainUpdateSettings)
 	},
 }
 
@@ -355,16 +335,36 @@ var domainRecordCmd = &cobra.Command{
 	Short: "Manage domain records",
 }
 
+var recordGetType string
+
 // GET DOMAIN/RECORDS
-var domainRecordListCmd = &cobra.Command{
-	Use:   "list [domain]",
+var domainRecordGetCmd = &cobra.Command{
+	Use:   "get [domain]",
 	Short: "Get a list of all records configured for a domain",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		records := Level27Client.DomainRecords(args[0])
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
+		recordIds, err := convertStringsToIds(args[1:])
+		cobra.CheckErr(err)
+
+		records := getDomainRecords(domainId, recordIds)
 
 		outputFormatTable(records, []string{"ID", "TYPE", "NAME", "CONTENT"}, []string{"ID", "Type", "Name", "Content"})
 	},
+}
+
+func getDomainRecords(domainId int, ids []int) []types.DomainRecord {
+	c := Level27Client
+	if len(ids) == 0 {
+		return c.DomainRecords(domainId, recordGetType, optNumber, optFilter)
+	} else {
+		domains := make([]types.DomainRecord, len(ids))
+		for idx, id := range ids {
+			domains[idx] = c.DomainRecord(domainId, id)
+		}
+		return domains
+	}
 }
 
 // CREATE DOMAIN/RECORD
