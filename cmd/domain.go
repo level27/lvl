@@ -534,6 +534,7 @@ var domainNotificationsCreateCmd = &cobra.Command{
 	},
 }
 
+// GET NOTIFICATIONS
 var domainNotificationsGetCmd = &cobra.Command{
 	Use: "get",
 	Short: "get a list of all notifications from a domain",
@@ -545,7 +546,7 @@ var domainNotificationsGetCmd = &cobra.Command{
 		}
 
 		notifications := Level27Client.DomainNotificationGet(id)
-		outputFormatTable(notifications, []string{"ID", "ENTITYNAME"}, []string{"ID", "EntityName"})
+		fmt.Print(notifications)
 
 	},
 }

@@ -292,21 +292,21 @@ type DomainAccessRequest struct {
 // notification data (get)
 type DomainNotification struct {
 	Notifications []struct {
-		ID                int    `json:"id"`
-		EnitityIndex      string `json:"entityIndex"`
-		EntityName        string `json:"entityName"`
-		DtStamap          string `json:"dtStamp"`
-		NotificationGroup string `json:"notificationGroup"`
-		Type              string `json:"type"`
-		EntityClass       string `json:"entityClass"`
-		EntityID          int    `json:"entityId"`
-		RootEntityClass   string `json:"rootEntityClass"`
-		RootEntityID      string `json:"rootEntityId"`
-		Status            int    `json:"status"`
-		StatusDisplay     string `json:"statusDisplay"`
-		StatusCategory    string `json:"statusCategory"`
-		SendMode          int    `json:"sendMode"`
-		Priority          int    `json:"priority"`
+		ID                int         `json:"id"`
+		EnitityIndex      string      `json:"entityIndex"`
+		EntityName        string      `json:"entityName"`
+		DtStamap          string      `json:"dtStamp"`
+		NotificationGroup string      `json:"notificationGroup"`
+		Type              string      `json:"type"`
+		EntityClass       string      `json:"entityClass"`
+		EntityID          int         `json:"entityId"`
+		RootEntityClass   string      `json:"rootEntityClass"`
+		RootEntityID      string      `json:"rootEntityId"`
+		Status            int         `json:"status"`
+		StatusDisplay     string      `json:"statusDisplay"`
+		StatusCategory    string      `json:"statusCategory"`
+		SendMode          int         `json:"sendMode"`
+		Priority          int         `json:"priority"`
 		Subject           interface{} `json:"subject"`
 		Params            struct {
 			ExceptionCode string `json:"exceptionCode"`
@@ -314,7 +314,7 @@ type DomainNotification struct {
 		} `json:"params"`
 		UserID   int `json:"userId"`
 		Contacts []struct {
-			ID        int    `json:"contactId"`
+			ID        int    `json:"id"`
 			DtStamp   string `json:"dtStamp"`
 			FullName  string `json:"fullName"`
 			Language  string `json:"language"`
@@ -326,29 +326,33 @@ type DomainNotification struct {
 		} `json:"contacts"`
 		ExtraRecipients []string `json:"extraRecipients"`
 		Entity          struct {
-			ID                    int    `json:"id"`
-			Name                  string `json:"name"`
-			Fullname              string `json:"fullname"`
-			TTL                   int    `json:"ttl"`
-			EppCode               string `json:"eppCode"`
-			Status                string `json:"status"`
-			DnssecStatus          string `json:"dnssecStatus"`
-			RegistrationIsHandled bool   `json:"registrationIsHandled"`
-			Provider              string `json:"provider"`
-			DNSIsHandled          bool   `json:"dnsIsHandled"`
-			DtRegister            string `json:"dtRegister"`
-			Nameserver1           string `json:"nameserver1"`
-			Nameserver2           string `json:"nameserver2"`
-			Nameserver3           string `json:"nameserver3"`
-			Nameserver4           string `json:"nameserver4"`
-			NameserverIP1         string `json:"nameserverIp1"`
-			NameserverIP2         string `json:"nameserverIp2"`
-			NameserverIP3         string `json:"nameserverIp3"`
-			NameserverIP4         string `json:"nameserverIp4"`
-			NameserverIpv61       string `json:"nameserverIpv61"`
-			NameserverIpv62       string `json:"nameserverIpv62"`
-			NameserverIpv63       string `json:"nameserverIpv63"`
-			NameserverIpv64       string `json:"nameserverIpv64"`
+			ID                    int         `json:"id"`
+			Name                  string      `json:"name"`
+			Fullname              string      `json:"fullname"`
+			TTL                   int         `json:"ttl"`
+			EppCode               string      `json:"eppCode"`
+			Status                string      `json:"status"`
+			StatusCategory        string      `json:"statusCategory"`
+			DnssecStatus          string      `json:"dnssecStatus"`
+			RegistrationIsHandled bool        `json:"registrationIsHandled"`
+			Provider              string      `json:"provider"`
+			DNSIsHandled          bool        `json:"dnsIsHandled"`
+			DtRegister            string      `json:"dtRegister"`
+			HandleMailDns         interface{} `json:"handleMailDns"`
+			MailPrimary           string      `json:"mailPrimary"`
+			MailGroup             string      `json:"mailgroup"`
+			Nameserver1           string      `json:"nameserver1"`
+			Nameserver2           string      `json:"nameserver2"`
+			Nameserver3           string      `json:"nameserver3"`
+			Nameserver4           string      `json:"nameserver4"`
+			NameserverIP1         string      `json:"nameserverIp1"`
+			NameserverIP2         string      `json:"nameserverIp2"`
+			NameserverIP3         string      `json:"nameserverIp3"`
+			NameserverIP4         string      `json:"nameserverIp4"`
+			NameserverIpv61       string      `json:"nameserverIpv61"`
+			NameserverIpv62       string      `json:"nameserverIpv62"`
+			NameserverIpv63       string      `json:"nameserverIpv63"`
+			NameserverIpv64       string      `json:"nameserverIpv64"`
 			Organisation          struct {
 				ID       int    `json:"id"`
 				Name     string `json:"name"`
@@ -366,7 +370,7 @@ type DomainNotification struct {
 				DnssecSupported                     bool   `json:"dnssecSupported"`
 			} `json:"domaintype"`
 			DomaincontactLicensee struct {
-				ID               int    `json:"id,omitempty"`
+				ID               int    `json:"id"`
 				FirstName        string `json:"firstName"`
 				LastName         string `json:"lastName"`
 				Fullname         string `json:"fullname"`
@@ -400,28 +404,31 @@ type DomainNotification struct {
 			Extrafields         []interface{} `json:"extraFields"`
 		} `json:"entity"`
 		User struct {
-			ID             int      `json:"id"`
-			Username       string   `json:"username"`
-			Email          string   `json:"email"`
-			FirstName      string   `json:"firstName"`
-			LastName       string   `json:"lastName"`
-			Roles          []string `json:"roles"`
-			Status         string   `json:"status"`
-			StatusCategory string   `json:"statusCategory"`
-			Language       string   `json:"language"`
-			Organisation   struct {
-				ID          int    `json:"id"`
-				Name        string `json:"name"`
-				Street      string `json:"street"`
-				HouseNumber string `json:"houseNumber"`
-				Zip         string `json:"zip"`
-				City        string `json:"city"`
+			ID               int      `json:"id"`
+			Username         string   `json:"username"`
+			Email            string   `json:"email"`
+			FirstName        string   `json:"firstName"`
+			LastName         string   `json:"lastName"`
+			Fullname         string   `json:"fullname"`
+			Roles            []string `json:"roles"`
+			Status           string   `json:"status"`
+			StatusCategory   string   `json:"statusCategory"`
+			Language         string   `json:"language"`
+			WebsiteOrderInfo string   `json:"websiteOrderInfo"`
+			Organisation     struct {
+				ID                 int    `json:"id"`
+				Name               string `json:"name"`
+				Street             string `json:"street"`
+				HouseNumber        string `json:"houseNumber"`
+				Zip                string `json:"zip"`
+				City               string `json:"city"`
+				Reseller           string `json:"reseller"`
+				UpdateEntitiesOnly bool   `json:"updateEntitiesOnly"`
 			} `json:"organisation"`
 			Country struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
 			} `json:"country"`
-			Fullname string `json:"fullname"`
 		} `json:"user"`
 	}
 }
