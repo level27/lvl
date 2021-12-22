@@ -242,8 +242,9 @@ func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificatio
 	AssertApiError(err, "notifications")
 }
 
-// --------------------------------------------------- BILLABLEITEM --------------------------------------------------------
-// GET 
+// --------------------------------------------------- BILLABLE ITEM --------------------------------------------------------
+
+// GET
 func (c *Client) DomainBillableItemsGet(domainId int) types.BillableItemGet {
 	var billableItem types.BillableItemGet
 	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
@@ -254,10 +255,12 @@ func (c *Client) DomainBillableItemsGet(domainId int) types.BillableItemGet {
 
 }
 
-//CREATE 
+//CREATE
 func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPostRequest) {
 	endpoint := fmt.Sprintf("domains/%v/bill", domainid)
-	err := c.invokeAPI("POST",endpoint, req, nil)
+	err := c.invokeAPI("POST", endpoint, req, nil)
 	AssertApiError(err, "billable item")
-
+	
+	
 }
+

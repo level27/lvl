@@ -19,7 +19,7 @@ type BillableItem struct {
 		ManuallyAdded        interface{} `json:"manuallyAdded"`
 		AllowToSkipInvoicing bool        `json:"allowToSkipInvoicing"`
 		ID                   int         `json:"id"`
-		Price                int         `json:"price"`
+		Price                interface{}         `json:"price"`
 		DtExpires            interface{} `json:"dtExpires"`
 		Quantity             int         `json:"quantity"`
 		Description          string      `json:"description"`

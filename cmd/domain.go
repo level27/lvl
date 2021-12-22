@@ -120,28 +120,28 @@ func init() {
 	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
 	domainAccessRemoveCmd.MarkFlagRequired("organisation")
 
-/*
-	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
-	domainCmd.AddCommand(domainNotificationCmd)
+	/*
+		// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+		domainCmd.AddCommand(domainNotificationCmd)
 
-	// CREATE NOTIFICATION
-	domainNotificationCmd.AddCommand(domainNotificationsCreateCmd)
-	flags = domainNotificationsCreateCmd.Flags()
-	flags.StringVarP(&domainNotificationPostType, "type", "t", "", "The notification type")
-	flags.StringVarP(&domainNotificationPostGroup, "group", "g", "", "The notification group")
-	flags.StringVarP(&domainNotificationPostParams, "params", "p", "", "Additional parameters (json)")
-	flags.SortFlags = false
-	domainNotificationsCreateCmd.MarkFlagRequired("type")
-	domainNotificationsCreateCmd.MarkFlagRequired("group")
+		// CREATE NOTIFICATION
+		domainNotificationCmd.AddCommand(domainNotificationsCreateCmd)
+		flags = domainNotificationsCreateCmd.Flags()
+		flags.StringVarP(&domainNotificationPostType, "type", "t", "", "The notification type")
+		flags.StringVarP(&domainNotificationPostGroup, "group", "g", "", "The notification group")
+		flags.StringVarP(&domainNotificationPostParams, "params", "p", "", "Additional parameters (json)")
+		flags.SortFlags = false
+		domainNotificationsCreateCmd.MarkFlagRequired("type")
+		domainNotificationsCreateCmd.MarkFlagRequired("group")
 
-	// GET NOTIFICATIONS
-	var notificationsOrderBy string
-	domainNotificationCmd.AddCommand(domainNotificationsGetCmd)
-	flags = domainNotificationsGetCmd.Flags()
-	flags.StringVarP(&notificationsOrderBy, "orderby", "", "", "The field you want to order the results on")
-	flags.SortFlags = false
-	addCommonGetFlags(domainNotificationsGetCmd)
-*/
+		// GET NOTIFICATIONS
+		var notificationsOrderBy string
+		domainNotificationCmd.AddCommand(domainNotificationsGetCmd)
+		flags = domainNotificationsGetCmd.Flags()
+		flags.StringVarP(&notificationsOrderBy, "orderby", "", "", "The field you want to order the results on")
+		flags.SortFlags = false
+		addCommonGetFlags(domainNotificationsGetCmd)
+	*/
 	// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
 	domainCmd.AddCommand(domainBillableItemCmd)
 
@@ -152,7 +152,7 @@ func init() {
 	// CREATE BILLABLEITEM
 	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
 	flags = domainBillCreateCmd.Flags()
-	flags.StringVarP(&externalInfo,"externalinfo","e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
+	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -199,7 +199,7 @@ var domainDeleteCmd = &cobra.Command{
 	Use:   "delete [domainId]",
 	Short: "Delete a domain",
 	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		Level27Client.DomainDelete(args)
 	},
@@ -323,13 +323,13 @@ var domainInternalTransferCmd = &cobra.Command{
 		Level27Client.DomainTransfer(args, requestData)
 	},
 }
-var domainUpdateSettings map[string] interface{} = make(map[string]interface{})
+var domainUpdateSettings map[string]interface{} = make(map[string]interface{})
 
 // UPDATE DOMAIN
 var domainUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Command for updating an existing domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
@@ -587,30 +587,34 @@ var domainBillableItemsGetCmd = &cobra.Command{
 		}
 		billableItem := Level27Client.DomainBillableItemsGet(id)
 
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"DESCRIPTION", "PRICE", "STATUS"})
-		
-		for _, item := range billableItem.BillableItem.Details{
-			
-			price, err := strconv.Atoi(item.ProductPrice.Price)
-			if err != nil{
-				price = 0
-			}
-			pricefl := float64(price) / 100
-			table.Append([]string{item.Product.Description, fmt.Sprintf("%v %v",item.ProductPrice.Currency, fmt.Sprintf("%.2f",pricefl)), strconv.Itoa(item.ProductPrice.Status)})
-		}
-
-		table.Render()
+		MakeBillableItemTable(billableItem.BillableItem)
 
 	},
+}
+
+func MakeBillableItemTable(billableItem types.BillableItem) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"DESCRIPTION", "PRICE", "STATUS"})
+
+	for _, item := range billableItem.Details {
+
+		price, err := strconv.Atoi(item.ProductPrice.Price)
+		if err != nil {
+			price = 0
+		}
+		pricefl := float64(price) / 100
+		table.Append([]string{item.Product.Description, fmt.Sprintf("%v %v", item.ProductPrice.Currency, fmt.Sprintf("%.2f", pricefl)), strconv.Itoa(item.ProductPrice.Status)})
+	}
+
+	table.Render()
 }
 
 // CREATE A BILLABLEITEM (ADMIN ONLY)
 var externalInfo string
 var domainBillCreateCmd = &cobra.Command{
-	Use: "create [domain] [flags]",
+	Use:   "create [domain] [flags]",
 	Short: "Create a billableitem (admin only)",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
@@ -619,6 +623,9 @@ var domainBillCreateCmd = &cobra.Command{
 		request := types.DomainBillPostRequest{
 			ExternalInfo: externalInfo,
 		}
+
 		Level27Client.DomainBillableItemCreate(id, request)
+
+		MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
 	},
 }
