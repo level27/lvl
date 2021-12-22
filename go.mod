@@ -13,6 +13,11 @@ require (
 )
 
 require (
+	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/rodaine/table v1.0.1 // indirect
+)
+
+require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -23,6 +28,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect

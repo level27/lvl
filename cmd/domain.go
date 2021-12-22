@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"log"
 	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
+	"github.com/olekukonko/tablewriter"
 )
 
 // MAIN COMMAND
@@ -124,11 +127,16 @@ func init() {
 	var notificationsOrderBy string
 	domainNotificationCmd.AddCommand(domainNotificationsGetCmd)
 	flags = domainNotificationsGetCmd.Flags()
-	flags.StringVarP(&notificationsOrderBy, "orderby", "","", "The field you want to order the results on" )
+	flags.StringVarP(&notificationsOrderBy, "orderby", "", "", "The field you want to order the results on")
 	flags.SortFlags = false
 	addCommonGetFlags(domainNotificationsGetCmd)
 
+	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+	domainCmd.AddCommand(domainBillableItemCmd)
 
+	// GET BILLABLEITEMS
+	domainBillableItemCmd.AddCommand(domainBillableItemsGet)
+	addCommonGetFlags(domainBillableItemsGet)
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -192,6 +200,7 @@ var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
 var domainCreateExtraFields string
 var domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
 var domainCreateContactOnSite int
+
 // var domainCreateConvertDomainRecords, domainCreateExternalCreated, domainCreateExternalExpires string
 // var  domainCreateDomainProvider int
 
@@ -536,9 +545,9 @@ var domainNotificationsCreateCmd = &cobra.Command{
 
 // GET NOTIFICATIONS
 var domainNotificationsGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "get a list of all notifications from a domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
@@ -551,4 +560,30 @@ var domainNotificationsGetCmd = &cobra.Command{
 	},
 }
 
-// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
+// MAIN COMMAND
+var domainBillableItemCmd = &cobra.Command{
+	Use:   "billable",
+	Short: "Manage domain's billable item's",
+}
+
+// GET BILLABLEITEM
+var domainBillableItemsGet = &cobra.Command{
+	Use:   "get [domain]",
+	Short: "get a list of all billableItems for a domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		billableItem := Level27Client.DomainBillableItemsGet(id)
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"ID","DESCRIPTION","TOTAL PRICE"})
+		table.Append([]string{strconv.Itoa(billableItem.BillableItem.ID), billableItem.BillableItem.Description, fmt.Sprint(billableItem.BillableItem.TotalPrice)})
+		table.Render()
+	
+
+	},
+}

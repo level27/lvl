@@ -240,3 +240,15 @@ func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.Domain
 		AssertApiError(err, "notifications")
 		return notifications.Notifications
 	}
+
+	// --------------------------------------------------- BILLABLEITEM --------------------------------------------------------
+
+	func (c *Client) DomainBillableItemsGet(domainId int) types.BillableItemGet{
+		var billableItem  types.BillableItemGet
+		endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
+		err := c.invokeAPI("GET", endpoint, nil, &billableItem)
+		AssertApiError(err, "BillableItem")
+
+		return billableItem
+
+	}
