@@ -110,7 +110,7 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 	if req.Action == "" {
 		req.Action = "none"
 	}
-	
+
 
 	test := c.Domain("CREATE", nil, req)
 	fmt.Printf("handle dns: %v ", test.DNSIsHandled)
@@ -127,11 +127,11 @@ func (c *Client) DomainTransfer(args []string, req types.DomainRequest) {
 	c.Domain("CREATE", nil, req)
 }
 
-// INTERNAL TRANSFER 
+// INTERNAL TRANSFER
 func (c *Client) DomainInternalTransfer(args []string, req types.DomainRequest){
-	 
+
 	res :=c.Domain("TRANSFER", args[0], req)
-	
+
 	fmt.Println(res)
 }
 
@@ -199,44 +199,44 @@ func (c *Client) DomainRecordUpdate(domainId int, recordId int, req types.Domain
 	AssertApiError(err, "domain record")
 }
 
-	// --------------------------------------------------- ACCESS --------------------------------------------------------
-	//add access to a domain
+// --------------------------------------------------- ACCESS --------------------------------------------------------
+//add access to a domain
 
-	func (c *Client) DomainAccesAdd(domainId int, req types.DomainAccessRequest){
-		endpoint := fmt.Sprintf("domains/%v/acls", domainId)
+func (c *Client) DomainAccesAdd(domainId int, req types.DomainAccessRequest){
+	endpoint := fmt.Sprintf("domains/%v/acls", domainId)
 
-		err := c.invokeAPI("POST", endpoint, &req,nil)
+	err := c.invokeAPI("POST", endpoint, &req,nil)
 
-		AssertApiError(err, "Access")
+	AssertApiError(err, "Access")
 
+}
+
+//remove acces from a domain
+
+func (c *Client) DomainAccesRemove(domainId int, organisationId int){
+	endpoint := fmt.Sprintf("domains/%v/acls/%v", domainId, organisationId)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "Access")
+}
+
+
+// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+// CREATE A NOTIFICATION
+func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificationPostRequest){
+	enpoint := fmt.Sprintf("domains/%v/notifications", domainId)
+	err := c.invokeAPI("POST", enpoint, req, nil)
+
+	AssertApiError(err, "notifications")
+}
+
+// GET LIST OF ALL NOTIFICATIONS FOR DOMAIN
+func (c *Client) DomainNotificationGet(domainId int ) []types.Notification{
+	var notifications struct {
+		Notifications []types.Notification `json:"notifications"`
 	}
-
-	//remove acces from a domain
-
-	func (c *Client) DomainAccesRemove(domainId int, organisationId int){
-		endpoint := fmt.Sprintf("domains/%v/acls/%v", domainId, organisationId)
-		err := c.invokeAPI("DELETE", endpoint, nil, nil)
-
-		AssertApiError(err, "Access")
-	}
-
-
-	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
-	// CREATE A NOTIFICATION
-	func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificationPostRequest){
-		enpoint := fmt.Sprintf("domains/%v/notifications", domainId)
-		err := c.invokeAPI("POST", enpoint, req, nil)
-
-		AssertApiError(err, "notifications")
-	}
-
-	// GET LIST OF ALL NOTIFICATIONS FOR DOMAIN
-	func (c *Client) DomainNotificationGet(domainId int ) []types.DomainNotification{
-		var notifications struct {
-			Notifications []types.DomainNotification `json:"notifications"`
-		}
-		endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
-		err := c.invokeAPI("GET", endpoint, nil , &notifications)
-		AssertApiError(err, "notifications")
-		return notifications.Notifications
-	}
+	endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
+	err := c.invokeAPI("GET", endpoint, nil , &notifications)
+	AssertApiError(err, "notifications")
+	return notifications.Notifications
+}
