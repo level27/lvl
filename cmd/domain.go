@@ -245,7 +245,6 @@ func getDomainRequestData() types.DomainRequest {
 		NameServer2: domainCreateNs2,
 		NameServer3: domainCreateNs3,
 		NameServer4: domainCreateNs4,
-
 		NameServer1Ip: domainCreateNsIp1,
 		NameServer2Ip: domainCreateNsIp2,
 		NameServer3Ip: domainCreateNsIp3,
