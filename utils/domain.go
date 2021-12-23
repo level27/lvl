@@ -111,9 +111,8 @@ func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
 		req.Action = "none"
 	}
 
-	test := c.Domain("CREATE", nil, req)
-	fmt.Printf("handle dns: %v ", test.DNSIsHandled)
-	log.Printf("domain created: '%v' - ID: '%v'", test.Fullname, test.ID)
+	result := c.Domain("CREATE", nil, req)
+	log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", result.Fullname, result.ID)
 
 }
 
@@ -260,7 +259,39 @@ func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPost
 	endpoint := fmt.Sprintf("domains/%v/bill", domainid)
 	err := c.invokeAPI("POST", endpoint, req, nil)
 	AssertApiError(err, "billable item")
-	
-	
+
 }
 
+//DELETE
+func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
+	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
+
+	if confimation{
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "Billable item")
+	}else{
+		var userResponse string
+	
+
+	question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
+	fmt.Print(question)
+	_, err := fmt.Scan(&userResponse)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	switch strings.ToLower(userResponse) {
+	case "y", "yes":
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "Billable item")
+	case "n", "no":
+		log.Printf("Delete billableItem canceled for domain: %v", domainId)
+	default:
+		log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+		confimation = false
+		c.DomainBillableItemDelete(domainId, confimation)
+	}
+	}
+	
+
+}
