@@ -18,8 +18,6 @@ func (c *Client) Extension() []types.DomainProvider {
 
 	endpoint := "domains/providers"
 	err := c.invokeAPI("GET", endpoint, nil, &extensions)
-	fmt.Println("dit zijn de providers ")
-	fmt.Println(err)
 	AssertApiError(err, "extension")
 
 	return extensions.Data
@@ -272,7 +270,7 @@ func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
 		AssertApiError(err, "Billable item")
 	}else{
 		var userResponse string
-	
+
 
 	question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
 	fmt.Print(question)

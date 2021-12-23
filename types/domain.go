@@ -102,16 +102,14 @@ func (d Domain) String() string {
 
 // DomainProvider represents a single DomainProvider
 type DomainProvider struct {
-	Providers []struct {
-		ID              int    `json:"id"`
-		Name            string `json:"name"`
-		API             string `json:"api"`
-		DNSSecSupported bool   `json:"dnsSecSupported"`
-		Domaintypes     []struct {
-			ID        int    `json:"id"`
-			Extension string `json:"extension"`
-		} `json:"domaintypes"`
-	} `json:"providers"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	API             string `json:"api"`
+	DNSSecSupported bool   `json:"dnsSecSupported"`
+	Domaintypes     []struct {
+		ID        int    `json:"id"`
+		Extension string `json:"extension"`
+	} `json:"domaintypes"`
 }
 
 // DomainExtension represents a single DomainExtension
