@@ -236,5 +236,6 @@ func TranslateStatusCode(e error, directory string) {
 	} else {
 		log.Println("Request succesfully executed")
 	}
+	
 
 }

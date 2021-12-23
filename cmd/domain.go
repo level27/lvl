@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"log"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -116,18 +119,43 @@ func init() {
 	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
 	domainAccessRemoveCmd.MarkFlagRequired("organisation")
 
-	// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
-	domainCmd.AddCommand(domainNotificationCmd)
+	/*
+		// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+		domainCmd.AddCommand(domainNotificationCmd)
 
-	// CREATE NOTIFICATION
-	domainNotificationCmd.AddCommand(domainNotificationsCreateCmd)
-	flags = domainNotificationsCreateCmd.Flags()
-	flags.StringVarP(&domainNotificationPostType, "type", "t", "", "The notification type")
-	flags.StringVarP(&domainNotificationPostGroup, "group", "g", "", "The notification group")
-	flags.StringVarP(&domainNotificationPostParams, "params", "p", "", "Additional parameters (json)")
-	flags.SortFlags = false
-	domainNotificationCmd.MarkFlagRequired("type")
-	domainNotificationCmd.MarkFlagRequired("group")
+		// CREATE NOTIFICATION
+		domainNotificationCmd.AddCommand(domainNotificationsCreateCmd)
+		flags = domainNotificationsCreateCmd.Flags()
+		flags.StringVarP(&domainNotificationPostType, "type", "t", "", "The notification type")
+		flags.StringVarP(&domainNotificationPostGroup, "group", "g", "", "The notification group")
+		flags.StringVarP(&domainNotificationPostParams, "params", "p", "", "Additional parameters (json)")
+		flags.SortFlags = false
+		domainNotificationsCreateCmd.MarkFlagRequired("type")
+		domainNotificationsCreateCmd.MarkFlagRequired("group")
+
+		// GET NOTIFICATIONS
+		var notificationsOrderBy string
+		domainNotificationCmd.AddCommand(domainNotificationsGetCmd)
+		flags = domainNotificationsGetCmd.Flags()
+		flags.StringVarP(&notificationsOrderBy, "orderby", "", "", "The field you want to order the results on")
+		flags.SortFlags = false
+		addCommonGetFlags(domainNotificationsGetCmd)
+	*/
+	// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
+	domainCmd.AddCommand(domainBillableItemCmd)
+
+	// GET BILLABLEITEMS
+	domainBillableItemCmd.AddCommand(domainBillableItemsGetCmd)
+	addCommonGetFlags(domainBillableItemsGetCmd)
+
+	// CREATE BILLABLEITEM
+	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
+	flags = domainBillCreateCmd.Flags()
+	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
+
+	// DELETE BILLABLEITEM
+	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
+	domainBillDeleteCmd.Flags().BoolVarP(&domainBillDeleteIsYes, "yes", "y", false, "Automaticly choose 'yes' to confirm deletion of given ID(s)")
 
 }
 
@@ -172,9 +200,10 @@ var domainDescribeCmd = &cobra.Command{
 
 // DELETE DOMAIN [lvl domain delete <id>]
 var domainDeleteCmd = &cobra.Command{
-	Use:   "delete",
+	Use:   "delete [domainId]",
 	Short: "Delete a domain",
 	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
+
 	Run: func(cmd *cobra.Command, args []string) {
 		Level27Client.DomainDelete(args)
 	},
@@ -186,12 +215,15 @@ var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
 var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
-var domainCreateTtl, domainCreateDomainProvider int
+var domainCreateTtl int
 var domainCreateEppCode, domainCreateAutoRecordTemplate string
 var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
-var domainCreateExtraFields, domainCreateExternalCreated, domainCreateExternalExpires string
-var domainCreateConvertDomainRecords, domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
+var domainCreateExtraFields string
+var domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
 var domainCreateContactOnSite int
+
+// var domainCreateConvertDomainRecords, domainCreateExternalCreated, domainCreateExternalExpires string
+// var  domainCreateDomainProvider int
 
 // common functions for managing domains
 // change given flag data into request data to put or post
@@ -295,7 +327,7 @@ var domainCreateCmd = &cobra.Command{
 // TRANSFER DOMAIN
 var domainTransferCmd = &cobra.Command{
 	Use:   "transfer",
-	Short: "Command for transfering a domain",
+	Short: "Transfer a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		requestData := getDomainRequestData()
@@ -313,13 +345,13 @@ var domainInternalTransferCmd = &cobra.Command{
 		Level27Client.DomainTransfer(args, requestData)
 	},
 }
-var domainUpdateSettings map[string] interface{} = make(map[string]interface{})
+var domainUpdateSettings map[string]interface{} = make(map[string]interface{})
 
 // UPDATE DOMAIN
 var domainUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Command for updating an existing domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
@@ -337,7 +369,7 @@ var domainUpdateCmd = &cobra.Command{
 
 var domainRecordCmd = &cobra.Command{
 	Use:   "record",
-	Short: "Commands for managing domain records",
+	Short: "Manage domain records",
 }
 
 var recordGetType string
@@ -464,7 +496,7 @@ var domainRecordUpdateCmd = &cobra.Command{
 // --------------------------------------------------- ACCESS --------------------------------------------------------
 var domainAccessCmd = &cobra.Command{
 	Use:   "access",
-	Short: "Commands for managing the access of a domain",
+	Short: "Manage the access of a domain",
 }
 
 // ADD ACCESS TO A DOMAIN
@@ -489,7 +521,7 @@ var domainAccessAddCmd = &cobra.Command{
 // REMOVE ACCESS FROM DOMAIN
 var domainAccessRemoveCmd = &cobra.Command{
 	Use:   "delete [domain] [flags]",
-	Short: "Remove organisation acces from a domain",
+	Short: "Remove organisation access from a domain",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
@@ -511,32 +543,134 @@ var domainAccessRemoveCmd = &cobra.Command{
 	},
 }
 
-
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
+/*
 // MAIN COMMAND
 var domainNotificationCmd = &cobra.Command{
-	Use:   "notification",
-	Short: "Commands for managing domain notifications",
+	Use:   "notifications",
+	Short: "Manage domain notifications",
 }
 
 // CREATE NOTIFICATION
 var domainNotificationPostType, domainNotificationPostGroup, domainNotificationPostParams string
 
 var domainNotificationsCreateCmd = &cobra.Command{
-	Use: "create [domain] [flags]",
+	Use:   "create [domain] [flags]",
 	Short: "Send a notification for a domain",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		id , err := strconv.Atoi(args[0])
-		if err != nil{
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
 
 		Level27Client.DomainNotificationAdd(id, types.DomainNotificationPostRequest{
-			Type: domainNotificationPostType,
-			Group: domainNotificationPostGroup,
+			Type:   domainNotificationPostType,
+			Group:  domainNotificationPostGroup,
 			Params: domainNotificationPostParams,
 		})
+
+	},
+}
+
+// GET NOTIFICATIONS
+var domainNotificationsGetCmd = &cobra.Command{
+	Use:   "get",
+	Short: "get a list of all notifications from a domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+
+		notifications := Level27Client.DomainNotificationGet(id)
+		fmt.Print(notifications)
+
+	},
+}
+*/
+// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
+// MAIN COMMAND
+var domainBillableItemCmd = &cobra.Command{
+	Use:   "billable",
+	Short: "Manage domain's billable item's",
+}
+
+// GET BILLABLEITEM
+var domainBillableItemsGetCmd = &cobra.Command{
+	Use:   "get [domain]",
+	Short: "get a list of all billableItems for a domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		billableItem := Level27Client.DomainBillableItemsGet(id)
+
+		MakeBillableItemTable(billableItem.BillableItem)
+
+	},
+}
+
+func MakeBillableItemTable(billableItem types.BillableItem) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"DESCRIPTION", "PRICE", "STATUS"})
+
+	for _, item := range billableItem.Details {
+
+		price, err := strconv.Atoi(item.ProductPrice.Price)
+		if err != nil {
+			price = 0
+		}
+		pricefl := float64(price) / 100
+		table.Append([]string{item.Product.Description, fmt.Sprintf("%v %v", item.ProductPrice.Currency, fmt.Sprintf("%.2f", pricefl)), strconv.Itoa(item.ProductPrice.Status)})
+	}
+
+	table.Render()
+}
+
+// CREATE A BILLABLEITEM (ADMIN ONLY)
+var externalInfo string
+var domainBillCreateCmd = &cobra.Command{
+	Use:   "create [domain] [flags]",
+	Short: "Create a billableitem (admin only)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		request := types.DomainBillPostRequest{
+			ExternalInfo: externalInfo,
+		}
+
+		Level27Client.DomainBillableItemCreate(id, request)
+
+		MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
+	},
+}
+
+//DELETE BILLABLEITEM
+var domainBillDeleteIsYes bool
+var domainBillDeleteCmd = &cobra.Command{
+	Use:   "delete [domainID]",
+	Short: "Delete billable item from domain (admin only)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+
+		if cmd.Flags().Changed("yes") {
+			domainBillDeleteIsYes = true
+		} else {
+			domainBillDeleteIsYes = false
+		}
+
+		Level27Client.DomainBillableItemDelete(id, domainBillDeleteIsYes)
 
 	},
 }

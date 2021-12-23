@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -61,7 +62,7 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.BoolVarP(&domainCreateHandleDns, "handleDns", "", true, "should dns be handled by lvl27")
 	command.StringVarP(&domainCreateExtraFields, "extra fields", "", "", "extra fields (json, non-editable)")
 
-	command.IntVarP(&domainCreateContactOnSite, "domaincontactOnsite","", 0, "the unique id of a domaincontact with type onsite")
+	command.IntVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
 
 	// command.StringVarP(&domainCreateAutoRecordTemplate, "autorecordTemplate", "", "", "AutorecordTemplate")
 	// command.BoolVarP(&domainCreateAutoRecordTemplateRep, "autorecordTemplateReplace", "", false, "autorecordTemplate replace")
@@ -72,6 +73,18 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
 
 	command.SortFlags = false
+}
+
+// Try to split the given cmd args into ID's (works with whitespace and komma's)
+func CheckForMultipleIDs(ids []string) []string {
+	var currIds []string
+
+	for _, id := range ids {
+		tempId := strings.Split(id, ",")
+		currIds = append(currIds, tempId...)
+	}
+
+	return currIds
 }
 
 // Add a string setting flag to a command, that will be stored in a map.
@@ -111,7 +124,7 @@ func settingBoolP(c *cobra.Command, settings map[string]interface{}, name string
 }
 
 type stringMapValue struct {
-	Map map[string]interface{}
+	Map  map[string]interface{}
 	Name string
 }
 
@@ -134,7 +147,7 @@ func (c *stringMapValue) Type() string {
 }
 
 type intMapValue struct {
-	Map map[string]interface{}
+	Map  map[string]interface{}
 	Name string
 }
 
@@ -150,7 +163,7 @@ func (c *intMapValue) String() string {
 func (c *intMapValue) Set(val string) error {
 	i, err := strconv.Atoi(val)
 	if err != nil {
-		return err;
+		return err
 	}
 
 	c.Map[c.Name] = i
@@ -161,9 +174,8 @@ func (c *intMapValue) Type() string {
 	return "int"
 }
 
-
 type boolMapValue struct {
-	Map map[string]interface{}
+	Map  map[string]interface{}
 	Name string
 }
 
@@ -179,7 +191,7 @@ func (c *boolMapValue) String() string {
 func (c *boolMapValue) Set(val string) error {
 	b, err := strconv.ParseBool(val)
 	if err != nil {
-		return err;
+		return err
 	}
 
 	c.Map[c.Name] = b
