@@ -6,6 +6,7 @@ import (
 
 	"log"
 	"strconv"
+	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/olekukonko/tablewriter"
@@ -41,7 +42,6 @@ func init() {
 	addDomainCommonPostFlags(domainCreateCmd)
 	//Required flags
 	domainCreateCmd.MarkFlagRequired("name")
-	domainCreateCmd.MarkFlagRequired("type")
 	domainCreateCmd.MarkFlagRequired("licensee")
 	domainCreateCmd.MarkFlagRequired("organisation")
 
@@ -50,7 +50,6 @@ func init() {
 	addDomainCommonPostFlags(domainTransferCmd)
 	// required flags
 	domainTransferCmd.MarkFlagRequired("name")
-	domainTransferCmd.MarkFlagRequired("type")
 	domainTransferCmd.MarkFlagRequired("licensee")
 	domainTransferCmd.MarkFlagRequired("organisation")
 	domainTransferCmd.MarkFlagRequired("eppCode")
@@ -269,15 +268,35 @@ func getDomainRequestData() types.DomainRequest {
 		requestData.DomainContactOnSite = nil
 	}
 
+	if requestData.Domaintype == 0 {
+		name, extension, domainType := getDomainTypeForDomain(requestData.Name)
+		if domainType == 0 {
+			log.Fatalf("Invalid domain extension: '%s'", extension)
+		}
+
+		requestData.Domaintype = domainType
+		requestData.Name = name
+	}
+
 	return requestData
 }
 
-// get all possible domain extensions and their ID
-func getDomainExtensions() {
-
+// Gets the domain type extension for a full domain name.
+func getDomainTypeForDomain(domain string) (string, string, int) {
+	idx := strings.IndexByte(domain, '.')
+	extension := domain[idx+1:]
+	name := domain[:idx]
 	res := Level27Client.Extension()
 
-	fmt.Println(res[0])
+	for _, provider := range res {
+		for _, domainType := range provider.Domaintypes {
+			if domainType.Extension == extension {
+				return name, extension, domainType.ID
+			}
+		}
+	}
+
+	return name, extension, 0
 }
 
 // CREATE DOMAIN [lvl domain create (action:create/none)]
@@ -286,8 +305,6 @@ var domainCreateCmd = &cobra.Command{
 	Short: "Create a new domain",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		getDomainExtensions()
-
 		requestData := getDomainRequestData()
 
 		if cmd.Flags().Changed("action") {
@@ -646,7 +663,7 @@ var domainBillDeleteCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		
+
 		if cmd.Flags().Changed("yes") {
 			domainBillDeleteIsYes = true
 		} else {
