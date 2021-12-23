@@ -158,6 +158,16 @@ func init() {
 	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
 	domainBillDeleteCmd.Flags().BoolVarP(&domainBillDeleteIsYes, "yes", "y", false, "Automaticly choose 'yes' to confirm deletion of given ID(s)")
 
+	// UPDATE BILLABLEITEM
+	domainBillableItemCmd.AddCommand(domainBillUpdateCmd)
+	flags = domainBillUpdateCmd.Flags()
+	flags.BoolVarP(&domainBillableAutoRenew, "autorenew", "a", true, "Renew automaticly (default: true)")
+	flags.StringVarP(&domainBillableExtra1, "extra1", "", "", "Extra1")
+	flags.StringVarP(&domainBillableExtra2, "extra2", "", "", "Extra2")
+	flags.StringVarP(&domainBillableExternalInfo, "externalinfo", "", "", "External info (required when billableitemInfo entities for an Organisation exist in db)")
+	flags.BoolVarP(&domainBillablePreventDeactivation, "preventdeactivation", "p", true, "Prevent deactivation (default: true) - admin only")
+	flags.BoolVarP(&domainBillableHideDetails, "hidedetails", "", true, "Hide details (default: true) - admin only")
+
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -646,7 +656,7 @@ var domainBillDeleteCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		
+		// if 'yes' flag is set no confirmation question should be askes
 		if cmd.Flags().Changed("yes") {
 			domainBillDeleteIsYes = true
 		} else {
@@ -655,5 +665,32 @@ var domainBillDeleteCmd = &cobra.Command{
 
 		Level27Client.DomainBillableItemDelete(id, domainBillDeleteIsYes)
 
+	},
+}
+
+// UPDATE BILLABLE ITEM
+var domainBillableAutoRenew, domainBillablePreventDeactivation, domainBillableHideDetails bool
+var domainBillableExtra1, domainBillableExtra2, domainBillableExternalInfo string
+
+var domainBillUpdateCmd = &cobra.Command{
+	Use:   "update [domain]",
+	Short: "Update billableItem for domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+
+		req := types.BillableItemUpdateRequest{
+			AutoRenew:          domainBillableAutoRenew,
+			Extra1:             domainBillableExtra1,
+			Extra2:             domainBillableExtra2,
+			ExternalInfo:       domainBillableExternalInfo,
+			PrevenDeactivation: domainBillablePreventDeactivation,
+			HideDetails:        domainBillableHideDetails,
+		}
+
+		Level27Client.DomainBillableItemUpdate(id, req)
 	},
 }

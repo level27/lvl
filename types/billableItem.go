@@ -19,7 +19,7 @@ type BillableItem struct {
 		ManuallyAdded        interface{} `json:"manuallyAdded"`
 		AllowToSkipInvoicing bool        `json:"allowToSkipInvoicing"`
 		ID                   int         `json:"id"`
-		Price                interface{}         `json:"price"`
+		Price                interface{} `json:"price"`
 		DtExpires            interface{} `json:"dtExpires"`
 		Quantity             int         `json:"quantity"`
 		Description          string      `json:"description"`
@@ -32,7 +32,7 @@ type BillableItem struct {
 			ID       int    `json:"id"`
 			Period   int    `json:"perion"`
 			Currency string `json:"currency"`
-			Price    string    `json:"price"`
+			Price    string `json:"price"`
 			Timing   string `json:"timing"`
 			Status   int    `json:"status"`
 		} `json:"productPrice"`
@@ -50,4 +50,14 @@ type BillableItem struct {
 // returns the billable item for GET call
 type BillableItemGet struct {
 	BillableItem BillableItem `json:"billableitem"`
+}
+
+// request for updating a billable item
+type BillableItemUpdateRequest struct {
+	AutoRenew          bool   `json:"autoRenew"`
+	Extra1             string `json:"extra1"`
+	Extra2             string `json:"extra2"`
+	ExternalInfo       string `json:"externalInfo"`
+	PrevenDeactivation bool   `json:"preventDeactivation"`
+	HideDetails        bool   `json:"hideDetails"`
 }

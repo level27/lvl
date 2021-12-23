@@ -266,6 +266,7 @@ func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPost
 func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
 	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
 
+	// if 'yes' flag is set no confirmation question should be askes
 	if confimation{
 		err := c.invokeAPI("DELETE", endpoint, nil, nil)
 		AssertApiError(err, "Billable item")
@@ -293,5 +294,11 @@ func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
 	}
 	}
 	
+}
 
+// UPDATE
+func (c *Client) DomainBillableItemUpdate(domainId int, req types.BillableItemUpdateRequest){
+	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
+	err := c.invokeAPI("PATCH", endpoint, req, nil)
+	AssertApiError(err, "billable item")
 }
