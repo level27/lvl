@@ -152,6 +152,7 @@ func init() {
 	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
 	flags = domainBillCreateCmd.Flags()
 	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
+	flags.IntVarP(&domainBillableAgreement, "agreement", "a", 0, "the unique ID og an agreement")
 
 	// DELETE BILLABLEITEM
 	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
@@ -643,6 +644,7 @@ func MakeBillableItemTable(billableItem types.BillableItem) {
 
 // CREATE A BILLABLEITEM (ADMIN ONLY)
 var externalInfo string
+var domainBillableAgreement int
 var domainBillCreateCmd = &cobra.Command{
 	Use:   "create [domain] [flags]",
 	Short: "Create a billableitem (admin only)",
@@ -652,13 +654,28 @@ var domainBillCreateCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		request := types.DomainBillPostRequest{
+		reqMain := types.DomainBillPostRequest{
 			ExternalInfo: externalInfo,
 		}
+		reqAgreement := types.BillableItemAgreement{
+			Agreement: domainBillableAgreement,
+		}
+		if domainBillableAgreement != 0 {
+			if Level27Client.CheckForBillableItem(id) {
+				Level27Client.DomainBillableItemAddAgreement(id, reqAgreement)
+				MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
+			} else {
+				Level27Client.DomainBillableItemCreate(id, reqMain)
+				Level27Client.DomainBillableItemAddAgreement(id, reqAgreement)
+				MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
 
-		Level27Client.DomainBillableItemCreate(id, request)
+			}
 
-		MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
+		} else {
+			Level27Client.DomainBillableItemCreate(id, reqMain)
+			MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
+		}
+
 	},
 }
 

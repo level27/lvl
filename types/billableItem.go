@@ -61,3 +61,13 @@ type BillableItemUpdateRequest struct {
 	PrevenDeactivation bool   `json:"preventDeactivation"`
 	HideDetails        bool   `json:"hideDetails"`
 }
+
+// request data for posting billableItem
+type DomainBillPostRequest struct {
+	ExternalInfo string `json:"externalInfo"`
+}
+
+// request data for posting an agreement to a billableItem
+type BillableItemAgreement struct {
+	Agreement int `json:"agreement"`
+}

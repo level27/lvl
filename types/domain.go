@@ -295,6 +295,3 @@ type DomainNotificationPostRequest struct {
 
 // ------------------------------------------ BILLABLEITEMS ---------------------------------------------
 
-type DomainBillPostRequest struct {
-	ExternalInfo string `json:"externalInfo"`
-}
