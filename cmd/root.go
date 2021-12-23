@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -208,7 +209,8 @@ func outputFormatTableYaml(objects interface{}) {
 }
 
 func outputFormatTemplateText(object interface{}, templatePath string) {
-	tmpl := template.Must(template.ParseFiles(templatePath))
+	_, fileName := path.Split(templatePath)
+	tmpl := template.Must(template.New(fileName).Funcs(utils.TemplateHelpers()).ParseFiles(templatePath))
 	err := tmpl.Execute(os.Stdout, object)
 	if err != nil {
 		panic(err)

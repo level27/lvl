@@ -298,3 +298,28 @@ type DomainNotificationPostRequest struct {
 type DomainBillPostRequest struct {
 	ExternalInfo string `json:"externalInfo"`
 }
+
+// Domain check
+type DomainCheckResult struct {
+	Success                             bool   `json:"success"`
+	Status                              string `json:"status"`
+	Action                              string `json:"action"`
+	DomaintypeId                        int    `json:"domaintypeId"`
+	DomainNameWithExtension             string `json:"domainNameWithExtension"`
+	RequestIncomingTransferCodePossible bool   `json:"requestIncomingTransferCodePossible"`
+	TransferAutoLicensee                bool   `json:"transferAutoLicensee"`
+	TransferEppCodeRequired             bool   `json:"transferEppCodeRequired"`
+	Products                            []struct {
+		Id string `json:"id"`
+		Description string `json:"description"`
+		Prices []struct {
+			Id       int    `json:"id"`
+			Period   int    `json:"period"`
+			Currency string `json:"currency"`
+			Price    string `json:"price"`
+			Timing   string `json:"timing"`
+			Default  bool   `json:"default"`
+			Status   int    `json:"sttaus"`
+		} `json:"prices"`
+	} `json:"products"`
+}
