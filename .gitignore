@@ -9,3 +9,5 @@ Thumbs.db
 ehthumbs.db
 
 *.exe
+# Compiled binary (Linux/macOS)
+lvl
