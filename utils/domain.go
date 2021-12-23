@@ -321,3 +321,15 @@ func (c *Client) DomainBillableItemUpdate(domainId int, req types.BillableItemUp
 	err := c.invokeAPI("PATCH", endpoint, req, nil)
 	AssertApiError(err, "billable item")
 }
+
+
+// Check domain availability
+func (c *Client) DomainCheck(name string, extension string) types.DomainCheckResult {
+	var checkResult types.DomainCheckResult
+
+	endpoint := fmt.Sprintf("domains/check?name=%s&extension=%s", url.QueryEscape(name), url.QueryEscape(extension))
+	err := c.invokeAPI("GET", endpoint, nil, &checkResult)
+	AssertApiError(err, "domainCheck")
+
+	return checkResult
+}

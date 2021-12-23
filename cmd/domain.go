@@ -168,6 +168,8 @@ func init() {
 	flags.BoolVarP(&domainBillablePreventDeactivation, "preventdeactivation", "p", true, "Prevent deactivation (default: true) - admin only")
 	flags.BoolVarP(&domainBillableHideDetails, "hidedetails", "", true, "Hide details (default: true) - admin only")
 
+	// CHECK
+	domainCmd.AddCommand(domainCheckCmd)
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -291,11 +293,18 @@ func getDomainRequestData() types.DomainRequest {
 	return requestData
 }
 
-// Gets the domain type extension for a full domain name.
-func getDomainTypeForDomain(domain string) (string, string, int) {
+// Splits a domain name into its name and extension respectively.
+func splitDomainName(domain string) (string, string) {
 	idx := strings.IndexByte(domain, '.')
 	extension := domain[idx+1:]
 	name := domain[:idx]
+
+	return name, extension
+}
+
+// Gets the domain type extension for a full domain name.
+func getDomainTypeForDomain(domain string) (string, string, int) {
+	name, extension := splitDomainName(domain)
 	res := Level27Client.Extension()
 
 	for _, provider := range res {
@@ -725,5 +734,18 @@ var domainBillUpdateCmd = &cobra.Command{
 		}
 
 		Level27Client.DomainBillableItemUpdate(id, req)
+	},
+}
+var domainCheckCmd = &cobra.Command{
+	Use:   "check [domain name]",
+	Short: "Check availability of a domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		domain := args[0]
+		name, extension := splitDomainName(domain)
+
+		status := Level27Client.DomainCheck(name, extension)
+
+		outputFormatTemplate(status, "templates/domainCheck.tmpl")
 	},
 }
