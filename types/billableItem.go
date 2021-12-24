@@ -71,7 +71,7 @@ type DomainBillPostRequest struct {
 type BillableItemDetailsPostRequest struct {
 	Product     string `json:"product"`
 	Description string `json:"description"`
-	Price       string `json:"price"`
+	Price       int    `json:"price"`
 	DtExpires   string `json:"dtExpires"`
 	Quantity    int    `json:"quantity"`
 }

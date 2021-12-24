@@ -154,6 +154,16 @@ func init() {
 	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
 	flags.IntVarP(&domainBillableAgreement, "agreement", "a", 0, "the unique ID og an agreement")
 
+	// CREATE BILLABLEITEM DETAIL
+	domainBillableItemCmd.AddCommand(domainBillableDetailCmd)
+	domainBillableDetailCmd.AddCommand(domainBillableDetailCreateCmd)
+	flags = domainBillableDetailCreateCmd.Flags()
+	flags.StringVarP(&domainBillableDetailProduct, "product", "p", "", "The ID/Name of the product")
+	flags.StringVarP(&domainBillableDetailDescription, "description", "s", "", "The description of the product")
+	flags.StringVarP(&domainBillableDetailDtExpires, "expires", "e", "", "Datetime of expiring")
+	flags.IntVarP(&domainBillableDetailPrice, "price", "",0, "Price in cents of the product")
+	flags.IntVarP(&domainBillableDetailQuantity, "quantity", "q", 0 , "Quantity of the product")
+
 	// DELETE BILLABLEITEM
 	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
 	domainBillDeleteCmd.Flags().BoolVarP(&domainBillDeleteIsYes, "yes", "y", false, "Automaticly choose 'yes' to confirm deletion of given ID(s)")
@@ -686,7 +696,38 @@ var domainBillCreateCmd = &cobra.Command{
 
 	},
 }
+//BILLABLE ITEMS DETAILS SECTION
+var domainBillableDetailCmd = &cobra.Command{
+	Use: "details",
+	Short: "Manage details for billableItem",
+}
+// CREATE BILLABLEITEM DETAILS
+var domainBillableDetailProduct, domainBillableDetailDescription, domainBillableDetailDtExpires string
+var domainBillableDetailPrice , domainBillableDetailQuantity int
 
+var domainBillableDetailCreateCmd = &cobra.Command{
+	Use: "create [domainID]",
+	Short: "Create a detail for a billableItem on a domain",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+
+		request := types.BillableItemDetailsPostRequest{
+			Product: domainBillableDetailProduct,
+			Price: domainBillableDetailPrice,
+			Description: domainBillableDetailDescription,
+			DtExpires: domainBillableDetailDtExpires,
+			Quantity: domainBillableDetailQuantity,
+
+
+
+		}
+		Level27Client.DomainBillableDetailsUpdate(id, request)
+	},
+}
 //DELETE BILLABLEITEM
 var domainBillDeleteIsYes bool
 var domainBillDeleteCmd = &cobra.Command{
