@@ -274,22 +274,6 @@ func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPost
 
 }
 
-// CREATE AN AGREEMENT FOR A BILLABLEITEM
-func (c *Client) DomainBillableItemCreateAgreement(domainId int, req types.BillableItemAgreement) {
-	endpoint := fmt.Sprintf("domains/%v/billableitem/agreements", domainId)
-
-	err := c.invokeAPI("POST", endpoint, req, nil)
-	AssertApiError(err, "billableItem agreement")
-}
-
-// CREATE A DETAIL FOR A BILLABLEITEM
-func (c *Client) DomainBillableDetailsUpdate(domainId int, req types.BillableItemDetailsPostRequest){
-	endpoint := fmt.Sprintf("domains/%v/billableitem/details", domainId)
-	err := c.invokeAPI("POST", endpoint, req, nil)
-	AssertApiError(err, "billableItem detail")
-}
-
-
 // ---------------------------- DELETE
 //DELETE
 func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
@@ -331,6 +315,26 @@ func (c *Client) DomainBillableItemUpdate(domainId int, req types.BillableItemUp
 	err := c.invokeAPI("PATCH", endpoint, req, nil)
 	AssertApiError(err, "billable item")
 }
+
+// ------------------------------------------------------- BILLABLEITEM / DETAIL---------------------------------------------------------------------
+
+// // CREATE A DETAIL FOR A BILLABLEITEM
+// func (c *Client) DomainBillableDetailsCreate(domainId int, req types.BillableItemDetailsPostRequest){
+// 	endpoint := fmt.Sprintf("domains/%v/billableitem/details", domainId)
+// 	err := c.invokeAPI("POST", endpoint, req, nil)
+// 	AssertApiError(err, "billableItem detail")
+// }
+
+
+// // CREATE AN AGREEMENT FOR A BILLABLEITEM
+// func (c *Client) DomainBillableItemCreateAgreement(domainId int, req types.BillableItemAgreement) {
+// 	endpoint := fmt.Sprintf("domains/%v/billableitem/agreements", domainId)
+
+// 	err := c.invokeAPI("POST", endpoint, req, nil)
+// 	AssertApiError(err, "billableItem agreement")
+// }
+
+
 
 // -------------------------------------------------------CHECK AVAILABILITY---------------------------------------------------------------------
 // Check domain availability
