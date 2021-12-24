@@ -67,6 +67,15 @@ type DomainBillPostRequest struct {
 	ExternalInfo string `json:"externalInfo"`
 }
 
+// request data for posting a detail for a billableItem
+type BillableItemDetailsPostRequest struct {
+	Product     string `json:"product"`
+	Description string `json:"description"`
+	Price       string `json:"price"`
+	DtExpires   string `json:"dtExpires"`
+	Quantity    int    `json:"quantity"`
+}
+
 // request data for posting an agreement to a billableItem
 type BillableItemAgreement struct {
 	Agreement int `json:"agreement"`

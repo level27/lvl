@@ -670,11 +670,11 @@ var domainBillCreateCmd = &cobra.Command{
 		}
 		if domainBillableAgreement != 0 {
 			if Level27Client.CheckForBillableItem(id) {
-				Level27Client.DomainBillableItemAddAgreement(id, reqAgreement)
+				Level27Client.DomainBillableItemCreateAgreement(id, reqAgreement)
 				MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
 			} else {
 				Level27Client.DomainBillableItemCreate(id, reqMain)
-				Level27Client.DomainBillableItemAddAgreement(id, reqAgreement)
+				Level27Client.DomainBillableItemCreateAgreement(id, reqAgreement)
 				MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
 
 			}

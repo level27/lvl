@@ -263,7 +263,7 @@ func (c* Client) CheckForBillableItem (domainId int) bool{
 		return false
 	}
 }
-
+//--------------------------- CREATE 
 //CREATE BILLABLEITEM
 func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPostRequest) {
 
@@ -275,13 +275,22 @@ func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPost
 }
 
 // CREATE AN AGREEMENT FOR A BILLABLEITEM
-func (c *Client) DomainBillableItemAddAgreement(domainId int, req types.BillableItemAgreement) {
+func (c *Client) DomainBillableItemCreateAgreement(domainId int, req types.BillableItemAgreement) {
 	endpoint := fmt.Sprintf("domains/%v/billableitem/agreements", domainId)
 
 	err := c.invokeAPI("POST", endpoint, req, nil)
-	AssertApiError(err, "billable item")
+	AssertApiError(err, "billableItem agreement")
 }
 
+// CREATE A DETAIL FOR A BILLABLEITEM
+func (c *Client) DomainBillableDetailsUpdate(domainId int, req types.BillableItemDetailsPostRequest){
+	endpoint := fmt.Sprintf("domains/%v/billableitem/details", domainId)
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "billableItem detail")
+}
+
+
+// ---------------------------- DELETE
 //DELETE
 func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
 	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
@@ -315,14 +324,15 @@ func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
 
 }
 
-// UPDATE
+// ---------------------------- UPDATE
+// UPDATE BILLABLEITEM
 func (c *Client) DomainBillableItemUpdate(domainId int, req types.BillableItemUpdateRequest) {
 	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
 	err := c.invokeAPI("PATCH", endpoint, req, nil)
 	AssertApiError(err, "billable item")
 }
 
-
+// -------------------------------------------------------CHECK AVAILABILITY---------------------------------------------------------------------
 // Check domain availability
 func (c *Client) DomainCheck(name string, extension string) types.DomainCheckResult {
 	var checkResult types.DomainCheckResult
