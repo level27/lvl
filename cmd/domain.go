@@ -193,9 +193,13 @@ var domainDescribeCmd = &cobra.Command{
 	Short: "Get detailed info about a domain",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		domainId, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid domain ID!")
+		}
 		domainID := args[0]
 		domain := Level27Client.Domain("GET", domainID, nil)
-
+		domain.Jobs = Level27Client.DomainJobHistoryGet(domainId)
 		outputFormatTemplate(domain, "templates/domain.tmpl")
 	},
 }
@@ -660,6 +664,7 @@ var domainCheckCmd = &cobra.Command{
 
 // ---------------------------------------------- JOB HISTORY DOMAINS ------------------------------------------------
 
+// get list of job history
 var domainJobHistoryCmd = &cobra.Command{
 	Use:   "jobs [domainId]",
 	Short: "Manage the job history for a domain",
@@ -676,6 +681,7 @@ var domainJobHistoryCmd = &cobra.Command{
 	},
 }
 
+// get detailed job history for a root job
 var domainRootJobHistoryCmd = &cobra.Command{
 	Use:   "root",
 	Short: "get detailed jobs",

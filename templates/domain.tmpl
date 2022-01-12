@@ -53,3 +53,10 @@ Teams ({{.CountTeams}}):
     OrganisationID: {{.OrganisationId}}
 {{- end}}
 {{- end}}
+{{- if .Jobs}}
+Latest jobs:
+    ID       Message
+{{- range .Jobs}}
+  {{.Id}} {{.Message}}
+{{- end}}
+{{- end}}

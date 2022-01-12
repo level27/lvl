@@ -275,8 +275,8 @@ func (c *Client) DomainCheck(name string, extension string) types.DomainCheckRes
 }
 
 // ------------------------------------------------------- JOB HISTORY ---------------------------------------------------------------------
-func (c *Client) DomainJobHistoryGet(domainId int) []types.DomainJobHistory {
-	var historyResult []types.DomainJobHistory
+func (c *Client) DomainJobHistoryGet(domainId int) []types.Job {
+	var historyResult []types.Job
 
 	endpoint := fmt.Sprintf("jobs/history/domain/%v", domainId)
 	err := c.invokeAPI("GET", endpoint, nil, &historyResult)
@@ -286,8 +286,7 @@ func (c *Client) DomainJobHistoryGet(domainId int) []types.DomainJobHistory {
 	return historyResult
 }
 
-
-func (c *Client) DomainJobHistoryRootGet(rooJobId int) types.Job{
+func (c *Client) DomainJobHistoryRootGet(rooJobId int) types.Job {
 	var job types.Job
 	endpoint := fmt.Sprintf("jobs/history/root/%v", rooJobId)
 	err := c.invokeAPI("GET", endpoint, nil, &job)
