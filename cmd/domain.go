@@ -157,6 +157,8 @@ func init() {
 	// --------------------------------------------------- JOB HISTORY --------------------------------------------------------
 	domainCmd.AddCommand(domainJobHistoryCmd)
 
+	domainCmd.AddCommand(domainRootJobHistoryCmd)
+
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -671,5 +673,18 @@ var domainJobHistoryCmd = &cobra.Command{
 
 		outputFormatTable(history, []string{"ID", "STATUS", "MESSAGE"}, []string{"Id", "Status", "Message"})
 
+	},
+}
+
+var domainRootJobHistoryCmd = &cobra.Command{
+	Use:   "root",
+	Short: "get detailed jobs",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		fmt.Print(Level27Client.DomainJobHistoryRootGet(id))
 	},
 }

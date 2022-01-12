@@ -321,12 +321,32 @@ type DomainCheckResult struct {
 }
 
 // ------------------------------------------ JOB HISTORY ---------------------------------------------
+type Job struct {
+	Action  string        `json:"action"`
+	Dt      int           `json:"dt"`
+	Eclass  string        `json:"eClass"`
+	Eid     int           `json:"eId"`
+	Estring string        `json:"eString"`
+	Hoe     int           `json:"hoe"`
+	Id      int           `json:"id"`
+	Jobs    []Job         `json:"jobs"`
+	Logs    []interface{} `json:"logs"`
+	Message string        `json:"msg"`
+	Service string        `json:"service"`
+	Status  int           `json:"status"`
+	System  int           `json:"system"`
+}
 
 type DomainJobHistory struct {
-	Id      int    `json:"id"`
-	Status  int    `json:"status"`
-	Conc    int    `json:"conc"`
-	Hoe     int    `json:"hoe"`
-	Message string `json:"msg"`
-	Dt      string `json:"dt"`
+	Id      int           `json:"id"`
+	Status  int           `json:"status"`
+	Conc    int           `json:"conc"`
+	Hoe     int           `json:"hoe"`
+	Message string        `json:"msg"`
+	Dt      string        `json:"dt"`
+	Logs    []interface{} `json:"logs"`
+}
+
+type DomainJobHistoryRoot struct {
+	DomainJobHistory
 }

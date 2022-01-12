@@ -285,3 +285,13 @@ func (c *Client) DomainJobHistoryGet(domainId int) []types.DomainJobHistory {
 
 	return historyResult
 }
+
+
+func (c *Client) DomainJobHistoryRootGet(rooJobId int) types.Job{
+	var job types.Job
+	endpoint := fmt.Sprintf("jobs/history/root/%v", rooJobId)
+	err := c.invokeAPI("GET", endpoint, nil, &job)
+	AssertApiError(err, "root job history")
+
+	return job
+}
