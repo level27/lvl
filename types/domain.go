@@ -93,8 +93,8 @@ type Domain struct {
 		AdminOnly      bool   `json:"adminOnly"`
 		OrganisationId int    `json:"organisationId"`
 	} `json:"teams"`
-	CountTeams int    `json:"countTeams"`
-	Jobs []Job	`json:"jobs"`
+	CountTeams int   `json:"countTeams"`
+	Jobs       []Job `json:"jobs"`
 }
 
 func (d Domain) String() string {
@@ -324,7 +324,7 @@ type DomainCheckResult struct {
 // ------------------------------------------ JOB HISTORY ---------------------------------------------
 type Job struct {
 	Action  string        `json:"action"`
-	Dt      string           `json:"dt"`
+	Dt      interface{}   `json:"dt"`
 	Eclass  string        `json:"eClass"`
 	Eid     int           `json:"eId"`
 	Estring string        `json:"eString"`

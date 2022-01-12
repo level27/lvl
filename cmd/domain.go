@@ -676,10 +676,35 @@ var domainJobHistoryCmd = &cobra.Command{
 		}
 		history := Level27Client.DomainJobHistoryGet(id)
 
-		outputFormatTable(history, []string{"ID", "STATUS", "MESSAGE"}, []string{"Id", "Status", "Message"})
+		notCompleted := FindNotcompletedJobs(history)
+
+		for _, job := range notCompleted{
+			fullData := Level27Client.DomainJobHistoryRootGet(job.Id)
+			
+			for _, subjob := range fullData.Jobs{
+				if subjob.Status != 50 {
+					notCompleted = append(notCompleted, subjob)
+					if len(subjob.Jobs) != 0 {
+						notCompleted = append(notCompleted, FindNotcompletedJobs(subjob.Jobs)...)
+					}
+				}
+			}
+		}  
+			outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE"}, []string{"Id", "Status", "Message"})
 
 	},
 }
+func FindNotcompletedJobs(jobs []types.Job) []types.Job {
+	var NotCompleted []types.Job
+	for _, job := range jobs {
+		if job.Status != 50 {
+			NotCompleted = append(NotCompleted, job)
+		}
+	}
+	return NotCompleted
+
+}
+
 
 // get detailed job history for a root job
 var domainRootJobHistoryCmd = &cobra.Command{
