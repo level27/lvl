@@ -319,3 +319,14 @@ type DomainCheckResult struct {
 		} `json:"prices"`
 	} `json:"products"`
 }
+
+// ------------------------------------------ JOB HISTORY ---------------------------------------------
+
+type DomainJobHistory struct {
+	Id      int    `json:"id"`
+	Status  int    `json:"status"`
+	Conc    int    `json:"conc"`
+	Hoe     int    `json:"hoe"`
+	Message string `json:"msg"`
+	Dt      string `json:"dt"`
+}
