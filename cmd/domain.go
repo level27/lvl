@@ -2,14 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"log"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -148,39 +146,15 @@ func init() {
 	// domainBillableItemCmd.AddCommand(domainBillableItemsGetCmd)
 	// addCommonGetFlags(domainBillableItemsGetCmd)
 
-	// CREATE BILLABLEITEM
+	// CREATE BILLABLEITEM (turn invoicing on)
 	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
 	flags = domainBillCreateCmd.Flags()
 	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
-	flags.IntVarP(&domainBillableAgreement, "agreement", "a", 0, "the unique ID og an agreement")
 
-	// DELETE BILLABLEITEM
+	// DELETE BILLABLEITEM (turn invoicing off)
 	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
-	domainBillDeleteCmd.Flags().BoolVarP(&domainBillDeleteIsYes, "yes", "y", false, "Automaticly choose 'yes' to confirm deletion of given ID(s)")
 
-	// // UPDATE BILLABLEITEM
-	// domainBillableItemCmd.AddCommand(domainBillUpdateCmd)
-	// flags = domainBillUpdateCmd.Flags()
-	// flags.BoolVarP(&domainBillableAutoRenew, "autorenew", "a", true, "Renew automaticly (default: true)")
-	// flags.StringVarP(&domainBillableExtra1, "extra1", "", "", "Extra1")
-	// flags.StringVarP(&domainBillableExtra2, "extra2", "", "", "Extra2")
-	// flags.StringVarP(&domainBillableExternalInfo, "externalinfo", "", "", "External info (required when billableitemInfo entities for an Organisation exist in db)")
-	// flags.BoolVarP(&domainBillablePreventDeactivation, "preventdeactivation", "p", true, "Prevent deactivation (default: true) - admin only")
-	// flags.BoolVarP(&domainBillableHideDetails, "hidedetails", "", true, "Hide details (default: true) - admin only")
-
-	// // CREATE BILLABLEITEM DETAIL
-	// domainBillableItemCmd.AddCommand(domainBillableDetailCmd)
-	// domainBillableDetailCmd.AddCommand(domainBillableDetailCreateCmd)
-	// flags = domainBillableDetailCreateCmd.Flags()
-	// flags.StringVarP(&domainBillableDetailProduct, "product", "p", "", "The ID/Name of the product")
-	// flags.StringVarP(&domainBillableDetailDescription, "description", "s", "", "The description of the product")
-	// flags.StringVarP(&domainBillableDetailDtExpires, "expires", "e", "", "Datetime of expiring")
-	// flags.IntVarP(&domainBillableDetailPrice, "price", "",0, "Price in cents of the product")
-	// flags.IntVarP(&domainBillableDetailQuantity, "quantity", "q", 0 , "Quantity of the product")
-	// domainBillableDetailCreateCmd.MarkFlagRequired("product")
-
-
-// --------------------------------------------------- AVAILABILITY/CHECK --------------------------------------------------------
+	// --------------------------------------------------- AVAILABILITY/CHECK --------------------------------------------------------
 	// CHECK
 	domainCmd.AddCommand(domainCheckCmd)
 }
@@ -626,7 +600,7 @@ var domainNotificationsGetCmd = &cobra.Command{
 // MAIN COMMAND
 var domainBillableItemCmd = &cobra.Command{
 	Use:   "billing",
-	Short: "Manage domain's billableItem (invoicing)",
+	Short: "Manage domain's invoicing (BillableItem)",
 }
 
 // // GET BILLABLEITEM
@@ -646,29 +620,12 @@ var domainBillableItemCmd = &cobra.Command{
 // 	},
 // }
 
-func MakeBillableItemTable(billableItem types.BillableItem) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"DESCRIPTION", "PRICE", "STATUS"})
-
-	for _, item := range billableItem.Details {
-
-		price, err := strconv.Atoi(item.ProductPrice.Price)
-		if err != nil {
-			price = 0
-		}
-		pricefl := float64(price) / 100
-		table.Append([]string{item.Product.Description, fmt.Sprintf("%v %v", item.ProductPrice.Currency, fmt.Sprintf("%.2f", pricefl)), strconv.Itoa(item.ProductPrice.Status)})
-	}
-
-	table.Render()
-}
-
 // CREATE A BILLABLEITEM / TURN ON BILLING(ADMIN ONLY)
 var externalInfo string
-var domainBillableAgreement int
+
 var domainBillCreateCmd = &cobra.Command{
 	Use:   "on [domain] [flags]",
-	Short: "Turn on billing for domain (admin only)",
+	Short: "Turn on billing for a domain (admin only)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
@@ -680,13 +637,12 @@ var domainBillCreateCmd = &cobra.Command{
 		}
 
 		Level27Client.DomainBillableItemCreate(id, req)
-		MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
 
 	},
 }
 
 //DELETE BILLABLEITEM/ TURN OF BILLING
-var domainBillDeleteIsYes bool
+
 var domainBillDeleteCmd = &cobra.Command{
 	Use:   "off [domainID]",
 	Short: "Turn off the billing for domain (admin only)",
@@ -696,14 +652,8 @@ var domainBillDeleteCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		// if 'yes' flag is set no confirmation question should be askes
-		if cmd.Flags().Changed("yes") {
-			domainBillDeleteIsYes = true
-		} else {
-			domainBillDeleteIsYes = false
-		}
 
-		Level27Client.DomainBillableItemDelete(id, domainBillDeleteIsYes)
+		Level27Client.DomainBillableItemDelete(id)
 
 	},
 }
