@@ -28,10 +28,10 @@ func (c *Client) App(method string, id interface{}, data interface{}) types.App 
 	return app
 }
 
-func (c *Client) Apps(filter string, number int) types.Apps {
+func (c *Client) Apps(getParams types.CommonGetParams) types.Apps {
 	var apps types.Apps
 
-	endpoint := "apps"
+	endpoint := fmt.Sprintf("apps?%s", formatCommonGetParams(getParams))
 	err := c.invokeAPI("GET", endpoint, nil, &apps)
 	AssertApiError(err, "app")
 

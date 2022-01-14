@@ -7,11 +7,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
 	"time"
 
+	"bitbucket.org/level27/lvl/types"
 	"github.com/Jeffail/gabs/v2"
 )
 
@@ -87,8 +89,7 @@ type successResponse struct {
 	Data interface{} `json:"data"`
 }
 
-func (c *Client) sendRequest(method string, endpoint string, data interface{}) ([]byte, error) {
-
+func (c *Client) sendRequestRaw(method string, endpoint string, data interface{}, headers map[string]string) (*http.Response, error) {
 	reqData := bytes.NewBuffer([]byte(nil))
 	if data != nil {
 		str, ok := data.(string)
@@ -126,8 +127,9 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 	req.Header.Set("User-Agent", "level27_lvl/1.0")
 	req.Header.Set("Authorization", c.apiKey)
 
@@ -136,11 +138,26 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		return nil, err
 	}
 
-	defer res.Body.Close()
-
 	if TraceRequests {
 		fmt.Fprintf(os.Stderr, "Response: %d %s\n", res.StatusCode, http.StatusText(res.StatusCode))
 	}
+
+	return res, err
+}
+
+func (c *Client) sendRequest(method string, endpoint string, data interface{}) ([]byte, error) {
+	headers := map[string]string{"Accept": "application/json"}
+	if data != nil {
+		headers["Content-Type"] = "application/json"
+	}
+
+	res, err := c.sendRequestRaw(method, endpoint, data, headers)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
 
 	if method == "UPDATE" && res.StatusCode == http.StatusNoContent {
 		return nil, nil
@@ -159,34 +176,42 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 		fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(bodyPrint))
 	}
 
-	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		jsonParsed, err := gabs.ParseJSON(body)
-		if err != nil {
-			return nil, err
-		}
-
-		// log.Printf("client.go: ERROR: %v", jsonParsed)
-		for key, child := range jsonParsed.Search("errors", "children").ChildrenMap() {
-			if child.Data().(map[string]interface{})["errors"] != nil {
-				errorMessages := child.Data().(map[string]interface{})["errors"].([]interface{})
-				if len(errorMessages) > 0 {
-					for _, err := range errorMessages {
-						log.Printf("Key=>%v, Value=>%v\n", key, err)
-						return nil, fmt.Errorf("%v : %v", key, err)
-					}
-				}
-			}
-		}
-
-		var errRes errorResponse
-		if err = json.Unmarshal(body, &errRes); err == nil {
-			return nil, errRes
-		}
-
-		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
+	if isErrorCode(res.StatusCode) {
+		return nil, formatRequestError(res.StatusCode, body)
 	}
 
 	return body, nil
+}
+
+func isErrorCode(statusCode int) bool {
+	return statusCode < http.StatusOK || statusCode >= http.StatusBadRequest
+}
+
+func formatRequestError(statusCode int, body []byte) error {
+	jsonParsed, err := gabs.ParseJSON(body)
+	if err != nil {
+		return err
+	}
+
+	// log.Printf("client.go: ERROR: %v", jsonParsed)
+	for key, child := range jsonParsed.Search("errors", "children").ChildrenMap() {
+		if child.Data().(map[string]interface{})["errors"] != nil {
+			errorMessages := child.Data().(map[string]interface{})["errors"].([]interface{})
+			if len(errorMessages) > 0 {
+				for _, err := range errorMessages {
+					log.Printf("Key=>%v, Value=>%v\n", key, err)
+					return fmt.Errorf("%v : %v", key, err)
+				}
+			}
+		}
+	}
+
+	var errRes errorResponse
+	if err = json.Unmarshal(body, &errRes); err == nil {
+		return errRes
+	}
+
+	return fmt.Errorf("unknown error, status code: %d", statusCode)
 }
 
 func (c *Client) invokeAPI(method string, endpoint string, data interface{}, result interface{}) error {
@@ -207,7 +232,7 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 func AssertApiError(e error, directory string) {
 	TranslateStatusCode(e, directory)
 	if e != nil {
-		
+
 		log.Fatalf("client.go: API error - %s\n", e.Error())
 	}
 }
@@ -236,6 +261,10 @@ func TranslateStatusCode(e error, directory string) {
 	} else {
 		log.Println("Request succesfully executed")
 	}
-	
 
+
+}
+
+func formatCommonGetParams(params types.CommonGetParams) string {
+	return fmt.Sprintf("limit=%d&filter=%s", params.Limit, url.QueryEscape(params.Filter))
 }

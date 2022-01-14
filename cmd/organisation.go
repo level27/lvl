@@ -29,7 +29,7 @@ func init() {
 func getOrganisations(ids []string) []types.StructOrganisation {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.Organisations(optFilter, optNumber).Data
+		return c.Organisations(optGetParameters).Data
 	} else {
 		organisations := make([]types.StructOrganisation, len(ids))
 		for idx, id := range ids {

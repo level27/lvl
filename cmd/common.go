@@ -19,17 +19,18 @@ import (
 	"strconv"
 	"strings"
 
+	"bitbucket.org/level27/lvl/types"
+	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
-var optNumber = 20
-var optFilter = ""
+var optGetParameters types.CommonGetParams
 
 func addCommonGetFlags(cmd *cobra.Command) {
 	pf := cmd.Flags()
 
-	pf.IntVarP(&optNumber, "number", "n", optNumber, "How many things should we retrieve from the API?")
-	pf.StringVarP(&optFilter, "filter", "f", optFilter, "How to filter API results?")
+	pf.IntVarP(&optGetParameters.Limit, "number", "n", optGetParameters.Limit, "How many things should we retrieve from the API?")
+	pf.StringVarP(&optGetParameters.Filter, "filter", "f", optGetParameters.Filter, "How to filter API results?")
 }
 
 // common date used for Post operations at /Domains
@@ -73,6 +74,10 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
 
 	command.SortFlags = false
+}
+
+func integrityCheckSummaryFmtDtRequested(s types.IntegrityCheckSummary) string {
+	return utils.FormatUnixTime(s.DtRequested)
 }
 
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
