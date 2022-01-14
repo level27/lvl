@@ -779,10 +779,7 @@ var domainIntegrityGetCmd = &cobra.Command{
 
 		checks := getDomainIntegrityChecks(domainId, checkIds)
 
-		outputFormatTableFuncs(
-			checks,
-			[]string{"ID", "STATUS", "DATE"},
-			[]interface{}{"Id", "Status", integrityCheckSummaryFmtDtRequested})
+		outputFormatIntegrityCheckTable(checks)
 	},
 }
 

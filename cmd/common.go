@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -74,10 +73,6 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
 
 	command.SortFlags = false
-}
-
-func integrityCheckSummaryFmtDtRequested(s types.IntegrityCheckSummary) string {
-	return utils.FormatUnixTime(s.DtRequested)
 }
 
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
