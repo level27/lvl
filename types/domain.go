@@ -293,11 +293,7 @@ type DomainNotificationPostRequest struct {
 	Params string `json:"params"`
 }
 
-// ------------------------------------------ BILLABLEITEMS ---------------------------------------------
-
-type DomainBillPostRequest struct {
-	ExternalInfo string `json:"externalInfo"`
-}
+// ------------------------------------------ CHECK/AVAILABILITY ---------------------------------------------
 
 // Domain check
 type DomainCheckResult struct {
@@ -310,9 +306,9 @@ type DomainCheckResult struct {
 	TransferAutoLicensee                bool   `json:"transferAutoLicensee"`
 	TransferEppCodeRequired             bool   `json:"transferEppCodeRequired"`
 	Products                            []struct {
-		Id string `json:"id"`
+		Id          string `json:"id"`
 		Description string `json:"description"`
-		Prices []struct {
+		Prices      []struct {
 			Id       int    `json:"id"`
 			Period   int    `json:"period"`
 			Currency string `json:"currency"`

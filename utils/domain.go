@@ -220,80 +220,71 @@ func (c *Client) DomainAccesRemove(domainId int, organisationId int) {
 
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 // GET LIST OF ALL NOTIFICATIONS FOR DOMAIN
-func (c *Client) DomainNotificationGet(domainId int) []types.Notification {
-	var notifications struct {
-		Notifications []types.Notification `json:"notifications"`
-	}
-	endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
-	err := c.invokeAPI("GET", endpoint, nil, &notifications)
-	AssertApiError(err, "notifications")
-	return notifications.Notifications
-}
+// func (c *Client) DomainNotificationGet(domainId int) []types.Notification {
+// 	var notifications struct {
+// 		Notifications []types.Notification `json:"notifications"`
+// 	}
+// 	endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
+// 	err := c.invokeAPI("GET", endpoint, nil, &notifications)
+// 	AssertApiError(err, "notifications")
+// 	return notifications.Notifications
+// }
 
-// CREATE A NOTIFICATION
-func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificationPostRequest) {
-	endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
-	err := c.invokeAPI("POST", endpoint, req, nil)
+// // CREATE A NOTIFICATION
+// func (c *Client) DomainNotificationAdd(domainId int, req types.DomainNotificationPostRequest) {
+// 	endpoint := fmt.Sprintf("domains/%v/notifications", domainId)
+// 	err := c.invokeAPI("POST", endpoint, req, nil)
 
-	AssertApiError(err, "notifications")
-}
+// 	AssertApiError(err, "notifications")
+// }
 
 // --------------------------------------------------- BILLABLE ITEM --------------------------------------------------------
 
 // GET
 func (c *Client) DomainBillableItemsGet(domainId int) types.BillableItemGet {
+
 	var billableItem types.BillableItemGet
 	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
 	err := c.invokeAPI("GET", endpoint, nil, &billableItem)
+
 	AssertApiError(err, "BillableItem")
 
 	return billableItem
-
 }
 
-//CREATE
+//CHECK IF BILLABLEITEM EXISTS
+func (c *Client) CheckForBillableItem(domainId int) bool {
+	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
+	err := c.invokeAPI("GET", endpoint, nil, nil)
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+//--------------------------- CREATE (Turn invoicing on)
+//CREATE BILLABLEITEM
 func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPostRequest) {
+
 	endpoint := fmt.Sprintf("domains/%v/bill", domainid)
+
 	err := c.invokeAPI("POST", endpoint, req, nil)
 	AssertApiError(err, "billable item")
 
 }
 
+// ---------------------------- DELETE (turn invoicing off)
 //DELETE
-func (c *Client) DomainBillableItemDelete(domainId int, confimation bool) {
+func (c *Client) DomainBillableItemDelete(domainId int) {
 	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
 
-	if confimation{
-		err := c.invokeAPI("DELETE", endpoint, nil, nil)
-		AssertApiError(err, "Billable item")
-	}else{
-		var userResponse string
-
-
-	question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
-	fmt.Print(question)
-	_, err := fmt.Scan(&userResponse)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	switch strings.ToLower(userResponse) {
-	case "y", "yes":
-		err := c.invokeAPI("DELETE", endpoint, nil, nil)
-		AssertApiError(err, "Billable item")
-	case "n", "no":
-		log.Printf("Delete billableItem canceled for domain: %v", domainId)
-	default:
-		log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
-		confimation = false
-		c.DomainBillableItemDelete(domainId, confimation)
-	}
-	}
-
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "Billable item")
 
 }
 
-
+// -------------------------------------------------------CHECK AVAILABILITY---------------------------------------------------------------------
 // Check domain availability
 func (c *Client) DomainCheck(name string, extension string) types.DomainCheckResult {
 	var checkResult types.DomainCheckResult

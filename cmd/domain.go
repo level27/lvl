@@ -2,14 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"log"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -144,19 +142,19 @@ func init() {
 	// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
 	domainCmd.AddCommand(domainBillableItemCmd)
 
-	// GET BILLABLEITEMS
-	domainBillableItemCmd.AddCommand(domainBillableItemsGetCmd)
-	addCommonGetFlags(domainBillableItemsGetCmd)
+	// // GET BILLABLEITEMS
+	// domainBillableItemCmd.AddCommand(domainBillableItemsGetCmd)
+	// addCommonGetFlags(domainBillableItemsGetCmd)
 
-	// CREATE BILLABLEITEM
+	// CREATE BILLABLEITEM (turn invoicing on)
 	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
 	flags = domainBillCreateCmd.Flags()
 	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
 
-	// DELETE BILLABLEITEM
+	// DELETE BILLABLEITEM (turn invoicing off)
 	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
-	domainBillDeleteCmd.Flags().BoolVarP(&domainBillDeleteIsYes, "yes", "y", false, "Automaticly choose 'yes' to confirm deletion of given ID(s)")
 
+	// --------------------------------------------------- AVAILABILITY/CHECK --------------------------------------------------------
 	// CHECK
 	domainCmd.AddCommand(domainCheckCmd)
 
@@ -245,12 +243,11 @@ var domainCreateContactOnSite int
 // change given flag data into request data to put or post
 func getDomainRequestData() types.DomainRequest {
 	requestData := types.DomainRequest{
-		Name:        domainCreateName,
-		NameServer1: &domainCreateNs1,
-		NameServer2: domainCreateNs2,
-		NameServer3: domainCreateNs3,
-		NameServer4: domainCreateNs4,
-
+		Name:          domainCreateName,
+		NameServer1:   &domainCreateNs1,
+		NameServer2:   domainCreateNs2,
+		NameServer3:   domainCreateNs3,
+		NameServer4:   domainCreateNs4,
 		NameServer1Ip: domainCreateNsIp1,
 		NameServer2Ip: domainCreateNsIp2,
 		NameServer3Ip: domainCreateNsIp3,
@@ -616,70 +613,53 @@ var domainNotificationsGetCmd = &cobra.Command{
 // --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
 // MAIN COMMAND
 var domainBillableItemCmd = &cobra.Command{
-	Use:   "billable",
-	Short: "Manage domain's billable item's",
+	Use:   "billing",
+	Short: "Manage domain's invoicing (BillableItem)",
 }
 
-// GET BILLABLEITEM
-var domainBillableItemsGetCmd = &cobra.Command{
-	Use:   "get [domain]",
-	Short: "get a list of all billableItems for a domain",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatal("no valid domain ID")
-		}
-		billableItem := Level27Client.DomainBillableItemsGet(id)
+// // GET BILLABLEITEM
+// var domainBillableItemsGetCmd = &cobra.Command{
+// 	Use:   "get [domain]",
+// 	Short: "get a list of all billableItems for a domain",
+// 	Args:  cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		id, err := strconv.Atoi(args[0])
+// 		if err != nil {
+// 			log.Fatal("no valid domain ID")
+// 		}
+// 		billableItem := Level27Client.DomainBillableItemsGet(id)
 
-		MakeBillableItemTable(billableItem.BillableItem)
+// 		MakeBillableItemTable(billableItem.BillableItem)
 
-	},
-}
+// 	},
+// }
 
-func MakeBillableItemTable(billableItem types.BillableItem) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"DESCRIPTION", "PRICE", "STATUS"})
-
-	for _, item := range billableItem.Details {
-
-		price, err := strconv.Atoi(item.ProductPrice.Price)
-		if err != nil {
-			price = 0
-		}
-		pricefl := float64(price) / 100
-		table.Append([]string{item.Product.Description, fmt.Sprintf("%v %v", item.ProductPrice.Currency, fmt.Sprintf("%.2f", pricefl)), strconv.Itoa(item.ProductPrice.Status)})
-	}
-
-	table.Render()
-}
-
-// CREATE A BILLABLEITEM (ADMIN ONLY)
+// CREATE A BILLABLEITEM / TURN ON BILLING(ADMIN ONLY)
 var externalInfo string
+
 var domainBillCreateCmd = &cobra.Command{
-	Use:   "create [domain] [flags]",
-	Short: "Create a billableitem (admin only)",
+	Use:   "on [domain] [flags]",
+	Short: "Turn on billing for a domain (admin only)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		request := types.DomainBillPostRequest{
+		req := types.DomainBillPostRequest{
 			ExternalInfo: externalInfo,
 		}
 
-		Level27Client.DomainBillableItemCreate(id, request)
+		Level27Client.DomainBillableItemCreate(id, req)
 
-		MakeBillableItemTable(Level27Client.DomainBillableItemsGet(id).BillableItem)
 	},
 }
 
-//DELETE BILLABLEITEM
-var domainBillDeleteIsYes bool
+//DELETE BILLABLEITEM/ TURN OF BILLING
+
 var domainBillDeleteCmd = &cobra.Command{
-	Use:   "delete [domainID]",
-	Short: "Delete billable item from domain (admin only)",
+	Use:   "off [domainID]",
+	Short: "Turn off the billing for domain (admin only)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
@@ -687,17 +667,87 @@ var domainBillDeleteCmd = &cobra.Command{
 			log.Fatal("no valid domain ID")
 		}
 
-		if cmd.Flags().Changed("yes") {
-			domainBillDeleteIsYes = true
-		} else {
-			domainBillDeleteIsYes = false
-		}
-
-		Level27Client.DomainBillableItemDelete(id, domainBillDeleteIsYes)
+		Level27Client.DomainBillableItemDelete(id)
 
 	},
 }
 
+// // UPDATE BILLABLE ITEM
+// var domainBillableAutoRenew, domainBillablePreventDeactivation, domainBillableHideDetails bool
+// var domainBillableExtra1, domainBillableExtra2, domainBillableExternalInfo string
+
+// var domainBillUpdateCmd = &cobra.Command{
+// 	Use:   "update [domain]",
+// 	Short: "Update billableItem for domain",
+// 	Args:  cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		id, err := strconv.Atoi(args[0])
+// 		if err != nil {
+// 			log.Fatal("no valid domain ID")
+// 		}
+
+// 		req := types.BillableItemUpdateRequest{
+// 			AutoRenew:          domainBillableAutoRenew,
+// 			Extra1:             domainBillableExtra1,
+// 			Extra2:             domainBillableExtra2,
+// 			ExternalInfo:       domainBillableExternalInfo,
+// 			PrevenDeactivation: domainBillablePreventDeactivation,
+// 			HideDetails:        domainBillableHideDetails,
+// 		}
+
+// 		Level27Client.DomainBillableItemUpdate(id, req)
+// 	},
+// }
+
+// ---------------------------------------------- BILLABLEITEM / DETAILS ------------------------------------------------
+// //BILLABLE ITEMS DETAILS SECTION
+// var domainBillableDetailCmd = &cobra.Command{
+// 	Use: "details",
+// 	Short: "Manage details for billableItem",
+// }
+
+// // CREATE BILLABLEITEM DETAILS
+// var domainBillableDetailProduct, domainBillableDetailDescription, domainBillableDetailDtExpires string
+// var domainBillableDetailPrice , domainBillableDetailQuantity int
+
+// var domainBillableDetailCreateCmd = &cobra.Command{
+// 	Use: "create [domainID]",
+// 	Short: "Create a detail for a billableItem on a domain",
+// 	Args: cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		id, err := strconv.Atoi(args[0])
+// 		if err != nil {
+// 			log.Fatal("no valid domain ID")
+// 		}
+
+// 		request := types.BillableItemDetailsPostRequest{
+// 			Product: domainBillableDetailProduct,
+// 			Price: domainBillableDetailPrice,
+// 			Description: domainBillableDetailDescription,
+// 			DtExpires: domainBillableDetailDtExpires,
+// 			Quantity: domainBillableDetailQuantity,
+
+// 		}
+// 		Level27Client.DomainBillableDetailsCreate(id, request)
+// 	},
+// }
+
+// // DELETE BILLABLEITEM DETAILS
+// var domainBillableDetailDeleteCmd = &cobra.Command{
+// 	Use: "delete",
+// 	Short: "Delete a detail from a billableItem",
+// 	Args: cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		id, err := strconv.Atoi(args[0])
+// 		if err != nil {
+// 			log.Fatal("no valid domain ID")
+// 		}
+
+// 		fmt.Print(id)
+
+// 	},
+// }
+// ---------------------------------------------- CHECK / AVAILABILITY ------------------------------------------------
 var domainCheckCmd = &cobra.Command{
 	Use:   "check [domain name]",
 	Short: "Check availability of a domain",
