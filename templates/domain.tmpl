@@ -55,8 +55,7 @@ Teams ({{.CountTeams}}):
 {{- end}}
 {{- if .Jobs}}
 Latest jobs:
-    ID       Message
 {{- range .Jobs}}
-  {{.Id}} {{.Message}}
+ID: {{.Id}} - STATUS: {{.Status}}  - MESSAGE: {{.Message}}
 {{- end}}
 {{- end}}

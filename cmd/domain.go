@@ -278,6 +278,7 @@ func getDomainRequestData() types.DomainRequest {
 		if domainType == 0 {
 			log.Fatalf("Invalid domain extension: '%s'", extension)
 		}
+		
 
 		requestData.Domaintype = domainType
 		requestData.Name = name
@@ -675,12 +676,14 @@ var domainJobHistoryCmd = &cobra.Command{
 			log.Fatal("no valid domain ID")
 		}
 		history := Level27Client.DomainJobHistoryGet(id)
-
+		// filter jobs where status is not 50.
 		notCompleted := FindNotcompletedJobs(history)
 
+		// check for every job without status 50. the subjobs who don't have status 50
 		for _, job := range notCompleted{
 			fullData := Level27Client.DomainJobHistoryRootGet(job.Id)
 			
+
 			for _, subjob := range fullData.Jobs{
 				if subjob.Status != 50 {
 					notCompleted = append(notCompleted, subjob)
@@ -719,3 +722,4 @@ var domainRootJobHistoryCmd = &cobra.Command{
 		fmt.Print(Level27Client.DomainJobHistoryRootGet(id))
 	},
 }
+
