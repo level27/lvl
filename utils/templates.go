@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 	"text/template"
+	"time"
 )
 
 func TemplateHelpers() template.FuncMap {
@@ -18,5 +20,20 @@ func TemplateHelpers() template.FuncMap {
 
 			panic("Unknown currency: " + currency)
 		},
+		// Formats a string unix time and prints it
+		"formatUnixTime": func(secs string) string {
+			return FormatUnixTime(secs)
+		},
 	}
+}
+
+
+func FormatUnixTime(secondsString string) string {
+	secs, err := strconv.ParseInt(secondsString, 10, 64)
+	if err != nil {
+		return ""
+	}
+
+	reqTime := time.Unix(secs, 0)
+	return reqTime.Format("2006 Jan _2 15:04:05")
 }

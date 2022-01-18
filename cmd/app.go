@@ -31,7 +31,7 @@ func init() {
 func getApps(ids []string) []types.StructApp {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.Apps(optFilter, optNumber).Data
+		return c.Apps(optGetParameters).Data
 	} else {
 		apps := make([]types.StructApp, len(ids))
 		for idx, id := range ids {

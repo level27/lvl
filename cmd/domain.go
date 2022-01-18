@@ -157,6 +157,20 @@ func init() {
 	// --------------------------------------------------- AVAILABILITY/CHECK --------------------------------------------------------
 	// CHECK
 	domainCmd.AddCommand(domainCheckCmd)
+
+	// INTEGRITY CHECKS
+	domainCmd.AddCommand(domainIntegrityCmd)
+
+	domainIntegrityCmd.AddCommand(domainIntegrityGetCmd)
+	addCommonGetFlags(domainIntegrityGetCmd)
+
+	domainIntegrityCmd.AddCommand(domainIntegrityCreateCmd)
+	flags = domainIntegrityCreateCmd.Flags()
+	flags.BoolVar(&domainIntegrityCheckDoJobs, "doJobs", domainIntegrityCheckDoJobs, "Create jobs")
+	flags.BoolVar(&domainIntegrityCheckForceJobs, "forceJobs", domainIntegrityCheckForceJobs, "Create jobs even if integrity check failed")
+
+	domainIntegrityCmd.AddCommand(domainIntegrityDownloadCmd)
+	domainIntegrityDownloadCmd.Flags().StringVarP(&integrityDownload, "file", "f", "", "File to download the report to. This defaults to a generated file name in the current directory.")
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -175,7 +189,7 @@ var domainGetCmd = &cobra.Command{
 func getDomains(ids []string) []types.Domain {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.Domains(optFilter, optNumber)
+		return c.Domains(optGetParameters)
 	} else {
 		domains := make([]types.Domain, len(ids))
 		for idx, id := range ids {
@@ -400,7 +414,7 @@ var domainRecordGetCmd = &cobra.Command{
 func getDomainRecords(domainId int, ids []int) []types.DomainRecord {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.DomainRecords(domainId, recordGetType, optNumber, optFilter)
+		return c.DomainRecords(domainId, recordGetType, optGetParameters)
 	} else {
 		domains := make([]types.DomainRecord, len(ids))
 		for idx, id := range ids {
@@ -745,5 +759,74 @@ var domainCheckCmd = &cobra.Command{
 		status := Level27Client.DomainCheck(name, extension)
 
 		outputFormatTemplate(status, "templates/domainCheck.tmpl")
+	},
+}
+
+var domainIntegrityCmd = &cobra.Command{
+	Use: "integrity",
+	Short: "Commands for managing integrity checks on domains",
+}
+
+var domainIntegrityGetCmd = &cobra.Command{
+	Use: "get [domain id]",
+	Short: "Get a list of all integrity checks for a domain",
+	Args: cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
+		checkIds, err := convertStringsToIds(args[1:])
+		cobra.CheckErr(err)
+
+		checks := getDomainIntegrityChecks(domainId, checkIds)
+
+		outputFormatIntegrityCheckTable(checks)
+	},
+}
+
+func getDomainIntegrityChecks(domainId int, ids []int) []types.IntegrityCheckSummary {
+	c := Level27Client
+	if len(ids) == 0 {
+		return c.DomainIntegrityChecks(domainId, optGetParameters)
+	} else {
+		domains := make([]types.IntegrityCheckSummary, len(ids))
+		for idx, id := range ids {
+			domains[idx] = c.DomainIntegrityCheck(domainId, id).IntegrityCheckSummary
+		}
+		return domains
+	}
+}
+
+var domainIntegrityCheckDoJobs bool = true;
+var domainIntegrityCheckForceJobs bool = false;
+var domainIntegrityCreateCmd = &cobra.Command{
+	Use: "create [domain id]",
+	Short: "Create a new integrity report",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
+
+		result := Level27Client.DomainIntegrityCreate(domainId, domainIntegrityCheckDoJobs, domainIntegrityCheckForceJobs)
+		outputFormatTemplate(result, "templates/domainIntegrityCreate.tmpl")
+	},
+}
+
+var integrityDownload string
+var domainIntegrityDownloadCmd = &cobra.Command{
+	Use: "download [domain id] [check id]",
+	Short: "Download an integrity check as PDF file",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		domainId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
+		checkId, err := convertStringToId(args[0])
+		cobra.CheckErr(err)
+
+		if integrityDownload == "" {
+			// Auto-generate file name.
+			integrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", checkId, domainId)
+		}
+
+		Level27Client.DomainIntegrityCheckDownload(domainId, checkId, integrityDownload)
 	},
 }
