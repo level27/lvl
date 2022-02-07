@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"net/url"
 
 	"bitbucket.org/level27/lvl/types"
 )
@@ -30,10 +29,10 @@ func (c *Client) Organisation(method string, id interface{}, data interface{}) t
 }
 
 //Organisation gets a organisation from the API
-func (c *Client) Organisations(filter string, number int) types.Organisations {
+func (c *Client) Organisations(getParams types.CommonGetParams) types.Organisations {
 	var organisations types.Organisations
 
-	endpoint := fmt.Sprintf("organisations?limit=%d&filter=%s", number, url.QueryEscape(filter))
+	endpoint := fmt.Sprintf("organisations?%s", formatCommonGetParams(getParams))
 	err := c.invokeAPI("GET", endpoint, nil, &organisations)
 	AssertApiError(err, "organisation")
 

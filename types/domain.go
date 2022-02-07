@@ -351,3 +351,141 @@ type DomainJobHistory struct {
 type DomainJobHistoryRoot struct {
 	DomainJobHistory
 }
+// INTEGRITY CHECKS
+type DomainIntegrityCheck struct {
+	IntegrityCheckSummary
+	Object      string `json:"object"`
+	ObjectID    int    `json:"objectId"`
+	Results     struct {
+		Domain struct {
+			ID   int `json:"id"`
+			Data struct {
+				FullName          string      `json:"fullName"`
+				Status            string      `json:"status"`
+				StatusColor       string      `json:"statusColor"`
+				Provider          string      `json:"provider"`
+				HandleDNS         bool        `json:"handleDns"`
+				Nameserver1       interface{} `json:"nameserver1"`
+				Nameserver2       interface{} `json:"nameserver2"`
+				Nameserver3       interface{} `json:"nameserver3"`
+				Nameserver4       interface{} `json:"nameserver4"`
+				NameserverIP1     interface{} `json:"nameserverIp1"`
+				NameserverIP2     interface{} `json:"nameserverIp2"`
+				NameserverIP3     interface{} `json:"nameserverIp3"`
+				NameserverIP4     interface{} `json:"nameserverIp4"`
+				NameserverIpv61   interface{} `json:"nameserverIpv61"`
+				NameserverIpv62   interface{} `json:"nameserverIpv62"`
+				NameserverIpv63   interface{} `json:"nameserverIpv63"`
+				NameserverIpv64   interface{} `json:"nameserverIpv64"`
+				IsRegistered      string      `json:"isRegistered"`
+				IsRegisteredColor string      `json:"isRegisteredColor"`
+				DcLicensee        struct {
+					FullName string `json:"fullName"`
+					Address  string `json:"address"`
+					Country  string `json:"country"`
+					Phone    string `json:"phone"`
+					Email    string `json:"email"`
+				} `json:"dcLicensee"`
+				DcOnsite          interface{} `json:"dcOnsite"`
+				DnssecStatus      string      `json:"dnssecStatus"`
+				DnssecStatusColor string      `json:"dnssecStatusColor"`
+				Retry             int         `json:"retry"`
+				Refresh           int         `json:"refresh"`
+				Expire            int         `json:"expire"`
+				Minimum           int         `json:"minimum"`
+				TTL               int         `json:"ttl"`
+				Mailgroup         string      `json:"mailgroup"`
+			} `json:"data"`
+			Results struct {
+				Name                  string `json:"name"`
+				FullName              string `json:"fullName"`
+				Subdomain             string `json:"subdomain"`
+				NameseversGeneral     string `json:"namesevers_general"`
+				Nameserver1           string `json:"nameserver1"`
+				Nameserver2           string `json:"nameserver2"`
+				Nameserver3           string `json:"nameserver3"`
+				Nameserver4           string `json:"nameserver4"`
+				NameserverIP1         string `json:"nameserverIp1"`
+				NameserverIP2         string `json:"nameserverIp2"`
+				NameserverIP3         string `json:"nameserverIp3"`
+				NameserverIP4         string `json:"nameserverIp4"`
+				NameserverIpv61       string `json:"nameserverIpv61"`
+				NameserverIpv62       string `json:"nameserverIpv62"`
+				NameserverIpv63       string `json:"nameserverIpv63"`
+				NameserverIpv64       string `json:"nameserverIpv64"`
+				Action                string `json:"action"`
+				EppCode               string `json:"eppCode"`
+				ExtraFields           string `json:"extraFields"`
+				Domaintype            string `json:"domaintype"`
+				Status                string `json:"status"`
+				DnssecStatus          string `json:"dnssecStatus"`
+				Retry                 string `json:"retry"`
+				Refresh               string `json:"refresh"`
+				Expire                string `json:"expire"`
+				Minimum               string `json:"minimum"`
+				TTL                   string `json:"ttl"`
+				Organisation          string `json:"organisation"`
+				Provider              string `json:"provider"`
+				NsDig                 string `json:"nsDig"`
+			} `json:"results"`
+			Records struct {
+				Message string `json:"message"`
+				Dig     []struct {
+					ID   int `json:"id"`
+					Data struct {
+						Type       string      `json:"type"`
+						Name       interface{} `json:"name"`
+						Content    string      `json:"content"`
+						Priority   interface{} `json:"priority"`
+						DigContent string      `json:"digContent"`
+					} `json:"data"`
+					Results struct {
+						Status    string `json:"status"`
+						IsExpired string `json:"isExpired"`
+					} `json:"results"`
+					SslCertificate interface{} `json:"sslCertificate"`
+				} `json:"dig"`
+			} `json:"records"`
+		} `json:"domain"`
+		Organisations struct {
+			Manual []string `json:"manual"`
+			Owner  string   `json:"owner"`
+		} `json:"organisations"`
+		Teams []struct {
+			ID             int         `json:"id"`
+			Name           string      `json:"name"`
+			AdminOnly      interface{} `json:"adminOnly"`
+			OrganisationID int         `json:"organisationId"`
+		} `json:"teams"`
+		FinanceData struct {
+			Billing         string `json:"billing"`
+			BillingStatus   string `json:"billingStatus"`
+			AutoRenew       string `json:"autoRenew"`
+			AutoRenewStatus string `json:"autoRenewStatus"`
+			DtExpires       string `json:"dtExpires"`
+			BillingItems    []struct {
+				ID          int     `json:"id"`
+				Description string  `json:"description"`
+				Type        string  `json:"type"`
+				Period      string  `json:"period"`
+				DtExpires   string  `json:"dtExpires"`
+				Price       float32 `json:"price"`
+			} `json:"billingItems"`
+			TotalPrice float32 `json:"totalPrice"`
+		} `json:"financeData"`
+		Jobs []struct {
+			ID           int         `json:"id"`
+			Action       string      `json:"action"`
+			Status       int         `json:"status"`
+			Message      string      `json:"message"`
+			DtEnd        interface{} `json:"dtEnd"`
+			DtStamp      string      `json:"dtStamp"`
+			ExceptionMsq interface{} `json:"exceptionMsq"`
+		} `json:"jobs"`
+		IsHealthy    bool   `json:"isHealthy"`
+		ExtraMessage string `json:"extraMessage"`
+	} `json:"results"`
+	Dojobs               bool          `json:"dojobs"`
+	Forcejobs            bool          `json:"forcejobs"`
+	LocalIntegritychecks []interface{} `json:"localIntegritychecks"`
+}

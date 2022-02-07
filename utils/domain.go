@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -54,12 +56,12 @@ func (c *Client) Domain(method string, id interface{}, data interface{}) types.D
 }
 
 //Domain gets a domain from the API
-func (c *Client) Domains(filter string, number int) []types.Domain {
+func (c *Client) Domains(getParams types.CommonGetParams) []types.Domain {
 	var domains struct {
 		Data []types.Domain `json:"domains"`
 	}
 
-	endpoint := fmt.Sprintf("domains?limit=%d&filter=%s", number, url.QueryEscape(filter))
+	endpoint := fmt.Sprintf("domains?%s", formatCommonGetParams(getParams))
 	err := c.invokeAPI("GET", endpoint, nil, &domains)
 	AssertApiError(err, "domains")
 
@@ -140,17 +142,14 @@ func (c *Client) DomainUpdate(id int, data map[string]interface{}) {
 
 // ------------------ /DOMAIN/RECORDS ----------------------
 // GET
-func (c *Client) DomainRecords(id int, recordType string, limit int, filter string) []types.DomainRecord {
+func (c *Client) DomainRecords(id int, recordType string, getParams types.CommonGetParams) []types.DomainRecord {
 	var records struct {
 		Records []types.DomainRecord `json:"records"`
 	}
 
-	endpoint := fmt.Sprintf("domains/%d/records?limit=%d", id, limit)
+	endpoint := fmt.Sprintf("domains/%d/records?%s", id, formatCommonGetParams(getParams))
 	if recordType != "" {
 		endpoint += fmt.Sprintf("&type=%s", recordType)
-	}
-	if filter != "" {
-		endpoint += fmt.Sprintf("&filter=%s", url.QueryEscape(filter))
 	}
 	err := c.invokeAPI("GET", endpoint, nil, &records)
 	AssertApiError(err, "domain record")
@@ -293,4 +292,76 @@ func (c *Client) DomainJobHistoryRootGet(rooJobId int) types.Job {
 	AssertApiError(err, "root job history")
 
 	return job
+}
+
+
+// ---------------------------------------------- INTEGRITY CHECKS DOMAINS ------------------------------------------------
+
+func (c *Client) DomainIntegrityCheck(domainId int, checkId int) types.DomainIntegrityCheck {
+	var result struct {
+		IntegrityCheck types.DomainIntegrityCheck `json:"integritycheck"`
+	}
+
+	endpoint := fmt.Sprintf("domains/%d/integritychecks/%d", domainId, checkId)
+	err := c.invokeAPI("GET", endpoint, nil, &result)
+	AssertApiError(err, "domainIntegrityCheck")
+
+	return result.IntegrityCheck
+}
+
+func (c *Client) DomainIntegrityChecks(domainId int, getParams types.CommonGetParams) []types.IntegrityCheckSummary {
+	var result struct {
+		IntegrityChecks []types.IntegrityCheckSummary `json:"integritychecks"`
+	}
+
+	endpoint := fmt.Sprintf("domains/%d/integritychecks?%s", domainId, formatCommonGetParams(getParams))
+	err := c.invokeAPI("GET", endpoint, nil, &result)
+	AssertApiError(err, "domainIntegrityCheck")
+
+	return result.IntegrityChecks
+}
+
+// Create domain integrity check
+func (c *Client) DomainIntegrityCreate(domainId int, runJobs bool, forceRunJobs bool) types.DomainIntegrityCheck {
+	var result struct {
+		IntegrityCheck types.DomainIntegrityCheck `json:"integritycheck"`
+	}
+
+	endpoint := fmt.Sprintf("domains/%d/integritychecks", domainId)
+	data := &types.IntegrityCreateRequest{Dojobs: runJobs, Forcejobs: forceRunJobs}
+	err := c.invokeAPI("POST", endpoint, data, &result)
+	AssertApiError(err, "domainIntegrityCheck")
+
+	return result.IntegrityCheck
+}
+
+// Download domain integrity check report to file.
+func (c *Client) DomainIntegrityCheckDownload(domainId int, checkId int, fileName string) {
+	endpoint := fmt.Sprintf("domains/%d/integritychecks/%d/report", domainId, checkId)
+	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/pdf"})
+
+	if err == nil {
+		defer res.Body.Close()
+
+		if isErrorCode(res.StatusCode) {
+			var body []byte
+			body, err = io.ReadAll(res.Body)
+			if err == nil {
+				err = formatRequestError(res.StatusCode, body)
+			}
+		}
+	}
+
+	AssertApiError(err, "domainIntegrityCheckDownload")
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		log.Fatalf("Failed to create file! %s", err.Error())
+	}
+
+	fmt.Printf("Saving report to %s\n", fileName)
+
+	defer file.Close()
+
+	io.Copy(file, res.Body)
 }

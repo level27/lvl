@@ -141,6 +141,26 @@ func outputFormatTable(objects interface{}, titles []string, fields []string) {
 	outputMode := viper.GetString("output")
 	switch outputMode {
 	case "text":
+		fieldsInterface := make([]interface{}, len(fields))
+		for i := range fields {
+			fieldsInterface[i] = fields[i]
+		}
+		outputFormatTableText(objects, titles, fieldsInterface)
+	case "json":
+		outputFormatTableJson(objects)
+	case "yaml":
+		outputFormatTableYaml(objects)
+	}
+}
+
+// Equivalent to outputFormatTable, but takes in a slice of interfaces as field names instead.
+// If a field is a string, it acts the same as outputFormatTable.
+// If instead the field is a func with a single parameter and return value,
+// it will be called with the row object to get the column value.
+func outputFormatTableFuncs(objects interface{}, titles []string, fields []interface{}) {
+	outputMode := viper.GetString("output")
+	switch outputMode {
+	case "text":
 		outputFormatTableText(objects, titles, fields)
 	case "json":
 		outputFormatTableJson(objects)
@@ -166,7 +186,7 @@ func outputFormatTemplate(object interface{}, templatePath string) {
 	}
 }
 
-func outputFormatTableText(objects interface{}, titles []string, fields []string) {
+func outputFormatTableText(objects interface{}, titles []string, fields []interface{}) {
 	// Have to use reflection for this because no generics in go (yet).
 	s := reflect.ValueOf(objects)
 
@@ -183,8 +203,15 @@ func outputFormatTableText(objects interface{}, titles []string, fields []string
 		val := s.Index(i)
 
 		first := true
-		for _, fieldName := range fields {
-			fld := val.FieldByName(fieldName)
+		for _, field := range fields {
+			fieldName, isString := field.(string)
+			var fld reflect.Value
+			if isString {
+				fld = val.FieldByName(fieldName)
+			} else {
+				// Assume function that returns actal field value.
+				fld = reflect.ValueOf(field).Call([]reflect.Value{val})[0]
+			}
 
 			if !first {
 				fmt.Fprintf(w, "\t");

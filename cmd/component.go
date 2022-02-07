@@ -36,7 +36,7 @@ func init() {
 
 func getComponents(ids []string) []types.StructComponent {
 	/* if len(ids) == 0 { */
-	return Level27Client.Components(optFilter, optNumber, componentCategory, componentType).Components
+	return Level27Client.Components(componentCategory, componentType, optGetParameters).Components
 	/* 	} else  {
 		components := make([]types.StructComponent, len(ids))
 		for idx, id := range ids {
