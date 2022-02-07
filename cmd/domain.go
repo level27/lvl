@@ -278,7 +278,6 @@ func getDomainRequestData() types.DomainRequest {
 		if domainType == 0 {
 			log.Fatalf("Invalid domain extension: '%s'", extension)
 		}
-		
 
 		requestData.Domaintype = domainType
 		requestData.Name = name
@@ -675,16 +674,16 @@ var domainJobHistoryCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
+		//get full history of toplevel jobs 
 		history := Level27Client.DomainJobHistoryGet(id)
 		// filter jobs where status is not 50.
 		notCompleted := FindNotcompletedJobs(history)
 
 		// check for every job without status 50. the subjobs who don't have status 50
-		for _, job := range notCompleted{
-			fullData := Level27Client.DomainJobHistoryRootGet(job.Id)
-			
+		for _, RootJob := range notCompleted {
+			fullData := Level27Client.DomainJobHistoryRootGet(RootJob.Id)
 
-			for _, subjob := range fullData.Jobs{
+			for _, subjob := range fullData.Jobs {
 				if subjob.Status != 50 {
 					notCompleted = append(notCompleted, subjob)
 					if len(subjob.Jobs) != 0 {
@@ -692,11 +691,22 @@ var domainJobHistoryCmd = &cobra.Command{
 					}
 				}
 			}
-		}  
-			outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE"}, []string{"Id", "Status", "Message"})
+		}
+
+		
+		outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"Id", "Status", "Message", "Dt"})
 
 	},
 }
+
+func CheckSubJobs (job types.Job) bool{
+	if len(job.Jobs) == 0  {
+		return false
+	}else{
+		return true
+	}
+}
+
 func FindNotcompletedJobs(jobs []types.Job) []types.Job {
 	var NotCompleted []types.Job
 	for _, job := range jobs {
@@ -707,7 +717,6 @@ func FindNotcompletedJobs(jobs []types.Job) []types.Job {
 	return NotCompleted
 
 }
-
 
 // get detailed job history for a root job
 var domainRootJobHistoryCmd = &cobra.Command{
@@ -722,4 +731,3 @@ var domainRootJobHistoryCmd = &cobra.Command{
 		fmt.Print(Level27Client.DomainJobHistoryRootGet(id))
 	},
 }
-
