@@ -819,7 +819,7 @@ var domainIntegrityDownloadCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
 		cobra.CheckErr(err)
-		checkId, err := convertStringToId(args[0])
+		checkId, err := convertStringToId(args[1])
 		cobra.CheckErr(err)
 
 		if integrityDownload == "" {
