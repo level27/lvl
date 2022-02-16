@@ -1,6 +1,6 @@
 package types
 
-type StructOrganisation struct {
+type Organisation struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	TaxNumber   string `json:"taxNumber"`
@@ -24,12 +24,4 @@ type StructOrganisation struct {
 	} `json:"users"`
 	// RemarksToprintInvoice
 	UpdateEntitiesOnly bool `json:"updateEntitiesOnly"`
-}
-
-type Organisation struct {
-	Data StructOrganisation `json:"organisation"`
-}
-
-type Organisations struct {
-	Data []StructOrganisation `json:"organisations"`
 }

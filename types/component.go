@@ -2,7 +2,7 @@ package types
 
 import "github.com/Jeffail/gabs/v2"
 
-type StructComponent struct {
+type Component struct {
 	ID                     int    `json:"id"`
 	Name                   string `json:"name"`
 	AppComponentType       string `json:"appcomponenttype"`
@@ -30,12 +30,4 @@ type StructComponent struct {
 	// ContainerSystem
 	// Provider
 	LinkedUrlsCount int `json:"linkedurlscount"`
-}
-
-type Component struct {
-	Component StructComponent `json:"components"`
-}
-
-type Components struct {
-	Components []StructComponent `json:"components"`
 }

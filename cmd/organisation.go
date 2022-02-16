@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +17,11 @@ var organisationGetCmd = &cobra.Command{
 
 	Args: cobra.ArbitraryArgs,
 	Run: func(ccmd *cobra.Command, args []string) {
-		outputFormatTable(getOrganisations(args), []string{"ID", "NAME"}, []string{"ID", "Name"})
+		ids, err := convertStringsToIds(args)
+		if err != nil {
+			log.Fatalln("Invalid organisation ID")
+		}
+		outputFormatTable(getOrganisations(ids), []string{"ID", "NAME"}, []string{"ID", "Name"})
 	},
 }
 
@@ -26,14 +32,14 @@ func init() {
 	addCommonGetFlags(organisationGetCmd)
 }
 
-func getOrganisations(ids []string) []types.StructOrganisation {
+func getOrganisations(ids []int) []types.Organisation {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.Organisations(optGetParameters).Data
+		return c.Organisations(optGetParameters)
 	} else {
-		organisations := make([]types.StructOrganisation, len(ids))
+		organisations := make([]types.Organisation, len(ids))
 		for idx, id := range ids {
-			organisations[idx] = c.Organisation("GET", id, nil).Data
+			organisations[idx] = c.Organisation(id)
 		}
 		return organisations
 	}

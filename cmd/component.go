@@ -34,14 +34,6 @@ func init() {
 	componentGetCmd.MarkFlagRequired("category")
 }
 
-func getComponents(ids []string) []types.StructComponent {
-	/* if len(ids) == 0 { */
-	return Level27Client.Components(componentCategory, componentType, optGetParameters).Components
-	/* 	} else  {
-		components := make([]types.StructComponent, len(ids))
-		for idx, id := range ids {
-			components[idx] = c.Component("GET", category, id, nil).Component
-		}
-		return components
-	} */
+func getComponents(ids []string) []types.Component {
+	return Level27Client.Components(componentCategory, componentType, optGetParameters)
 }
