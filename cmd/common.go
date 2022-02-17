@@ -23,56 +23,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Contains parameters passed to get commands, like filter and max number of entries.
 var optGetParameters types.CommonGetParams
 
+// Add common flags for get-style commands, such as --number and --filter.
 func addCommonGetFlags(cmd *cobra.Command) {
 	pf := cmd.Flags()
 
 	pf.IntVarP(&optGetParameters.Limit, "number", "n", optGetParameters.Limit, "How many things should we retrieve from the API?")
 	pf.StringVarP(&optGetParameters.Filter, "filter", "f", optGetParameters.Filter, "How to filter API results?")
-}
-
-// common date used for Post operations at /Domains
-func addDomainCommonPostFlags(cmd *cobra.Command) {
-	command := cmd.Flags()
-
-	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (REQUIRED)")
-	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain")
-	command.MarkHidden("type")
-	command.IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
-	command.IntVarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
-
-	command.StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
-	command.StringVarP(&domainCreateNs2, "nameserver2", "", "", "Nameserver")
-	command.StringVarP(&domainCreateNs3, "nameserver3", "", "", "Nameserver")
-	command.StringVarP(&domainCreateNs4, "nameserver4", "", "", "Nameserver")
-
-	command.StringVarP(&domainCreateNsIp1, "nameserverIp1", "", "", "IP address for nameserver")
-	command.StringVarP(&domainCreateNsIp2, "nameserverIp2", "", "", "IP address for nameserver")
-	command.StringVarP(&domainCreateNsIp3, "nameserverIp3", "", "", "IP address for nameserver")
-	command.StringVarP(&domainCreateNsIp4, "nameserverIp4", "", "", "IP address for nameserver")
-
-	command.StringVarP(&domainCreateNsIpv61, "nameserverIpv61", "", "", "IPv6 address for nameserver")
-	command.StringVarP(&domainCreateNsIpv62, "nameserverIpv62", "", "", "IPv6 address for nameserver")
-	command.StringVarP(&domainCreateNsIpv63, "nameserverIpv63", "", "", "IPv6 address for nameserver")
-	command.StringVarP(&domainCreateNsIpv64, "nameserverIpv64", "", "", "IPv6 address for nameserver")
-
-	command.IntVarP(&domainCreateTtl, "ttl", "", 28800, "Time to live: amount of time (in seconds) the DNS-records stay in the cache")
-	command.StringVarP(&domainCreateEppCode, "eppCode", "", "", "eppCode")
-	command.BoolVarP(&domainCreateHandleDns, "handleDns", "", true, "should dns be handled by lvl27")
-	command.StringVarP(&domainCreateExtraFields, "extra fields", "", "", "extra fields (json, non-editable)")
-
-	command.IntVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
-
-	// command.StringVarP(&domainCreateAutoRecordTemplate, "autorecordTemplate", "", "", "AutorecordTemplate")
-	// command.BoolVarP(&domainCreateAutoRecordTemplateRep, "autorecordTemplateReplace", "", false, "autorecordTemplate replace")
-	//command.IntVarP(&domainCreateDomainProvider, "domainProvider", "", 0, "The id of a domain provider (admin only)")
-	// command.StringVarP(&domainCreateExternalCreated, "dtExternallCreated", "", "", "Creation timestamp (admin only)")
-	// command.StringVarP(&domainCreateExternalExpires, "dtExternallExpires", "", "", "Expire date timestamp (admin only)")
-	// command.StringVarP(&domainCreateConvertDomainRecords, "convertDomainrecords", "", "", "Domainrecord json (admin only)")
-	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
-
-	command.SortFlags = false
 }
 
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
@@ -122,6 +81,8 @@ func settingBool(c *cobra.Command, settings map[string]interface{}, name string,
 func settingBoolP(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
 	c.Flags().VarP(&boolMapValue{Map: settings, Name: name}, name, short, usage)
 }
+
+// Types below implement the pflag.Value interface for string/int/bool so that they can receive values assigned via command line.
 
 type stringMapValue struct {
 	Map  map[string]interface{}
