@@ -37,4 +37,19 @@ type system struct {
 		OsType    string `json:"osType"`
 		OsVersion string `json:"osVersion"`
 	} `json:"operatingsystemVersion"`
+	ProvideId                   int    `json:"providerId"`
+	Provider                    string `json:"provider"`
+	ProviderApi                 string `json:"providerApi"`
+	SystemProviderConfiguration struct {
+		Id          int    `json:"id"`
+		ExternalId  string `json:"externalId"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	} `json:"systemproviderConfiguration"`
+	Region string `json:"region"`
+	Zone   struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"zone"`
+	
 }
