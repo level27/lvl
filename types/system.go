@@ -20,5 +20,21 @@ type system struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"organisation"`
-	
+	SystemImage struct {
+		Id          int    `json:"id"`
+		Name        string `json:"name"`
+		ExternalId  string `json:"externalId"`
+		OsId        int    `json:"osId"`
+		OsName      string `json:"osName"`
+		OsType      string `json:"osType"`
+		OsVersion   string `json:"osVersion"`
+		OsVersionId int    `json:"osVersionId"`
+	} `json:"systemimage"`
+	OperatingSystemVersion struct {
+		Id        int    `json:"id"`
+		OsId      int    `json:"osId"`
+		OsName    string `json:"osName"`
+		OsType    string `json:"osType"`
+		OsVersion string `json:"osVersion"`
+	} `json:"operatingsystemVersion"`
 }
