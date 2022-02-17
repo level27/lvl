@@ -51,5 +51,27 @@ type system struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"zone"`
-	
+	Networks         []interface{} `json:"networks"`
+	PublicNetworking bool          `json:"publicNetworking"`
+	StatsSummary     struct {
+		DiskSpace struct {
+			Unit  string `json:"unit"`
+			Value string `json:"value"`
+			Max   string `json:"max"`
+		} `json:"diskspace"`
+		Memory struct {
+			Unit  string `json:"unit"`
+			Value string `json:"value"`
+			Max   string `json:"max"`
+		} `json:"Memory"`
+		Cpu struct {
+			Unit  string `json:"unit"`
+			Value string `json:"value"`
+			Max   string `json:"max"`
+		} `json:"cpu"`
+	} `json:"statsSummary"`
+	DtExpires     int    `json:"dtExpires"`
+	BillingStatus string `json:"billingStatus"`
+	ExternalInfo  string `json:"externalInfo"`
+	Remarks       string `json:"remarks"`
 }
