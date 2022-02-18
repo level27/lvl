@@ -323,9 +323,9 @@ type DomainCheckResult struct {
 // INTEGRITY CHECKS
 type DomainIntegrityCheck struct {
 	IntegrityCheckSummary
-	Object      string `json:"object"`
-	ObjectID    int    `json:"objectId"`
-	Results     struct {
+	Object   string `json:"object"`
+	ObjectID int    `json:"objectId"`
+	Results  struct {
 		Domain struct {
 			ID   int `json:"id"`
 			Data struct {
@@ -366,36 +366,36 @@ type DomainIntegrityCheck struct {
 				Mailgroup         string      `json:"mailgroup"`
 			} `json:"data"`
 			Results struct {
-				Name                  string `json:"name"`
-				FullName              string `json:"fullName"`
-				Subdomain             string `json:"subdomain"`
-				NameseversGeneral     string `json:"namesevers_general"`
-				Nameserver1           string `json:"nameserver1"`
-				Nameserver2           string `json:"nameserver2"`
-				Nameserver3           string `json:"nameserver3"`
-				Nameserver4           string `json:"nameserver4"`
-				NameserverIP1         string `json:"nameserverIp1"`
-				NameserverIP2         string `json:"nameserverIp2"`
-				NameserverIP3         string `json:"nameserverIp3"`
-				NameserverIP4         string `json:"nameserverIp4"`
-				NameserverIpv61       string `json:"nameserverIpv61"`
-				NameserverIpv62       string `json:"nameserverIpv62"`
-				NameserverIpv63       string `json:"nameserverIpv63"`
-				NameserverIpv64       string `json:"nameserverIpv64"`
-				Action                string `json:"action"`
-				EppCode               string `json:"eppCode"`
-				ExtraFields           string `json:"extraFields"`
-				Domaintype            string `json:"domaintype"`
-				Status                string `json:"status"`
-				DnssecStatus          string `json:"dnssecStatus"`
-				Retry                 string `json:"retry"`
-				Refresh               string `json:"refresh"`
-				Expire                string `json:"expire"`
-				Minimum               string `json:"minimum"`
-				TTL                   string `json:"ttl"`
-				Organisation          string `json:"organisation"`
-				Provider              string `json:"provider"`
-				NsDig                 string `json:"nsDig"`
+				Name              string `json:"name"`
+				FullName          string `json:"fullName"`
+				Subdomain         string `json:"subdomain"`
+				NameseversGeneral string `json:"namesevers_general"`
+				Nameserver1       string `json:"nameserver1"`
+				Nameserver2       string `json:"nameserver2"`
+				Nameserver3       string `json:"nameserver3"`
+				Nameserver4       string `json:"nameserver4"`
+				NameserverIP1     string `json:"nameserverIp1"`
+				NameserverIP2     string `json:"nameserverIp2"`
+				NameserverIP3     string `json:"nameserverIp3"`
+				NameserverIP4     string `json:"nameserverIp4"`
+				NameserverIpv61   string `json:"nameserverIpv61"`
+				NameserverIpv62   string `json:"nameserverIpv62"`
+				NameserverIpv63   string `json:"nameserverIpv63"`
+				NameserverIpv64   string `json:"nameserverIpv64"`
+				Action            string `json:"action"`
+				EppCode           string `json:"eppCode"`
+				ExtraFields       string `json:"extraFields"`
+				Domaintype        string `json:"domaintype"`
+				Status            string `json:"status"`
+				DnssecStatus      string `json:"dnssecStatus"`
+				Retry             string `json:"retry"`
+				Refresh           string `json:"refresh"`
+				Expire            string `json:"expire"`
+				Minimum           string `json:"minimum"`
+				TTL               string `json:"ttl"`
+				Organisation      string `json:"organisation"`
+				Provider          string `json:"provider"`
+				NsDig             string `json:"nsDig"`
 			} `json:"results"`
 			Records struct {
 				Message string `json:"message"`

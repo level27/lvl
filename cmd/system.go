@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"bitbucket.org/level27/lvl/types"
+	"github.com/spf13/cobra"
+)
 
 // MAIN COMMAND
 var systemCmd = &cobra.Command{
@@ -16,11 +19,29 @@ func init() {
 	systemCmd.AddCommand(systemGetCmd)
 }
 
-
 var systemGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "get a list of all curent systems",
 	Run: func(cmd *cobra.Command, args []string) {
+		outputFormatTable(getSystems(args), []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
 
 	},
 }
+
+func getSystems(amount []string) []types.SystemGet {
+	result := Level27Client.systemGet()
+
+}
+
+// func getDomains(ids []string) []types.Domain {
+// 	c := Level27Client
+// 	if len(ids) == 0 {
+// 		return c.Domains(optGetParameters)
+// 	} else {
+// 		domains := make([]types.Domain, len(ids))
+// 		for idx, id := range ids {
+// 			domains[idx] = c.Domain("GET", id, nil)
+// 		}
+// 		return domains
+// 	}
+// }
