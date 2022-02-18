@@ -6,11 +6,16 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
-func (c *Client) systemGet(data types.SystemGet) types.SystemGet {
+func (c *Client) SystemGetList() []types.SystemGet {
 
-	var result types.SystemGet
-	endpoint := fmt.Sprint("/systems")
-	c.invokeAPI("GET", endpoint, data, result)
-	return result
+	var systems struct {
+		Data []types.SystemGet `json:"systems"`
+	}
+	endpoint := fmt.Sprint("systems")
+	err := c.invokeAPI("GET", endpoint, nil, &systems)
+	AssertApiError(err, "Systems")
+	return systems.Data
 
 }
+
+

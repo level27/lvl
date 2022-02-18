@@ -55,19 +55,19 @@ type SystemGet struct {
 	PublicNetworking bool          `json:"publicNetworking"`
 	StatsSummary     struct {
 		DiskSpace struct {
-			Unit  string `json:"unit"`
-			Value string `json:"value"`
-			Max   string `json:"max"`
+			Unit  string      `json:"unit"`
+			Value interface{} `json:"value"`
+			Max   interface{}         `json:"max"`
 		} `json:"diskspace"`
 		Memory struct {
-			Unit  string `json:"unit"`
-			Value string `json:"value"`
-			Max   string `json:"max"`
+			Unit  string      `json:"unit"`
+			Value interface{} `json:"value"`
+			Max   interface{}         `json:"max"`
 		} `json:"Memory"`
 		Cpu struct {
-			Unit  string `json:"unit"`
-			Value string `json:"value"`
-			Max   string `json:"max"`
+			Unit  string      `json:"unit"`
+			Value interface{} `json:"value"`
+			Max   interface{}         `json:"max"`
 		} `json:"cpu"`
 	} `json:"statsSummary"`
 	DtExpires     int    `json:"dtExpires"`

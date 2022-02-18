@@ -29,19 +29,23 @@ var systemGetCmd = &cobra.Command{
 }
 
 func getSystems(amount []string) []types.SystemGet {
-	result := Level27Client.systemGet()
+
+	if len(amount) == 0 {
+		return Level27Client.SystemGetList()
+	}
+	return Level27Client.SystemGetList()
 
 }
 
-// func getDomains(ids []string) []types.Domain {
-// 	c := Level27Client
-// 	if len(ids) == 0 {
-// 		return c.Domains(optGetParameters)
-// 	} else {
-// 		domains := make([]types.Domain, len(ids))
-// 		for idx, id := range ids {
-// 			domains[idx] = c.Domain("GET", id, nil)
-// 		}
-// 		return domains
-// 	}
-// }
+// // func getDomains(ids []string) []types.Domain {
+// // 	c := Level27Client
+// // 	if len(ids) == 0 {
+// // 		return c.Domains(optGetParameters)
+// // 	} else {
+// // 		domains := make([]types.Domain, len(ids))
+// // 		for idx, id := range ids {
+// // 			domains[idx] = c.Domain("GET", id, nil)
+// // 		}
+// // 		return domains
+// // 	}
+// // }
