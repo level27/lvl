@@ -43,19 +43,17 @@ func (c *Client) SystemGetSingle(id int) types.System {
 
 //----------------- POST
 
-// CREATE DOMAIN [lvl domain create <parmeters>]
-func (c *Client) SystemCreate(args []string, req types.DomainRequest) {
-	if req.Action == "" {
-		req.Action = "none"
+// CREATE SYSTEM [lvl system create <parmeters>]
+func (c *Client) SystemCreate(args []string, req types.SystemPost) {
+	
+
+	var System struct {
+		Data types.System `json:"system"`
 	}
 
-	var domain struct {
-		Data types.Domain `json:"domain"`
-	}
+	err := c.invokeAPI("POST", "systems", req, &System)
+	AssertApiError(err, "SystemCreate")
 
-	err := c.invokeAPI("POST", "domains", req, &domain)
-	AssertApiError(err, "domainCreate")
-
-	log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", domain.Data.Fullname, domain.Data.ID)
+	log.Printf("System created! [Fullname: '%v' , ID: '%v']", System.Data.Name, System.Data.Id)
 
 }

@@ -18,10 +18,21 @@ func init() {
 	RootCmd.AddCommand(systemCmd)
 
 	//Toplevel subcommands (get/post)
+	// --- GET
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
+
+	// --- CREATE
+	systemCmd.AddCommand(systemCreateCmd)
+	flags := systemCreateCmd.Flags()
+	flags.StringVarP(&systemCreateName, "name", "n", "", "The name you want to give the system")
+	flags.StringVarP(&systemCreateFqdn, "Fqdn" ,"","", "Valid hostname for the system")
+	flags.StringVarP(&systemCreateRemarks, "remarks", "", "", "Remarks (Admin only)")
 }
 
+
+//------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
+//----------------------------------------- GET ---------------------------------------
 var systemGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "get a list of all curent systems",
@@ -50,3 +61,15 @@ func getSystems(ids []int) []types.System {
 }
 
 
+//----------------------------------------- CREATE ---------------------------------------
+// vars needed to save flag data.
+var systemCreateName, systemCreateFqdn, systemCreateRemarks string 
+
+var systemCreateCmd = &cobra.Command{
+	Use: "create",
+	Short: "Create a new system",
+	Run: func(cmd *cobra.Command, args []string) {
+
+
+	},
+}
