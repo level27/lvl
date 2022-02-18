@@ -37,9 +37,9 @@ type System struct {
 		OsType    string `json:"osType"`
 		OsVersion string `json:"osVersion"`
 	} `json:"operatingsystemVersion"`
-	ProvideId                   int    `json:"providerId"`
+	ProvideId                   int         `json:"providerId"`
 	Provider                    interface{} `json:"provider"`
-	ProviderApi                 string `json:"providerApi"`
+	ProviderApi                 string      `json:"providerApi"`
 	SystemProviderConfiguration struct {
 		Id          int    `json:"id"`
 		ExternalId  string `json:"externalId"`
@@ -57,21 +57,44 @@ type System struct {
 		DiskSpace struct {
 			Unit  string      `json:"unit"`
 			Value interface{} `json:"value"`
-			Max   interface{}         `json:"max"`
+			Max   interface{} `json:"max"`
 		} `json:"diskspace"`
 		Memory struct {
 			Unit  string      `json:"unit"`
 			Value interface{} `json:"value"`
-			Max   interface{}         `json:"max"`
+			Max   interface{} `json:"max"`
 		} `json:"Memory"`
 		Cpu struct {
 			Unit  string      `json:"unit"`
 			Value interface{} `json:"value"`
-			Max   interface{}         `json:"max"`
+			Max   interface{} `json:"max"`
 		} `json:"cpu"`
 	} `json:"statsSummary"`
 	DtExpires     int    `json:"dtExpires"`
 	BillingStatus string `json:"billingStatus"`
 	ExternalInfo  string `json:"externalInfo"`
 	Remarks       string `json:"remarks"`
+}
+
+// data needed for POST request (create system)
+type SystemPost struct {
+	Name                        string        `json:"name"`
+	CustomeerFqdn               string        `json:"customerFqdn"`
+	Remarks                     string        `json:"remarks"`
+	Disk                        int           `json:"disk"`
+	Cpu                         int           `json:"cpu"`
+	Memory                      int           `json:"memory"`
+	MamanagementType            string        `json:"managementType"`
+	PublicNetworking            bool          `json:"publicNetworking"`
+	SystemImage                 int           `json:"systemimage"`
+	Organisation                int           `json:"organisation"`
+	SystemProviderConfiguration int           `json:"systemproviderConfiguration"`
+	Zone                        int           `json:"zone"`
+	InstallSecurityUpdates      int           `json:"installSecurityUpdates"`
+	AutoTeams                   string        `json:"autoTeams"`
+	ExternalInfo                string        `json:"externalInfo"`
+	OperatingSystemVersion      int           `json:"operatingsystemVersion"`
+	ParentSystem                int           `json:"parentsystem"`
+	Type                        string        `json:"type"`
+	AutoNetworks                []interface{} `json:"autoNetworks"`
 }
