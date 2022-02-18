@@ -1,6 +1,6 @@
 package types
 
-type SystemGet struct {
+type System struct {
 	Id                    int    `json:"id"`
 	Uid                   string `json:"uid"`
 	Hostname              string `json:"hostname"`

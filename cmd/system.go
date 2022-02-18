@@ -28,11 +28,16 @@ var systemGetCmd = &cobra.Command{
 	},
 }
 
-func getSystems(amount []string) []types.SystemGet {
+func getSystems(ids []string) []types.System {
 
-	if len(amount) == 0 {
+	if len(ids) == 0 {
 		return Level27Client.SystemGetList()
-	}
+	}else {
+		systems := make([]types.System, len(ids))
+		for idx, id := range ids {
+			systems[idx] = Level27Client.SystemGetList
+		}}
+
 	return Level27Client.SystemGetList()
 
 }
