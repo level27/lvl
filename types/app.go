@@ -1,6 +1,6 @@
 package types
 
-type StructApp struct {
+type App struct {
 	ID            int    `json:"id"`
 	Name          string `json:"name"`
 	Status        string `json:"status"`
@@ -16,12 +16,4 @@ type StructApp struct {
 		Category         string `json:"category"`
 		AppComponentType string `json:"appcomponenttype"`
 	} `json:"components"`
-}
-
-type App struct {
-	Data StructApp `json:"app"`
-}
-
-type Apps struct {
-	Data []StructApp `json:"apps"`
 }

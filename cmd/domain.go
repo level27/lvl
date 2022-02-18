@@ -173,27 +173,89 @@ func init() {
 	domainIntegrityDownloadCmd.Flags().StringVarP(&integrityDownload, "file", "f", "", "File to download the report to. This defaults to a generated file name in the current directory.")
 }
 
+//flag vars needed for all post or put requests on Domain level [Domains/]
+var domainCreateType, domainCreateLicensee, domainCreateOrganisation int
+var domainCreateName string
+var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
+var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
+var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
+var domainCreateTtl int
+var domainCreateEppCode, domainCreateAutoRecordTemplate string
+var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
+var domainCreateExtraFields string
+var domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
+var domainCreateContactOnSite int
+
+// common date used for Post operations at /Domains
+func addDomainCommonPostFlags(cmd *cobra.Command) {
+	command := cmd.Flags()
+
+	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (REQUIRED)")
+	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain")
+	command.MarkHidden("type")
+	command.IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
+	command.IntVarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
+
+	command.StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
+	command.StringVarP(&domainCreateNs2, "nameserver2", "", "", "Nameserver")
+	command.StringVarP(&domainCreateNs3, "nameserver3", "", "", "Nameserver")
+	command.StringVarP(&domainCreateNs4, "nameserver4", "", "", "Nameserver")
+
+	command.StringVarP(&domainCreateNsIp1, "nameserverIp1", "", "", "IP address for nameserver")
+	command.StringVarP(&domainCreateNsIp2, "nameserverIp2", "", "", "IP address for nameserver")
+	command.StringVarP(&domainCreateNsIp3, "nameserverIp3", "", "", "IP address for nameserver")
+	command.StringVarP(&domainCreateNsIp4, "nameserverIp4", "", "", "IP address for nameserver")
+
+	command.StringVarP(&domainCreateNsIpv61, "nameserverIpv61", "", "", "IPv6 address for nameserver")
+	command.StringVarP(&domainCreateNsIpv62, "nameserverIpv62", "", "", "IPv6 address for nameserver")
+	command.StringVarP(&domainCreateNsIpv63, "nameserverIpv63", "", "", "IPv6 address for nameserver")
+	command.StringVarP(&domainCreateNsIpv64, "nameserverIpv64", "", "", "IPv6 address for nameserver")
+
+	command.IntVarP(&domainCreateTtl, "ttl", "", 28800, "Time to live: amount of time (in seconds) the DNS-records stay in the cache")
+	command.StringVarP(&domainCreateEppCode, "eppCode", "", "", "eppCode")
+	command.BoolVarP(&domainCreateHandleDns, "handleDns", "", true, "should dns be handled by lvl27")
+	command.StringVarP(&domainCreateExtraFields, "extra fields", "", "", "extra fields (json, non-editable)")
+
+	command.IntVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
+
+	// command.StringVarP(&domainCreateAutoRecordTemplate, "autorecordTemplate", "", "", "AutorecordTemplate")
+	// command.BoolVarP(&domainCreateAutoRecordTemplateRep, "autorecordTemplateReplace", "", false, "autorecordTemplate replace")
+	//command.IntVarP(&domainCreateDomainProvider, "domainProvider", "", 0, "The id of a domain provider (admin only)")
+	// command.StringVarP(&domainCreateExternalCreated, "dtExternallCreated", "", "", "Creation timestamp (admin only)")
+	// command.StringVarP(&domainCreateExternalExpires, "dtExternallExpires", "", "", "Expire date timestamp (admin only)")
+	// command.StringVarP(&domainCreateConvertDomainRecords, "convertDomainrecords", "", "", "Domainrecord json (admin only)")
+	command.StringVarP(&domainCreateAutoTeams, "autoTeams", "", "", "a csv list of team id's")
+
+	command.SortFlags = false
+}
+
+
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
 //GET LIST OF ALL DOMAINS [lvl domain get]
 var domainGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a list of all current domains",
 	Run: func(ccmd *cobra.Command, args []string) {
+		ids, err := convertStringsToIds(args)
+		if err != nil {
+			log.Fatalln("Invalid domain ID")
+		}
+
 		outputFormatTable(
-			getDomains(args),
+			getDomains(ids),
 			[]string{"ID", "NAME", "STATUS"},
 			[]string{"ID", "Fullname", "Status"})
 	},
 }
 
-func getDomains(ids []string) []types.Domain {
+func getDomains(ids []int) []types.Domain {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Domains(optGetParameters)
 	} else {
 		domains := make([]types.Domain, len(ids))
 		for idx, id := range ids {
-			domains[idx] = c.Domain("GET", id, nil)
+			domains[idx] = c.Domain(id)
 		}
 		return domains
 	}
@@ -205,8 +267,12 @@ var domainDescribeCmd = &cobra.Command{
 	Short: "Get detailed info about a domain",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		domainID := args[0]
-		domain := Level27Client.Domain("GET", domainID, nil)
+		domainID, err := convertStringToId(args[0])
+		if err != nil {
+			log.Fatalln("Invalid domain ID")
+		}
+
+		domain := Level27Client.Domain(domainID)
 
 		outputFormatTemplate(domain, "templates/domain.tmpl")
 	},
@@ -222,22 +288,6 @@ var domainDeleteCmd = &cobra.Command{
 		Level27Client.DomainDelete(args)
 	},
 }
-
-//flag vars needed for all post or put requests on Domain level [Domains/]
-var domainCreateType, domainCreateLicensee, domainCreateOrganisation int
-var domainCreateName string
-var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
-var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
-var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
-var domainCreateTtl int
-var domainCreateEppCode, domainCreateAutoRecordTemplate string
-var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
-var domainCreateExtraFields string
-var domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
-var domainCreateContactOnSite int
-
-// var domainCreateConvertDomainRecords, domainCreateExternalCreated, domainCreateExternalExpires string
-// var  domainCreateDomainProvider int
 
 // common functions for managing domains
 // change given flag data into request data to put or post
@@ -819,7 +869,7 @@ var domainIntegrityDownloadCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
 		cobra.CheckErr(err)
-		checkId, err := convertStringToId(args[0])
+		checkId, err := convertStringToId(args[1])
 		cobra.CheckErr(err)
 
 		if integrityDownload == "" {

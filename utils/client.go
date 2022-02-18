@@ -89,6 +89,10 @@ type successResponse struct {
 	Data interface{} `json:"data"`
 }
 
+// Send authorized HTTP request to the API and return the response.
+// Method is HTTP method to use, Endpoint is HTTP endpoint on the API,
+// data is either a []byte or an object to json-serialize,
+// headers is a list of HTTP headers to send.
 func (c *Client) sendRequestRaw(method string, endpoint string, data interface{}, headers map[string]string) (*http.Response, error) {
 	reqData := bytes.NewBuffer([]byte(nil))
 	if data != nil {
@@ -145,6 +149,9 @@ func (c *Client) sendRequestRaw(method string, endpoint string, data interface{}
 	return res, err
 }
 
+// Sends an authorized JSON request to the API and accepts the result as JSON.
+// Also handles standard API errors.
+// Method is HTTP method to use, Endpoint is HTTP endpoint on the API.
 func (c *Client) sendRequest(method string, endpoint string, data interface{}) ([]byte, error) {
 	headers := map[string]string{"Accept": "application/json"}
 	if data != nil {
@@ -183,6 +190,7 @@ func (c *Client) sendRequest(method string, endpoint string, data interface{}) (
 	return body, nil
 }
 
+// Returns whether an HTTP status code is considered an error of some kind.
 func isErrorCode(statusCode int) bool {
 	return statusCode < http.StatusOK || statusCode >= http.StatusBadRequest
 }
@@ -214,6 +222,11 @@ func formatRequestError(statusCode int, body []byte) error {
 	return fmt.Errorf("unknown error, status code: %d", statusCode)
 }
 
+// Sends a JSON request to the API, with an optional JSON request body and optionally deserializing a JSON response body.
+// Method is the HTTP method to use.
+// Method is HTTP method to use, Endpoint is HTTP endpoint on the API.
+// If not nil, data will be serialized as JSON and sent to the API.
+// If not nil, result will be deserialized into from the API response body.
 func (c *Client) invokeAPI(method string, endpoint string, data interface{}, result interface{}) error {
 	body, err := c.sendRequest(method, endpoint, data)
 
@@ -229,6 +242,7 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 	return err
 }
 
+// Assert that an API call completed successfully, aborting the program if it did not
 func AssertApiError(e error, directory string) {
 	TranslateStatusCode(e, directory)
 	if e != nil {
@@ -237,6 +251,7 @@ func AssertApiError(e error, directory string) {
 	}
 }
 
+// Nicely present a HTTP status code.
 func TranslateStatusCode(e error, directory string) {
 	if e != nil {
 		splittedError := strings.Split(e.Error(), " ")
@@ -265,6 +280,7 @@ func TranslateStatusCode(e error, directory string) {
 
 }
 
+// Helper function to make query parameters from common get parameters.
 func formatCommonGetParams(params types.CommonGetParams) string {
 	return fmt.Sprintf("limit=%d&filter=%s", params.Limit, url.QueryEscape(params.Filter))
 }

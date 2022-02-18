@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Returns the template helper functions accessible to our templates.
 func TemplateHelpers() template.FuncMap {
 	return template.FuncMap{
 		// Formats a currenct + price pair such as "EUR", "100" -> 1.00 €.
@@ -20,14 +21,14 @@ func TemplateHelpers() template.FuncMap {
 
 			panic("Unknown currency: " + currency)
 		},
-		// Formats a string unix time and prints it
+		// Formats a string unix time and returns it
 		"formatUnixTime": func(secs string) string {
 			return FormatUnixTime(secs)
 		},
 	}
 }
 
-
+// Format a unix time value returned by the API in a way that is human-readable.
 func FormatUnixTime(secondsString string) string {
 	secs, err := strconv.ParseInt(secondsString, 10, 64)
 	if err != nil {
