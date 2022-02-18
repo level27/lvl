@@ -32,13 +32,15 @@ func getSystems(ids []string) []types.System {
 
 	if len(ids) == 0 {
 		return Level27Client.SystemGetList()
-	}else {
+	} else {
 		systems := make([]types.System, len(ids))
 		for idx, id := range ids {
-			systems[idx] = Level27Client.SystemGetList
-		}}
+			systems[idx] = Level27Client.SystemGetSingle(id)
+		}
+		return systems
+	}
 
-	return Level27Client.SystemGetList()
+	
 
 }
 

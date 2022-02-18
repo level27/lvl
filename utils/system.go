@@ -22,12 +22,14 @@ func (c *Client) SystemGetList() []types.System {
 }
 
 // Returning a single system by its ID
-func (c *Client) SystemGetSingle(id int) types.System{
-	var system types.System
-	endpoint := fmt.Sprintf("system?%v", id)
+func (c *Client) SystemGetSingle(id string) types.System {
+	var system struct {
+		Data types.System `json:"system"`
+	}
+	endpoint := fmt.Sprintf("systems/%v", id)
 	err := c.invokeAPI("GET", endpoint, nil, &system)
 
 	AssertApiError(err, "System")
-	return system
+	return system.Data
 
 }

@@ -38,7 +38,7 @@ type System struct {
 		OsVersion string `json:"osVersion"`
 	} `json:"operatingsystemVersion"`
 	ProvideId                   int    `json:"providerId"`
-	Provider                    string `json:"provider"`
+	Provider                    interface{} `json:"provider"`
 	ProviderApi                 string `json:"providerApi"`
 	SystemProviderConfiguration struct {
 		Id          int    `json:"id"`
