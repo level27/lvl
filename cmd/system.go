@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
 )
@@ -17,21 +19,26 @@ func init() {
 
 	//Toplevel subcommands (get/post)
 	systemCmd.AddCommand(systemGetCmd)
+	addCommonGetFlags(systemGetCmd)
 }
 
 var systemGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "get a list of all curent systems",
 	Run: func(cmd *cobra.Command, args []string) {
-		outputFormatTable(getSystems(args), []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
+		ids, err := convertStringsToIds(args)
+		if err != nil {
+			log.Fatalln("Invalid domain ID")
+		}
+		outputFormatTable(getSystems(ids), []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
 
 	},
 }
 
-func getSystems(ids []string) []types.System {
+func getSystems(ids []int) []types.System {
 
 	if len(ids) == 0 {
-		return Level27Client.SystemGetList()
+		return Level27Client.SystemGetList(optGetParameters)
 	} else {
 		systems := make([]types.System, len(ids))
 		for idx, id := range ids {
@@ -40,19 +47,6 @@ func getSystems(ids []string) []types.System {
 		return systems
 	}
 
-	
-
 }
 
-// // func getDomains(ids []string) []types.Domain {
-// // 	c := Level27Client
-// // 	if len(ids) == 0 {
-// // 		return c.Domains(optGetParameters)
-// // 	} else {
-// // 		domains := make([]types.Domain, len(ids))
-// // 		for idx, id := range ids {
-// // 			domains[idx] = c.Domain("GET", id, nil)
-// // 		}
-// // 		return domains
-// // 	}
-// // }
+

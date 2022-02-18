@@ -7,14 +7,14 @@ import (
 )
 
 // returning a list of all current systems [lvl system get]
-func (c *Client) SystemGetList() []types.System {
+func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 
 	//creating an array of systems.
 	var systems struct {
 		Data []types.System `json:"systems"`
 	}
 
-	endpoint := "systems"
+	endpoint := fmt.Sprintf("systems?%s", formatCommonGetParams(getParams))
 	err := c.invokeAPI("GET", endpoint, nil, &systems)
 	AssertApiError(err, "Systems")
 	return systems.Data
@@ -22,7 +22,7 @@ func (c *Client) SystemGetList() []types.System {
 }
 
 // Returning a single system by its ID
-func (c *Client) SystemGetSingle(id string) types.System {
+func (c *Client) SystemGetSingle(id int) types.System {
 	var system struct {
 		Data types.System `json:"system"`
 	}
