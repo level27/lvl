@@ -52,6 +52,11 @@ func init() {
 		systemCreateCmd.MarkFlagRequired(flag)
 	}
 
+	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
+	systemCmd.AddCommand(systemCheckCmd)
+	// GET LIST OF ALL CHECKS
+	systemCheckCmd.AddCommand(systemCheckGetCmd)
+	addCommonGetFlags(systemGetCmd)
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
@@ -96,7 +101,7 @@ var systemCreateOperatingSystemVersion, systemCreateParentSystem int
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
-var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+// var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 
 var systemCreateCmd = &cobra.Command{
 	Use:   "create",
@@ -198,4 +203,18 @@ var systemCreateCmd = &cobra.Command{
 		Level27Client.SystemCreate(args, RequestData)
 
 	},
+}
+
+//------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCheckCmd = &cobra.Command{
+	Use:   "checks",
+	Short: "Command for managing systems checks",
+}
+
+// ---------------- GET
+
+var systemCheckGetCmd = &cobra.Command{
+	Use:   "checks",
+	Short: "Command for managing systems checks",
 }

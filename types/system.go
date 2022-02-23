@@ -78,23 +78,52 @@ type System struct {
 
 // data needed for POST request (create system)
 type SystemPost struct {
-	Name                        string        `json:"name"`
-	CustomerFqdn                string        `json:"customerFqdn"`
-	Remarks                     string        `json:"remarks"`
-	Disk                        *int           `json:"disk"`
-	Cpu                         *int           `json:"cpu"`
-	Memory                      *int           `json:"memory"`
-	MamanagementType            string        `json:"managementType"`
-	PublicNetworking            bool          `json:"publicNetworking"`
-	SystemImage                 int           `json:"systemimage"`
-	Organisation                int           `json:"organisation"`
-	SystemProviderConfiguration int           `json:"systemproviderConfiguration"`
-	Zone                        int          `json:"zone"`
+	Name                        string `json:"name"`
+	CustomerFqdn                string `json:"customerFqdn"`
+	Remarks                     string `json:"remarks"`
+	Disk                        *int   `json:"disk"`
+	Cpu                         *int   `json:"cpu"`
+	Memory                      *int   `json:"memory"`
+	MamanagementType            string `json:"managementType"`
+	PublicNetworking            bool   `json:"publicNetworking"`
+	SystemImage                 int    `json:"systemimage"`
+	Organisation                int    `json:"organisation"`
+	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
+	Zone                        int    `json:"zone"`
 	// InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
-	AutoTeams                   string        `json:"autoTeams"`
-	ExternalInfo                string        `json:"externalInfo"`
-	OperatingSystemVersion      *int           `json:"operatingsystemVersion"`
-	ParentSystem                *int          `json:"parentsystem"`
-	Type                        string        `json:"type"`
-	AutoNetworks                []interface{} `json:"autoNetworks"`
+	AutoTeams              string        `json:"autoTeams"`
+	ExternalInfo           string        `json:"externalInfo"`
+	OperatingSystemVersion *int          `json:"operatingsystemVersion"`
+	ParentSystem           *int          `json:"parentsystem"`
+	Type                   string        `json:"type"`
+	AutoNetworks           []interface{} `json:"autoNetworks"`
+}
+
+// ----------------------------------- CHECKS ----------------------------------
+
+type SystemCheck struct {
+	Id                   int    `json:"id"`
+	CheckType            string `json:"checktype"`
+	Status               string `json:"status"`
+	StatusInformation    string `json:"statusInformation"`
+	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
+	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
+	DtNextCheck          int    `json:"dtNextCheck"`
+	CheckParameters      struct {
+		W struct {
+			Value   string `json:"value"`
+			Default bool   `json:"default"`
+		} `json:"w"`
+		C struct {
+			Value   string `json:"value"`
+			Default bool   `json:"default"`
+		} `json:"c"`
+	} `json:"checkparameters"`
+	CheckParametersDescriptions struct {
+		W string `json:"w"`
+		C string `json:"c"`
+	} `json:"checkparameterDescriptions"`
+
+	ChecktypeLocation string `json:"checktypeLocation"`
+	
 }
