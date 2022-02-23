@@ -79,7 +79,7 @@ type System struct {
 // data needed for POST request (create system)
 type SystemPost struct {
 	Name                        string        `json:"name"`
-	CustomeerFqdn               string        `json:"customerFqdn"`
+	CustomerFqdn               string        `json:"customerFqdn"`
 	Remarks                     string        `json:"remarks"`
 	Disk                        int           `json:"disk"`
 	Cpu                         int           `json:"cpu"`
