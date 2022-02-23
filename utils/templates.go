@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 )
 
+// Returns the template helper functions accessible to our templates.
 func MakeTemplateHelpers(t *template.Template) template.FuncMap {
 	return template.FuncMap{
 		// Formats a currenct + price pair such as "EUR", "100" -> 1.00 €.
@@ -115,6 +116,7 @@ func FormatUnixTimeF(seconds interface{}, fmt string) string {
 	return reqTime.Format(fmt)
 }
 
+// Format a unix time value returned by the API in a way that is human-readable.
 func FormatUnixTime(seconds interface{}) string {
 	return FormatUnixTimeF(seconds, "2006 Jan _2 15:04:05")
 }

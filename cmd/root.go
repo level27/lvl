@@ -267,6 +267,7 @@ func outputFormatTemplateYaml(object interface{}) {
 	fmt.Println(string(b))
 }
 
+// Convert a JSON-serializable value to a model of interface{} maps and slices. Effectively serializing the object to maps/slices with the JSON model.
 func roundTripJson(obj interface{}) interface{} {
 	// Round-trip through JSON so we use the JSON (camelcased) key names in the YAML without having to re-define them
 	bJson, _ := json.Marshal(obj)
@@ -275,6 +276,7 @@ func roundTripJson(obj interface{}) interface{} {
 	return interf
 }
 
+// Tries to convert a string command line argument to an integer ID
 func convertStringToId(id string) (int, error) {
 	intId, err := strconv.Atoi(id)
 	if err != nil {
@@ -284,6 +286,7 @@ func convertStringToId(id string) (int, error) {
 	return intId, nil
 }
 
+// Tries to convert a slice of command line arguments to integer IDs
 func convertStringsToIds(ids []string) ([]int, error) {
 	ints := make([]int, len(ids))
 	for idx, id := range ids {

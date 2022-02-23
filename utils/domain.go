@@ -25,31 +25,14 @@ func (c *Client) Extension() []types.DomainProvider {
 	return extensions.Data
 }
 
-//Domain gets a system from the API
-func (c *Client) Domain(method string, id interface{}, data interface{}) types.Domain {
+// Gets a single domain from the API
+func (c *Client) Domain(id int) types.Domain {
 	var domain struct {
 		Data types.Domain `json:"domain"`
 	}
 
-	var err error
-	switch method {
-	case "GET":
-		endpoint := fmt.Sprintf("domains/%s", id)
-		err = c.invokeAPI("GET", endpoint, nil, &domain)
-	case "CREATE":
-		endpoint := "domains"
-		err = c.invokeAPI("POST", endpoint, data, &domain)
-	case "UPDATE":
-		endpoint := fmt.Sprintf("domains/%s", id)
-		err = c.invokeAPI("PUT", endpoint, data, nil)
-	case "DELETE":
-		endpoint := fmt.Sprintf("domains/%s", id)
-		err = c.invokeAPI("DELETE", endpoint, nil, nil)
-	case "TRANSFER":
-		endpoint := fmt.Sprintf("domains/%s/internaltransfer", id)
-		err = c.invokeAPI("POST", endpoint, data, &domain)
-	}
-
+	endpoint := fmt.Sprintf("domains/%d", id)
+	err := c.invokeAPI("GET", endpoint, nil, &domain)
 	AssertApiError(err, "domain")
 
 	return domain.Data
@@ -89,7 +72,9 @@ func (c *Client) DomainDelete(id []string) {
 
 			switch strings.ToLower(userResponse) {
 			case "y", "yes":
-				c.Domain("DELETE", value, nil)
+				endpoint := fmt.Sprintf("domains/%d", domainId)
+				err := c.invokeAPI("DELETE", endpoint, nil, nil)
+				AssertApiError(err, "domainDelete")
 			case "n", "no":
 				log.Printf("Delete canceled for domain: %v", value)
 			default:
@@ -106,13 +91,18 @@ func (c *Client) DomainDelete(id []string) {
 
 // CREATE DOMAIN [lvl domain create <parmeters>]
 func (c *Client) DomainCreate(args []string, req types.DomainRequest) {
-
 	if req.Action == "" {
 		req.Action = "none"
 	}
 
-	result := c.Domain("CREATE", nil, req)
-	log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", result.Fullname, result.ID)
+	var domain struct {
+		Data types.Domain `json:"domain"`
+	}
+
+	err := c.invokeAPI("POST", "domains", req, &domain)
+	AssertApiError(err, "domainCreate")
+
+	log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", domain.Data.Fullname, domain.Data.ID)
 
 }
 
@@ -122,15 +112,17 @@ func (c *Client) DomainTransfer(args []string, req types.DomainRequest) {
 		req.Action = "transfer"
 	}
 
-	c.Domain("CREATE", nil, req)
+	err := c.invokeAPI("POST", "domains", req, nil)
+	AssertApiError(err, "domainCreate")
 }
 
 // INTERNAL TRANSFER
-func (c *Client) DomainInternalTransfer(args []string, req types.DomainRequest) {
+func (c *Client) DomainInternalTransfer(id int, req types.DomainRequest) {
+	endpoint := fmt.Sprintf("domains/%d/internaltransfer", id)
+	err := c.invokeAPI("POST", endpoint, req, nil)
 
-	res := c.Domain("TRANSFER", args[0], req)
+	AssertApiError(err, "internalTransfer")
 
-	fmt.Println(res)
 }
 
 // UPDATE DOMAIN [lvl update <parameters>]
