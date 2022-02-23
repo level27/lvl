@@ -57,6 +57,8 @@ func init() {
 	// GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
 	addCommonGetFlags(systemCheckGetCmd)
+
+
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
@@ -67,7 +69,7 @@ var systemGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
-			log.Fatalln("Invalid domain ID")
+			log.Fatalln("Invalid system ID")
 		}
 		outputFormatTable(getSystems(ids), []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
 
@@ -217,4 +219,20 @@ var systemCheckCmd = &cobra.Command{
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Command for managing systems checks",
+	Run: func(cmd *cobra.Command, args []string) {
+		ids, err := convertStringsToIds(args)
+		if err != nil {
+			log.Fatalln("Invalid system check ID")
+		}
+		outputFormatTable(getSystemChecks(ids), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+	},
 }
+
+func getSystemChecks(ids []int) []types.SystemCheck {
+
+
+	return Level27Client.SystemCheckGetList(ids[0], optGetParameters)
+	
+
+}
+

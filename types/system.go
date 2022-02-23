@@ -118,10 +118,15 @@ type SystemCheck struct {
 			Value   string `json:"value"`
 			Default bool   `json:"default"`
 		} `json:"c"`
+		H struct {
+			Value   string `json:"value"`
+			Default bool   `json:"default"`
+		} `json:"H"`
 	} `json:"checkparameters"`
 	CheckParametersDescriptions struct {
 		W string `json:"w"`
 		C string `json:"c"`
+		H string `json:"H"`
 	} `json:"checkparameterDescriptions"`
 
 	ChecktypeLocation string `json:"checktypeLocation"`

@@ -59,3 +59,21 @@ func (c *Client) SystemCreate(args []string, req types.SystemPost) {
 	log.Printf("System created! [Fullname: '%v' , ID: '%v']", System.Data.Name, System.Data.Id)
 
 }
+
+// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
+
+func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
+
+	//creating an array of systems.
+	var systemChecks struct {
+		Data []types.SystemCheck `json:"checks"`
+	}
+
+	//creating endpoint
+	endpoint := fmt.Sprintf("systems/%v/checks?%s", systemId, formatCommonGetParams(getParams))
+	err := c.invokeAPI("GET", endpoint, nil, &systemChecks)
+	AssertApiError(err, "Systems")
+	//returning result as system check type
+	return systemChecks.Data
+
+}
