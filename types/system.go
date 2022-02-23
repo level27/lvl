@@ -79,7 +79,7 @@ type System struct {
 // data needed for POST request (create system)
 type SystemPost struct {
 	Name                        string        `json:"name"`
-	CustomerFqdn               string        `json:"customerFqdn"`
+	CustomerFqdn                string        `json:"customerFqdn"`
 	Remarks                     string        `json:"remarks"`
 	Disk                        int           `json:"disk"`
 	Cpu                         int           `json:"cpu"`
@@ -89,12 +89,12 @@ type SystemPost struct {
 	SystemImage                 int           `json:"systemimage"`
 	Organisation                int           `json:"organisation"`
 	SystemProviderConfiguration int           `json:"systemproviderConfiguration"`
-	Zone                        int           `json:"zone"`
+	Zone                        int          `json:"zone"`
 	InstallSecurityUpdates      int           `json:"installSecurityUpdates"`
 	AutoTeams                   string        `json:"autoTeams"`
 	ExternalInfo                string        `json:"externalInfo"`
 	OperatingSystemVersion      int           `json:"operatingsystemVersion"`
-	ParentSystem                int           `json:"parentsystem"`
+	ParentSystem                int          `json:"parentsystem"`
 	Type                        string        `json:"type"`
 	AutoNetworks                []interface{} `json:"autoNetworks"`
 }
