@@ -51,6 +51,8 @@ func (c *Client) SystemCreate(args []string, req types.SystemPost) {
 		Data types.System `json:"system"`
 	}
 
+	
+
 	err := c.invokeAPI("POST", "systems", req, &System)
 	AssertApiError(err, "SystemCreate")
 

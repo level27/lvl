@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -39,7 +39,7 @@ func init() {
 	flags.IntVarP(&systemCreateOrganisation, "organisation", "", 0, "The unique ID of an organisation")
 	flags.IntVarP(&systemCreateProviderConfig, "provider", "", 0, "The unique ID of a SystemproviderConfiguration")
 	flags.IntVarP(&systemCreateZone, "zone", "", 0, "The unique ID of a zone")
-	flags.IntVarP(&systemCreateSecurityUpdates, "security", "", 0, "installSecurityUpdates (default: random POST:1-8, PUT:0-12)")
+	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)")
 	flags.StringVarP(&systemCreateAutoTeams, "autoTeams", "", "", "A csv list of team ID's")
 	flags.StringVarP(&systemCreateExternalInfo, "externalInfo", "", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in db)")
 	flags.IntVarP(&systemCreateOperatingSystemVersion, "version", "", 0, "The unique ID of an OperatingsystemVersion (non-editable)")
@@ -91,12 +91,14 @@ var systemCreateDisk, systemCreateCpu, systemCreateMemory int
 var systemCreateManageType string
 var systemCreatePublicNetworking bool
 var systemCreateImage, systemCreateOrganisation, systemCreateProviderConfig, systemCreateZone int
-var systemCreateSecurityUpdates int
+var systemCreateSecurityUpdates string
 var systemCreateAutoTeams, systemCreateExternalInfo string
 var systemCreateOperatingSystemVersion, systemCreateParentSystem int
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
+var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+
 
 var systemCreateCmd = &cobra.Command{
 	Use:   "create",
@@ -104,19 +106,23 @@ var systemCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		managementTypeValue := cmd.Flag("management").Value.String()
+		securityUpdateValue := cmd.Flag("security").Value.String()
+		var checkedSecurityUpdateValue int
+
 		//  checking if the management flag has been changed/set
 		if cmd.Flag("management").Changed {
+
 			// checking if given managamentType is one of the possible options.
-			var isPossible bool
+			var isValidManagementType bool
 			for _, arrayItem := range managementTypeArray {
 				if strings.ToLower(managementTypeValue) == arrayItem {
 					managementTypeValue = arrayItem
-					isPossible = true
-				} 
+					isValidManagementType = true
+				}
 			}
 			// if no valid management type was given -> error for user
-			if !isPossible {
-				log.Printf("ERROR. given managementType is not valid: '%v'", managementTypeValue)
+			if !isValidManagementType {
+				log.Printf("ERROR: given managementType is not valid: '%v'", managementTypeValue)
 			}
 		}
 
@@ -125,16 +131,16 @@ var systemCreateCmd = &cobra.Command{
 			Name:                        systemCreateName,
 			CustomerFqdn:                systemCreateFqdn,
 			Remarks:                     systemCreateRemarks,
-			Disk:                        systemCreateDisk,
-			Cpu:                         systemCreateCpu,
-			Memory:                      systemCreateMemory,
+			Disk:                        &systemCreateDisk,
+			Cpu:                         &systemCreateCpu,
+			Memory:                      &systemCreateMemory,
 			MamanagementType:            managementTypeValue,
 			PublicNetworking:            systemCreatePublicNetworking,
 			SystemImage:                 systemCreateImage,
 			Organisation:                systemCreateOrganisation,
 			SystemProviderConfiguration: systemCreateProviderConfig,
 			Zone:                        systemCreateZone,
-			InstallSecurityUpdates:      systemCreateSecurityUpdates,
+			InstallSecurityUpdates:      &checkedSecurityUpdateValue,
 			AutoTeams:                   systemCreateAutoTeams,
 			ExternalInfo:                systemCreateExternalInfo,
 			OperatingSystemVersion:      systemCreateOperatingSystemVersion,
@@ -143,8 +149,48 @@ var systemCreateCmd = &cobra.Command{
 			AutoNetworks:                systemCreateAutoNetworks,
 		}
 
-		fmt.Println(RequestData.MamanagementType)
-		// Level27Client.SystemCreate(args, RequestData)
+		// checking if the install securityUpdates flag is changed
+		if cmd.Flag("security").Changed {
+
+			// check if given value is a valid int
+			checkedSecurityUpdateValue, err := strconv.Atoi(securityUpdateValue)
+			if err != nil {
+				log.Printf("ERROR: given installSecurityUpdates not valid: '%v'", securityUpdateValue)
+			} else {
+				//if given value is okay, check if value is one of the allowed values
+				var isValidSecurityUpdate bool
+				for _, arrayItem := range securityUpdatesArray {
+					if checkedSecurityUpdateValue == arrayItem {
+
+						RequestData.InstallSecurityUpdates = new(int)
+						RequestData.InstallSecurityUpdates = &arrayItem
+						log.Printf("value gevonden: '%v'", arrayItem)
+
+						isValidSecurityUpdate = true
+					}
+				}
+
+				if !isValidSecurityUpdate {
+					log.Printf("ERROR: given installSecurityUpdates is not valid: '%v'", securityUpdateValue)
+					RequestData.InstallSecurityUpdates = nil
+				}
+			}
+
+		}
+
+		if *RequestData.Disk == 0 {
+			RequestData.Disk = nil
+		}
+
+		if *RequestData.Cpu == 0 {
+			RequestData.Cpu = nil
+		}
+
+		if *RequestData.Memory == 0 {
+			RequestData.Memory = nil
+		}
+		log.Printf("cpu %v, disk %v, memory %v", RequestData.Cpu, RequestData.Disk, RequestData.Memory)
+		 Level27Client.SystemCreate(args, RequestData)
 
 	},
 }
