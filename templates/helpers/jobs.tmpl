@@ -1,41 +1,50 @@
+{{/* JOB STATUS */}}
 {{ define "jobStatus" }}
 {{- $stat := jobStatusSafe .Status }}
-{{- if eq $stat 50 }}
-  {{- $stat = "Succeeded" }}
-{{- else if eq $stat 999 }}
-  {{- $stat = "Busy" }}
-{{- else if eq $stat 20 }}
-  {{- $stat = "Not Queued" }}
-{{- else if eq $stat 21 }}
-  {{- $stat = "Queued" }}
-{{- else if eq $stat 40 }}
-  {{- $stat = "Failed" }}
-{{- else if eq $stat 90 }}
-  {{- $stat = "Removed" }}
+{{- if eq $stat 50 -}}
+{{ vt "green"}}Succeeded{{vt "reset"}}
+{{- else if eq $stat 999 -}}
+{{ vt "yellow" }}Busy
+{{- else if eq $stat 20 -}}
+{{ vt "brightblack"}}Not Queued
+{{- else if eq $stat 21 -}}
+{{ vt "cyan"}}Queued
+{{- else if eq $stat 40 -}}
+{{ vt "red"}}Failed
+{{- else if eq $stat 90 -}}
+{{ vt "brightblack" }}Removed
 {{- end }}
-{{- $stat }}
+{{- vt "reset"}}
 {{- end }}
+
+
+{{/* JOB ENTITY  */}}
 {{ define "jobEntity" -}}
   {{ if eq .Eclass "Level27\\DomainBundle\\Entity\\Domain" -}}
-    domain {{ .Estring }}/{{ .Eid -}}
+    domain {{ .Estring }} ({{ .Eid }})
   {{ else if eq .Eclass "Level27\\BaseBundle\\Entity\\Integritycheck" -}}
-    {{ .Estring -}}
-  {{ end -}}
+    Integritycheck #{{ .Eid }}
+  {{ else -}}
+    {{ .Estring }} ({{ .Eid }})
+  {{- end -}}
 {{ end -}}
+
+{{/* JOB TITLE */}}
 {{ define "jobTitle" }}
-[{{.Id}}] [{{formatUnixTimeF .Dt "2006-01-02 15:04:05" }}] {{template "jobStatus" .}}
+[{{vt "brightwhite"}}{{.Id}}{{vt "reset"}}] [{{vt "brightblue"}}{{formatUnixTimeF .Dt "2006-01-02 15:04:05" }}{{vt "reset"}}] {{template "jobStatus" .}}
 {{- if ne .Message "" -}}
-: {{.Message -}}
+: {{vt "brightwhite"}}{{.Message}}{{vt "reset" -}}
 {{end -}}
 {{- end }}
 
+{{/* JOB STATUS */}}
 {{ define "jobDesc" }}
 {{- if ne .Action "" }}
-  {{if ne .System 0}}System: {{.System}}{{end -}}
-  {{if ne .Estring ""}}Entity: {{ template "jobEntity" . }} {{end -}}
-  Action: {{.Action}}
+  {{if ne .System 0}}{{vt "yellow"}}System: {{vt "brightyellow"}}{{.System}} {{vt "reset"}}{{end -}}
+  {{if ne .Estring ""}}{{vt "yellow"}}Entity: {{vt "brightyellow"}}{{ template "jobEntity" . }} {{vt "reset"}}{{end -}}
+  {{vt "yellow"}}Action: {{vt "brightyellow"}}{{.Action}}{{vt "reset"}}
 {{- end}}
 {{- if ne .ExcCode 0 }}
-  Error: [{{.ExcCode}}] {{.ExcMsg}}
+  {{vt "red"}}Error:{{vt "reset"}} [{{vt "brightred"}}{{.ExcCode}}{{vt "reset"}}] {{.ExcMsg}}
 {{- end}}
 {{- end }}

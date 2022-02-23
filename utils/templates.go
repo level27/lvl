@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/fatih/color"
 )
 
 func MakeTemplateHelpers(t *template.Template) template.FuncMap {
@@ -54,7 +55,34 @@ func MakeTemplateHelpers(t *template.Template) template.FuncMap {
 			}
 		},
 		"jobChildCountTotal": jobChildCountTotalRecurse,
+		"vt": func(colorCode string) string {
+			if color.NoColor {
+				return ""
+			}
+			return vtCodes[colorCode]
+		},
 	}
+}
+
+var vtCsi = "\x1B["
+var vtCodes = map[string]string {
+	"reset": vtCsi + "0m",
+	"black": vtCsi + "30m",
+	"red": vtCsi + "31m",
+	"green": vtCsi + "32m",
+	"yellow": vtCsi + "33m",
+	"blue": vtCsi + "34m",
+	"magenta": vtCsi + "35m",
+	"cyan": vtCsi + "36m",
+	"white": vtCsi + "37m",
+	"brightblack": vtCsi + "90m",
+	"brightred": vtCsi + "91m",
+	"brightgreen": vtCsi + "92m",
+	"brightyellow": vtCsi + "93m",
+	"brightblue": vtCsi + "94m",
+	"brightmagenta": vtCsi + "95m",
+	"brightcyan": vtCsi + "96m",
+	"brightwhite": vtCsi + "97m",
 }
 
 func jobChildCountTotalRecurse(job types.Job) int {
