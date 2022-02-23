@@ -17,7 +17,7 @@ func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemCmd)
 
-	//Toplevel subcommands (get/post)
+	//-------------------------------------  Toplevel subcommands (get/post) --------------------------------------
 	// --- GET
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
@@ -44,6 +44,12 @@ func init() {
 	flags.IntVarP(&systemCreateParentSystem, "parent", "", 0, "The unique ID of a system (parent system)")
 	flags.StringVarP(&systemCreateType, "type", "", "", "System type")
 	flags.StringArrayP("networks", "", []string{""}, "Array of network IP's. (default: null)")
+
+	// Required flags for create system.
+	requiredFlags := []string{ "name", "image", "organisation", "provider", "zone"}
+	for _, flag := range requiredFlags {
+		systemCreateCmd.MarkFlagRequired(flag)
+	}
 
 }
 
