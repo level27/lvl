@@ -93,7 +93,8 @@ type Domain struct {
 		AdminOnly      bool   `json:"adminOnly"`
 		OrganisationId int    `json:"organisationId"`
 	} `json:"teams"`
-	CountTeams int `json:"countTeams"`
+	CountTeams int   `json:"countTeams"`
+	Jobs       []Job `json:"jobs"`
 }
 
 func (d Domain) String() string {
@@ -320,6 +321,20 @@ type DomainCheckResult struct {
 	} `json:"products"`
 }
 
+// ------------------------------------------ JOB HISTORY ---------------------------------------------
+type DomainJobHistory struct {
+	Id      int           `json:"id"`
+	Status  int           `json:"status"`
+	Conc    int           `json:"conc"`
+	Hoe     int           `json:"hoe"`
+	Message string        `json:"msg"`
+	Dt      string        `json:"dt"`
+	Logs    []interface{} `json:"logs"`
+}
+
+type DomainJobHistoryRoot struct {
+	DomainJobHistory
+}
 // INTEGRITY CHECKS
 type DomainIntegrityCheck struct {
 	IntegrityCheckSummary

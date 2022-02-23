@@ -142,10 +142,6 @@ func init() {
 	// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
 	domainCmd.AddCommand(domainBillableItemCmd)
 
-	// // GET BILLABLEITEMS
-	// domainBillableItemCmd.AddCommand(domainBillableItemsGetCmd)
-	// addCommonGetFlags(domainBillableItemsGetCmd)
-
 	// CREATE BILLABLEITEM (turn invoicing on)
 	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
 	flags = domainBillCreateCmd.Flags()
@@ -157,6 +153,11 @@ func init() {
 	// --------------------------------------------------- AVAILABILITY/CHECK --------------------------------------------------------
 	// CHECK
 	domainCmd.AddCommand(domainCheckCmd)
+
+	// --------------------------------------------------- JOB HISTORY --------------------------------------------------------
+	domainCmd.AddCommand(domainJobHistoryCmd)
+
+	domainCmd.AddCommand(domainRootJobHistoryCmd)
 
 	// INTEGRITY CHECKS
 	domainCmd.AddCommand(domainIntegrityCmd)
@@ -273,6 +274,10 @@ var domainDescribeCmd = &cobra.Command{
 		}
 
 		domain := Level27Client.Domain(domainID)
+		domain.Jobs = Level27Client.DomainJobHistoryGet(domainID)
+		for idx, j := range domain.Jobs {
+			domain.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
+		}
 
 		outputFormatTemplate(domain, "templates/domain.tmpl")
 	},
@@ -667,23 +672,6 @@ var domainBillableItemCmd = &cobra.Command{
 	Short: "Manage domain's invoicing (BillableItem)",
 }
 
-// // GET BILLABLEITEM
-// var domainBillableItemsGetCmd = &cobra.Command{
-// 	Use:   "get [domain]",
-// 	Short: "get a list of all billableItems for a domain",
-// 	Args:  cobra.ExactArgs(1),
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		id, err := strconv.Atoi(args[0])
-// 		if err != nil {
-// 			log.Fatal("no valid domain ID")
-// 		}
-// 		billableItem := Level27Client.DomainBillableItemsGet(id)
-
-// 		MakeBillableItemTable(billableItem.BillableItem)
-
-// 	},
-// }
-
 // CREATE A BILLABLEITEM / TURN ON BILLING(ADMIN ONLY)
 var externalInfo string
 
@@ -722,81 +710,6 @@ var domainBillDeleteCmd = &cobra.Command{
 	},
 }
 
-// // UPDATE BILLABLE ITEM
-// var domainBillableAutoRenew, domainBillablePreventDeactivation, domainBillableHideDetails bool
-// var domainBillableExtra1, domainBillableExtra2, domainBillableExternalInfo string
-
-// var domainBillUpdateCmd = &cobra.Command{
-// 	Use:   "update [domain]",
-// 	Short: "Update billableItem for domain",
-// 	Args:  cobra.ExactArgs(1),
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		id, err := strconv.Atoi(args[0])
-// 		if err != nil {
-// 			log.Fatal("no valid domain ID")
-// 		}
-
-// 		req := types.BillableItemUpdateRequest{
-// 			AutoRenew:          domainBillableAutoRenew,
-// 			Extra1:             domainBillableExtra1,
-// 			Extra2:             domainBillableExtra2,
-// 			ExternalInfo:       domainBillableExternalInfo,
-// 			PrevenDeactivation: domainBillablePreventDeactivation,
-// 			HideDetails:        domainBillableHideDetails,
-// 		}
-
-// 		Level27Client.DomainBillableItemUpdate(id, req)
-// 	},
-// }
-
-// ---------------------------------------------- BILLABLEITEM / DETAILS ------------------------------------------------
-// //BILLABLE ITEMS DETAILS SECTION
-// var domainBillableDetailCmd = &cobra.Command{
-// 	Use: "details",
-// 	Short: "Manage details for billableItem",
-// }
-
-// // CREATE BILLABLEITEM DETAILS
-// var domainBillableDetailProduct, domainBillableDetailDescription, domainBillableDetailDtExpires string
-// var domainBillableDetailPrice , domainBillableDetailQuantity int
-
-// var domainBillableDetailCreateCmd = &cobra.Command{
-// 	Use: "create [domainID]",
-// 	Short: "Create a detail for a billableItem on a domain",
-// 	Args: cobra.ExactArgs(1),
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		id, err := strconv.Atoi(args[0])
-// 		if err != nil {
-// 			log.Fatal("no valid domain ID")
-// 		}
-
-// 		request := types.BillableItemDetailsPostRequest{
-// 			Product: domainBillableDetailProduct,
-// 			Price: domainBillableDetailPrice,
-// 			Description: domainBillableDetailDescription,
-// 			DtExpires: domainBillableDetailDtExpires,
-// 			Quantity: domainBillableDetailQuantity,
-
-// 		}
-// 		Level27Client.DomainBillableDetailsCreate(id, request)
-// 	},
-// }
-
-// // DELETE BILLABLEITEM DETAILS
-// var domainBillableDetailDeleteCmd = &cobra.Command{
-// 	Use: "delete",
-// 	Short: "Delete a detail from a billableItem",
-// 	Args: cobra.ExactArgs(1),
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		id, err := strconv.Atoi(args[0])
-// 		if err != nil {
-// 			log.Fatal("no valid domain ID")
-// 		}
-
-// 		fmt.Print(id)
-
-// 	},
-// }
 // ---------------------------------------------- CHECK / AVAILABILITY ------------------------------------------------
 var domainCheckCmd = &cobra.Command{
 	Use:   "check [domain name]",
@@ -812,15 +725,85 @@ var domainCheckCmd = &cobra.Command{
 	},
 }
 
+// ---------------------------------------------- JOB HISTORY DOMAINS ------------------------------------------------
+
+// get list of job history
+var domainJobHistoryCmd = &cobra.Command{
+	Use:   "jobs [domainId]",
+	Short: "Manage the job history for a domain",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		//get full history of toplevel jobs
+		history := Level27Client.DomainJobHistoryGet(id)
+		// filter jobs where status is not 50.
+		notCompleted := FindNotcompletedJobs(history)
+
+		// check for every job without status 50. the subjobs who don't have status 50
+		for _, RootJob := range notCompleted {
+			fullData := Level27Client.JobHistoryRootGet(RootJob.Id)
+
+			for _, subjob := range fullData.Jobs {
+				if subjob.Status != 50 {
+					notCompleted = append(notCompleted, subjob)
+					if len(subjob.Jobs) != 0 {
+						notCompleted = append(notCompleted, FindNotcompletedJobs(subjob.Jobs)...)
+					}
+				}
+			}
+		}
+
+		outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"Id", "Status", "Message", "Dt"})
+
+	},
+}
+
+func CheckSubJobs(job types.Job) bool {
+	if len(job.Jobs) == 0 {
+		return false
+	} else {
+		return true
+	}
+}
+
+func FindNotcompletedJobs(jobs []types.Job) []types.Job {
+	var NotCompleted []types.Job
+	for _, job := range jobs {
+		if job.Status != 50 {
+			NotCompleted = append(NotCompleted, job)
+		}
+	}
+	return NotCompleted
+
+}
+
+// get detailed job history for a root job
+var domainRootJobHistoryCmd = &cobra.Command{
+	Use:   "root",
+	Short: "get detailed jobs",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal("no valid domain ID")
+		}
+		fmt.Print(Level27Client.JobHistoryRootGet(id))
+	},
+}
+
+// ---------------------------------------------- INTEGRITY CHECKS DOMAINS ------------------------------------------------
 var domainIntegrityCmd = &cobra.Command{
-	Use: "integrity",
+	Use:   "integrity",
 	Short: "Commands for managing integrity checks on domains",
 }
 
 var domainIntegrityGetCmd = &cobra.Command{
-	Use: "get [domain id]",
+	Use:   "get [domain id]",
 	Short: "Get a list of all integrity checks for a domain",
-	Args: cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
 		cobra.CheckErr(err)
@@ -846,12 +829,12 @@ func getDomainIntegrityChecks(domainId int, ids []int) []types.IntegrityCheckSum
 	}
 }
 
-var domainIntegrityCheckDoJobs bool = true;
-var domainIntegrityCheckForceJobs bool = false;
+var domainIntegrityCheckDoJobs bool = true
+var domainIntegrityCheckForceJobs bool = false
 var domainIntegrityCreateCmd = &cobra.Command{
-	Use: "create [domain id]",
+	Use:   "create [domain id]",
 	Short: "Create a new integrity report",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
 		cobra.CheckErr(err)
@@ -863,9 +846,9 @@ var domainIntegrityCreateCmd = &cobra.Command{
 
 var integrityDownload string
 var domainIntegrityDownloadCmd = &cobra.Command{
-	Use: "download [domain id] [check id]",
+	Use:   "download [domain id] [check id]",
 	Short: "Download an integrity check as PDF file",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		domainId, err := convertStringToId(args[0])
 		cobra.CheckErr(err)

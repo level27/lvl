@@ -28,6 +28,7 @@ import (
 	"text/template"
 
 	"bitbucket.org/level27/lvl/utils"
+	"github.com/Masterminds/sprig/v3"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
@@ -237,7 +238,13 @@ func outputFormatTableYaml(objects interface{}) {
 
 func outputFormatTemplateText(object interface{}, templatePath string) {
 	_, fileName := path.Split(templatePath)
-	tmpl := template.Must(template.New(fileName).Funcs(utils.TemplateHelpers()).ParseFiles(templatePath))
+
+	tmpl := template.New(fileName)
+	tmpl.Funcs(sprig.TxtFuncMap())
+	tmpl.Funcs(utils.MakeTemplateHelpers(tmpl))
+	tmpl = template.Must(tmpl.ParseFiles(templatePath))
+	tmpl = template.Must(tmpl.ParseGlob("templates/helpers/*.tmpl"))
+
 	err := tmpl.Execute(os.Stdout, object)
 	if err != nil {
 		panic(err)
