@@ -1,0 +1,7 @@
+{{ block "jobShort" . }}
+{{- template "jobTitle" . }}
+{{- template "jobDesc" . }}
+{{- range .Jobs }}
+  {{- include "jobShort" . | indent 4 }}
+{{- end }}
+{{- end }}

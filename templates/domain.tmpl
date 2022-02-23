@@ -55,7 +55,18 @@ Teams ({{.CountTeams}}):
 {{- end}}
 {{- if .Jobs}}
 Latest jobs:
-{{- range .Jobs}}
-ID: {{.Id}} - STATUS: {{.Status}}  - MESSAGE: {{.Message}}
+{{- range .Jobs -}}
+  {{ block "job" . }}
+    {{- $stat := jobStatusSafe .Status}}
+    {{- $hasChildren := gt (len .Jobs) 0 }}
+    {{- $showChildren := and (or (ne $stat 50) (eq .Message "")) $hasChildren }}
+    {{- template "jobTitle" . }}
+    {{- template "jobDesc" . }}
+    {{- if $showChildren }}
+      {{- range .Jobs }}
+        {{- include "job" . | indent 4 }}
+      {{- end}}
+    {{- else if $hasChildren }} ({{ jobChildCountTotal . }} hidden){{- end }}
+  {{- end }}
 {{- end}}
 {{- end}}

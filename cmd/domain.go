@@ -213,6 +213,9 @@ var domainDescribeCmd = &cobra.Command{
 		domainID := args[0]
 		domain := Level27Client.Domain("GET", domainID, nil)
 		domain.Jobs = Level27Client.DomainJobHistoryGet(domainId)
+		for idx, j := range domain.Jobs {
+			domain.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
+		}
 		outputFormatTemplate(domain, "templates/domain.tmpl")
 	},
 }
@@ -694,7 +697,7 @@ var domainJobHistoryCmd = &cobra.Command{
 
 		// check for every job without status 50. the subjobs who don't have status 50
 		for _, RootJob := range notCompleted {
-			fullData := Level27Client.DomainJobHistoryRootGet(RootJob.Id)
+			fullData := Level27Client.JobHistoryRootGet(RootJob.Id)
 
 			for _, subjob := range fullData.Jobs {
 				if subjob.Status != 50 {
@@ -740,7 +743,7 @@ var domainRootJobHistoryCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		fmt.Print(Level27Client.DomainJobHistoryRootGet(id))
+		fmt.Print(Level27Client.JobHistoryRootGet(id))
 	},
 }
 

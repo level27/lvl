@@ -1,0 +1,41 @@
+{{ define "jobStatus" }}
+{{- $stat := jobStatusSafe .Status }}
+{{- if eq $stat 50 }}
+  {{- $stat = "Succeeded" }}
+{{- else if eq $stat 999 }}
+  {{- $stat = "Busy" }}
+{{- else if eq $stat 20 }}
+  {{- $stat = "Not Queued" }}
+{{- else if eq $stat 21 }}
+  {{- $stat = "Queued" }}
+{{- else if eq $stat 40 }}
+  {{- $stat = "Failed" }}
+{{- else if eq $stat 90 }}
+  {{- $stat = "Removed" }}
+{{- end }}
+{{- $stat }}
+{{- end }}
+{{ define "jobEntity" -}}
+  {{ if eq .Eclass "Level27\\DomainBundle\\Entity\\Domain" -}}
+    domain {{ .Estring }}/{{ .Eid -}}
+  {{ else if eq .Eclass "Level27\\BaseBundle\\Entity\\Integritycheck" -}}
+    {{ .Estring -}}
+  {{ end -}}
+{{ end -}}
+{{ define "jobTitle" }}
+[{{.Id}}] [{{formatUnixTimeF .Dt "2006-01-02 15:04:05" }}] {{template "jobStatus" .}}
+{{- if ne .Message "" -}}
+: {{.Message -}}
+{{end -}}
+{{- end }}
+
+{{ define "jobDesc" }}
+{{- if ne .Action "" }}
+  {{if ne .System 0}}System: {{.System}}{{end -}}
+  {{if ne .Estring ""}}Entity: {{ template "jobEntity" . }} {{end -}}
+  Action: {{.Action}}
+{{- end}}
+{{- if ne .ExcCode 0 }}
+  Error: [{{.ExcCode}}] {{.ExcMsg}}
+{{- end}}
+{{- end }}

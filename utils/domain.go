@@ -285,16 +285,6 @@ func (c *Client) DomainJobHistoryGet(domainId int) []types.Job {
 	return historyResult
 }
 
-func (c *Client) DomainJobHistoryRootGet(rooJobId int) types.Job {
-	var job types.Job
-	endpoint := fmt.Sprintf("jobs/history/root/%v", rooJobId)
-	err := c.invokeAPI("GET", endpoint, nil, &job)
-	AssertApiError(err, "root job history")
-
-	return job
-}
-
-
 // ---------------------------------------------- INTEGRITY CHECKS DOMAINS ------------------------------------------------
 
 func (c *Client) DomainIntegrityCheck(domainId int, checkId int) types.DomainIntegrityCheck {
