@@ -90,11 +90,11 @@ type SystemPost struct {
 	Organisation                int           `json:"organisation"`
 	SystemProviderConfiguration int           `json:"systemproviderConfiguration"`
 	Zone                        int          `json:"zone"`
-	InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
+	// InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
 	AutoTeams                   string        `json:"autoTeams"`
 	ExternalInfo                string        `json:"externalInfo"`
-	OperatingSystemVersion      int           `json:"operatingsystemVersion"`
-	ParentSystem                int          `json:"parentsystem"`
+	OperatingSystemVersion      *int           `json:"operatingsystemVersion"`
+	ParentSystem                *int          `json:"parentsystem"`
 	Type                        string        `json:"type"`
 	AutoNetworks                []interface{} `json:"autoNetworks"`
 }

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -99,15 +98,14 @@ var systemCreateAutoNetworks []interface{}
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
 var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 
-
 var systemCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new system",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		managementTypeValue := cmd.Flag("management").Value.String()
-		securityUpdateValue := cmd.Flag("security").Value.String()
-		var checkedSecurityUpdateValue int
+		// securityUpdateValue := cmd.Flag("security").Value.String()
+		// var checkedSecurityUpdateValue int
 
 		//  checking if the management flag has been changed/set
 		if cmd.Flag("management").Changed {
@@ -140,41 +138,41 @@ var systemCreateCmd = &cobra.Command{
 			Organisation:                systemCreateOrganisation,
 			SystemProviderConfiguration: systemCreateProviderConfig,
 			Zone:                        systemCreateZone,
-			InstallSecurityUpdates:      &checkedSecurityUpdateValue,
-			AutoTeams:                   systemCreateAutoTeams,
-			ExternalInfo:                systemCreateExternalInfo,
-			OperatingSystemVersion:      systemCreateOperatingSystemVersion,
-			ParentSystem:                systemCreateParentSystem,
-			Type:                        systemCreateType,
-			AutoNetworks:                systemCreateAutoNetworks,
+			// InstallSecurityUpdates:      &checkedSecurityUpdateValue,
+			AutoTeams:              systemCreateAutoTeams,
+			ExternalInfo:           systemCreateExternalInfo,
+			OperatingSystemVersion: &systemCreateOperatingSystemVersion,
+			ParentSystem:           &systemCreateParentSystem,
+			Type:                   systemCreateType,
+			AutoNetworks:           systemCreateAutoNetworks,
 		}
 
 		// checking if the install securityUpdates flag is changed
 		if cmd.Flag("security").Changed {
 
 			// check if given value is a valid int
-			checkedSecurityUpdateValue, err := strconv.Atoi(securityUpdateValue)
-			if err != nil {
-				log.Printf("ERROR: given installSecurityUpdates not valid: '%v'", securityUpdateValue)
-			} else {
-				//if given value is okay, check if value is one of the allowed values
-				var isValidSecurityUpdate bool
-				for _, arrayItem := range securityUpdatesArray {
-					if checkedSecurityUpdateValue == arrayItem {
+			// checkedSecurityUpdateValue, err := strconv.Atoi(securityUpdateValue)
+			// if err != nil {
+			// 	log.Printf("ERROR: given installSecurityUpdates not valid: '%v'", securityUpdateValue)
+			// } else {
+			// 	//if given value is okay, check if value is one of the allowed values
+			// 	var isValidSecurityUpdate bool
+			// 	for _, arrayItem := range securityUpdatesArray {
+			// 		if checkedSecurityUpdateValue == arrayItem {
 
-						RequestData.InstallSecurityUpdates = new(int)
-						RequestData.InstallSecurityUpdates = &arrayItem
-						log.Printf("value gevonden: '%v'", arrayItem)
+			// 			RequestData.InstallSecurityUpdates = new(int)
+			// 			RequestData.InstallSecurityUpdates = &arrayItem
+			// 			log.Printf("value gevonden: '%v'", arrayItem)
 
-						isValidSecurityUpdate = true
-					}
-				}
+			// 			isValidSecurityUpdate = true
+			// 		}
+			// 	}
 
-				if !isValidSecurityUpdate {
-					log.Printf("ERROR: given installSecurityUpdates is not valid: '%v'", securityUpdateValue)
-					RequestData.InstallSecurityUpdates = nil
-				}
-			}
+			// 	if !isValidSecurityUpdate {
+			// 		log.Printf("ERROR: given installSecurityUpdates is not valid: '%v'", securityUpdateValue)
+			// 		RequestData.InstallSecurityUpdates = nil
+			// 	}
+			// }
 
 		}
 
@@ -189,8 +187,15 @@ var systemCreateCmd = &cobra.Command{
 		if *RequestData.Memory == 0 {
 			RequestData.Memory = nil
 		}
-		log.Printf("cpu %v, disk %v, memory %v", RequestData.Cpu, RequestData.Disk, RequestData.Memory)
-		 Level27Client.SystemCreate(args, RequestData)
+
+		if *RequestData.OperatingSystemVersion == 0 {
+			RequestData.OperatingSystemVersion = nil
+		}
+
+		if *RequestData.ParentSystem == 0 {
+			RequestData.ParentSystem = nil
+		}
+		Level27Client.SystemCreate(args, RequestData)
 
 	},
 }
