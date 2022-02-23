@@ -56,7 +56,7 @@ func init() {
 	systemCmd.AddCommand(systemCheckCmd)
 	// GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
-	addCommonGetFlags(systemGetCmd)
+	addCommonGetFlags(systemCheckGetCmd)
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
@@ -215,6 +215,6 @@ var systemCheckCmd = &cobra.Command{
 // ---------------- GET
 
 var systemCheckGetCmd = &cobra.Command{
-	Use:   "checks",
+	Use:   "get",
 	Short: "Command for managing systems checks",
 }
