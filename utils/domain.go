@@ -232,29 +232,6 @@ func (c *Client) DomainAccesRemove(domainId int, organisationId int) {
 
 // --------------------------------------------------- BILLABLE ITEM --------------------------------------------------------
 
-// GET
-func (c *Client) DomainBillableItemsGet(domainId int) types.BillableItemGet {
-
-	var billableItem types.BillableItemGet
-	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
-	err := c.invokeAPI("GET", endpoint, nil, &billableItem)
-
-	AssertApiError(err, "BillableItem")
-
-	return billableItem
-}
-
-//CHECK IF BILLABLEITEM EXISTS
-func (c *Client) CheckForBillableItem(domainId int) bool {
-	endpoint := fmt.Sprintf("domains/%v/billableitem", domainId)
-	err := c.invokeAPI("GET", endpoint, nil, nil)
-	if err == nil {
-		return true
-	} else {
-		return false
-	}
-}
-
 //--------------------------- CREATE (Turn invoicing on)
 //CREATE BILLABLEITEM
 func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPostRequest) {
@@ -287,6 +264,20 @@ func (c *Client) DomainCheck(name string, extension string) types.DomainCheckRes
 
 	return checkResult
 }
+
+// ------------------------------------------------------- JOB HISTORY ---------------------------------------------------------------------
+func (c *Client) DomainJobHistoryGet(domainId int) []types.Job {
+	var historyResult []types.Job
+
+	endpoint := fmt.Sprintf("jobs/history/domain/%v", domainId)
+	err := c.invokeAPI("GET", endpoint, nil, &historyResult)
+
+	AssertApiError(err, "job history")
+
+	return historyResult
+}
+
+// ---------------------------------------------- INTEGRITY CHECKS DOMAINS ------------------------------------------------
 
 func (c *Client) DomainIntegrityCheck(domainId int, checkId int) types.DomainIntegrityCheck {
 	var result struct {
