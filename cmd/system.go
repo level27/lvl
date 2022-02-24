@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -38,7 +39,7 @@ func init() {
 	flags.IntVarP(&systemCreateOrganisation, "organisation", "", 0, "The unique ID of an organisation")
 	flags.IntVarP(&systemCreateProviderConfig, "provider", "", 0, "The unique ID of a SystemproviderConfiguration")
 	flags.IntVarP(&systemCreateZone, "zone", "", 0, "The unique ID of a zone")
-//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
+	//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
 	flags.StringVarP(&systemCreateAutoTeams, "autoTeams", "", "", "A csv list of team ID's")
 	flags.StringVarP(&systemCreateExternalInfo, "externalInfo", "", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in db)")
 	flags.IntVarP(&systemCreateOperatingSystemVersion, "version", "", 0, "The unique ID of an OperatingsystemVersion (non-editable)")
@@ -57,7 +58,6 @@ func init() {
 	// GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
 	addCommonGetFlags(systemCheckGetCmd)
-
 
 }
 
@@ -103,7 +103,8 @@ var systemCreateOperatingSystemVersion, systemCreateParentSystem int
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
-// var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}        - not needed for create request 
+
+// var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}        - not needed for create request
 // var systemCreateSecurityUpdates string 											/
 
 var systemCreateCmd = &cobra.Command{
@@ -155,10 +156,6 @@ var systemCreateCmd = &cobra.Command{
 			AutoNetworks:           systemCreateAutoNetworks,
 		}
 
-		
-
-		
-
 		if *RequestData.Disk == 0 {
 			RequestData.Disk = nil
 		}
@@ -193,22 +190,20 @@ var systemCheckCmd = &cobra.Command{
 // ---------------- GET
 
 var systemCheckGetCmd = &cobra.Command{
-	Use:   "get",
+	Use:   "get [system ID]",
 	Short: "Command for managing systems checks",
+
 	Run: func(cmd *cobra.Command, args []string) {
-		ids, err := convertStringsToIds(args)
+		id, err := strconv.Atoi(args[0])
 		if err != nil {
-			log.Fatalln("Invalid system check ID")
+			log.Fatalln("Not a valid system ID!")
 		}
-		outputFormatTable(getSystemChecks(ids), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
 	},
 }
 
-func getSystemChecks(ids []int) []types.SystemCheck {
+func getSystemChecks(id int) []types.SystemCheck {
 
-
-	return Level27Client.SystemCheckGetList(ids[0], optGetParameters)
-	
+	return Level27Client.SystemCheckGetList(id, optGetParameters)
 
 }
-

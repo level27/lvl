@@ -104,12 +104,18 @@ type SystemPost struct {
 type SystemCheck struct {
 	Id                   int    `json:"id"`
 	CheckType            string `json:"checktype"`
+	ChecktypeLocation    string `json:"checktypeLocation"`
 	Status               string `json:"status"`
 	StatusInformation    string `json:"statusInformation"`
 	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
 	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
+	DtLastCheck          int    `json:"dtLastCheck"`
 	CheckParameters      []struct {
+		Port struct {
+			Value   string `json:"value"`
+			Default bool   `json:"default"`
+		} `json:"port"`
 		W struct {
 			Value   string `json:"value"`
 			Default bool   `json:"default"`
@@ -123,11 +129,10 @@ type SystemCheck struct {
 			Default bool   `json:"default"`
 		} `json:"H"`
 	} `json:"checkparameters"`
-	CheckParametersDescriptions []struct {
-		W string `json:"w"`
-		C string `json:"c"`
-		H string `json:"H"`
+	CheckParametersDescriptions struct {
+		W    string `json:"w"`
+		C    string `json:"c"`
+		H    string `json:"H"`
+		Port string `json:"port"`
 	} `json:"checkparameterDescriptions"`
-
-	ChecktypeLocation string `json:"checktypeLocation"`
 }

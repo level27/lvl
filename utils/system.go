@@ -61,7 +61,7 @@ func (c *Client) SystemCreate(args []string, req types.SystemPost) {
 }
 
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
-
+// ------------- GET CHECKS
 func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
 
 	//creating an array of systems.
