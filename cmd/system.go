@@ -204,11 +204,14 @@ var systemCheckGetCmd = &cobra.Command{
 	Short: "Command for managing systems checks",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system ID
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
-		// outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+
+		// Creating readable output
+		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
 		log.Print(getSystemChecks(id))
 	},
 }
