@@ -44,7 +44,7 @@ func (c *Client) SystemGetSingle(id int) types.System {
 //----------------- POST
 
 // CREATE SYSTEM [lvl system create <parmeters>]
-func (c *Client) SystemCreate(args []string, req types.SystemPost) {
+func (c *Client) SystemCreate( req types.SystemPost) {
 	
 
 	var System struct {
@@ -76,4 +76,16 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 	//returning result as system check type
 	return systemChecks.Data
 
+}
+
+// ------------- CREATE A CHECK
+func (c *Client) SystemCheckCreate(systemId int, req types.SystemCheckRequest ) {
+	var SystemCheck struct {
+		Data types.SystemCheck `json:"check"`
+	}
+	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
+	err := c.invokeAPI("POST", endpoint, req, &SystemCheck )
+
+	AssertApiError(err, "System checks")
+	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }

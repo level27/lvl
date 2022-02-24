@@ -136,3 +136,8 @@ type SystemCheck struct {
 		Port string `json:"port"`
 	} `json:"checkparameterDescriptions"`
 }
+
+// ---- Check create request
+type SystemCheckRequest struct {
+	CookbookType string `json:"cookbooktype"`
+}

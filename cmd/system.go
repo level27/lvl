@@ -55,11 +55,17 @@ func init() {
 
 	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
 	systemCmd.AddCommand(systemCheckCmd)
-	// GET LIST OF ALL CHECKS
+	// ---- GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
 	addCommonGetFlags(systemCheckGetCmd)
 
+	// ---- CREATE NEW CHECK
+	systemCheckCmd.AddCommand(systemCheckCreateCmd)
 }
+
+
+
+
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
 //----------------------------------------- GET ---------------------------------------
@@ -112,9 +118,8 @@ var systemCreateCmd = &cobra.Command{
 	Short: "Create a new system",
 	Run: func(cmd *cobra.Command, args []string) {
 
+	
 		managementTypeValue := cmd.Flag("management").Value.String()
-		// securityUpdateValue := cmd.Flag("security").Value.String()
-		// var checkedSecurityUpdateValue int
 
 		//  checking if the management flag has been changed/set
 		if cmd.Flag("management").Changed {
@@ -175,7 +180,7 @@ var systemCreateCmd = &cobra.Command{
 		if *RequestData.ParentSystem == 0 {
 			RequestData.ParentSystem = nil
 		}
-		Level27Client.SystemCreate(args, RequestData)
+		Level27Client.SystemCreate(RequestData)
 
 	},
 }
@@ -192,7 +197,7 @@ var systemCheckCmd = &cobra.Command{
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
 	Short: "Command for managing systems checks",
-
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
@@ -206,4 +211,20 @@ func getSystemChecks(id int) []types.SystemCheck {
 
 	return Level27Client.SystemCheckGetList(id, optGetParameters)
 
+}
+
+// ---------------- CREATE CHECK
+
+var systemCheckCreateCmd = &cobra.Command{
+	Use: "create [system ID] [parameters]",
+	Short: "create a new check for a specific system",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// id, err := strconv.Atoi(args[0])
+		// if err != nil {
+		// 	log.Fatalln("Not a valid system ID!")
+		// }
+		
+	
+	},
 }
