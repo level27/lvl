@@ -109,7 +109,7 @@ type SystemCheck struct {
 	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
 	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
-	CheckParameters      struct {
+	CheckParameters      []struct {
 		W struct {
 			Value   string `json:"value"`
 			Default bool   `json:"default"`
@@ -123,12 +123,11 @@ type SystemCheck struct {
 			Default bool   `json:"default"`
 		} `json:"H"`
 	} `json:"checkparameters"`
-	CheckParametersDescriptions struct {
+	CheckParametersDescriptions []struct {
 		W string `json:"w"`
 		C string `json:"c"`
 		H string `json:"H"`
 	} `json:"checkparameterDescriptions"`
 
 	ChecktypeLocation string `json:"checktypeLocation"`
-	
 }
