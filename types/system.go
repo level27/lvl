@@ -111,8 +111,8 @@ type SystemCheck struct {
 	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
 	DtLastCheck          int    `json:"dtLastCheck"`
-	
-	CheckParameters      []struct {
+
+	CheckParameters struct {
 		Port struct {
 			Value   string `json:"value"`
 			Default bool   `json:"default"`
@@ -136,10 +136,20 @@ type SystemCheck struct {
 		H    string `json:"H"`
 		Port string `json:"port"`
 	} `json:"checkparameterDescriptions"`
-
 }
 
 // ---- Check create request
 type SystemCheckRequest struct {
 	Checktype string `json:"checktype"`
+}
+
+// ----------------------------------- COOKBOOKS ----------------------------------
+
+type Cookbook struct {
+	Id                             int         `json:"id"`
+	CookbookType                   string      `json:"cookbooktype"`
+	CookbookParameters             interface{} `json:"cookbookparameters"`
+	CookbookParametersDescriptions interface{} `json:"cookbookparameterDescriptions"`
+	PreviousCookbookParameters     interface{} `json:"previousCookbookparameters"`
+	Status                         string      `json:"status"`
 }

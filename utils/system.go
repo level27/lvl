@@ -89,3 +89,21 @@ func (c *Client) SystemCheckCreate(systemId int, req types.SystemCheckRequest ) 
 	AssertApiError(err, "System checks")
 	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
+
+// --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
+// ------------- GET COOKBOOK
+
+func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook{
+	// creating array of cookbooks to return
+	var systemCookbooks struct{
+		Data []types.Cookbook `json:"cookbooks"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks", systemId)
+	err := c.invokeAPI("GET", endpoint, nil, &systemCookbooks)
+
+	AssertApiError(err, "cookbooks")
+
+	return systemCookbooks.Data
+
+}

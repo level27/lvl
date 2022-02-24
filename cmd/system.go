@@ -66,6 +66,15 @@ func init() {
 	flags = systemCheckCreateCmd.Flags()
 	
 	flags.StringVarP(&systemCheckCreateCookbook, "cookbook", "c", "", "Check type (non-editable)")
+
+
+	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
+	// adding cookbook subcommand to system command
+	systemCmd.AddCommand(systemCookbookCmd)
+
+	// ---- GET cookbooks
+	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
+
 }
 
 
@@ -242,4 +251,33 @@ var systemCheckCreateCmd = &cobra.Command{
 		
 	
 	},
+}
+
+
+//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCookbookCmd = &cobra.Command{
+	Use:   "cookbook",
+	Short: "Command for managing systems cookbooks",
+}
+
+// ---------- GET COOKBOOKS
+var systemCookbookGetCmd = &cobra.Command{
+	Use: "get [system ID]",
+	Short: "Gets a list of all cookbooks from a system.",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		outputFormatTable(getSystemCookbooks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+	},
+}
+
+func getSystemCookbooks(id int) []types.Cookbook {
+
+	return Level27Client.SystemCookbookGetList(id)
+
 }
