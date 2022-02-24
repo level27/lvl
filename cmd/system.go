@@ -61,6 +61,11 @@ func init() {
 
 	// ---- CREATE NEW CHECK
 	systemCheckCmd.AddCommand(systemCheckCreateCmd)
+
+	// -- flags needed to create a check
+	flags = systemCheckCreateCmd.Flags()
+	
+	flags.StringVarP(&systemCheckCreateCookbook, "cookbook", "c", "", "Check type (non-editable)")
 }
 
 
@@ -214,16 +219,22 @@ func getSystemChecks(id int) []types.SystemCheck {
 }
 
 // ---------------- CREATE CHECK
-
+var systemCheckCreateCookbook string
 var systemCheckCreateCmd = &cobra.Command{
 	Use: "create [system ID] [parameters]",
 	Short: "create a new check for a specific system",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// id, err := strconv.Atoi(args[0])
-		// if err != nil {
-		// 	log.Fatalln("Not a valid system ID!")
-		// }
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		request := types.SystemCheckRequest{
+			Checktype: systemCheckCreateCookbook,
+		}
+
+		Level27Client.SystemCheckCreate(id, request)
 		
 	
 	},

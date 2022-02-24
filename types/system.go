@@ -139,5 +139,5 @@ type SystemCheck struct {
 
 // ---- Check create request
 type SystemCheckRequest struct {
-	CookbookType string `json:"cookbooktype"`
+	Checktype string `json:"checktype"`
 }
