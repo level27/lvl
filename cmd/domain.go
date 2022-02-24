@@ -33,6 +33,8 @@ func init() {
 	// Delete (single domain)
 	domainCmd.AddCommand(domainDeleteCmd)
 
+	domainDeleteCmd.Flags().BoolVarP(&isConfirmed, "yes", "y", false, "Confirmation flag. Set this flag to delete the domain without confirmation question.")
+
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
 	domainCreateCmd.Flags().StringVarP(&domainCreateAction, "action", "a", "", "Specify the action you want to commit")
@@ -284,13 +286,21 @@ var domainDescribeCmd = &cobra.Command{
 }
 
 // DELETE DOMAIN [lvl domain delete <id>]
+var isConfirmed bool
 var domainDeleteCmd = &cobra.Command{
 	Use:   "delete [domainId]",
 	Short: "Delete a domain",
 	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
+	Args: cobra.MinimumNArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		Level27Client.DomainDelete(args)
+
+		if cmd.Flag("yes").Changed {
+			Level27Client.DomainDelete(args, true)
+		}else{
+			Level27Client.DomainDelete(args, false)
+		}
+		
 	},
 }
 
