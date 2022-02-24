@@ -208,7 +208,8 @@ var systemCheckGetCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
-		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+		// outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+		log.Print(getSystemChecks(id))
 	},
 }
 

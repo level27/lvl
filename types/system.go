@@ -111,6 +111,7 @@ type SystemCheck struct {
 	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
 	DtLastCheck          int    `json:"dtLastCheck"`
+	CheckParameters1 []interface{} `json:"checkparameters"`
 	CheckParameters      []struct {
 		Port struct {
 			Value   string `json:"value"`
@@ -135,6 +136,7 @@ type SystemCheck struct {
 		H    string `json:"H"`
 		Port string `json:"port"`
 	} `json:"checkparameterDescriptions"`
+	Checkdescription []interface{} `json:"checkparameterDescriptions"`
 }
 
 // ---- Check create request
