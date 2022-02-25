@@ -220,8 +220,8 @@ var systemCheckGetCmd = &cobra.Command{
 		}
 
 		// Creating readable output
-		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
-		log.Print(getSystemChecks(id))
+		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "INFORMATION"}, []string{"Id", "CheckType", "Status", "StatusInformation"})
+		
 	},
 }
 
@@ -258,7 +258,7 @@ var systemCheckCreateCmd = &cobra.Command{
 // ---------------- MAIN COMMAND (checks)
 var systemCookbookCmd = &cobra.Command{
 	Use:   "cookbook",
-	Short: "Command for managing systems cookbooks",
+	Short: "Manage systems cookbooks",
 }
 
 // ---------- GET COOKBOOKS
