@@ -296,11 +296,9 @@ var domainDeleteCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if isConfirmed{
-			Level27Client.DomainDelete(args, true)
-		}else{
-			Level27Client.DomainDelete(args, false)
-		}
+		
+			Level27Client.DomainDelete(args, isConfirmed)
+	
 		
 	},
 }
