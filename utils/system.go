@@ -52,7 +52,7 @@ func (c *Client) SystemCheckTypeGet() []string {
 	err := c.invokeAPI("GET", endpoint, nil, &checks)
 	AssertApiError(err, "checktypes")
 
-	
+	//creating an array from the maps keys. the keys of the map are the possible checktypes 
 	validTypes := make([]string, 0, len(checks.Data))
 	values := make([]types.SystemCheckType, 0, len(checks.Data))
 
@@ -60,6 +60,7 @@ func (c *Client) SystemCheckTypeGet() []string {
 		validTypes = append(validTypes, K)
 		values = append(values, V)
 	}
+
 
 	return validTypes
 
