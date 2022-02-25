@@ -184,3 +184,26 @@ type SystemCookbook struct {
 	Status                        string            `json:"status"`
 	StatusCategory                string            `json:"statusCategory"`
 }
+
+// data needed for POST request (create system)
+type SystemPost struct {
+	Name                        string        `json:"name"`
+	CustomerFqdn                string        `json:"customerFqdn"`
+	Remarks                     string        `json:"remarks"`
+	Disk                        *int           `json:"disk"`
+	Cpu                         *int           `json:"cpu"`
+	Memory                      *int           `json:"memory"`
+	MamanagementType            string        `json:"managementType"`
+	PublicNetworking            bool          `json:"publicNetworking"`
+	SystemImage                 int           `json:"systemimage"`
+	Organisation                int           `json:"organisation"`
+	SystemProviderConfiguration int           `json:"systemproviderConfiguration"`
+	Zone                        int          `json:"zone"`
+	// InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
+	AutoTeams                   string        `json:"autoTeams"`
+	ExternalInfo                string        `json:"externalInfo"`
+	OperatingSystemVersion      *int           `json:"operatingsystemVersion"`
+	ParentSystem                *int          `json:"parentsystem"`
+	Type                        string        `json:"type"`
+	AutoNetworks                []interface{} `json:"autoNetworks"`
+}
