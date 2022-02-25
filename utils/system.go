@@ -42,16 +42,35 @@ func (c *Client) SystemGetSingle(id int) types.System {
 }
 
 //----------------- POST
+//Get request to see all curent checktypes (valid checktype needed to create new check)
+func (c *Client) SystemCheckTypeGet() []string {
+	var checks struct {
+		Data types.SystemCheckTypeName `json:"checktypes"`
+	}
+
+	endpoint := "checktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &checks)
+	AssertApiError(err, "checktypes")
+
+	
+	validTypes := make([]string, 0, len(checks.Data))
+	values := make([]types.SystemCheckType, 0, len(checks.Data))
+
+	for K, V:= range checks.Data {
+		validTypes = append(validTypes, K)
+		values = append(values, V)
+	}
+
+	return validTypes
+
+}
 
 // CREATE SYSTEM [lvl system create <parmeters>]
-func (c *Client) SystemCreate( req types.SystemPost) {
-	
+func (c *Client) SystemCreate(req types.SystemPost) {
 
 	var System struct {
 		Data types.System `json:"system"`
 	}
-
-	
 
 	err := c.invokeAPI("POST", "systems", req, &System)
 	AssertApiError(err, "SystemCreate")
@@ -79,12 +98,12 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 }
 
 // ------------- CREATE A CHECK
-func (c *Client) SystemCheckCreate(systemId int, req types.SystemCheckRequest ) {
+func (c *Client) SystemCheckCreate(systemId int, req types.SystemCheckRequest) {
 	var SystemCheck struct {
 		Data types.SystemCheck `json:"check"`
 	}
 	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
-	err := c.invokeAPI("POST", endpoint, req, &SystemCheck )
+	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
 
 	AssertApiError(err, "System checks")
 	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
@@ -93,9 +112,9 @@ func (c *Client) SystemCheckCreate(systemId int, req types.SystemCheckRequest ) 
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
 // ------------- GET COOKBOOK
 
-func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook{
+func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 	// creating array of cookbooks to return
-	var systemCookbooks struct{
+	var systemCookbooks struct {
 		Data []types.Cookbook `json:"cookbooks"`
 	}
 

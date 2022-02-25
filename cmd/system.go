@@ -58,16 +58,19 @@ func init() {
 	// ---- GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
 	addCommonGetFlags(systemCheckGetCmd)
+//-----	NIET VERGETEN
+	systemCheckCmd.AddCommand(systemChecktypeCmd)
+//----- NIET VERGETEN
+
 
 	// ---- CREATE NEW CHECK
 	systemCheckCmd.AddCommand(systemCheckCreateCmd)
 
 	// -- flags needed to create a check
 	flags = systemCheckCreateCmd.Flags()
-	
+
 	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
 	systemCheckCreateCmd.MarkFlagRequired("type")
-
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
 	// adding cookbook subcommand to system command
@@ -77,10 +80,6 @@ func init() {
 	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
 
 }
-
-
-
-
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
 //----------------------------------------- GET ---------------------------------------
@@ -133,7 +132,6 @@ var systemCreateCmd = &cobra.Command{
 	Short: "Create a new system",
 	Run: func(cmd *cobra.Command, args []string) {
 
-	
 		managementTypeValue := cmd.Flag("management").Value.String()
 
 		//  checking if the management flag has been changed/set
@@ -212,7 +210,7 @@ var systemCheckCmd = &cobra.Command{
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
 	Short: "Get a list of all checks for a system",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
 		id, err := strconv.Atoi(args[0])
@@ -222,7 +220,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 		// Creating readable output
 		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "INFORMATION"}, []string{"Id", "CheckType", "Status", "StatusInformation"})
-		
+
 	},
 }
 
@@ -231,15 +229,20 @@ func getSystemChecks(id int) []types.SystemCheck {
 	return Level27Client.SystemCheckGetList(id, optGetParameters)
 
 }
-
+// ---------------- GET CHECKTYPES
+var systemChecktypeCmd = &cobra.Command{
+	Use: "type",
+	Run: func(cmd *cobra.Command, args []string) {
+		Level27Client.SystemCheckTypeGet()
+	},
+}
 // ---------------- CREATE CHECK
 // possible check types for creating a new system check.
-var systemCheckCreateArray = []string{"disk", "docker", "elasticsearch", "gearman", "gluster", "haproxy", "host", "hhtp", "load", "mailq", "mongodb", "mysql", "ntp", "ping", "solr", "ssh", "supervisor", "swap"  }
 var systemCheckCreate string
 var systemCheckCreateCmd = &cobra.Command{
-	Use: "create [system ID] [parameters]",
+	Use:   "create [system ID] [parameters]",
 	Short: "create a new check for a specific system",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
 		id, err := strconv.Atoi(args[0])
@@ -253,32 +256,34 @@ var systemCheckCreateCmd = &cobra.Command{
 		// bool value to see if user input is valid
 		var isChecktypeValid bool
 		if cmd.Flag("type").Changed {
+
+			// GET REQUEST to see what all curent valid checktypes are (function gives back array of valid types)
+			systemCheckCreateArray := Level27Client.SystemCheckTypeGet()
+
 			//when user input is in valid options array bool is true
-			for _ , arrayType := range systemCheckCreateArray{
+			for _, arrayType := range systemCheckCreateArray {
 				if strings.ToLower(checkTypeInput) == arrayType {
 					checkTypeInput = arrayType
 					isChecktypeValid = true
 				}
-			} 
+			}
 			// if user input not in valid options array -> error
 			if !isChecktypeValid {
 				log.Fatalln("Given checktype is not valid")
 			}
 
-			
 		}
 
-		
 		request := types.SystemCheckRequest{
 			Checktype: checkTypeInput,
 		}
 
 		Level27Client.SystemCheckCreate(id, request)
-		
+
 	
+
 	},
 }
-
 
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
@@ -289,9 +294,9 @@ var systemCookbookCmd = &cobra.Command{
 
 // ---------- GET COOKBOOKS
 var systemCookbookGetCmd = &cobra.Command{
-	Use: "get [system ID]",
+	Use:   "get [system ID]",
 	Short: "Gets a list of all cookbooks from a system.",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, err := strconv.Atoi(args[0])
 		if err != nil {

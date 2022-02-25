@@ -103,6 +103,7 @@ type SystemPost struct {
 
 type SystemCheckTypeName map[string]SystemCheckType
 
+
 type SystemCheckType struct {
 	ServiceType struct {
 		Name            string `json:"name"`
@@ -112,7 +113,14 @@ type SystemCheckType struct {
 		AlwaysApply     bool   `json:"alwaysApply"`
 		OperatingSystem string `json:"operatingSystem"`
 		EntityType      string `json:"entityType"`
-	}
+		Parameters      []struct {
+			Name         string      `json:"name"`
+			Description  string      `json:"description"`
+			Type         string      `json:"type"`
+			DefaultValue interface{} `json:"defaultValue"`
+			Mandatory    bool        `json:"mandatory"`
+		} `json:"parameters"`
+	} `json:"servicetype"`
 }
 
 type SystemCheck struct {
