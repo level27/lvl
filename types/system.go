@@ -1,5 +1,7 @@
 package types
 
+import "encoding/json"
+
 type System struct {
 	Id                    int    `json:"id"`
 	Uid                   string `json:"uid"`
@@ -100,8 +102,12 @@ type SystemPost struct {
 }
 
 // ----------------------------------- CHECKS ----------------------------------
-
 type SystemCheck struct {
+	SystemCheckData
+	CheckParameters interface{} `json:"checkparameters"`
+}
+
+type SystemCheckData struct {
 	Id                   int    `json:"id"`
 	CheckType            string `json:"checktype"`
 	ChecktypeLocation    string `json:"checktypeLocation"`
@@ -111,8 +117,7 @@ type SystemCheck struct {
 	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
 	DtLastCheck          int    `json:"dtLastCheck"`
-
-	CheckParameters struct {
+	CheckParameters      struct {
 		Port struct {
 			Value   string `json:"value"`
 			Default bool   `json:"default"`
@@ -130,12 +135,34 @@ type SystemCheck struct {
 			Default bool   `json:"default"`
 		} `json:"H"`
 	} `json:"checkparameters"`
+
 	CheckParametersDescriptions struct {
 		W    string `json:"w"`
 		C    string `json:"c"`
 		H    string `json:"H"`
 		Port string `json:"port"`
 	} `json:"checkparameterDescriptions"`
+}
+
+func (s *SystemCheck) UnmarshalJSON(data []byte) error {
+	err := json.Unmarshal(data, &s.SystemCheckData)
+	if err != nil {
+		return err
+	}
+
+
+
+
+	switch s.CheckParameters {
+	case "domain":
+		var dat struct {
+			Entity Domain `json:"entity"`
+		}
+		err = json.Unmarshal(data, &dat)
+		// n.Entity = dat.Entity
+	}
+
+	return err
 }
 
 // ---- Check create request

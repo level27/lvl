@@ -203,14 +203,14 @@ var systemCreateCmd = &cobra.Command{
 // ---------------- MAIN COMMAND (checks)
 var systemCheckCmd = &cobra.Command{
 	Use:   "checks",
-	Short: "Command for managing systems checks",
+	Short: "Manage systems checks",
 }
 
 // ---------------- GET
 
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
-	Short: "Command for managing systems checks",
+	Short: "Get a list of all checks for a system",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
