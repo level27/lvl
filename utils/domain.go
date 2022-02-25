@@ -54,14 +54,19 @@ func (c *Client) Domains(getParams types.CommonGetParams) []types.Domain {
 // ------------------ /DOMAINS --------------------------
 
 // DELETE DOMAIN
-func (c *Client) DomainDelete(id []string) {
+func (c *Client) DomainDelete(id []string, isConfirmed bool) {
 
 	// looping over all given args and checking for valid domainId's
 	for _, value := range id {
 
 		domainId, err := strconv.Atoi(value)
 		if err == nil {
-			var userResponse string
+			if isConfirmed {
+				endpoint := fmt.Sprintf("domains/%d", domainId)
+				err := c.invokeAPI("DELETE", endpoint, nil, nil)
+				AssertApiError(err, "domainDelete")
+			}else{
+				var userResponse string
 
 			question := fmt.Sprintf("Are you sure you want to delete domain with ID: %v? Please type [y]es or [n]o: ", domainId)
 			fmt.Print(question)
@@ -80,8 +85,10 @@ func (c *Client) DomainDelete(id []string) {
 			default:
 				log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
 				domID := []string{value}
-				c.DomainDelete(domID)
+				c.DomainDelete(domID, false)
 			}
+			}
+			
 		} else {
 			log.Printf("Wrong or invalid domain ID: %v.\n", value)
 		}
