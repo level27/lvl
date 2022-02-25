@@ -33,6 +33,7 @@ func init() {
 	// Delete (single domain)
 	domainCmd.AddCommand(domainDeleteCmd)
 
+	// flag used to skip confirmation on deleting domain(s)
 	domainDeleteCmd.Flags().BoolVarP(&isConfirmed, "yes", "y", false, "Confirmation flag. Set this flag to delete the domain without confirmation question.")
 
 	// Create (single domain)
@@ -295,7 +296,7 @@ var domainDeleteCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if cmd.Flag("yes").Changed {
+		if isConfirmed{
 			Level27Client.DomainDelete(args, true)
 		}else{
 			Level27Client.DomainDelete(args, false)
@@ -520,6 +521,7 @@ var domainRecordDeleteCmd = &cobra.Command{
 	Short: "Delete a record for a domain",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid domain id
 		domainId, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatalln("Not a valid domain ID!")
