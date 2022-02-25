@@ -23,6 +23,10 @@ func init() {
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
 
+	// --- DESCRIBE
+	systemCmd.AddCommand(systemDescribeCmd)
+	systemDescribeCmd.Flags().BoolVar(&systemDescribeHideJobs, "hide-jobs", false, "Hide jobs in the describe output.")
+
 	// --- CREATE
 	systemCmd.AddCommand(systemCreateCmd)
 	flags := systemCreateCmd.Flags()
@@ -83,6 +87,39 @@ func getSystems(ids []int) []types.System {
 
 }
 
+//----------------------------------------- DESCRIBE ---------------------------------------
+var systemDescribeHideJobs = false;
+
+var systemDescribeCmd = &cobra.Command{
+	Use: "describe",
+	Short: "Get detailed information about a system.",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID, err := convertStringToId(args[0])
+		if err != nil {
+			log.Fatalln("Invalid system ID")
+		}
+
+		var system types.DescribeSystem
+		system.System = Level27Client.SystemGetSingle(systemID)
+		if !systemDescribeHideJobs {
+			system.Jobs = Level27Client.EntityJobHistoryGet("system", systemID)
+			for idx, j := range system.Jobs {
+				system.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
+			}
+		}
+
+		system.SshKeys = Level27Client.SystemGetSshKeys(systemID, types.CommonGetParams{})
+		securityUpdates := Level27Client.SecurityUpdateDates()
+		system.InstallSecurityUpdatesString = securityUpdates[system.InstallSecurityUpdates]
+		system.HasNetworks = Level27Client.SystemGetHasNetworks(systemID)
+		system.Volumes = Level27Client.SystemGetVolumes(systemID, types.CommonGetParams{})
+
+		outputFormatTemplate(system, "templates/system.tmpl")
+	},
+}
+
+
 //----------------------------------------- CREATE ---------------------------------------
 // vars needed to save flag data.
 var systemCreateName, systemCreateFqdn, systemCreateRemarks string
@@ -96,7 +133,7 @@ var systemCreateOperatingSystemVersion, systemCreateParentSystem int
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
-// var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}        - not needed for create request 
+// var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}        - not needed for create request
 // var systemCreateSecurityUpdates string 											/
 
 var systemCreateCmd = &cobra.Command{
@@ -148,9 +185,9 @@ var systemCreateCmd = &cobra.Command{
 			AutoNetworks:           systemCreateAutoNetworks,
 		}
 
-		
 
-		
+
+
 
 		if *RequestData.Disk == 0 {
 			RequestData.Disk = nil
