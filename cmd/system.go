@@ -65,7 +65,8 @@ func init() {
 	// -- flags needed to create a check
 	flags = systemCheckCreateCmd.Flags()
 	
-	flags.StringVarP(&systemCheckCreateCookbook, "cookbook", "c", "", "Check type (non-editable)")
+	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
+	systemCheckCreateCmd.MarkFlagRequired("type")
 
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
@@ -232,19 +233,44 @@ func getSystemChecks(id int) []types.SystemCheck {
 }
 
 // ---------------- CREATE CHECK
-var systemCheckCreateCookbook string
+// possible check types for creating a new system check.
+var systemCheckCreateArray = []string{"disk", "docker", "elasticsearch", "gearman", "gluster", "haproxy", "host", "hhtp", "load", "mailq", "mongodb", "mysql", "ntp", "ping", "solr", "ssh", "supervisor", "swap"  }
+var systemCheckCreate string
 var systemCheckCreateCmd = &cobra.Command{
 	Use: "create [system ID] [parameters]",
 	Short: "create a new check for a specific system",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid system ID
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
 
+		// get the value of the flag type set by user
+		checkTypeInput := cmd.Flag("type").Value.String()
+
+		// bool value to see if user input is valid
+		var isChecktypeValid bool
+		if cmd.Flag("type").Changed {
+			//when user input is in valid options array bool is true
+			for _ , arrayType := range systemCheckCreateArray{
+				if strings.ToLower(checkTypeInput) == arrayType {
+					checkTypeInput = arrayType
+					isChecktypeValid = true
+				}
+			} 
+			// if user input not in valid options array -> error
+			if !isChecktypeValid {
+				log.Fatalln("Given checktype is not valid")
+			}
+
+			
+		}
+
+		
 		request := types.SystemCheckRequest{
-			Checktype: systemCheckCreateCookbook,
+			Checktype: checkTypeInput,
 		}
 
 		Level27Client.SystemCheckCreate(id, request)
