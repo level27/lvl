@@ -100,10 +100,20 @@ type SystemPost struct {
 }
 
 // ----------------------------------- CHECKS ----------------------------------
-// type SystemCheck struct {
-// 	SystemCheckData
-// 	CheckParameters interface{} `json:"checkparameters"`
-// }
+
+type SystemCheckTypeName map[string]SystemCheckType
+
+type SystemCheckType struct {
+	ServiceType struct {
+		Name            string `json:"name"`
+		DisplayName     string `json:"displayName"`
+		Description     string `json:"descriptiom"`
+		Location        string `json:"location"`
+		AlwaysApply     bool   `json:"alwaysApply"`
+		OperatingSystem string `json:"operatingSystem"`
+		EntityType      string `json:"entityType"`
+	}
+}
 
 type SystemCheck struct {
 	Id                          int         `json:"id"`
@@ -117,10 +127,7 @@ type SystemCheck struct {
 	DtLastCheck                 int         `json:"dtLastCheck"`
 	CheckParameters             interface{} `json:"checkparameters"`
 	CheckParametersDescriptions interface{} `json:"checkparameterDescriptions"`
-
 }
-
-
 
 // ---- Check create request
 type SystemCheckRequest struct {
