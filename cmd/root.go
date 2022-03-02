@@ -135,7 +135,8 @@ func initConfig() {
 // Output tabular data from the CLI. Respects the --output flag.
 // objects must be a slice of some set of objects.
 // titles is the list of table headers,
-// and fields contains the corresponding fields to read from the objects to fill said columns.
+// and fields contains the corresponding fields names to read from the objects to fill said columns.
+// Field names can contain "." separators to allow nested property field access.
 // When outputting as a structured format like JSON, the titles and fields are unused,
 // and the slice is simply serialized directly.
 func outputFormatTable(objects interface{}, titles []string, fields []string) {
@@ -205,10 +206,13 @@ func outputFormatTableText(objects interface{}, titles []string, fields []interf
 
 		first := true
 		for _, field := range fields {
-			fieldName, isString := field.(string)
+			fieldPath, isString := field.(string)
 			var fld reflect.Value
 			if isString {
-				fld = val.FieldByName(fieldName)
+				fld = val
+				for _, fieldName := range strings.Split(fieldPath, ".") {
+					fld = fld.FieldByName(fieldName)
+				}
 			} else {
 				// Assume function that returns actal field value.
 				fld = reflect.ValueOf(field).Call([]reflect.Value{val})[0]
