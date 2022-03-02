@@ -1,0 +1,27 @@
+ID: {{.Id}}
+Checktype:  {{.CheckType}}
+Status: {{.Status}}
+StatusInformation:  {{.StatusInformation}}
+
+
+
+{{- /* PARAMETERS */}}
+
+  {{- $anyParams := false }}
+
+  CHECKPARAMETERS: {{ range $key, $dat := .CheckParameters }}{{ if not $dat.Default }}
+    {{- $anyParams = true }}
+    {{ get $.CheckParametersDescriptions $key }}
+    {{ $key }}: {{vt "brightwhite"}}{{ $dat.value}}    
+  {{ end }}{{ end }}{{if not $anyParams}}(none){{ end -}}
+
+{{- /* ALERTS */}}
+  {{- $anyOpened := false }}
+
+  OPEN ALERTS: {{ range $key, $dat := .Alerts -}}
+   {{- $anyOpened = true -}}
+  {{if eq $dat.status "opened" }}
+    ID: {{ $dat.id}}
+    STATUS: {{ $dat.status }}
+    STATUSINFO: {{$dat.statusInformation}}
+    {{ end }}{{ end }}{{if not $anyOpened}}(none){{ end -}}

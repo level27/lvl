@@ -92,6 +92,9 @@ func init() {
 
 
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
+	// --- DESCRIBE CHECK
+	systemCheckCmd.AddCommand(systemCheckGetSingleCmd)
+	// --- DELETE CHECK
 	systemCheckCmd.AddCommand(systemCheckDeleteCmd)
 
 	//flag to skip confirmation when deleting a check
@@ -359,6 +362,30 @@ var systemCheckCreateCmd = &cobra.Command{
 	},
 }
 //------------------------------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ----------------------------------
+// -------------- GET DETAILS FROM A CHECK
+var systemCheckGetSingleCmd = &cobra.Command{
+	Use: "describe [systemID] [checkID]",
+	Short: "Get detailed info about a specific check.",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid system ID
+		systemID, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		//check for valid system checkID
+		checkID, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Fatalln("Not a valid check ID!")
+		}
+
+		check := Level27Client.SystemCheckDescribe(systemID, checkID)
+
+		outputFormatTemplate(check, "templates/systemCheck.tmpl")
+	},
+}
+// -------------- DELETE SPECIFIC CHECK
 var systemCheckDeleteConfirmed bool
 var systemCheckDeleteCmd = &cobra.Command{
 	Use: "delete [systemID] [checkID]",
