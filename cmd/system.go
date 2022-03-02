@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -42,7 +43,7 @@ func init() {
 	flags.IntVarP(&systemCreateOrganisation, "organisation", "", 0, "The unique ID of an organisation")
 	flags.IntVarP(&systemCreateProviderConfig, "provider", "", 0, "The unique ID of a SystemproviderConfiguration")
 	flags.IntVarP(&systemCreateZone, "zone", "", 0, "The unique ID of a zone")
-//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
+	//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
 	flags.StringVarP(&systemCreateAutoTeams, "autoTeams", "", "", "A csv list of team ID's")
 	flags.StringVarP(&systemCreateExternalInfo, "externalInfo", "", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in db)")
 	flags.IntVarP(&systemCreateOperatingSystemVersion, "version", "", 0, "The unique ID of an OperatingsystemVersion (non-editable)")
@@ -56,6 +57,33 @@ func init() {
 		systemCreateCmd.MarkFlagRequired(flag)
 	}
 
+	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
+	systemCmd.AddCommand(systemCheckCmd)
+	// ---- GET LIST OF ALL CHECKS
+	systemCheckCmd.AddCommand(systemCheckGetCmd)
+	addCommonGetFlags(systemCheckGetCmd)
+
+	// ---- CREATE NEW CHECK
+	systemCheckCmd.AddCommand(systemCheckCreateCmd)
+
+	// -- flags needed to create a check
+	flags = systemCheckCreateCmd.Flags()
+	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
+	systemCheckCreateCmd.MarkFlagRequired("type")
+
+	// -- optional flags, only for creating a http check
+	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
+	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
+	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
+	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
+
+	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
+	// adding cookbook subcommand to system command
+	systemCmd.AddCommand(systemCookbookCmd)
+
+	// ---- GET cookbooks
+	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
+
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
@@ -66,7 +94,7 @@ var systemGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
-			log.Fatalln("Invalid domain ID")
+			log.Fatalln("Invalid system ID")
 		}
 		outputFormatTable(getSystems(ids), []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
 
@@ -88,12 +116,12 @@ func getSystems(ids []int) []types.System {
 }
 
 //----------------------------------------- DESCRIBE ---------------------------------------
-var systemDescribeHideJobs = false;
+var systemDescribeHideJobs = false
 
 var systemDescribeCmd = &cobra.Command{
-	Use: "describe",
+	Use:   "describe",
 	Short: "Get detailed information about a system.",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		systemID, err := convertStringToId(args[0])
 		if err != nil {
@@ -119,7 +147,6 @@ var systemDescribeCmd = &cobra.Command{
 	},
 }
 
-
 //----------------------------------------- CREATE ---------------------------------------
 // vars needed to save flag data.
 var systemCreateName, systemCreateFqdn, systemCreateRemarks string
@@ -132,7 +159,10 @@ var systemCreateAutoTeams, systemCreateExternalInfo string
 var systemCreateOperatingSystemVersion, systemCreateParentSystem int
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
+
+// ARRAY NOG DYNAMIC MAKEN!!!!!
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
+
 // var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}        - not needed for create request
 // var systemCreateSecurityUpdates string 											/
 
@@ -142,8 +172,6 @@ var systemCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		managementTypeValue := cmd.Flag("management").Value.String()
-		// securityUpdateValue := cmd.Flag("security").Value.String()
-		// var checkedSecurityUpdateValue int
 
 		//  checking if the management flag has been changed/set
 		if cmd.Flag("management").Changed {
@@ -185,10 +213,6 @@ var systemCreateCmd = &cobra.Command{
 			AutoNetworks:           systemCreateAutoNetworks,
 		}
 
-
-
-
-
 		if *RequestData.Disk == 0 {
 			RequestData.Disk = nil
 		}
@@ -208,7 +232,135 @@ var systemCreateCmd = &cobra.Command{
 		if *RequestData.ParentSystem == 0 {
 			RequestData.ParentSystem = nil
 		}
-		Level27Client.SystemCreate(args, RequestData)
+		Level27Client.SystemCreate(RequestData)
 
 	},
+}
+
+//------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCheckCmd = &cobra.Command{
+	Use:   "checks",
+	Short: "Manage systems checks",
+}
+
+// ---------------- GET
+
+var systemCheckGetCmd = &cobra.Command{
+	Use:   "get [system ID]",
+	Short: "Get a list of all checks for a system",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system ID
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		// Creating readable output
+		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "INFORMATION"}, []string{"Id", "CheckType", "Status", "StatusInformation"})
+
+	},
+}
+
+func getSystemChecks(id int) []types.SystemCheck {
+
+	return Level27Client.SystemCheckGetList(id, optGetParameters)
+
+}
+
+// ---------------- CREATE CHECK
+var systemCheckCreate, systemCreateCheckUrl, systemCreateCheckContent, systemCreateCheckHost string
+var systemCreateCheckPort int
+
+var systemCheckCreateCmd = &cobra.Command{
+	Use:   "create [system ID] [parameters]",
+	Short: "create a new check for a specific system",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid system ID
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		// get the value of the flag type set by user
+		checkTypeInput := cmd.Flag("type").Value.String()
+
+		// bool value to see if user input is valid, and bool to check if chosen type is http
+		var isChecktypeValid, isCheckTypeHttp bool
+		if cmd.Flag("type").Changed {
+
+			// GET REQUEST to see what all curent valid checktypes are (function gives back an array of valid types)
+			systemCheckCreateArray := Level27Client.SystemCheckTypeGet()
+
+			//when user input is one of the valid options -> validation bool is true
+			for _, validOption := range systemCheckCreateArray {
+				if strings.ToLower(checkTypeInput) == validOption {
+
+					checkTypeInput = validOption
+
+					// check if chosen type is http
+					if checkTypeInput == "http" {
+						isCheckTypeHttp = true
+					}
+					isChecktypeValid = true
+
+				}
+			}
+			// if user input not in valid options array -> error
+			if !isChecktypeValid {
+				log.Fatalln("Given checktype is not valid")
+			} else {
+				//when user chose http type, aditional flags can be set
+				if isCheckTypeHttp {
+					request := types.SystemCheckRequestHttp{
+						Checktype: checkTypeInput,
+						Port:      systemCreateCheckPort,
+						Url:       systemCreateCheckUrl,
+						Hostname:  systemCreateCheckHost,
+						Content:   systemCreateCheckContent,
+					}
+					Level27Client.SystemCheckCreate(id, request)
+					//when chosen type NOT http -> only checktype will be needed for request
+				} else {
+					request := types.SystemCheckRequest{
+						Checktype: checkTypeInput,
+					}
+					Level27Client.SystemCheckCreate(id, request)
+				}
+
+			}
+
+		}
+
+	},
+}
+
+//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCookbookCmd = &cobra.Command{
+	Use:   "cookbook",
+	Short: "Manage systems cookbooks",
+}
+
+// ---------- GET COOKBOOKS
+var systemCookbookGetCmd = &cobra.Command{
+	Use:   "get [system ID]",
+	Short: "Gets a list of all cookbooks from a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		outputFormatTable(getSystemCookbooks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+	},
+}
+
+func getSystemCookbooks(id int) []types.Cookbook {
+
+	return Level27Client.SystemCookbookGetList(id)
+
 }
