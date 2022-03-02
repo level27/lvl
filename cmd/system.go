@@ -56,6 +56,18 @@ func init() {
 		systemCreateCmd.MarkFlagRequired(flag)
 	}
 
+	// --- ACTIONS
+	systemCmd.AddCommand(systemActionsCmd)
+
+	systemActionsCmd.AddCommand(systemActionsStartCmd)
+	systemActionsCmd.AddCommand(systemActionsStopCmd)
+	systemActionsCmd.AddCommand(systemActionsShutdownCmd)
+	systemActionsCmd.AddCommand(systemActionsRebootCmd)
+	systemActionsCmd.AddCommand(systemActionsResetCmd)
+	systemActionsCmd.AddCommand(systemActionsEmergencyPowerOffCmd)
+	systemActionsCmd.AddCommand(systemActionsDeactivateCmd)
+	systemActionsCmd.AddCommand(systemActionsActivateCmd)
+	systemActionsCmd.AddCommand(systemActionsAutoInstallCmd)
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
@@ -211,4 +223,72 @@ var systemCreateCmd = &cobra.Command{
 		Level27Client.SystemCreate(args, RequestData)
 
 	},
+}
+
+var systemActionsCmd = &cobra.Command{
+	Use: "actions",
+	Short: "Actions for systems such as rebooting",
+}
+
+var systemActionsStartCmd = &cobra.Command{
+	Use: "start",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("start", args) },
+}
+
+var systemActionsStopCmd = &cobra.Command{
+	Use: "stop",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("stop", args) },
+}
+
+var systemActionsShutdownCmd = &cobra.Command{
+	Use: "shutdown",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("shutdown", args) },
+}
+
+var systemActionsRebootCmd = &cobra.Command{
+	Use: "reboot",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("reboot", args) },
+}
+
+var systemActionsResetCmd = &cobra.Command{
+	Use: "reset",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("reset", args) },
+}
+
+var systemActionsEmergencyPowerOffCmd = &cobra.Command{
+	Use: "emergencyPowerOff",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("emergencyPowerOff", args) },
+}
+
+var systemActionsDeactivateCmd = &cobra.Command{
+	Use: "deactivate",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("deactivate", args) },
+}
+
+var systemActionsActivateCmd = &cobra.Command{
+	Use: "activate",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("activate", args) },
+}
+
+var systemActionsAutoInstallCmd = &cobra.Command{
+	Use: "autoInstall",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
+}
+
+func runAction(action string, args []string) {
+	id, err := convertStringToId(args[0])
+	if err != nil {
+		log.Fatalln("Invalid system ID")
+	}
+
+	Level27Client.SystemAction(id, action)
 }

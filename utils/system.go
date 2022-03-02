@@ -108,3 +108,22 @@ func (c *Client) SystemCreate(args []string, req types.SystemPost) {
 	log.Printf("System created! [Fullname: '%v' , ID: '%v']", System.Data.Name, System.Data.Id)
 
 }
+
+// SYSTEM ACTION
+
+func (c *Client) SystemAction(id int, action string) types.System {
+	var request struct {
+		Type string `json:"type"`
+	}
+
+	var response struct {
+		System types.System `json:"system"`
+	}
+
+	request.Type = action
+	endpoint := fmt.Sprintf("systems/%d/actions", id)
+	err := c.invokeAPI("POST", endpoint, request, &response)
+	AssertApiError(err, "SystemAction")
+
+	return response.System
+}
