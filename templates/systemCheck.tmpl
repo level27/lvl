@@ -9,7 +9,7 @@ StatusInformation:  {{.StatusInformation}}
 
   {{- $anyParams := false }}
 
-  CheckParameters: {{ range $key, $dat := .CheckParameters }}{{ if not $dat.Default }}
+  CHECKPARAMETERS: {{ range $key, $dat := .CheckParameters }}{{ if not $dat.Default }}
     {{- $anyParams = true }}
     {{ get $.CheckParametersDescriptions $key }}
     {{ $key }}: {{vt "brightwhite"}}{{ $dat.value}}    
@@ -17,10 +17,11 @@ StatusInformation:  {{.StatusInformation}}
 
 {{- /* ALERTS */}}
   {{- $anyOpened := false }}
-  
-  Alerts: {{ range $key, $dat := .Alerts -}}
+
+  OPEN ALERTS: {{ range $key, $dat := .Alerts -}}
+   {{- $anyOpened = true -}}
   {{if eq $dat.status "opened" }}
     ID: {{ $dat.id}}
     STATUS: {{ $dat.status }}
     STATUSINFO: {{$dat.statusInformation}}
-    {{ end }}{{ end }}{{ if not $anyOpened}}(none){{ end -}}
+    {{ end }}{{ end }}{{if not $anyOpened}}(none){{ end -}}
