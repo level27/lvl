@@ -368,7 +368,8 @@ var systemCheckGetSingleCmd = &cobra.Command{
 		}
 
 		check := Level27Client.SystemCheckDescribe(systemID, checkID)
-		log.Print(check)
+
+		outputFormatTemplate(check, "templates/systemCheck.tmpl")
 	},
 }
 // -------------- DELETE SPECIFIC CHECK

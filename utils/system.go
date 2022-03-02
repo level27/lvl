@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/Jeffail/gabs/v2"
 )
 
 // --------------------------- TOPLEVEL SYSTEM ACTIONS (GET / POST) ------------------------------------
@@ -156,6 +158,9 @@ func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemChec
 	err := c.invokeAPI("GET", endpoint, nil, &check)
 	AssertApiError(err, "system check")
 
+	result, err := json.Marshal(check.Data)
+	jsonParsed, err := gabs.ParseJSON([]byte(result))
+	log.Print(jsonParsed)
 	return check.Data
 }
 

@@ -232,19 +232,23 @@ type SystemCheckType struct {
 }
 
 type SystemCheck struct {
-	Id                          int         `json:"id"`
-	CheckType                   string      `json:"checktype"`
-	ChecktypeLocation           string      `json:"checktypeLocation"`
-	Status                      string      `json:"status"`
-	StatusInformation           string      `json:"statusInformation"`
-	DtLastMonitorEnabled        int         `json:"dtLastMonitoringEnabled"`
-	DtLastStatusChanged         int         `json:"dtLastStatusChange"`
-	DtNextCheck                 int         `json:"dtNextCheck"`
-	DtLastCheck                 int         `json:"dtLastCheck"`
-	CheckParameters             interface{} `json:"checkparameters"`
-	CheckParametersDescriptions interface{} `json:"checkparameterDescriptions"`
-	Location                    string      `json:"location"`
-	System                      struct {
+	Id                   int    `json:"id"`
+	CheckType            string `json:"checktype"`
+	ChecktypeLocation    string `json:"checktypeLocation"`
+	Status               string `json:"status"`
+	StatusInformation    string `json:"statusInformation"`
+	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
+	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
+	DtNextCheck          int    `json:"dtNextCheck"`
+	DtLastCheck          int    `json:"dtLastCheck"`
+	CheckParameters      map[string]struct {
+		Value   interface{} `json:"value"`
+		Default bool        `json:"default"`
+	} `json:"checkparameters"`
+	CheckParametersDescriptions map[string]interface {
+	} `json:"checkparameterDescriptions"`
+	Location string `json:"location"`
+	System   struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"system"`
