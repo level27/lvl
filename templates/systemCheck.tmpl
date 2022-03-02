@@ -8,15 +8,19 @@ StatusInformation:  {{.StatusInformation}}
 {{- /* PARAMETERS */}}
 
   {{- $anyParams := false }}
+
   CheckParameters: {{ range $key, $dat := .CheckParameters }}{{ if not $dat.Default }}
     {{- $anyParams = true }}
     {{ get $.CheckParametersDescriptions $key }}
-    {{ $key }}: {{vt "brightwhite"}}{{ $dat.Value }}    
-  {{ end }}{{ end }}{{if not $anyParams}}{{vt "brightblack"}}(none){{ end -}}
+    {{ $key }}: {{vt "brightwhite"}}{{ $dat.value}}    
+  {{ end }}{{ end }}{{if not $anyParams}}(none){{ end -}}
 
-{{- /* PARAMETERS */}}
-  {{- $anyParams := false }}
-  Alerts: {{ range $key, $dat := .Alerts }}{{ if not $dat.Default }}
-    {{- $anyParams = true }}
-    {{ $key }}: {{vt "brightwhite"}}{{ $dat.Value }}
-    {{ end }}{{ end }}{{if not $anyParams}}{{vt "brightblack"}}(none){{ end -}}
+{{- /* ALERTS */}}
+  {{- $anyOpened := false }}
+  
+  Alerts: {{ range $key, $dat := .Alerts -}}
+  {{if eq $dat.status "opened" }}
+    ID: {{ $dat.id}}
+    STATUS: {{ $dat.status }}
+    STATUSINFO: {{$dat.statusInformation}}
+    {{ end }}{{ end }}{{ if not $anyOpened}}(none){{ end -}}

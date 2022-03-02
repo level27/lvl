@@ -241,11 +241,9 @@ type SystemCheck struct {
 	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
 	DtLastCheck          int    `json:"dtLastCheck"`
-	CheckParameters      map[string]struct {
-		Value   interface{} `json:"value"`
-		Default bool        `json:"default"`
+	CheckParameters      interface {
 	} `json:"checkparameters"`
-	CheckParametersDescriptions map[string]interface {
+	CheckParametersDescriptions interface {
 	} `json:"checkparameterDescriptions"`
 	Location string `json:"location"`
 	System   struct {

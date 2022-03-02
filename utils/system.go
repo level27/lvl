@@ -1,13 +1,11 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
-	"github.com/Jeffail/gabs/v2"
 )
 
 // --------------------------- TOPLEVEL SYSTEM ACTIONS (GET / POST) ------------------------------------
@@ -151,16 +149,16 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
 // ------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
-	var check struct{
+	var check struct {
 		Data types.SystemCheck `json:"check"`
 	}
 	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemID, CheckID)
 	err := c.invokeAPI("GET", endpoint, nil, &check)
 	AssertApiError(err, "system check")
 
-	result, err := json.Marshal(check.Data)
-	jsonParsed, err := gabs.ParseJSON([]byte(result))
-	log.Print(jsonParsed)
+	// result, err := json.Marshal(check.Data)
+	// jsonParsed, err := gabs.ParseJSON([]byte(result))
+	// log.Print(jsonParsed)
 	return check.Data
 }
 
@@ -192,7 +190,7 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 			log.Printf("Delete canceled for system check: %v", checkId)
 		default:
 			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
-			
+
 			c.SystemCheckDelete(systemId, checkId, false)
 		}
 
