@@ -187,23 +187,85 @@ type SystemCookbook struct {
 
 // data needed for POST request (create system)
 type SystemPost struct {
-	Name                        string        `json:"name"`
-	CustomerFqdn                string        `json:"customerFqdn"`
-	Remarks                     string        `json:"remarks"`
-	Disk                        *int           `json:"disk"`
-	Cpu                         *int           `json:"cpu"`
-	Memory                      *int           `json:"memory"`
-	MamanagementType            string        `json:"managementType"`
-	PublicNetworking            bool          `json:"publicNetworking"`
-	SystemImage                 int           `json:"systemimage"`
-	Organisation                int           `json:"organisation"`
-	SystemProviderConfiguration int           `json:"systemproviderConfiguration"`
-	Zone                        int          `json:"zone"`
+	Name                        string `json:"name"`
+	CustomerFqdn                string `json:"customerFqdn"`
+	Remarks                     string `json:"remarks"`
+	Disk                        *int   `json:"disk"`
+	Cpu                         *int   `json:"cpu"`
+	Memory                      *int   `json:"memory"`
+	MamanagementType            string `json:"managementType"`
+	PublicNetworking            bool   `json:"publicNetworking"`
+	SystemImage                 int    `json:"systemimage"`
+	Organisation                int    `json:"organisation"`
+	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
+	Zone                        int    `json:"zone"`
 	// InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
-	AutoTeams                   string        `json:"autoTeams"`
-	ExternalInfo                string        `json:"externalInfo"`
-	OperatingSystemVersion      *int           `json:"operatingsystemVersion"`
-	ParentSystem                *int          `json:"parentsystem"`
-	Type                        string        `json:"type"`
-	AutoNetworks                []interface{} `json:"autoNetworks"`
+	AutoTeams              string        `json:"autoTeams"`
+	ExternalInfo           string        `json:"externalInfo"`
+	OperatingSystemVersion *int          `json:"operatingsystemVersion"`
+	ParentSystem           *int          `json:"parentsystem"`
+	Type                   string        `json:"type"`
+	AutoNetworks           []interface{} `json:"autoNetworks"`
+}
+
+// ----------------------------------- CHECKS ----------------------------------
+
+type SystemCheckTypeName map[string]SystemCheckType
+
+type SystemCheckType struct {
+	ServiceType struct {
+		Name            string `json:"name"`
+		DisplayName     string `json:"displayName"`
+		Description     string `json:"descriptiom"`
+		Location        string `json:"location"`
+		AlwaysApply     bool   `json:"alwaysApply"`
+		OperatingSystem string `json:"operatingSystem"`
+		EntityType      string `json:"entityType"`
+		Parameters      []struct {
+			Name         string      `json:"name"`
+			Description  string      `json:"description"`
+			Type         string      `json:"type"`
+			DefaultValue interface{} `json:"defaultValue"`
+			Mandatory    bool        `json:"mandatory"`
+		} `json:"parameters"`
+	} `json:"servicetype"`
+}
+
+type SystemCheck struct {
+	Id                          int         `json:"id"`
+	CheckType                   string      `json:"checktype"`
+	ChecktypeLocation           string      `json:"checktypeLocation"`
+	Status                      string      `json:"status"`
+	StatusInformation           string      `json:"statusInformation"`
+	DtLastMonitorEnabled        int         `json:"dtLastMonitoringEnabled"`
+	DtLastStatusChanged         int         `json:"dtLastStatusChange"`
+	DtNextCheck                 int         `json:"dtNextCheck"`
+	DtLastCheck                 int         `json:"dtLastCheck"`
+	CheckParameters             interface{} `json:"checkparameters"`
+	CheckParametersDescriptions interface{} `json:"checkparameterDescriptions"`
+}
+
+// ---- Check create request
+type SystemCheckRequest struct {
+	Checktype string `json:"checktype"`
+}
+
+// ---- check create request for http type
+type SystemCheckRequestHttp struct {
+	Checktype string `json:"checktype"`
+	Port      int    `json:"port"`
+	Hostname  string `json:"hostname"`
+	Url       string `json:"url"`
+	Content   string `json:"content"`
+}
+
+// ----------------------------------- COOKBOOKS ----------------------------------
+
+type Cookbook struct {
+	Id                             int         `json:"id"`
+	CookbookType                   string      `json:"cookbooktype"`
+	CookbookParameters             interface{} `json:"cookbookparameters"`
+	CookbookParametersDescriptions interface{} `json:"cookbookparameterDescriptions"`
+	PreviousCookbookParameters     interface{} `json:"previousCookbookparameters"`
+	Status                         string      `json:"status"`
 }

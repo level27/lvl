@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 )
@@ -89,18 +90,36 @@ func (c *Client) SecurityUpdateDates() []string {
 	return updates.SecurityUpdateDates
 }
 
-
 //----------------- POST
+//Get request to see all curent checktypes (valid checktype needed to create new check)
+func (c *Client) SystemCheckTypeGet() []string {
+	var checks struct {
+		Data types.SystemCheckTypeName `json:"checktypes"`
+	}
+
+	endpoint := "checktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &checks)
+	AssertApiError(err, "checktypes")
+
+	//creating an array from the maps keys. the keys of the map are the possible checktypes
+	validTypes := make([]string, 0, len(checks.Data))
+	values := make([]types.SystemCheckType, 0, len(checks.Data))
+
+	for K, V := range checks.Data {
+		validTypes = append(validTypes, K)
+		values = append(values, V)
+	}
+
+	return validTypes
+
+}
 
 // CREATE SYSTEM [lvl system create <parmeters>]
-func (c *Client) SystemCreate(args []string, req types.SystemPost) {
-
+func (c *Client) SystemCreate(req types.SystemPost) {
 
 	var System struct {
 		Data types.System `json:"system"`
 	}
-
-
 
 	err := c.invokeAPI("POST", "systems", req, &System)
 	AssertApiError(err, "SystemCreate")
@@ -126,4 +145,89 @@ func (c *Client) SystemAction(id int, action string) types.System {
 	AssertApiError(err, "SystemAction")
 
 	return response.System
+}
+
+// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
+// ------------- GET CHECKS
+func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
+
+	//creating an array of systems.
+	var systemChecks struct {
+		Data []types.SystemCheck `json:"checks"`
+	}
+
+	//creating endpoint
+	endpoint := fmt.Sprintf("systems/%v/checks?%s", systemId, formatCommonGetParams(getParams))
+	err := c.invokeAPI("GET", endpoint, nil, &systemChecks)
+	AssertApiError(err, "Systems")
+	//returning result as system check type
+	return systemChecks.Data
+
+}
+
+// --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
+// ------------- DELETE A SPECIFIC CHECK
+func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed bool) {
+
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "system check")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the systems check with ID: %v? Please type [y]es or [n]o: ", checkId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "system check")
+		case "n", "no":
+			log.Printf("Delete canceled for system check: %v", checkId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.SystemCheckDelete(systemId, checkId, false)
+		}
+
+	}
+
+}
+
+// ------------- CREATE A CHECK
+func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+	var SystemCheck struct {
+		Data types.SystemCheck `json:"check"`
+	}
+	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
+	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+
+	AssertApiError(err, "System checks")
+	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
+}
+
+// --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
+// ------------- GET COOKBOOK
+
+func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
+	// creating array of cookbooks to return
+	var systemCookbooks struct {
+		Data []types.Cookbook `json:"cookbooks"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks", systemId)
+	err := c.invokeAPI("GET", endpoint, nil, &systemCookbooks)
+
+	AssertApiError(err, "cookbooks")
+
+	return systemCookbooks.Data
+
 }
