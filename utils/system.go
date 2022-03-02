@@ -128,6 +128,25 @@ func (c *Client) SystemCreate(req types.SystemPost) {
 
 }
 
+// SYSTEM ACTION
+
+func (c *Client) SystemAction(id int, action string) types.System {
+	var request struct {
+		Type string `json:"type"`
+	}
+
+	var response struct {
+		System types.System `json:"system"`
+	}
+
+	request.Type = action
+	endpoint := fmt.Sprintf("systems/%d/actions", id)
+	err := c.invokeAPI("POST", endpoint, request, &response)
+	AssertApiError(err, "SystemAction")
+
+	return response.System
+}
+
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
 // ------------- GET CHECKS
 func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
@@ -175,7 +194,7 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 			log.Printf("Delete canceled for system check: %v", checkId)
 		default:
 			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
-			
+
 			c.SystemCheckDelete(systemId, checkId, false)
 		}
 
