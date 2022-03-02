@@ -41,6 +41,55 @@ func (c *Client) SystemGetSingle(id int) types.System {
 
 }
 
+func (c *Client) SystemGetSshKeys(id int, get types.CommonGetParams) []types.SshKey {
+	var keys struct {
+		SshKeys []types.SshKey `json:"sshKeys"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/sshkeys?%s", id, formatCommonGetParams(get))
+	err := c.invokeAPI("GET", endpoint, nil, &keys)
+
+	AssertApiError(err, "System SSH Keys")
+	return keys.SshKeys
+}
+
+func (c *Client) SystemGetHasNetworks(id int) []types.SystemHasNetwork {
+	var keys struct {
+		SystemHasNetworks []types.SystemHasNetwork `json:"systemHasNetworks"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/networks", id)
+	err := c.invokeAPI("GET", endpoint, nil, &keys)
+
+	AssertApiError(err, "System has networks")
+	return keys.SystemHasNetworks
+}
+
+func (c *Client) SystemGetVolumes(id int, get types.CommonGetParams) []types.SystemVolume {
+	var keys struct {
+		Volumes []types.SystemVolume `json:"volumes"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/volumes?%s", id, formatCommonGetParams(get))
+	err := c.invokeAPI("GET", endpoint, nil, &keys)
+
+	AssertApiError(err, "Volumes")
+	return keys.Volumes
+}
+
+func (c *Client) SecurityUpdateDates() []string {
+	var updates struct {
+		SecurityUpdateDates []string `json:"securityUpdateDates"`
+	}
+
+	endpoint := "systems/securityupdatedates"
+	err := c.invokeAPI("GET", endpoint, nil, &updates)
+
+	AssertApiError(err, "Security updates")
+	return updates.SecurityUpdateDates
+}
+
+
 //----------------- POST
 //Get request to see all curent checktypes (valid checktype needed to create new check)
 func (c *Client) SystemCheckTypeGet() []string {

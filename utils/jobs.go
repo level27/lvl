@@ -14,3 +14,15 @@ func (c *Client) JobHistoryRootGet(rootJobId int) types.Job {
 
 	return job
 }
+
+
+func (c *Client) EntityJobHistoryGet(entityType string, domainId int) []types.Job {
+	var historyResult []types.Job
+
+	endpoint := fmt.Sprintf("jobs/history/%s/%v", entityType, domainId)
+	err := c.invokeAPI("GET", endpoint, nil, &historyResult)
+
+	AssertApiError(err, "job history")
+
+	return historyResult
+}

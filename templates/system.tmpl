@@ -1,0 +1,107 @@
+{{- /* BASIC INFO */ -}}
+
+
+{{vt "yellow"}}ID:               {{vt "brightwhite"}}{{ .Id }}
+{{vt "yellow"}}Name:             {{vt "brightwhite"}}{{ .Name }}
+{{vt "yellow"}}Status:           {{template "statusVt" .StatusCategory}}{{ .Status }}
+{{vt "yellow"}}System Status:    {{template "statusVt" .RunningStatusCategory}}{{ .RunningStatus }}
+{{vt "yellow"}}Host name:        {{vt "brightwhite"}}{{ .Hostname }}
+{{vt "yellow"}}FQDN:             {{vt "brightwhite"}}{{ .Fqdn }}
+{{vt "yellow"}}UID:              {{vt "brightwhite"}}{{ .Uid }}
+{{vt "yellow"}}CPU:              {{vt "brightwhite"}}{{ .Cpu }} cores
+{{vt "yellow"}}Memory:           {{vt "brightwhite"}}{{ .Memory }} GB
+{{vt "yellow"}}Disk:             {{vt "brightwhite"}}{{ .Disk }} GB
+{{vt "yellow"}}IOPS limit:       {{vt "brightwhite"}}{{ .LimitRiops }} {{vt "yellow"}}R {{vt "reset"}}/ {{vt "brightwhite"}}{{ .LimitWiops }} {{vt "yellow"}}W
+{{vt "yellow"}}Image:            {{vt "brightwhite"}}{{ .SystemImage.Name }}
+{{vt "yellow"}}Organisation:     {{vt "brightwhite"}}{{ .Organisation.Name }} ({{ .Organisation.ID }})
+{{vt "yellow"}}Management type:  {{vt "brightwhite"}}{{ .ManagementType }}
+{{vt "yellow"}}Security updates: {{vt "brightwhite"}}{{ .InstallSecurityUpdatesString }} 
+{{vt "yellow"}}Zone:             {{vt "brightwhite"}}{{ .Zone.Name }}
+{{vt "yellow"}}Host system:      {{ if .ParentSystem -}}
+{{vt "brightwhite"}}{{ .ParentSystem.Name }} ({{ .ParentSystem.Id }})
+{{- else -}}
+{{vt "brightblack"}}None{{vt "reset"}}
+{{- end }}
+
+
+{{- /* GROUPS */}}
+{{vt "yellow"}}Groups: {{range .Groups}}
+{{ vt "brightblue"}}- {{ vt "brightwhite"}}{{ .Name }}
+{{- end }}
+
+
+{{- /* SSH KEYS */}}
+{{vt "yellow"}}SSH keys: {{ range .SshKeys }}
+{{ vt "brightblue"}}- {{ vt "brightwhite"}}{{ .Description }}{{vt "reset"}} ({{vt "cyan"}}{{ .Organisation.Name }}{{vt "reset"}})
+  {{vt "brightblack"}}{{ .Fingerprint }}{{vt "reset" -}}  
+{{ end }} 
+
+
+{{- /* NETWORKS */}}
+{{vt "yellow"}}Networks: {{ range $index, $_ := .Networks -}}
+{{ $hasNet := index $.HasNetworks $index }}  
+{{ vt "brightblue"}}- {{ vt "yellow"}}Name:         {{ vt "brightwhite"}}{{ $hasNet.Network.Description }} ({{ .Name }})
+  {{ vt "yellow"}}ID:           {{ vt "brightwhite"}}{{ .ID }}
+  {{ vt "yellow"}}Network ID:   {{ vt "brightwhite"}}{{ .NetworkID }}
+  {{ vt "yellow"}}Status:       {{template "statusVt" $hasNet.StatusCategory}}{{ $hasNet.Status }}
+  {{ vt "yellow"}}Type:         {{ vt "brightwhite"}}
+  {{- if .NetPublic }}Public{{ else if .NetInternal }}Internal {{ else if .NetCustomer }}Customer{{ end }} 
+  {{ vt "yellow"}}VLAN:         {{ vt "brightwhite"}}{{ .Vlan }}
+  {{ vt "yellow"}}MAC:          {{ vt "brightwhite"}}{{ .Mac }}
+  {{ vt "yellow"}}IPv4 Range:   {{ vt "brightwhite"}}{{ .NetIpv4 }}/{{ .NetMaskv4 }}
+  {{ vt "yellow"}}IPv4 Gateway: {{ vt "brightwhite"}}{{ .NetGatewayv4 }}
+  {{ vt "yellow"}}IPv6 Range:   {{ vt "brightwhite"}}{{ .NetIpv6 }}/{{ .NetMaskv6 }}
+  {{ vt "yellow"}}IPv6 Gateway: {{ vt "brightwhite"}}{{ .NetGatewayv6 }}
+  {{ vt "yellow"}}Addresses: {{ range .Ips }}
+  {{ vt "brightblue"}}- {{ vt "brightwhite"}}{{ .PublicIpv4 }}{{ .Ipv4 }}{{ .PublicIpv6 }}{{ .Ipv6 }} {{vt "cyan" }}{{ .Hostname }} 
+{{- end }} 
+{{- end }}
+
+
+{{- /* VOLUMES */}}
+{{vt "yellow"}}Volumes: {{ range .Volumes }}
+{{vt "brightblue"}}- {{ if eq $.BootVolume.Id .ID }}{{vt "brightgreen"}}Boot Volume
+  {{ end -}}
+  {{vt "yellow"}}Name:         {{vt "brightwhite"}}{{ .Name }}
+  {{vt "yellow"}}ID:           {{vt "brightwhite"}}{{ .ID }}
+  {{vt "yellow"}}Status:       {{template "statusVt" .StatusCategory}}{{ .Status }}
+  {{vt "yellow"}}Space:        {{vt "brightwhite"}}{{ .Space }} GB
+  {{vt "yellow"}}UID:          {{vt "brightwhite"}}{{ .UID }}
+  {{vt "yellow"}}AutoResize:   {{vt "brightwhite"}}{{ .AutoResize }}
+  {{vt "yellow"}}Device:       {{vt "brightwhite"}}{{ .DeviceName }}
+  {{vt "yellow"}}Remarks:      {{vt "brightwhite"}}{{ .Remarks }}
+  {{vt "yellow"}}Volume group: {{vt "brightwhite"}}{{ .Volumegroup.Name }} ({{ .Volumegroup.ID }})
+{{- end }}
+
+
+{{- /* COOKBOOKS */}}
+{{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
+{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .Cookbooktype }}
+  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
+  {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
+  {{- $anyParams := false }}
+  {{vt "yellow"}}Parameters: {{ range $key, $dat := .Cookbookparameters }}{{ if not $dat.Default }}
+    {{- $anyParams = true }}
+    {{vt "yellow"}}{{ $key }}: {{vt "brightwhite"}}{{ $dat.Value -}}
+  {{ end }}{{ end }}{{if not $anyParams}}{{vt "brightblack"}}(none){{ end -}}
+{{ end }}
+
+
+{{- /* CHECKS */}}
+{{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
+{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .Cookbooktype }}
+  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
+  {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
+  {{- $anyParams := false }}
+  {{vt "yellow"}}Parameters: {{ range $key, $dat := .Cookbookparameters }}{{ if not $dat.Default }}
+    {{- $anyParams = true }}
+    {{vt "yellow"}}{{ $key }}: {{vt "brightwhite"}}{{ $dat.Value -}}
+  {{ end }}{{ end }}{{if not $anyParams}}{{vt "brightblack"}}(none){{ end -}}
+{{ end }}
+
+
+{{- /* JOBS */ -}}
+{{- if .Jobs}}
+{{vt "yellow"}}Latest jobs:{{vt "reset"}}
+{{- template "describeJobs" . }}
+{{- end}}

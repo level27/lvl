@@ -1,8 +1,7 @@
 package types
 
 type Organisation struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
+	OrganisationRef
 	TaxNumber   string `json:"taxNumber"`
 	MustPayTax  bool   `json:"mustPayTax"`
 	Street      string `json:"street"`
@@ -24,4 +23,9 @@ type Organisation struct {
 	} `json:"users"`
 	// RemarksToprintInvoice
 	UpdateEntitiesOnly bool `json:"updateEntitiesOnly"`
+}
+
+type OrganisationRef struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

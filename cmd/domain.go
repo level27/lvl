@@ -277,7 +277,7 @@ var domainDescribeCmd = &cobra.Command{
 		}
 
 		domain := Level27Client.Domain(domainID)
-		domain.Jobs = Level27Client.DomainJobHistoryGet(domainID)
+		domain.Jobs = Level27Client.EntityJobHistoryGet("domain", domainID)
 		for idx, j := range domain.Jobs {
 			domain.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
 		}
@@ -748,7 +748,7 @@ var domainJobHistoryCmd = &cobra.Command{
 			log.Fatal("no valid domain ID")
 		}
 		//get full history of toplevel jobs
-		history := Level27Client.DomainJobHistoryGet(id)
+		history := Level27Client.EntityJobHistoryGet("domain", id)
 		// filter jobs where status is not 50.
 		notCompleted := FindNotcompletedJobs(history)
 

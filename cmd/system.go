@@ -24,6 +24,10 @@ func init() {
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
 
+	// --- DESCRIBE
+	systemCmd.AddCommand(systemDescribeCmd)
+	systemDescribeCmd.Flags().BoolVar(&systemDescribeHideJobs, "hide-jobs", false, "Hide jobs in the describe output.")
+
 	// --- CREATE
 	systemCmd.AddCommand(systemCreateCmd)
 	flags := systemCreateCmd.Flags()
@@ -66,7 +70,7 @@ func init() {
 	flags = systemCheckCreateCmd.Flags()
 	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
 	systemCheckCreateCmd.MarkFlagRequired("type")
-	
+
 	// -- optional flags, only for creating a http check
 	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
 	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
@@ -109,6 +113,38 @@ func getSystems(ids []int) []types.System {
 		return systems
 	}
 
+}
+
+//----------------------------------------- DESCRIBE ---------------------------------------
+var systemDescribeHideJobs = false
+
+var systemDescribeCmd = &cobra.Command{
+	Use:   "describe",
+	Short: "Get detailed information about a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID, err := convertStringToId(args[0])
+		if err != nil {
+			log.Fatalln("Invalid system ID")
+		}
+
+		var system types.DescribeSystem
+		system.System = Level27Client.SystemGetSingle(systemID)
+		if !systemDescribeHideJobs {
+			system.Jobs = Level27Client.EntityJobHistoryGet("system", systemID)
+			for idx, j := range system.Jobs {
+				system.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
+			}
+		}
+
+		system.SshKeys = Level27Client.SystemGetSshKeys(systemID, types.CommonGetParams{})
+		securityUpdates := Level27Client.SecurityUpdateDates()
+		system.InstallSecurityUpdatesString = securityUpdates[system.InstallSecurityUpdates]
+		system.HasNetworks = Level27Client.SystemGetHasNetworks(systemID)
+		system.Volumes = Level27Client.SystemGetVolumes(systemID, types.CommonGetParams{})
+
+		outputFormatTemplate(system, "templates/system.tmpl")
+	},
 }
 
 //----------------------------------------- CREATE ---------------------------------------
@@ -235,7 +271,7 @@ func getSystemChecks(id int) []types.SystemCheck {
 
 // ---------------- CREATE CHECK
 var systemCheckCreate, systemCreateCheckUrl, systemCreateCheckContent, systemCreateCheckHost string
-var systemCreateCheckPort int 
+var systemCreateCheckPort int
 
 var systemCheckCreateCmd = &cobra.Command{
 	Use:   "create [system ID] [parameters]",
@@ -257,7 +293,7 @@ var systemCheckCreateCmd = &cobra.Command{
 
 			// GET REQUEST to see what all curent valid checktypes are (function gives back an array of valid types)
 			systemCheckCreateArray := Level27Client.SystemCheckTypeGet()
-			
+
 			//when user input is one of the valid options -> validation bool is true
 			for _, validOption := range systemCheckCreateArray {
 				if strings.ToLower(checkTypeInput) == validOption {
@@ -269,38 +305,34 @@ var systemCheckCreateCmd = &cobra.Command{
 						isCheckTypeHttp = true
 					}
 					isChecktypeValid = true
-					 
+
 				}
 			}
 			// if user input not in valid options array -> error
 			if !isChecktypeValid {
 				log.Fatalln("Given checktype is not valid")
-			}else{
+			} else {
 				//when user chose http type, aditional flags can be set
 				if isCheckTypeHttp {
 					request := types.SystemCheckRequestHttp{
 						Checktype: checkTypeInput,
-						Port: systemCreateCheckPort,
-						Url: systemCreateCheckUrl,
-						Hostname: systemCreateCheckHost,
-						Content: systemCreateCheckContent,
+						Port:      systemCreateCheckPort,
+						Url:       systemCreateCheckUrl,
+						Hostname:  systemCreateCheckHost,
+						Content:   systemCreateCheckContent,
 					}
 					Level27Client.SystemCheckCreate(id, request)
 					//when chosen type NOT http -> only checktype will be needed for request
-				}else{
+				} else {
 					request := types.SystemCheckRequest{
 						Checktype: checkTypeInput,
 					}
 					Level27Client.SystemCheckCreate(id, request)
 				}
-				
-		
-				
+
 			}
 
 		}
-
-		
 
 	},
 }
