@@ -77,6 +77,15 @@ func init() {
 	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
 	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
 
+
+	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
+	systemCheckCmd.AddCommand(systemCheckDeleteCmd)
+
+	//flag to skip confirmation when deleting a check
+	systemCheckDeleteCmd.Flags().BoolVarP(&systemCheckDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
+
+
+
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
 	// adding cookbook subcommand to system command
 	systemCmd.AddCommand(systemCookbookCmd)
@@ -336,6 +345,29 @@ var systemCheckCreateCmd = &cobra.Command{
 
 	},
 }
+//------------------------------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ----------------------------------
+var systemCheckDeleteConfirmed bool
+var systemCheckDeleteCmd = &cobra.Command{
+	Use: "delete [systemID] [checkID]",
+	Short: "Delete a specific check from a system",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid system ID
+		systemID, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		//check for valid system checkID
+		checkID, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Fatalln("Not a valid check ID!")
+		}
+
+		Level27Client.SystemCheckDelete(systemID, checkID, systemCheckDeleteConfirmed)
+	},
+}
+
 
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
