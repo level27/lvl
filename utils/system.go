@@ -147,6 +147,18 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 }
 
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
+// ------------- DESCRIBE A SPECIFIC CHECK
+func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
+	var check struct{
+		Data types.SystemCheck `json:"check"`
+	}
+	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemID, CheckID)
+	err := c.invokeAPI("GET", endpoint, nil, &check)
+	AssertApiError(err, "system check")
+
+	return check.Data
+}
+
 // ------------- DELETE A SPECIFIC CHECK
 func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed bool) {
 

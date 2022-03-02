@@ -243,6 +243,12 @@ type SystemCheck struct {
 	DtLastCheck                 int         `json:"dtLastCheck"`
 	CheckParameters             interface{} `json:"checkparameters"`
 	CheckParametersDescriptions interface{} `json:"checkparameterDescriptions"`
+	Location                    string      `json:"location"`
+	System                      struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"system"`
+	Alerts []interface{} `json:"alerts"`
 }
 
 // ---- Check create request
