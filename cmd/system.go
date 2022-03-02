@@ -58,19 +58,20 @@ func init() {
 	// ---- GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
 	addCommonGetFlags(systemCheckGetCmd)
-//-----	NIET VERGETEN
-	systemCheckCmd.AddCommand(systemChecktypeCmd)
-//----- NIET VERGETEN
-
 
 	// ---- CREATE NEW CHECK
 	systemCheckCmd.AddCommand(systemCheckCreateCmd)
 
 	// -- flags needed to create a check
 	flags = systemCheckCreateCmd.Flags()
-
 	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
 	systemCheckCreateCmd.MarkFlagRequired("type")
+	
+	// -- optional flags, only for creating a http check
+	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
+	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
+	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
+	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
 	// adding cookbook subcommand to system command
@@ -122,6 +123,8 @@ var systemCreateAutoTeams, systemCreateExternalInfo string
 var systemCreateOperatingSystemVersion, systemCreateParentSystem int
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
+
+// ARRAY NOG DYNAMIC MAKEN!!!!!
 var managementTypeArray = []string{"basic", "professional", "enterprise", "professional_level27"}
 
 // var securityUpdatesArray = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}        - not needed for create request
@@ -229,16 +232,11 @@ func getSystemChecks(id int) []types.SystemCheck {
 	return Level27Client.SystemCheckGetList(id, optGetParameters)
 
 }
-// ---------------- GET CHECKTYPES
-var systemChecktypeCmd = &cobra.Command{
-	Use: "type",
-	Run: func(cmd *cobra.Command, args []string) {
-		Level27Client.SystemCheckTypeGet()
-	},
-}
+
 // ---------------- CREATE CHECK
-// possible check types for creating a new system check.
-var systemCheckCreate string
+var systemCheckCreate, systemCreateCheckUrl, systemCreateCheckContent, systemCreateCheckHost string
+var systemCreateCheckPort int 
+
 var systemCheckCreateCmd = &cobra.Command{
 	Use:   "create [system ID] [parameters]",
 	Short: "create a new check for a specific system",
@@ -253,34 +251,56 @@ var systemCheckCreateCmd = &cobra.Command{
 		// get the value of the flag type set by user
 		checkTypeInput := cmd.Flag("type").Value.String()
 
-		// bool value to see if user input is valid
-		var isChecktypeValid bool
+		// bool value to see if user input is valid, and bool to check if chosen type is http
+		var isChecktypeValid, isCheckTypeHttp bool
 		if cmd.Flag("type").Changed {
 
-			// GET REQUEST to see what all curent valid checktypes are (function gives back array of valid types)
+			// GET REQUEST to see what all curent valid checktypes are (function gives back an array of valid types)
 			systemCheckCreateArray := Level27Client.SystemCheckTypeGet()
+			
+			//when user input is one of the valid options -> validation bool is true
+			for _, validOption := range systemCheckCreateArray {
+				if strings.ToLower(checkTypeInput) == validOption {
 
-			//when user input is in valid options array bool is true
-			for _, arrayType := range systemCheckCreateArray {
-				if strings.ToLower(checkTypeInput) == arrayType {
-					checkTypeInput = arrayType
+					checkTypeInput = validOption
+
+					// check if chosen type is http
+					if checkTypeInput == "http" {
+						isCheckTypeHttp = true
+					}
 					isChecktypeValid = true
+					 
 				}
 			}
 			// if user input not in valid options array -> error
 			if !isChecktypeValid {
 				log.Fatalln("Given checktype is not valid")
+			}else{
+				//when user chose http type, aditional flags can be set
+				if isCheckTypeHttp {
+					request := types.SystemCheckRequestHttp{
+						Checktype: checkTypeInput,
+						Port: systemCreateCheckPort,
+						Url: systemCreateCheckUrl,
+						Hostname: systemCreateCheckHost,
+						Content: systemCreateCheckContent,
+					}
+					Level27Client.SystemCheckCreate(id, request)
+					//when chosen type NOT http -> only checktype will be needed for request
+				}else{
+					request := types.SystemCheckRequest{
+						Checktype: checkTypeInput,
+					}
+					Level27Client.SystemCheckCreate(id, request)
+				}
+				
+		
+				
 			}
 
 		}
 
-		request := types.SystemCheckRequest{
-			Checktype: checkTypeInput,
-		}
-
-		Level27Client.SystemCheckCreate(id, request)
-
-	
+		
 
 	},
 }

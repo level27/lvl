@@ -103,7 +103,6 @@ type SystemPost struct {
 
 type SystemCheckTypeName map[string]SystemCheckType
 
-
 type SystemCheckType struct {
 	ServiceType struct {
 		Name            string `json:"name"`
@@ -140,6 +139,15 @@ type SystemCheck struct {
 // ---- Check create request
 type SystemCheckRequest struct {
 	Checktype string `json:"checktype"`
+}
+
+// ---- check create request for http type
+type SystemCheckRequestHttp struct {
+	Checktype string `json:"checktype"`
+	Port      int    `json:"port"`
+	Hostname  string `json:"hostname"`
+	Url       string `json:"url"`
+	Content   string `json:"content"`
 }
 
 // ----------------------------------- COOKBOOKS ----------------------------------

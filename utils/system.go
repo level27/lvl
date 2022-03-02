@@ -99,7 +99,7 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 }
 
 // ------------- CREATE A CHECK
-func (c *Client) SystemCheckCreate(systemId int, req types.SystemCheckRequest) {
+func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 	var SystemCheck struct {
 		Data types.SystemCheck `json:"check"`
 	}
