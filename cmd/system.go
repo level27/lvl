@@ -361,7 +361,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 		//check for valid system checkID
 		checkID, err := strconv.Atoi(args[1])
 		if err != nil {
-			log.Fatalln("Not a valid system ID!")
+			log.Fatalln("Not a valid check ID!")
 		}
 
 		Level27Client.SystemCheckDelete(systemID, checkID, systemCheckDeleteConfirmed)
