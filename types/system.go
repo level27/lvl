@@ -283,6 +283,8 @@ type CookbookType struct {
 		} `json:"parameters"`
 	} `json:"cookbooktype"`
 }
+
+
 type Cookbook struct {
 	Id                             int         `json:"id"`
 	CookbookType                   string      `json:"cookbooktype"`
@@ -296,8 +298,7 @@ type Cookbook struct {
 	} `json:"system"`
 }
 
-// Add cookbook to system request
-
+// Add cookbook to a system request
 type CookbookAdd struct {
 	Cookbooktype string `json:"cookbooktype"`
 }
