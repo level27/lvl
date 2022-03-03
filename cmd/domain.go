@@ -233,6 +233,21 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.SortFlags = false
 }
 
+// Resolve an integer or name domain.
+// If the domain is a name, a request is made to resolve the integer ID.
+func resolveDomain(arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	domain := Level27Client.LookupDomain(arg)
+	if domain == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find domain: %s", arg))
+		return 0
+	}
+	return domain.ID
+}
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
 //GET LIST OF ALL DOMAINS [lvl domain get]
@@ -271,11 +286,7 @@ var domainDescribeCmd = &cobra.Command{
 	Short: "Get detailed info about a domain",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		domainID, err := convertStringToId(args[0])
-		if err != nil {
-			log.Fatalln("Invalid domain ID")
-		}
-
+		domainID := resolveDomain(args[0])
 		domain := Level27Client.Domain(domainID)
 		domain.Jobs = Level27Client.EntityJobHistoryGet("domain", domainID)
 		for idx, j := range domain.Jobs {
@@ -295,11 +306,7 @@ var domainDeleteCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-
-		
 			Level27Client.DomainDelete(args, isConfirmed)
-	
-		
 	},
 }
 
@@ -438,8 +445,7 @@ var domainUpdateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		domainId, err := convertStringToId(args[0])
-		cobra.CheckErr(err)
+		domainId := resolveDomain(args[0])
 
 		if len(domainUpdateSettings) == 0 {
 			fmt.Println("No options specified!")
@@ -464,8 +470,7 @@ var domainRecordGetCmd = &cobra.Command{
 	Short: "Get a list of all records configured for a domain",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		domainId, err := convertStringToId(args[0])
-		cobra.CheckErr(err)
+		domainId := resolveDomain(args[0])
 		recordIds, err := convertStringsToIds(args[1:])
 		cobra.CheckErr(err)
 
@@ -815,8 +820,7 @@ var domainIntegrityGetCmd = &cobra.Command{
 	Short: "Get a list of all integrity checks for a domain",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		domainId, err := convertStringToId(args[0])
-		cobra.CheckErr(err)
+		domainId := resolveDomain(args[0])
 		checkIds, err := convertStringsToIds(args[1:])
 		cobra.CheckErr(err)
 
@@ -846,8 +850,7 @@ var domainIntegrityCreateCmd = &cobra.Command{
 	Short: "Create a new integrity report",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		domainId, err := convertStringToId(args[0])
-		cobra.CheckErr(err)
+		domainId := resolveDomain(args[0])
 
 		result := Level27Client.DomainIntegrityCreate(domainId, domainIntegrityCheckDoJobs, domainIntegrityCheckForceJobs)
 		outputFormatTemplate(result, "templates/domainIntegrityCreate.tmpl")
@@ -860,8 +863,7 @@ var domainIntegrityDownloadCmd = &cobra.Command{
 	Short: "Download an integrity check as PDF file",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		domainId, err := convertStringToId(args[0])
-		cobra.CheckErr(err)
+		domainId := resolveDomain(args[0])
 		checkId, err := convertStringToId(args[1])
 		cobra.CheckErr(err)
 
