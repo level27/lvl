@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -90,7 +91,6 @@ func init() {
 	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
 	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
 
-
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
 	// --- DESCRIBE CHECK
 	systemCheckCmd.AddCommand(systemCheckGetSingleCmd)
@@ -99,8 +99,6 @@ func init() {
 
 	//flag to skip confirmation when deleting a check
 	systemCheckDeleteCmd.Flags().BoolVarP(&systemCheckDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
-
-
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
 	// adding cookbook subcommand to system command
@@ -283,7 +281,10 @@ var systemCheckGetCmd = &cobra.Command{
 		}
 
 		// Creating readable output
-		outputFormatTable(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "INFORMATION"}, []string{"Id", "CheckType", "Status", "StatusInformation"})
+		outputFormatTableFuncs(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
+			[]interface{}{"Id", "CheckType", "Status",func(s types.SystemCheck) string {return utils.FormatUnixTime(s.DtLastStatusChanged)}, "StatusInformation"})
+
+		
 
 	},
 }
@@ -361,12 +362,13 @@ var systemCheckCreateCmd = &cobra.Command{
 
 	},
 }
+
 //------------------------------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ----------------------------------
 // -------------- GET DETAILS FROM A CHECK
 var systemCheckGetSingleCmd = &cobra.Command{
-	Use: "describe [systemID] [checkID]",
+	Use:   "describe [systemID] [checkID]",
 	Short: "Get detailed info about a specific check.",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
 		systemID, err := strconv.Atoi(args[0])
@@ -385,12 +387,13 @@ var systemCheckGetSingleCmd = &cobra.Command{
 		outputFormatTemplate(check, "templates/systemCheck.tmpl")
 	},
 }
+
 // -------------- DELETE SPECIFIC CHECK
 var systemCheckDeleteConfirmed bool
 var systemCheckDeleteCmd = &cobra.Command{
-	Use: "delete [systemID] [checkID]",
+	Use:   "delete [systemID] [checkID]",
 	Short: "Delete a specific check from a system",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
 		systemID, err := strconv.Atoi(args[0])
@@ -407,7 +410,6 @@ var systemCheckDeleteCmd = &cobra.Command{
 		Level27Client.SystemCheckDelete(systemID, checkID, systemCheckDeleteConfirmed)
 	},
 }
-
 
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
@@ -440,62 +442,62 @@ func getSystemCookbooks(id int) []types.Cookbook {
 // -------- SYSTEM ACTIONS
 
 var systemActionsCmd = &cobra.Command{
-	Use: "actions",
+	Use:   "actions",
 	Short: "Actions for systems such as rebooting",
 }
 
 var systemActionsStartCmd = &cobra.Command{
-	Use: "start",
+	Use:  "start",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("start", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("start", args) },
 }
 
 var systemActionsStopCmd = &cobra.Command{
-	Use: "stop",
+	Use:  "stop",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("stop", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("stop", args) },
 }
 
 var systemActionsShutdownCmd = &cobra.Command{
-	Use: "shutdown",
+	Use:  "shutdown",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("shutdown", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("shutdown", args) },
 }
 
 var systemActionsRebootCmd = &cobra.Command{
-	Use: "reboot",
+	Use:  "reboot",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("reboot", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("reboot", args) },
 }
 
 var systemActionsResetCmd = &cobra.Command{
-	Use: "reset",
+	Use:  "reset",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("reset", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("reset", args) },
 }
 
 var systemActionsEmergencyPowerOffCmd = &cobra.Command{
-	Use: "emergencyPowerOff",
+	Use:  "emergencyPowerOff",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("emergencyPowerOff", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("emergencyPowerOff", args) },
 }
 
 var systemActionsDeactivateCmd = &cobra.Command{
-	Use: "deactivate",
+	Use:  "deactivate",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("deactivate", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("deactivate", args) },
 }
 
 var systemActionsActivateCmd = &cobra.Command{
-	Use: "activate",
+	Use:  "activate",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("activate", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("activate", args) },
 }
 
 var systemActionsAutoInstallCmd = &cobra.Command{
-	Use: "autoInstall",
+	Use:  "autoInstall",
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
+	Run:  func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
 }
 
 func runAction(action string, args []string) {

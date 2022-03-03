@@ -238,7 +238,7 @@ type SystemCheck struct {
 	Status               string `json:"status"`
 	StatusInformation    string `json:"statusInformation"`
 	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
-	DtLastStatusChanged  int    `json:"dtLastStatusChange"`
+	DtLastStatusChanged  int64    `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
 	DtLastCheck          int    `json:"dtLastCheck"`
 	CheckParameters      interface {

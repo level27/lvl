@@ -118,5 +118,10 @@ func FormatUnixTimeF(seconds interface{}, fmt string) string {
 
 // Format a unix time value returned by the API in a way that is human-readable.
 func FormatUnixTime(seconds interface{}) string {
-	return FormatUnixTimeF(seconds, "2006 Jan _2 15:04:05")
+	result :=  FormatUnixTimeF(seconds, "2006 Jan _2 15:04:05")
+	if result == "1970 Jan  1 01:00:00" {
+		return "null"
+	}else{
+		return result
+	}
 }

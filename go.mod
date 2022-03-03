@@ -3,6 +3,7 @@ module bitbucket.org/level27/lvl
 go 1.17
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.3.2
 	github.com/Jeffail/gabs/v2 v2.6.1
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
@@ -10,7 +11,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	golang.org/x/sys v0.0.0-20220222200937-f2425489ef4c
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -20,6 +21,8 @@ require (
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
