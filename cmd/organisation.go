@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
@@ -30,6 +32,20 @@ func init() {
 
 	organisationCmd.AddCommand(organisationGetCmd)
 	addCommonGetFlags(organisationGetCmd)
+}
+
+func resolveOrganisation(arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	org := Level27Client.LookupOrganisation(arg)
+	if org == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find organisation: %s", arg))
+		return 0
+	}
+	return org.ID
 }
 
 func getOrganisations(ids []int) []types.Organisation {

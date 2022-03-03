@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -40,10 +41,10 @@ func init() {
 	flags.IntVarP(&systemCreateMemory, "memory", "", 0, "Memory (Required for Level27 systems)")
 	flags.StringVarP(&systemCreateManageType, "management", "", "basic", "Managament type (default: basic)")
 	flags.BoolVarP(&systemCreatePublicNetworking, "publicNetworking", "", true, "For digitalOcean servers always true. (non-editable)")
-	flags.IntVarP(&systemCreateImage, "image", "", 0, "The ID of a systemimage. (must match selected configuration and zone. non-editable)")
-	flags.IntVarP(&systemCreateOrganisation, "organisation", "", 0, "The unique ID of an organisation")
-	flags.IntVarP(&systemCreateProviderConfig, "provider", "", 0, "The unique ID of a SystemproviderConfiguration")
-	flags.IntVarP(&systemCreateZone, "zone", "", 0, "The unique ID of a zone")
+	flags.StringVarP(&systemCreateImage, "image", "", "", "The ID of a systemimage. (must match selected configuration and zone. non-editable)")
+	flags.StringVarP(&systemCreateOrganisation, "organisation", "", "", "The unique ID of an organisation")
+	flags.StringVarP(&systemCreateProviderConfig, "provider", "", "", "The unique ID of a SystemproviderConfiguration")
+	flags.StringVarP(&systemCreateZone, "zone", "", "", "The unique ID of a zone")
 	//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
 	flags.StringVarP(&systemCreateAutoTeams, "autoTeams", "", "", "A csv list of team ID's")
 	flags.StringVarP(&systemCreateExternalInfo, "externalInfo", "", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in db)")
@@ -109,6 +110,39 @@ func init() {
 
 }
 
+// Resolve an integer or name domain.
+// If the domain is a name, a request is made to resolve the integer ID.
+func resolveSystem(arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	system := Level27Client.LookupSystem(arg)
+	if system == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find system: %s", arg))
+		return 0
+	}
+	return system.Id
+}
+
+func resolveSystemProviderConfiguration(region int, arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	cfgs := Level27Client.GetSystemProviderConfigurations()
+	for _, cfg := range cfgs {
+		if cfg.Name == arg {
+			return cfg.ID
+		}
+	}
+
+	cobra.CheckErr(fmt.Sprintf("Unable to find provider configuration: %s", arg))
+	return 0
+}
+
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
 //----------------------------------------- GET ---------------------------------------
 var systemGetCmd = &cobra.Command{
@@ -146,10 +180,7 @@ var systemDescribeCmd = &cobra.Command{
 	Short: "Get detailed information about a system.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		systemID, err := convertStringToId(args[0])
-		if err != nil {
-			log.Fatalln("Invalid system ID")
-		}
+		systemID := resolveSystem(args[0])
 
 		var system types.DescribeSystem
 		system.System = Level27Client.SystemGetSingle(systemID)
@@ -176,7 +207,7 @@ var systemCreateName, systemCreateFqdn, systemCreateRemarks string
 var systemCreateDisk, systemCreateCpu, systemCreateMemory int
 var systemCreateManageType string
 var systemCreatePublicNetworking bool
-var systemCreateImage, systemCreateOrganisation, systemCreateProviderConfig, systemCreateZone int
+var systemCreateImage, systemCreateOrganisation, systemCreateProviderConfig, systemCreateZone string
 
 var systemCreateAutoTeams, systemCreateExternalInfo string
 var systemCreateOperatingSystemVersion, systemCreateParentSystem int
@@ -213,6 +244,11 @@ var systemCreateCmd = &cobra.Command{
 			}
 		}
 
+		zoneID, regionID := resolveZoneRegion(systemCreateZone)
+		imageID := resolveRegionImage(regionID, systemCreateImage)
+		orgID := resolveOrganisation(systemCreateOrganisation)
+		providerConfigID := resolveSystemProviderConfiguration(regionID, systemCreateProviderConfig)
+
 		// Using data from the flags to make the right type used for posting a new system. (types systemPost)
 		RequestData := types.SystemPost{
 			Name:                        systemCreateName,
@@ -223,10 +259,10 @@ var systemCreateCmd = &cobra.Command{
 			Memory:                      &systemCreateMemory,
 			MamanagementType:            managementTypeValue,
 			PublicNetworking:            systemCreatePublicNetworking,
-			SystemImage:                 systemCreateImage,
-			Organisation:                systemCreateOrganisation,
-			SystemProviderConfiguration: systemCreateProviderConfig,
-			Zone:                        systemCreateZone,
+			SystemImage:                 imageID,
+			Organisation:                orgID,
+			SystemProviderConfiguration: providerConfigID,
+			Zone:                        zoneID,
 			// InstallSecurityUpdates:      &checkedSecurityUpdateValue, NOT NEEDED IN CREATE REQUEST//
 			AutoTeams:              systemCreateAutoTeams,
 			ExternalInfo:           systemCreateExternalInfo,
@@ -501,10 +537,7 @@ var systemActionsAutoInstallCmd = &cobra.Command{
 }
 
 func runAction(action string, args []string) {
-	id, err := convertStringToId(args[0])
-	if err != nil {
-		log.Fatalln("Invalid system ID")
-	}
+	id := resolveSystem(args[0])
 
 	Level27Client.SystemAction(id, action)
 }

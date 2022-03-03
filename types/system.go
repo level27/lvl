@@ -37,17 +37,12 @@ type System struct {
 		OsType    string `json:"osType"`
 		OsVersion string `json:"osVersion"`
 	} `json:"operatingsystemVersion"`
-	ProvideId                   int         `json:"providerId"`
-	Provider                    interface{} `json:"provider"`
-	ProviderApi                 string      `json:"providerApi"`
-	SystemProviderConfiguration struct {
-		Id          int    `json:"id"`
-		ExternalId  string `json:"externalId"`
-		Name        string `json:"name"`
-		Description string `json:"description"`
-	} `json:"systemproviderConfiguration"`
-	Region string `json:"region"`
-	Zone   struct {
+	ProvideId                   int                            `json:"providerId"`
+	Provider                    interface{}                    `json:"provider"`
+	ProviderApi                 string                         `json:"providerApi"`
+	SystemProviderConfiguration SystemProviderConfigurationRef `json:"systemproviderConfiguration"`
+	Region                      string                         `json:"region"`
+	Zone                        struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"zone"`
@@ -276,4 +271,26 @@ type Cookbook struct {
 	CookbookParametersDescriptions interface{} `json:"cookbookparameterDescriptions"`
 	PreviousCookbookParameters     interface{} `json:"previousCookbookparameters"`
 	Status                         string      `json:"status"`
+}
+
+type SystemProviderConfigurationRef struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	ExternalID  string `json:"externalId"`
+	Description string `json:"description"`
+}
+
+type SystemProviderConfiguration struct {
+	SystemProviderConfigurationRef
+	MinCPU         int    `json:"minCpu"`
+	MaxCPU         int    `json:"maxCpu"`
+	MinMemory      string `json:"minMemory"`
+	MaxMemory      string `json:"maxMemory"`
+	MinDisk        int    `json:"minDisk"`
+	MaxDisk        int    `json:"maxDisk"`
+	Status         int    `json:"status"`
+	Systemprovider struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"systemprovider"`
 }

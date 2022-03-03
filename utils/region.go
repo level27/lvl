@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
 )
@@ -31,17 +32,18 @@ func (c *Client) LookupRegion(name string) *types.Region {
 
 // Try to get a zone by name.
 // Very slow.
-func (c *Client) LookupZone(name string) *types.Zone {
+func (c *Client) LookupZoneAndRegion(zoneName string) (*types.Zone, *types.Region) {
 	regions := c.GetRegions()
+	intId, _ := strconv.Atoi(zoneName)
 	for _, region := range regions {
 		for _, zone := range c.GetZones(region.ID) {
-			if zone.Name == name {
-				return &zone
+			if zone.Name == zoneName || zone.ID == intId {
+				return &zone, &region
 			}
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (c *Client) GetZones(region int) []types.Zone {

@@ -31,3 +31,14 @@ func (c *Client) Organisations(getParams types.CommonGetParams) []types.Organisa
 
 	return orgs.Organisation
 }
+
+func (c *Client) LookupOrganisation(name string) *types.Organisation {
+	orgs := c.Organisations(types.CommonGetParams{ Filter: name })
+	for _, org := range orgs {
+		if org.Name == name {
+			return &org
+		}
+	}
+
+	return nil
+}
