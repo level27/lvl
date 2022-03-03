@@ -28,6 +28,17 @@ func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 
 }
 
+func (c *Client) LookupSystem(name string) *types.System {
+	systems := c.SystemGetList(types.CommonGetParams{ Filter: name })
+	for _, system := range systems {
+		if system.Name == name {
+			return &system
+		}
+	}
+
+	return nil
+}
+
 // Returning a single system by its ID
 // this is not for a describe.
 func (c *Client) SystemGetSingle(id int) types.System {
@@ -245,4 +256,15 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 
 	return systemCookbooks.Data
 
+}
+
+func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {
+	var response struct {
+		ProviderConfigurations []types.SystemProviderConfiguration `json:"providerConfigurations"`
+	}
+
+	err := c.invokeAPI("GET", "systems/provider/configurations", nil, &response)
+	AssertApiError(err, "GetSystemProviderConfigurations")
+
+	return response.ProviderConfigurations
 }
