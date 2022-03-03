@@ -2,6 +2,7 @@ ID: {{.Id}}
 Checktype:  {{.CheckType}}
 Status: {{.Status}}
 StatusInformation:  {{.StatusInformation}}
+System: {{.System.Name}}  ID: {{.System.Id}}
 
 
 
@@ -16,12 +17,12 @@ StatusInformation:  {{.StatusInformation}}
   {{ end }}{{ end }}{{if not $anyParams}}(none){{ end -}}
 
 {{- /* ALERTS */}}
-  {{- $anyOpened := false }}
+  {{- $anyAlerts := false }}
 
-  OPEN ALERTS: {{ range $key, $dat := .Alerts -}}
-   {{- $anyOpened = true -}}
-  {{if eq $dat.status "opened" }}
+  ALERTS: {{ range $key, $dat := .Alerts -}}
+   {{- $anyAlerts = true }}
     ID: {{ $dat.id}}
     STATUS: {{ $dat.status }}
     STATUSINFO: {{$dat.statusInformation}}
-    {{ end }}{{ end }}{{if not $anyOpened}}(none){{ end -}}
+   {{ end }}{{if not $anyAlerts}}(none){{ end -}}
+    
