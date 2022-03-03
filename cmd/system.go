@@ -411,6 +411,25 @@ var systemCheckDeleteCmd = &cobra.Command{
 	},
 }
 
+// -------------- DELETE SPECIFIC CHECK
+var systemCheckUpdateCmd = &cobra.Command{
+	Use: "update [SystemID] [CheckID]",
+	Short: "update a specific check from a system",
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid system ID
+		systemID, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		//check for valid system checkID
+		checkID, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Fatalln("Not a valid check ID!")
+		}
+	},
+}
+
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
 var systemCookbookCmd = &cobra.Command{
