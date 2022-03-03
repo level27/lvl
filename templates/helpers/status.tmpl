@@ -1,4 +1,4 @@
 {{ define "statusVt" -}}
-{{ $vtCats := dict "green" "green" "grey" "brightblack" "red" "red" "yellow" "yellow" -}}
+{{ $vtCats := dict "green" "green" "grey" "brightblack" "red" "red" "yellow" "yellow" "orange" "yellow" -}}
 {{ get $vtCats . | default "reset" | vt -}}
 {{ end }}
