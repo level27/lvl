@@ -165,6 +165,18 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 
 }
 
+// ------------- CREATE A CHECK
+func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+	var SystemCheck struct {
+		Data types.SystemCheck `json:"check"`
+	}
+	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
+	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+
+	AssertApiError(err, "System checks")
+	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
+}
+
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
 // ------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
@@ -216,17 +228,15 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 	}
 
 }
-
-// ------------- CREATE A CHECK
-func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+// ------------- UPDATE A SPECIFIC CHECK
+func (c *Client) SystemCheckUpdate(systemId int, checkId int, req types.SystemCheckRequestHttp) {
 	var SystemCheck struct {
 		Data types.SystemCheck `json:"check"`
 	}
 	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
-	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+	err := c.invokeAPI("PUT", endpoint, req, &SystemCheck)
 
 	AssertApiError(err, "System checks")
-	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
 
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------

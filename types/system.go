@@ -238,7 +238,7 @@ type SystemCheck struct {
 	Status               string `json:"status"`
 	StatusInformation    string `json:"statusInformation"`
 	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
-	DtLastStatusChanged  int64    `json:"dtLastStatusChange"`
+	DtLastStatusChanged  int64  `json:"dtLastStatusChange"`
 	DtNextCheck          int    `json:"dtNextCheck"`
 	DtLastCheck          int    `json:"dtLastCheck"`
 	CheckParameters      interface {
@@ -276,4 +276,8 @@ type Cookbook struct {
 	CookbookParametersDescriptions interface{} `json:"cookbookparameterDescriptions"`
 	PreviousCookbookParameters     interface{} `json:"previousCookbookparameters"`
 	Status                         string      `json:"status"`
+	System                         struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"system"`
 }

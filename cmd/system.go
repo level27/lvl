@@ -100,6 +100,16 @@ func init() {
 	//flag to skip confirmation when deleting a check
 	systemCheckDeleteCmd.Flags().BoolVarP(&systemCheckDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
 
+	// --- UPDATE CHECK (ONLY FOR HTTP REQUEST)
+	systemCheckCmd.AddCommand(systemCheckUpdateCmd)
+
+	// -- flags, only for updating a http check
+	flags = systemCheckUpdateCmd.Flags()
+	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
+	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
+	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
+	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
+
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
 	// adding cookbook subcommand to system command
 	systemCmd.AddCommand(systemCookbookCmd)
@@ -271,7 +281,7 @@ var systemCheckCmd = &cobra.Command{
 
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
-	Short: "Get a list of all checks for a system",
+	Short: "Get a list of all checks from a system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
@@ -282,9 +292,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 		// Creating readable output
 		outputFormatTableFuncs(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-			[]interface{}{"Id", "CheckType", "Status",func(s types.SystemCheck) string {return utils.FormatUnixTime(s.DtLastStatusChanged)}, "StatusInformation"})
-
-		
+			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheck) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
 
 	},
 }
@@ -411,54 +419,39 @@ var systemCheckDeleteCmd = &cobra.Command{
 	},
 }
 
-// -------------- DELETE SPECIFIC CHECK
+// -------------- UPDATE SPECIFIC CHECK
 var systemCheckUpdateCmd = &cobra.Command{
-	Use: "update [SystemID] [CheckID]",
+	Use:   "update [SystemID] [CheckID]",
 	Short: "update a specific check from a system",
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid system ID
-		systemID, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		// //check for valid system ID
+		// systemID, err := strconv.Atoi(args[0])
+		// if err != nil {
+		// 	log.Fatalln("Not a valid system ID!")
+		// }
 
-		//check for valid system checkID
-		checkID, err := strconv.Atoi(args[1])
-		if err != nil {
-			log.Fatalln("Not a valid check ID!")
-		}
+		// //check for valid system checkID
+		// checkID, err := strconv.Atoi(args[1])
+		// if err != nil {
+		// 	log.Fatalln("Not a valid check ID!")
+		// }
+		// // get the current data from the check
+		// currentData := Level27Client.SystemCheckDescribe(systemID, checkID)
+
+		// request := types.SystemCheckRequestHttp{
+		// 	Checktype: currentData.CheckType,
+		// 	Port: ,
+		// }
+		// if cmd.Flag("port").Changed {
+		// 	currentData.CheckParameters.p
+		// }
+		// Level27Client.SystemCheckUpdate(systemID, checkID, nil)
 	},
 }
 
-//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
-// ---------------- MAIN COMMAND (checks)
-var systemCookbookCmd = &cobra.Command{
-	Use:   "cookbook",
-	Short: "Manage systems cookbooks",
-}
 
-// ---------- GET COOKBOOKS
-var systemCookbookGetCmd = &cobra.Command{
-	Use:   "get [system ID]",
-	Short: "Gets a list of all cookbooks from a system.",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
-
-		outputFormatTable(getSystemCookbooks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
-	},
-}
-
-func getSystemCookbooks(id int) []types.Cookbook {
-
-	return Level27Client.SystemCookbookGetList(id)
-
-}
-
-// -------- SYSTEM ACTIONS
+//------------------------------------------------- SYSTEM ACTIONS ----------------------------------
 
 var systemActionsCmd = &cobra.Command{
 	Use:   "actions",
@@ -526,4 +519,31 @@ func runAction(action string, args []string) {
 	}
 
 	Level27Client.SystemAction(id, action)
+}
+
+//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCookbookCmd = &cobra.Command{
+	Use:   "cookbooks",
+	Short: "Manage systems cookbooks",
+}
+
+// ---------- GET COOKBOOKS
+var systemCookbookGetCmd = &cobra.Command{
+	Use:   "get [system ID]",
+	Short: "Gets a list of all cookbooks from a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+
+		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
+	},
+}
+
+func getSystemCookbooks(id int) []types.Cookbook {
+	
+	return Level27Client.SystemCookbookGetList(id)
 }
