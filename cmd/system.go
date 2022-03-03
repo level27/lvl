@@ -117,6 +117,14 @@ func init() {
 	// ---- GET cookbooks
 	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
 
+	// ---- CREATE cookbook
+	systemCookbookCmd.AddCommand(systemCookbookCreateCmd)
+
+	// flags needed to add new cookbook to a system
+	flags = systemCookbookCreateCmd.Flags()
+	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
+	systemCookbookCreateCmd.MarkFlagRequired("type")
+
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
@@ -546,4 +554,44 @@ var systemCookbookGetCmd = &cobra.Command{
 func getSystemCookbooks(id int) []types.Cookbook {
 	
 	return Level27Client.SystemCookbookGetList(id)
+}
+
+// ----------- CREATE COOKBOOKS
+var systemCreateCookbookType string
+var systemCookbookCreateCmd = &cobra.Command{
+	Use: "add [systemID] [flags]",
+	Short: "add a new cookbook to a system",
+	// Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//checking for valid system ID
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalln("Not a valid system ID!")
+		}
+		// get all current valid cookbooktypes 
+		validCookbooktypes := Level27Client.SystemCookbookTypesGet()
+
+		// get the user input from the type flag
+		inputType := cmd.Flag("type").Value.String()
+
+		var isTypeValid bool
+		// check if given cookbooktype is 1 of valid options
+		for _, cookbooktype := range validCookbooktypes{
+			if  strings.ToLower(inputType) == cookbooktype {
+				inputType = cookbooktype
+				isTypeValid = true
+			}
+		}
+
+		// when choses cookbooktype is not valid -> error
+		if !isTypeValid {
+			log.Fatalln("Given cookbooktype is not valid")
+		}else{
+			request := types.CookbookAdd{
+				Cookbooktype: inputType,
+			}
+			Level27Client.SystemCookbookAdd(id, request )
+		}
+
+	},
 }

@@ -268,7 +268,21 @@ type SystemCheckRequestHttp struct {
 }
 
 // ----------------------------------- COOKBOOKS ----------------------------------
-
+// Cookbooktype (used to see all current valid cookbooktypes)
+type CookbookTypeName map[string]CookbookType
+type CookbookType struct {
+	CookbookType struct {
+		Name        string `json:"name"`
+		DisplayName string `json:"displayName"`
+		Description string `json:"description"`
+		Parameters  []struct {
+			Name         string `json:"name"`
+			Description  string `json:"description"`
+			Type         string `json:"type"`
+			DefaultValue interface{} `json:"defaultValue"`
+		} `json:"parameters"`
+	} `json:"cookbooktype"`
+}
 type Cookbook struct {
 	Id                             int         `json:"id"`
 	CookbookType                   string      `json:"cookbooktype"`
@@ -280,4 +294,10 @@ type Cookbook struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"system"`
+}
+
+// Add cookbook to system request
+
+type CookbookAdd struct {
+	Cookbooktype string `json:"cookbooktype"`
 }

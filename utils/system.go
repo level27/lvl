@@ -228,6 +228,7 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 	}
 
 }
+
 // ------------- UPDATE A SPECIFIC CHECK
 func (c *Client) SystemCheckUpdate(systemId int, checkId int, req types.SystemCheckRequestHttp) {
 	var SystemCheck struct {
@@ -255,4 +256,32 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 
 	return systemCookbooks.Data
 
+}
+
+// ------------- ADD COOKBOOK
+func (c *Client) SystemCookbookAdd(systemID int, req types.CookbookAdd) {
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks", systemID)
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "cookbooktype")
+
+}
+
+func (c *Client) SystemCookbookTypesGet() []string {
+	var cookbookTypes struct {
+		Data types.CookbookTypeName `json:"cookbooktypes"`
+	}
+	endpoint := "cookbooktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &cookbookTypes)
+	AssertApiError(err, "cookbooktypes")
+
+	//creating an array from the maps keys. the keys of the map are the possible cookbooktypes
+	validTypes := make([]string, 0, len(cookbookTypes.Data))
+
+	for K, _ := range cookbookTypes.Data {
+		validTypes = append(validTypes, K)
+
+	}
+
+	return validTypes
 }
