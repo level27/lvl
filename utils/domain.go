@@ -38,6 +38,17 @@ func (c *Client) Domain(id int) types.Domain {
 	return domain.Data
 }
 
+func (c *Client) LookupDomain(name string) *types.Domain {
+	domains := c.Domains(types.CommonGetParams{ Filter: name })
+	for _, domain := range domains {
+		if domain.Fullname == name {
+			return &domain
+		}
+	}
+
+	return nil
+}
+
 //Domain gets a domain from the API
 func (c *Client) Domains(getParams types.CommonGetParams) []types.Domain {
 	var domains struct {
@@ -88,7 +99,7 @@ func (c *Client) DomainDelete(id []string, isConfirmed bool) {
 				c.DomainDelete(domID, false)
 			}
 			}
-			
+
 		} else {
 			log.Printf("Wrong or invalid domain ID: %v.\n", value)
 		}

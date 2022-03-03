@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -20,6 +22,33 @@ func init() {
 }
 
 
+func resolveZoneRegion(zoneName string) (int, int) {
+	zone, region := Level27Client.LookupZoneAndRegion(zoneName)
+
+	if zone == nil || region == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find zone: %s", zoneName))
+		return 0, 0
+	}
+
+	return zone.ID, region.ID
+}
+
+func resolveRegionImage(region int, imageName string) int {
+	id, err := strconv.Atoi(imageName)
+	if err == nil {
+		return id
+	}
+
+	images := Level27Client.GetRegionImages(region)
+	for _, image := range images {
+		if image.Name == imageName {
+			return image.ID
+		}
+	}
+
+	cobra.CheckErr(fmt.Sprintf("Unable to find image with name %s in zone", imageName))
+	return 0
+}
 
 var regionCommand = &cobra.Command{
 	Use: "region",
