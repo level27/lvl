@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -467,7 +468,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 var systemCheckUpdateCmd = &cobra.Command{
 	Use:   "update [SystemID] [CheckID]",
 	Short: "update a specific check from a system",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// //check for valid system ID
 		// systemID, err := strconv.Atoi(args[0])
@@ -493,7 +494,6 @@ var systemCheckUpdateCmd = &cobra.Command{
 		// Level27Client.SystemCheckUpdate(systemID, checkID, nil)
 	},
 }
-
 
 //------------------------------------------------- SYSTEM ACTIONS ----------------------------------
 
@@ -585,45 +585,56 @@ var systemCookbookGetCmd = &cobra.Command{
 }
 
 func getSystemCookbooks(id int) []types.Cookbook {
-	
+
 	return Level27Client.SystemCookbookGetList(id)
 }
 
 // ----------- CREATE COOKBOOKS
 var systemCreateCookbookType string
 var systemCookbookCreateCmd = &cobra.Command{
-	Use: "add [systemID] [flags]",
+	Use:   "add [systemID] [flags]",
 	Short: "add a new cookbook to a system",
-	// Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		id, err := strconv.Atoi(args[0])
+		_, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
-		// get all current valid cookbooktypes 
-		validCookbooktypes := Level27Client.SystemCookbookTypesGet()
+		// get all current valid cookbooktypes and a gabs container with all data from all types
+		validCookbooktypes, allCookbooktypeData := Level27Client.SystemCookbookTypesGet()
 
 		// get the user input from the type flag
 		inputType := cmd.Flag("type").Value.String()
 
 		var isTypeValid bool
 		// check if given cookbooktype is 1 of valid options
-		for _, cookbooktype := range validCookbooktypes{
-			if  strings.ToLower(inputType) == cookbooktype {
+		for _, cookbooktype := range validCookbooktypes {
+			if strings.ToLower(inputType) == cookbooktype {
 				inputType = cookbooktype
 				isTypeValid = true
 			}
 		}
-
 		// when choses cookbooktype is not valid -> error
 		if !isTypeValid {
 			log.Fatalln("Given cookbooktype is not valid")
-		}else{
-			request := types.CookbookAdd{
-				Cookbooktype: inputType,
+		} else {
+
+			// based on the given cookbooktype from user we load in the data such as its parameters
+			jsonOutput := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
+
+			// converting the filtered json back into a cookbooktype
+			var chosenType types.CookbookType
+			erro := json.Unmarshal([]byte(jsonOutput), &chosenType)
+			if erro != nil {
+				log.Fatal(erro.Error())
 			}
-			Level27Client.SystemCookbookAdd(id, request )
+
+			log.Print(chosenType.CookbookType.Parameters)
+			// request := types.CookbookAdd{
+			// 	Cookbooktype: inputType,
+			// }
+			// Level27Client.SystemCookbookAdd(id, request)
 		}
 
 	},

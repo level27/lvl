@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/Jeffail/gabs/v2"
 )
 
 // --------------------------- TOPLEVEL SYSTEM ACTIONS (GET / POST) ------------------------------------
@@ -29,7 +31,7 @@ func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 }
 
 func (c *Client) LookupSystem(name string) *types.System {
-	systems := c.SystemGetList(types.CommonGetParams{ Filter: name })
+	systems := c.SystemGetList(types.CommonGetParams{Filter: name})
 	for _, system := range systems {
 		if system.Name == name {
 			return &system
@@ -198,9 +200,6 @@ func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemChec
 	err := c.invokeAPI("GET", endpoint, nil, &check)
 	AssertApiError(err, "system check")
 
-	// result, err := json.Marshal(check.Data)
-	// jsonParsed, err := gabs.ParseJSON([]byte(result))
-	// log.Print(jsonParsed)
 	return check.Data
 }
 
@@ -278,7 +277,7 @@ func (c *Client) SystemCookbookAdd(systemID int, req types.CookbookAdd) {
 
 }
 
-func (c *Client) SystemCookbookTypesGet() []string {
+func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	var cookbookTypes struct {
 		Data types.CookbookTypeName `json:"cookbooktypes"`
 	}
@@ -294,8 +293,22 @@ func (c *Client) SystemCookbookTypesGet() []string {
 
 	}
 
-	return validTypes
+	// marshal all current data into a slice to parse it into json.
+	result, err := json.Marshal(cookbookTypes)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	// parse the slice of bytes into json, this way we can dynamicaly user unknown incomming data
+	jsonParsed, err := gabs.ParseJSON([]byte(result))
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	return validTypes, jsonParsed
 }
+
 // ------------------ GET PROVIDERS
 
 func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {
