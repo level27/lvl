@@ -72,6 +72,21 @@ func init() {
 	systemActionsCmd.AddCommand(systemActionsActivateCmd)
 	systemActionsCmd.AddCommand(systemActionsAutoInstallCmd)
 
+	// --- UPDATE
+
+	systemCmd.AddCommand(systemUpdateCmd)
+	systemUpdateCmd.Flags().StringVarP(&systemUpdateSettingsFile, "settings-file", "s", "", "JSON file to read settings from. Pass '-' to read from stdin.")
+	settingString(systemUpdateCmd, systemUpdateSettings, "name", "New name for this system")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "cpu", "Set amount of CPU cores of the system")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "memory", "Set amount of memory in GB of the system")
+	settingString(systemUpdateCmd, systemUpdateSettings, "managementType", "Set management type of the system")
+	settingString(systemUpdateCmd, systemUpdateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "publicNetworking", "")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "limitRiops", "Set read IOPS limit")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "limitWiops", "Set write IOPS limit")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "installSecurityUpdates", "Set security updates mode index")
+	settingString(systemUpdateCmd, systemUpdateSettings, "remarks", "")
+
 	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
@@ -296,6 +311,52 @@ var systemCreateCmd = &cobra.Command{
 	},
 }
 
+var systemUpdateSettings = map[string]interface{}{}
+var systemUpdateSettingsFile string
+
+var systemUpdateCmd = &cobra.Command{
+	Use: "update",
+	Short: "Update settings on a system",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(systemUpdateSettingsFile, systemUpdateSettings)
+
+		systemID := resolveSystem(args[0])
+
+		system := Level27Client.SystemGetSingle(systemID)
+
+		systemPut := types.SystemPut{
+			Id: system.Id,
+			Name: system.Name,
+			Type: system.Type,
+			Cpu: system.Cpu,
+			Memory: system.Memory,
+			Disk: system.Disk,
+			ManagementType: system.ManagementType,
+			Organisation: system.Organisation.ID,
+			SystemImage: system.SystemImage.Id,
+			OperatingsystemVersion: system.OperatingSystemVersion.Id,
+			SystemProviderConfiguration: system.SystemProviderConfiguration.ID,
+			Zone: system.Zone.Id,
+			PublicNetworking: system.PublicNetworking,
+			Preferredparentsystem: system.Preferredparentsystem,
+			Remarks: system.Remarks,
+			InstallSecurityUpdates: system.InstallSecurityUpdates,
+			LimitRiops: system.LimitRiops,
+			LimitWiops: system.LimitWiops,
+		}
+
+		data := roundTripJson(systemPut).(map[string]interface{})
+		data = mergeMaps(data, settings)
+
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+
+		Level27Client.SystemUpdate(systemID, data)
+	},
+}
+
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
 var systemCheckCmd = &cobra.Command{
@@ -320,7 +381,7 @@ var systemCheckGetCmd = &cobra.Command{
 		outputFormatTableFuncs(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
 			[]interface{}{"Id", "CheckType", "Status",func(s types.SystemCheck) string {return utils.FormatUnixTime(s.DtLastStatusChanged)}, "StatusInformation"})
 
-		
+
 
 	},
 }
