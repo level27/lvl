@@ -277,6 +277,7 @@ func (c *Client) SystemCookbookAdd(systemID int, req types.CookbookAdd) {
 
 }
 
+// ------- get valid cookbooktypes and their data
 func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	var cookbookTypes struct {
 		Data types.CookbookTypeName `json:"cookbooktypes"`
@@ -305,7 +306,7 @@ func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
+	
 	return validTypes, jsonParsed
 }
 

@@ -601,7 +601,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
-		// get all current valid cookbooktypes and a gabs container with all data from all types
+		// get all current valid cookbooktypes and a gabs container with all data for each type
 		validCookbooktypes, allCookbooktypeData := Level27Client.SystemCookbookTypesGet()
 
 		// get the user input from the type flag
@@ -615,7 +615,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 				isTypeValid = true
 			}
 		}
-		// when choses cookbooktype is not valid -> error
+		// when chosen cookbooktype is not valid -> error
 		if !isTypeValid {
 			log.Fatalln("Given cookbooktype is not valid")
 		} else {
@@ -623,14 +623,34 @@ var systemCookbookCreateCmd = &cobra.Command{
 			// based on the given cookbooktype from user we load in the data such as its parameters
 			jsonOutput := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
 
-			// converting the filtered json back into a cookbooktype
+			// converting the filtered json back into a cookbooktype 
+			// this makes it easy to use and manipulate the data for a post request
 			var chosenType types.CookbookType
 			erro := json.Unmarshal([]byte(jsonOutput), &chosenType)
 			if erro != nil {
 				log.Fatal(erro.Error())
 			}
 
-			log.Print(chosenType.CookbookType.Parameters)
+			// loop over all parameters for chosen type. put name and default values in array
+			var possibleParameters []string
+			for _ , parameter := range chosenType.CookbookType.Parameters{
+				line := fmt.Sprintf("{%v: %v}", parameter.Name, parameter.DefaultValue)
+				possibleParameters = append(possibleParameters,line)
+			}
+
+			log.Println(possibleParameters)
+
+			var userResponse string
+			// ask user if he wants to use the default parameters
+			question := fmt.Sprintf("Do you want to use the default values as parameters for cookbook '%v'? Please type [y]es or [n]o: ", inputType)
+			fmt.Print(question)
+			//reading user response
+			_, err := fmt.Scan(&userResponse)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+	
 			// request := types.CookbookAdd{
 			// 	Cookbooktype: inputType,
 			// }
