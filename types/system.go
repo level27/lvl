@@ -49,21 +49,9 @@ type System struct {
 	Networks         []SystemNetwork `json:"networks"`
 	PublicNetworking bool            `json:"publicNetworking"`
 	StatsSummary     struct {
-		DiskSpace struct {
-			Unit  string      `json:"unit"`
-			Value interface{} `json:"value"`
-			Max   interface{} `json:"max"`
-		} `json:"diskspace"`
-		Memory struct {
-			Unit  string      `json:"unit"`
-			Value interface{} `json:"value"`
-			Max   interface{} `json:"max"`
-		} `json:"Memory"`
-		Cpu struct {
-			Unit  string      `json:"unit"`
-			Value interface{} `json:"value"`
-			Max   interface{} `json:"max"`
-		} `json:"cpu"`
+		DiskSpace StatSummary `json:"diskspace"`
+		Memory    StatSummary `json:"Memory"`
+		Cpu       StatSummary `json:"cpu"`
 	} `json:"statsSummary"`
 	DtExpires     int    `json:"dtExpires"`
 	BillingStatus string `json:"billingStatus"`
@@ -87,6 +75,12 @@ type System struct {
 	} `json:"bootVolume"`
 	Cookbooks             []SystemCookbook `json:"cookbooks"`
 	Preferredparentsystem string           `json:"preferredparentsystem"`
+}
+
+type StatSummary struct {
+	Unit  string      `json:"unit"`
+	Value interface{} `json:"value"`
+	Max   interface{} `json:"max"`
 }
 
 type DescribeSystem struct {
