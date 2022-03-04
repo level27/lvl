@@ -269,15 +269,22 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 }
 
 // ------------- ADD COOKBOOK
-func (c *Client) SystemCookbookAdd(systemID int, req types.CookbookAdd) {
+func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
+
+	// var to show result of API after succesfull adding cookbook
+	var cookbook struct{
+		Data types.Cookbook `json:"cookbook"`
+	}
 
 	endpoint := fmt.Sprintf("systems/%v/cookbooks", systemID)
-	err := c.invokeAPI("POST", endpoint, req, nil)
+	err := c.invokeAPI("POST", endpoint, req, &cookbook)
 	AssertApiError(err, "cookbooktype")
+
 
 }
 
-// ------- get valid cookbooktypes and their data
+// --------------------------- SPECIFIC COOKBOOKTYPES (GET) ------------------------------------
+// ------- GET ALL CURRENT COOKBOOKTYPES
 func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	var cookbookTypes struct {
 		Data types.CookbookTypeName `json:"cookbooktypes"`

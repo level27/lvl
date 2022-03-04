@@ -271,14 +271,13 @@ type CookbookType struct {
 		DisplayName string `json:"displayName"`
 		Description string `json:"description"`
 		Parameters  []struct {
-			Name         string `json:"name"`
-			Description  string `json:"description"`
-			Type         string `json:"type"`
+			Name         string      `json:"name"`
+			Description  string      `json:"description"`
+			Type         string      `json:"type"`
 			DefaultValue interface{} `json:"defaultValue"`
 		} `json:"parameters"`
 	} `json:"cookbooktype"`
 }
-
 
 type Cookbook struct {
 	Id                             int         `json:"id"`
@@ -295,7 +294,8 @@ type Cookbook struct {
 
 // Add cookbook to a system request
 type CookbookAdd struct {
-	Cookbooktype string `json:"cookbooktype"`
+	Cookbooktype string        `json:"cookbooktype"`
+	
 }
 
 type SystemProviderConfigurationRef struct {

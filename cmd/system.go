@@ -9,6 +9,7 @@ import (
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
+	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +23,7 @@ func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemCmd)
 
-	//-------------------------------------  Toplevel subcommands (get/post) --------------------------------------
+	//-------------------------------------  Toplevel SYSTEM COMMANDS (get/post) --------------------------------------
 	// --- GET
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
@@ -73,6 +74,7 @@ func init() {
 	systemActionsCmd.AddCommand(systemActionsActivateCmd)
 	systemActionsCmd.AddCommand(systemActionsAutoInstallCmd)
 
+	// #region SYSTEM/ CHECKS TOPLEVEL (GET/POST)
 	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
@@ -92,6 +94,7 @@ func init() {
 	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
 	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
 	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
+	// #endregion
 
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
 	// --- DESCRIBE CHECK
@@ -126,12 +129,14 @@ func init() {
 	SystemCookbookTypesGetCmd.Flags().StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
 	SystemCookbookTypesGetCmd.MarkFlagRequired("type")
 
-	// ---- CREATE cookbook
+	// ---- ADD cookbook (to system)
 	systemCookbookCmd.AddCommand(systemCookbookCreateCmd)
 
 	// flags needed to add new cookbook to a system
 	flags = systemCookbookCreateCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
+	flags.StringSliceP("parameters", "p", systemCookbookAddParams, "Custom parameters for adding a cookbook to a system")
+
 	systemCookbookCreateCmd.MarkFlagRequired("type")
 
 }
@@ -151,7 +156,6 @@ func resolveSystem(arg string) int {
 	}
 	return system.Id
 }
-
 func resolveSystemProviderConfiguration(region int, arg string) int {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
@@ -596,22 +600,22 @@ func getSystemCookbooks(id int) []types.Cookbook {
 	return Level27Client.SystemCookbookGetList(id)
 }
 
-func CheckforValidType (input string, validTypes []string) (string, bool){
+func CheckforValidType(input string, validTypes []string) (string, bool) {
 	var isTypeValid bool
-		// check if given cookbooktype is 1 of valid options
-		for _, cookbooktype := range validTypes {
-			if strings.ToLower(input) == cookbooktype {
-				input = cookbooktype
-				isTypeValid = true
-				return input, isTypeValid
-			}
+	// check if given cookbooktype is 1 of valid options
+	for _, cookbooktype := range validTypes {
+		if strings.ToLower(input) == cookbooktype {
+			input = cookbooktype
+			isTypeValid = true
+			return input, isTypeValid
 		}
-		return "",isTypeValid
+	}
+	return "", isTypeValid
 }
 
-// ----------- GET SPECIFIC COOKBOOKTYPE PARAMETERS
+// ----------- GET COOKBOOKTYPE PARAMETERS
 var SystemCookbookTypesGetCmd = &cobra.Command{
-	Use: "parameters",
+	Use:   "parameters",
 	Short: "Show all default parameters for a specific cookbooktype.",
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -626,8 +630,8 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 		// chosen cookbooktype not valid -> error
 		if !isTypeValid {
 			log.Fatalf("Given cookbooktype: '%v' is not valid.", inputType)
-			
-		}else{
+
+		} else {
 			// function checkForValidType checks input with function tolower. if match with type we need to set eventualy caps to lower.
 			inputType = result
 			// based on the given cookbooktype from user we load in the data such as its parameters
@@ -646,11 +650,11 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 
 		}
 
-
 	},
 }
 
 // ----------- ADD COOKBOOK TO SPECIFIC SYSTEM
+var systemCookbookAddParams []string
 var systemCreateCookbookType string
 var systemCookbookCreateCmd = &cobra.Command{
 	Use:   "add [systemID] [flags]",
@@ -674,24 +678,30 @@ var systemCookbookCreateCmd = &cobra.Command{
 			log.Fatalln("Given cookbooktype is not valid")
 		} else {
 			// input gets checked in lowercase. if type match -> input needs to stay lowercase
-			inputType =result
+			inputType = result
 			// based on the given cookbooktype from user we load in the data such as its parameters
-			jsonOutput := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
+			allDataForType := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
 
 			// converting the filtered json back into a cookbooktype
 			// this makes it easy to use and manipulate the data for a post request
 			var chosenType types.CookbookType
-			erro := json.Unmarshal([]byte(jsonOutput), &chosenType)
+			erro := json.Unmarshal([]byte(allDataForType), &chosenType)
 			if erro != nil {
 				log.Fatal(erro.Error())
 			}
 
-			
+			// creating gabs container to dynamicaly create json for post request
+			jsonObjCookbook := gabs.New()
 
-			// request := types.CookbookAdd{
-			// 	Cookbooktype: inputType,
-			// }
-			// Level27Client.SystemCookbookAdd(id, request)
+			jsonObjCookbook.Set(inputType, "cookbooktype")
+
+			// for each parameter possible, create a json line with its default values
+			for i, _ := range chosenType.CookbookType.Parameters {
+				jsonObjCookbook.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
+			}
+
+			log.Print(jsonObjCookbook.StringIndent(""," "))
+			// Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
 		}
 
 	},
