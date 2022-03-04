@@ -139,6 +139,12 @@ func (c *Client) SystemCreate(req types.SystemPost) {
 
 }
 
+func (c *Client) SystemUpdate(id int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("systems/%d", id)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "SystemUpdate")
+}
+
 // SYSTEM ACTION
 
 func (c *Client) SystemAction(id int, action string) types.System {

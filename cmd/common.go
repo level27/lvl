@@ -16,6 +16,9 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -44,6 +47,52 @@ func CheckForMultipleIDs(ids []string) []string {
 	}
 
 	return currIds
+}
+
+// Open a file passed as an argument.
+// This handles the convention of "-" opening stdin.
+func openArgFile(file string) io.ReadCloser {
+	if file == "-" {
+		return os.Stdin
+	} else {
+		f, err := os.Open(file)
+		cobra.CheckErr(err)
+		return f
+	}
+}
+
+// Load JSON settings from arg-specified file and merge it with override settings from other args.
+func loadMergeSettings(fileName string, override map[string]interface{}) map[string]interface{} {
+	if fileName == "" {
+		return override
+	}
+
+	file := openArgFile(fileName)
+
+	defer func(){ cobra.CheckErr(file.Close()) }()
+
+	jsonBytes, err := io.ReadAll(file)
+	cobra.CheckErr(err)
+
+	var jsonSettings map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &jsonSettings)
+	cobra.CheckErr(err)
+
+	return mergeMaps(jsonSettings, override)
+}
+
+func mergeMaps(base map[string]interface{}, override map[string]interface{}) map[string]interface{} {
+	var newMap = map[string]interface{}{}
+
+	for k, v := range base {
+		newMap[k] = v
+	}
+
+	for k, v := range override {
+		newMap[k] = v
+	}
+
+	return newMap
 }
 
 // Add a string setting flag to a command, that will be stored in a map.
