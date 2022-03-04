@@ -677,12 +677,12 @@ var systemCookbookCreateCmd = &cobra.Command{
 		if !isTypeValid {
 			log.Fatalln("Given cookbooktype is not valid")
 		} else {
-			// input gets checked in lowercase. if type match -> input needs to stay lowercase
+			// input gets checked in lowercase. if type and input match -> input needs to stay lowercase
 			inputType = result
 			// based on the given cookbooktype from user we load in the data such as its parameters
 			allDataForType := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
 
-			// converting the filtered json back into a cookbooktype
+			// converting the filtered json string back into a cookbooktype
 			// this makes it easy to use and manipulate the data for a post request
 			var chosenType types.CookbookType
 			erro := json.Unmarshal([]byte(allDataForType), &chosenType)
@@ -690,7 +690,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 				log.Fatal(erro.Error())
 			}
 
-			// creating gabs container to dynamicaly create json for post request
+			// creating gabs container to dynamicaly create json for post request with default cookbooktype parameters
 			jsonObjCookbook := gabs.New()
 
 			jsonObjCookbook.Set(inputType, "cookbooktype")
@@ -700,6 +700,11 @@ var systemCookbookCreateCmd = &cobra.Command{
 				jsonObjCookbook.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
 			}
 
+			// check if json path/key exists. if true -> replace value with custom value
+			if jsonObjCookbook.ExistsP("waf"){
+				jsonObjCookbook.SetP(true,"test")
+			}
+			
 			log.Print(jsonObjCookbook.StringIndent(""," "))
 			// Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
 		}
