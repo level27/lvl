@@ -294,7 +294,7 @@ func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 
 	}
 
-	// marshal all current data into a slice to parse it into json.
+	// marshal all current data into a byteslice to parse it into json.
 	result, err := json.Marshal(cookbookTypes)
 	if err != nil {
 		log.Fatal(err.Error())

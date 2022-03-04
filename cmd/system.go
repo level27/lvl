@@ -119,6 +119,13 @@ func init() {
 	// ---- GET cookbooks
 	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
 
+	// ---- GET COOKBOOKTYPES PARAMETERS
+	systemCookbookCmd.AddCommand(SystemCookbookTypesGetCmd)
+
+	//flags needed to get specific parameters info
+	SystemCookbookTypesGetCmd.Flags().StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
+	SystemCookbookTypesGetCmd.MarkFlagRequired("type")
+
 	// ---- CREATE cookbook
 	systemCookbookCmd.AddCommand(systemCookbookCreateCmd)
 
@@ -589,11 +596,65 @@ func getSystemCookbooks(id int) []types.Cookbook {
 	return Level27Client.SystemCookbookGetList(id)
 }
 
-// ----------- CREATE COOKBOOKS
+func CheckforValidType (input string, validTypes []string) (string, bool){
+	var isTypeValid bool
+		// check if given cookbooktype is 1 of valid options
+		for _, cookbooktype := range validTypes {
+			if strings.ToLower(input) == cookbooktype {
+				input = cookbooktype
+				isTypeValid = true
+				return input, isTypeValid
+			}
+		}
+		return "",isTypeValid
+}
+
+// ----------- GET SPECIFIC COOKBOOKTYPE PARAMETERS
+var SystemCookbookTypesGetCmd = &cobra.Command{
+	Use: "parameters",
+	Short: "Show all default parameters for a specific cookbooktype.",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// get the user input from the type flag
+		inputType := cmd.Flag("type").Value.String()
+
+		// Get request to get all cookbooktypes data
+		validCookbooktypes, allCookbooktypeData := Level27Client.SystemCookbookTypesGet()
+
+		result, isTypeValid := CheckforValidType(inputType, validCookbooktypes)
+
+		// chosen cookbooktype not valid -> error
+		if !isTypeValid {
+			log.Fatalf("Given cookbooktype: '%v' is not valid.", inputType)
+			
+		}else{
+			// function checkForValidType checks input with function tolower. if match with type we need to set eventualy caps to lower.
+			inputType = result
+			// based on the given cookbooktype from user we load in the data such as its parameters
+			jsonOutput := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
+
+			// converting the filtered json back into a cookbooktype
+			// this makes it easy to use and manipulate the data
+			var chosenType types.CookbookType
+			erro := json.Unmarshal([]byte(jsonOutput), &chosenType)
+			if erro != nil {
+				log.Fatal(erro.Error())
+			}
+
+			// show all default parameters data in a list
+			outputFormatTable(chosenType.CookbookType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
+
+		}
+
+
+	},
+}
+
+// ----------- ADD COOKBOOK TO SPECIFIC SYSTEM
 var systemCreateCookbookType string
 var systemCookbookCreateCmd = &cobra.Command{
 	Use:   "add [systemID] [flags]",
-	Short: "add a new cookbook to a system",
+	Short: "add a cookbook to a system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
@@ -607,23 +668,17 @@ var systemCookbookCreateCmd = &cobra.Command{
 		// get the user input from the type flag
 		inputType := cmd.Flag("type").Value.String()
 
-		var isTypeValid bool
-		// check if given cookbooktype is 1 of valid options
-		for _, cookbooktype := range validCookbooktypes {
-			if strings.ToLower(inputType) == cookbooktype {
-				inputType = cookbooktype
-				isTypeValid = true
-			}
-		}
+		result, isTypeValid := CheckforValidType(inputType, validCookbooktypes)
 		// when chosen cookbooktype is not valid -> error
 		if !isTypeValid {
 			log.Fatalln("Given cookbooktype is not valid")
 		} else {
-
+			// input gets checked in lowercase. if type match -> input needs to stay lowercase
+			inputType =result
 			// based on the given cookbooktype from user we load in the data such as its parameters
 			jsonOutput := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
 
-			// converting the filtered json back into a cookbooktype 
+			// converting the filtered json back into a cookbooktype
 			// this makes it easy to use and manipulate the data for a post request
 			var chosenType types.CookbookType
 			erro := json.Unmarshal([]byte(jsonOutput), &chosenType)
@@ -631,26 +686,8 @@ var systemCookbookCreateCmd = &cobra.Command{
 				log.Fatal(erro.Error())
 			}
 
-			// loop over all parameters for chosen type. put name and default values in array
-			var possibleParameters []string
-			for _ , parameter := range chosenType.CookbookType.Parameters{
-				line := fmt.Sprintf("{%v: %v}", parameter.Name, parameter.DefaultValue)
-				possibleParameters = append(possibleParameters,line)
-			}
+			
 
-			log.Println(possibleParameters)
-
-			var userResponse string
-			// ask user if he wants to use the default parameters
-			question := fmt.Sprintf("Do you want to use the default values as parameters for cookbook '%v'? Please type [y]es or [n]o: ", inputType)
-			fmt.Print(question)
-			//reading user response
-			_, err := fmt.Scan(&userResponse)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-	
 			// request := types.CookbookAdd{
 			// 	Cookbooktype: inputType,
 			// }
