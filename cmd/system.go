@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // MAIN COMMAND
@@ -87,6 +88,11 @@ func init() {
 	settingInt(systemUpdateCmd, systemUpdateSettings, "installSecurityUpdates", "Set security updates mode index")
 	settingString(systemUpdateCmd, systemUpdateSettings, "remarks", "")
 
+	// --- Delete
+
+	systemCmd.AddCommand(systemDeleteCmd)
+	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
+
 	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
@@ -123,6 +129,14 @@ func init() {
 	// ---- GET cookbooks
 	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
 
+	// SSH KEYS
+	systemCmd.AddCommand(systemSshKeysCmd)
+
+	systemSshKeysCmd.AddCommand(systemSshKeysGetCmd)
+	addCommonGetFlags(systemSshKeysGetCmd)
+
+	systemSshKeysCmd.AddCommand(systemSshKeysAddCmd)
+	systemSshKeysCmd.AddCommand(systemSshKeysRemoveCmd)
 }
 
 // Resolve an integer or name domain.
@@ -354,6 +368,22 @@ var systemUpdateCmd = &cobra.Command{
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
 
 		Level27Client.SystemUpdate(systemID, data)
+	},
+}
+
+var systemDeleteForce bool
+var systemDeleteCmd = &cobra.Command{
+	Use: "delete",
+	Short: "Delete a system",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		if systemDeleteForce {
+			Level27Client.SystemDeleteForce(systemID)
+		} else {
+			Level27Client.SystemDelete(systemID)
+		}
 	},
 }
 
@@ -601,4 +631,75 @@ func runAction(action string, args []string) {
 	id := resolveSystem(args[0])
 
 	Level27Client.SystemAction(id, action)
+}
+
+// SSH KEYS
+
+var systemSshKeysCmd = &cobra.Command{
+	Use: "sshkeys",
+}
+
+var systemSshKeysGetCmd = &cobra.Command{
+	Use: "get",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id := resolveSystem(args[0])
+
+		outputFormatTable(Level27Client.SystemGetSshKeys(id, optGetParameters), []string{"ID", "DESCRIPTION", "STATUS", "FINGERPRINT"}, []string{"ID", "Description", "ShsStatus", "Fingerprint"})
+	},
+}
+
+var systemSshKeysAddCmd = &cobra.Command{
+	Use: "add",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		keyName := args[1]
+		keyID, err := strconv.Atoi(keyName)
+		if err != nil {
+			user := viper.GetInt("user_id")
+			org := viper.GetInt("org_id")
+			system := Level27Client.LookupSystemNonAddedSshkey(systemID, org, user, keyName)
+			if system == nil {
+				existing := Level27Client.LookupSystemSshkey(systemID, keyName)
+				if existing != nil {
+					fmt.Println("SSH key already exists on system!")
+					return
+				} else {
+					cobra.CheckErr("Unable to find SSH key to add")
+					return
+				}
+			}
+			keyID = system.Id
+		}
+
+		Level27Client.SystemAddSshKey(systemID, keyID)
+	},
+}
+
+
+var systemSshKeysRemoveCmd = &cobra.Command{
+	Use: "remove",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		keyName := args[1]
+		keyID, err := strconv.Atoi(keyName)
+		if err != nil {
+			existing := Level27Client.LookupSystemSshkey(systemID, keyName)
+			if existing == nil {
+				cobra.CheckErr("Unable to find SSH key to remove!")
+				return
+			}
+
+			keyID = existing.ID
+		}
+
+		Level27Client.SystemRemoveSshKey(systemID, keyID)
+	},
 }

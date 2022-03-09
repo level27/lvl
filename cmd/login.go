@@ -51,6 +51,7 @@ var loginCmd = &cobra.Command{
 		// fmt.Println(login.Hash)
 		utils.SaveConfig("apikey", login.Hash)
 		utils.SaveConfig("user_id", login.User.ID)
+		utils.SaveConfig("org_id", login.User.Organisation.ID)
 	},
 }
 

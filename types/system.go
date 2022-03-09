@@ -85,7 +85,7 @@ type StatSummary struct {
 
 type DescribeSystem struct {
 	System
-	SshKeys                      []SshKey           `json:"sshKeys"`
+	SshKeys                      []SystemSshkey     `json:"sshKeys"`
 	InstallSecurityUpdatesString string             `json:"installSecurityUpdatesString"`
 	HasNetworks                  []SystemHasNetwork `json:"hasNetworks"`
 	Volumes                      []SystemVolume     `json:"volumes"`
@@ -122,6 +122,23 @@ type SshKey struct {
 	Status       string          `json:"status"`
 	Fingerprint  string          `json:"fingerprint"`
 	Organisation OrganisationRef `json:"organisation"`
+}
+
+type SystemSshkey struct {
+	ID           int             `json:"id"`
+	Description  string          `json:"description"`
+	Fingerprint  string          `json:"fingerprint"`
+	Organisation OrganisationRef `json:"organisation"`
+	User         struct {
+		ID             int    `json:"id"`
+		FirstName      string `json:"firstName"`
+		LastName       string `json:"lastName"`
+		Status         string `json:"status"`
+		StatusCategory string `json:"statusCategory"`
+	} `json:"user"`
+	ShsID             int    `json:"shsId"`
+	ShsStatusCategory string `json:"shsStatusCategory"`
+	ShsStatus         string `json:"shsStatus"`
 }
 
 type SystemNetwork struct {
