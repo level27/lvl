@@ -135,7 +135,7 @@ func init() {
 	// flags needed to add new cookbook to a system
 	flags = systemCookbookCreateCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
-	flags.StringSliceP("parameters", "p", systemCookbookAddParams, "Custom parameters for adding a cookbook to a system")
+	flags.StringSliceVarP( &systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. Example for type: url. USE SINGLE: [ -p waf=true ], USE MULTIPLE: [ -p ''waf=true, timeout=200'' ] OR [ -p waf=true -p timeout=200 ]")
 
 	systemCookbookCreateCmd.MarkFlagRequired("type")
 
@@ -614,6 +614,7 @@ func CheckforValidType(input string, validTypes []string) (string, bool) {
 }
 
 // ----------- GET COOKBOOKTYPE PARAMETERS
+// seperate command used to see wich parameters can be used for a specific cookbooktype. also shows the description and default values
 var SystemCookbookTypesGetCmd = &cobra.Command{
 	Use:   "parameters",
 	Short: "Show all default parameters for a specific cookbooktype.",
@@ -669,9 +670,10 @@ var systemCookbookCreateCmd = &cobra.Command{
 		// get all current valid cookbooktypes and a gabs container with all data for each type
 		validCookbooktypes, allCookbooktypeData := Level27Client.SystemCookbookTypesGet()
 
-		// get the user input from the type flag
+		// get the user input from the type flag (cookbooktype)
 		inputType := cmd.Flag("type").Value.String()
 
+		//check if chosen type is one of valid options 
 		result, isTypeValid := CheckforValidType(inputType, validCookbooktypes)
 		// when chosen cookbooktype is not valid -> error
 		if !isTypeValid {
@@ -700,6 +702,12 @@ var systemCookbookCreateCmd = &cobra.Command{
 				jsonObjCookbook.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
 			}
 
+			if cmd.Flag("parameters").Changed {
+				
+				log.Print(systemCookbookAddParams[1])
+				
+				
+			}
 			// check if json path/key exists. if true -> replace value with custom value
 			if jsonObjCookbook.ExistsP("waf"){
 				jsonObjCookbook.SetP(true,"test")
