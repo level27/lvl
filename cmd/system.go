@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -136,7 +137,7 @@ func init() {
 	// flags needed to add new cookbook to a system
 	flags = systemCookbookCreateCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
-	flags.StringSliceVarP(&systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. Example for type: url. USE SINGLE: [ -p waf=true ], USE MULTIPLE: [ -p ''waf=true, timeout=200'' ] OR [ -p waf=true -p timeout=200 ]")
+	flags.StringArrayVarP(&systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
 
 	systemCookbookCreateCmd.MarkFlagRequired("type")
 
@@ -670,7 +671,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		id, err := strconv.Atoi(args[0])
+		_, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
@@ -701,17 +702,18 @@ var systemCookbookCreateCmd = &cobra.Command{
 				log.Fatal(erro.Error())
 			}
 
-
-			// creating gabs container for post request with default cookbooktype parameters
-			jsonObjCookbook := gabs.New()
-
-			jsonObjCookbook.Set(inputType, "cookbooktype")
+			// creating JSON gabs container with all parameters and its default values. used to compare user input
+			jsonObjCookbookCompare := gabs.New()
+			jsonObjCookbookCompare.Set(inputType, "cookbooktype")
 
 			// for each parameter possible, create a json line with its default values
 			for i, _ := range chosenType.CookbookType.Parameters {
-				jsonObjCookbook.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
+				jsonObjCookbookCompare.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
 			}
 
+			// creaet base of json container, will be used for post request and eventually filled with custom parameters
+			jsonObjCookbookPost := gabs.New()
+			jsonObjCookbookPost.Set(inputType, "cookbooktype")
 
 			// when user wants to use custom parameters
 			if cmd.Flag("parameters").Changed {
@@ -723,9 +725,23 @@ var systemCookbookCreateCmd = &cobra.Command{
 				for _, setParameter := range systemCookbookAddParams {
 					// check if correct way is used to define parameters -> key=value
 					if strings.Contains(setParameter, "=") {
+
 						// split each parameter set by user into its key and value. put them in the dictionary
 						line := strings.Split(setParameter, "=")
-						customParameterDict[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
+						// some keys can use multiple values. check if values seperated by comma
+						if strings.Contains(line[1], ",") {
+							values := strings.Split(line[1], ",")
+							//removing spaces from splitted values
+							for i, _ := range values {
+								values[i] = strings.Trim(values[i], " ")
+							}
+							// add key value pair to dict
+							customParameterDict[strings.Trim(line[0], " ")] = values
+						} else {
+							// add key value pair to dict
+							customParameterDict[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
+						}
+
 					} else {
 						// when there is no '=' in the parameter -> error
 						message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
@@ -736,36 +752,46 @@ var systemCookbookCreateCmd = &cobra.Command{
 
 				// loop over the filtered parameters set by the user
 				for key, value := range customParameterDict {
-					// check if json path/key exists in our early created json object (parameters). if true -> replace value with custom value
-					if jsonObjCookbook.ExistsP(key) {
+					// check if json path/key exists in our early created json object (parameters).
+					if jsonObjCookbookCompare.ExistsP(key) {
 						//loop over all possible parameters for the chosen type
 						for _, parameter := range chosenType.CookbookType.Parameters {
 							if parameter.Name == key {
-								
+
 								// when parameter type is select -> value can only be one of the selectable options
 								if parameter.Type == "select" {
-									// check in json obj with all selectable options for the cookbooktype if parameter exists
-									if selectableOptions.ExistsP(parameter.Name){
-										if selectableOptions.Search(parameter.Name).ExistsP(fmt.Sprintf("%v", value)){
+									// check in json obj with all selectable options for the cookbooktype if parameteroptions exists
+									if selectableOptions.ExistsP(parameter.Name) {
+										// check wich type the value currently is. needed to know to filter possible values
+										valueType := reflect.TypeOf(value)
+
+										// when value = array or slice -> key contains multiple values
+										if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
+											jsonObjCookbookPost.SetP(value, key)
+										} else {
 											var values []interface{}
 											values = append(values, value)
-											jsonObjCookbook.SetP(values, key)
-										}else{
-											message := fmt.Sprintf("Invalid Value: '%v' for key: '%v'", value, key)
-											errorParameters = append(errorParameters, message )
+											jsonObjCookbookPost.SetP(values, key)
+
 										}
+									} else {
+										message := fmt.Sprintf("No parameter options found for: '%v'.", key)
+										errorParameters = append(errorParameters, message)
 									}
+								} else {
+
+									jsonObjCookbookPost.SetP(value, key)
 								}
 							}
 						}
-						
+
 					} else {
 						message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
 						errorParameters = append(errorParameters, message)
 					}
 				}
 
-				// when parameters are not recognized for chosen cookbooktype. show errors and stop command
+				// when parameters are not found for chosen cookbooktype. show errors and stop command
 				if errorParameters != nil {
 					for _, message := range errorParameters {
 						log.Print(message)
@@ -773,12 +799,12 @@ var systemCookbookCreateCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				log.Println("custom")
-				log.Print(jsonObjCookbook.StringIndent("", " "))
-				Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
-			}else {
+				log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				// Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+			} else {
 				log.Println("standaard")
-				log.Print(jsonObjCookbook.StringIndent("", " "))
-				Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
+				log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				// Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			}
 
 		}
