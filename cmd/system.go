@@ -87,6 +87,11 @@ func init() {
 	settingInt(systemUpdateCmd, systemUpdateSettings, "installSecurityUpdates", "Set security updates mode index")
 	settingString(systemUpdateCmd, systemUpdateSettings, "remarks", "")
 
+	// --- Delete
+
+	systemCmd.AddCommand(systemDeleteCmd)
+	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
+
 	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
@@ -354,6 +359,22 @@ var systemUpdateCmd = &cobra.Command{
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
 
 		Level27Client.SystemUpdate(systemID, data)
+	},
+}
+
+var systemDeleteForce bool
+var systemDeleteCmd = &cobra.Command{
+	Use: "delete",
+	Short: "Delete a system",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		if systemDeleteForce {
+			Level27Client.SystemDeleteForce(systemID)
+		} else {
+			Level27Client.SystemDelete(systemID)
+		}
 	},
 }
 
