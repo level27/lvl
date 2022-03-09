@@ -164,6 +164,21 @@ func (c *Client) SystemAction(id int, action string) types.System {
 	return response.System
 }
 
+// Delete
+func (c *Client) SystemDelete(id int) {
+	endpoint := fmt.Sprintf("systems/%v", id)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "SystemDelete")
+}
+
+func (c *Client) SystemDeleteForce(id int) {
+	endpoint := fmt.Sprintf("systems/%v/force", id)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "SystemDelete")
+}
+
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
 // ------------- GET CHECKS
 func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
