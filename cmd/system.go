@@ -137,6 +137,12 @@ func init() {
 
 	systemSshKeysCmd.AddCommand(systemSshKeysAddCmd)
 	systemSshKeysCmd.AddCommand(systemSshKeysRemoveCmd)
+
+	// NETWORKS
+
+	systemCmd.AddCommand(systemNetworksCmd)
+
+	systemNetworksCmd.AddCommand(systemNetworksGetCmd)
 }
 
 // Resolve an integer or name domain.
@@ -701,5 +707,29 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 		}
 
 		Level27Client.SystemRemoveSshKey(systemID, keyID)
+	},
+}
+
+// NETWORKS
+
+var systemNetworksCmd = &cobra.Command{
+	Use: "networks",
+}
+
+var systemNetworksGetCmd = &cobra.Command{
+	Use: "get",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		system := Level27Client.SystemGetSingle(systemID)
+
+		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "IPs"}, []interface{}{"ID", "NetworkID", func(net types.SystemNetwork) string {
+			if net.NetPublic { return "public" }
+			if net.NetCustomer { return "customer" }
+			if net.NetInternal { return "internal" }
+			return ""
+		}, "Name", func(net types.SystemNetwork) string {
+			return strconv.Itoa(len(net.Ips))
+		}})
 	},
 }

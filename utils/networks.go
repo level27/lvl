@@ -8,7 +8,7 @@ import (
 
 func (c *Client) GetNetworks(get types.CommonGetParams) []types.Network {
 	var networks struct {
-		Networks []types.Network `json:"network"`
+		Networks []types.Network `json:"networks"`
 	}
 
 	endpoint := fmt.Sprintf("networks?%s", formatCommonGetParams(get))
@@ -16,6 +16,29 @@ func (c *Client) GetNetworks(get types.CommonGetParams) []types.Network {
 
 	AssertApiError(err, "Networks")
 	return networks.Networks
+}
+
+func (c *Client) GetNetwork(id int) types.Network {
+	var network struct {
+		Network types.Network `json:"network"`
+	}
+
+	endpoint := fmt.Sprintf("network/%d", id)
+	err := c.invokeAPI("GET", endpoint, nil, &network)
+
+	AssertApiError(err, "Network")
+	return network.Network
+}
+
+func (c *Client) LookupNetwork(name string) *types.Network {
+	networks := c.GetNetworks(types.CommonGetParams{Filter: name})
+	for _, net := range networks {
+		if net.Name == name {
+			return &net
+		}
+	}
+
+	return nil
 }
 
 func Ipv4IntToString(ipv4 int) string {
