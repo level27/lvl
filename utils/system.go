@@ -307,7 +307,7 @@ func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 		log.Fatal(err.Error())
 	}
 
-	// parse the slice of bytes into json, this way we can dynamicaly user unknown incomming data
+	// parse the slice of bytes into json, this way we can dynamicaly use unknown incomming data
 	jsonParsed, err := gabs.ParseJSON([]byte(result))
 
 	if err != nil {

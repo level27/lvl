@@ -174,7 +174,8 @@ func resolveSystemProviderConfiguration(region int, arg string) int {
 	return 0
 }
 
-//------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
+//------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
+// #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
 //----------------------------------------- GET ---------------------------------------
 var systemGetCmd = &cobra.Command{
 	Use:   "get",
@@ -326,6 +327,8 @@ var systemCreateCmd = &cobra.Command{
 
 	},
 }
+
+// #endregion
 
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
@@ -508,6 +511,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 }
 
 //------------------------------------------------- SYSTEM ACTIONS ----------------------------------
+// #region SYSTEM ACTIONS
 
 var systemActionsCmd = &cobra.Command{
 	Use:   "actions",
@@ -567,6 +571,8 @@ var systemActionsAutoInstallCmd = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 	Run:  func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
 }
+
+// #endregion
 
 func runAction(action string, args []string) {
 	id := resolveSystem(args[0])
@@ -664,12 +670,12 @@ var systemCookbookCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		_, err := strconv.Atoi(args[0])
+		id, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.Fatalln("Not a valid system ID!")
 		}
 		// get all current valid cookbooktypes and a gabs container with all data for each type
-		validCookbooktypes, allCookbooktypeData := Level27Client.SystemCookbookTypesGet()
+		validCookbooktypes, allCookbooktypesData := Level27Client.SystemCookbookTypesGet()
 
 		// get the user input from the type flag (cookbooktype)
 		inputType := cmd.Flag("type").Value.String()
@@ -683,8 +689,10 @@ var systemCookbookCreateCmd = &cobra.Command{
 			// input gets checked in lowercase. if type and input match -> input needs to stay lowercase
 			inputType = result
 			// based on the given cookbooktype from user we load in the data such as its parameters
-			allDataForType := allCookbooktypeData.Search("cookbooktypes").Search(inputType).String()
+			allDataForType := allCookbooktypesData.Search("cookbooktypes").Search(inputType).String()
 
+			//creating a gabs obj with only the parameteroptions if available. this makes it easy later to manipulate this data
+			selectableOptions := allCookbooktypesData.Search("cookbooktypes").Search(inputType).Search("cookbooktype").Search("parameterOptions")
 			// converting the filtered json string back into a cookbooktype
 			// this makes it easy to use and manipulate the data for a post request
 			var chosenType types.CookbookType
@@ -693,7 +701,8 @@ var systemCookbookCreateCmd = &cobra.Command{
 				log.Fatal(erro.Error())
 			}
 
-			// creating gabs container to dynamicaly create json for post request with default cookbooktype parameters
+
+			// creating gabs container for post request with default cookbooktype parameters
 			jsonObjCookbook := gabs.New()
 
 			jsonObjCookbook.Set(inputType, "cookbooktype")
@@ -703,6 +712,8 @@ var systemCookbookCreateCmd = &cobra.Command{
 				jsonObjCookbook.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
 			}
 
+
+			// when user wants to use custom parameters
 			if cmd.Flag("parameters").Changed {
 				// dictionary to keep track of the set parameters and their values
 				customParameterDict := make(map[string]interface{})
@@ -723,11 +734,32 @@ var systemCookbookCreateCmd = &cobra.Command{
 
 				}
 
+				// loop over the filtered parameters set by the user
 				for key, value := range customParameterDict {
-					// check if json path/key exists. if true -> replace value with custom value
+					// check if json path/key exists in our early created json object (parameters). if true -> replace value with custom value
 					if jsonObjCookbook.ExistsP(key) {
-						jsonObjCookbook.SetP(value, key)
-					}else{
+						//loop over all possible parameters for the chosen type
+						for _, parameter := range chosenType.CookbookType.Parameters {
+							if parameter.Name == key {
+								
+								// when parameter type is select -> value can only be one of the selectable options
+								if parameter.Type == "select" {
+									// check in json obj with all selectable options for the cookbooktype if parameter exists
+									if selectableOptions.ExistsP(parameter.Name){
+										if selectableOptions.Search(parameter.Name).ExistsP(fmt.Sprintf("%v", value)){
+											var values []interface{}
+											values = append(values, value)
+											jsonObjCookbook.SetP(values, key)
+										}else{
+											message := fmt.Sprintf("Invalid Value: '%v' for key: '%v'", value, key)
+											errorParameters = append(errorParameters, message )
+										}
+									}
+								}
+							}
+						}
+						
+					} else {
 						message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
 						errorParameters = append(errorParameters, message)
 					}
@@ -740,12 +772,15 @@ var systemCookbookCreateCmd = &cobra.Command{
 					}
 					os.Exit(1)
 				}
-
-				log.Print(jsonObjCookbook.StringIndent(""," "))	
+				log.Println("custom")
+				log.Print(jsonObjCookbook.StringIndent("", " "))
+				Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
+			}else {
+				log.Println("standaard")
+				log.Print(jsonObjCookbook.StringIndent("", " "))
+				Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
 			}
 
-			
-			// Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
 		}
 
 	},

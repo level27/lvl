@@ -263,6 +263,7 @@ type SystemCheckRequestHttp struct {
 }
 
 // ----------------------------------- COOKBOOKS ----------------------------------
+
 // Cookbooktype (used to see all current valid cookbooktypes)
 type CookbookTypeName map[string]CookbookType
 type CookbookType struct {
@@ -276,6 +277,7 @@ type CookbookType struct {
 			Type         string      `json:"type"`
 			DefaultValue interface{} `json:"defaultValue"`
 		} `json:"parameters"`
+		ParameterOptions interface{} `json:"parameterOptions"`
 	} `json:"cookbooktype"`
 }
 
@@ -294,8 +296,7 @@ type Cookbook struct {
 
 // Add cookbook to a system request
 type CookbookAdd struct {
-	Cookbooktype string        `json:"cookbooktype"`
-	
+	Cookbooktype string `json:"cookbooktype"`
 }
 
 type SystemProviderConfigurationRef struct {
