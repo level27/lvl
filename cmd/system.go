@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 
@@ -135,7 +136,7 @@ func init() {
 	// flags needed to add new cookbook to a system
 	flags = systemCookbookCreateCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
-	flags.StringSliceVarP( &systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. Example for type: url. USE SINGLE: [ -p waf=true ], USE MULTIPLE: [ -p ''waf=true, timeout=200'' ] OR [ -p waf=true -p timeout=200 ]")
+	flags.StringSliceVarP(&systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. Example for type: url. USE SINGLE: [ -p waf=true ], USE MULTIPLE: [ -p ''waf=true, timeout=200'' ] OR [ -p waf=true -p timeout=200 ]")
 
 	systemCookbookCreateCmd.MarkFlagRequired("type")
 
@@ -673,7 +674,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 		// get the user input from the type flag (cookbooktype)
 		inputType := cmd.Flag("type").Value.String()
 
-		//check if chosen type is one of valid options 
+		//check if chosen type is one of valid options
 		result, isTypeValid := CheckforValidType(inputType, validCookbooktypes)
 		// when chosen cookbooktype is not valid -> error
 		if !isTypeValid {
@@ -703,17 +704,47 @@ var systemCookbookCreateCmd = &cobra.Command{
 			}
 
 			if cmd.Flag("parameters").Changed {
-				
-				log.Print(systemCookbookAddParams[1])
-				
-				
+				// dictionary to keep track of the set parameters and their values
+				customParameterDict := make(map[string]interface{})
+				var errorParameters []string
+
+				// loop over raw data set by user with -p flag
+				for _, setParameter := range systemCookbookAddParams {
+					// check if correct way is used to define parameters -> key=value
+					if strings.Contains(setParameter, "=") {
+						// split each parameter set by user into its key and value. put them in the dictionary
+						line := strings.Split(setParameter, "=")
+						customParameterDict[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
+					} else {
+						// when there is no '=' in the parameter -> error
+						message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
+						errorParameters = append(errorParameters, message)
+					}
+
+				}
+
+				for key, value := range customParameterDict {
+					// check if json path/key exists. if true -> replace value with custom value
+					if jsonObjCookbook.ExistsP(key) {
+						jsonObjCookbook.SetP(value, key)
+					}else{
+						message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
+						errorParameters = append(errorParameters, message)
+					}
+				}
+
+				// when parameters are not recognized for chosen cookbooktype. show errors and stop command
+				if errorParameters != nil {
+					for _, message := range errorParameters {
+						log.Print(message)
+					}
+					os.Exit(1)
+				}
+
+				log.Print(jsonObjCookbook.StringIndent(""," "))	
 			}
-			// check if json path/key exists. if true -> replace value with custom value
-			if jsonObjCookbook.ExistsP("waf"){
-				jsonObjCookbook.SetP(true,"test")
-			}
+
 			
-			log.Print(jsonObjCookbook.StringIndent(""," "))
 			// Level27Client.SystemCookbookAdd(id, jsonObjCookbook)
 		}
 
