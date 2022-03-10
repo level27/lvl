@@ -672,8 +672,6 @@ var systemCookbookCreateCmd = &cobra.Command{
 		currentSystem := Level27Client.SystemGetSingle(id)
 		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
 
-		log.Print(currentSystem.SystemImage.Name)
-
 		// get all current valid cookbooktypes and a gabs container with all data for each type
 		validCookbooktypes, allCookbooktypesData := Level27Client.SystemCookbookTypesGet()
 
@@ -707,7 +705,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 			// when user wants to use custom parameters
 			if cmd.Flag("parameters").Changed {
 
-				// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (key=value).
+				// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
 				customParameterDict, err := SplitCustomParameters(systemCookbookAddParams)
 
 				// loop over the filtered parameters set by the user
@@ -729,34 +727,43 @@ var systemCookbookCreateCmd = &cobra.Command{
 									// check wich type the value currently is. value needs to be of type array for selectable parameter + see if value is 1 or multiple values for 1 key
 									valueType := reflect.TypeOf(value)
 
-									// when value = array or slice -> key contains multiple values
+									// when value = array or slice -> key contains multiple values (PHP versions -> 7.2 + 7.3)
 									if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
+										rawValues := reflect.ValueOf(value)
+
+										// need to convert interface to a go slice
+										values := make([]interface{}, rawValues.Len())
+										for i := 0; i < rawValues.Len(); i++ {
+											values[i] = rawValues.Index(i).Interface()
+										}
+
+										// loop over each value
+										for i := range values {
+
+											// check if value can be installed on the os and if the value needs to be exclusive
+											_, isExclusive := isValueValidForParameter(*selectableOptions, values[i], currentSystemOS)
+
+											// when value is exclusive -> cannot be installed with other values of same sort
+											if isExclusive {
+												message := fmt.Sprintf("Given Value: '%v' NOT possible for multiselect..", values[i])
+												err := errors.New(message)
+												log.Fatal(err)
+											}
+
+										}
 										jsonObjCookbookPost.SetP(value, key)
 
 									} else {
-										// in this case we have a single value asigned to a key
+										// --- SINGLE VALUE in this case we have a single value asigned to a key
 										valueAsString := fmt.Sprintf("%v", value)
-										// given value is one of the possible options for the given parameter key
+										// if given value is one of the possible options for the given parameter key
 										if selectableOptions.Exists(valueAsString) {
-											var option types.CookbookParameterOption
-											// unmarshal into struct, to easy and clearly manipulate options data
-											err := json.Unmarshal([]byte(selectableOptions.Search(valueAsString).String()), &option)
-											if err != nil {
-												log.Fatal(err)
-											}
-
-											var isAvailableforSystemOS bool = false
-											for _, optionalOS := range option.OperatingSystemVersions {
-												if optionalOS.Name == currentSystemOS {
-													log.Printf("optOS: %v | currentOS %v", optionalOS.Name, currentSystemOS)
-													isAvailableforSystemOS = true
-												}
-											}
-											if !isAvailableforSystemOS {
-												message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentSystemOS)
-												err = errors.New(message)
-												
-												log.Fatal(err)
+											isAvailable, _ := isValueValidForParameter(*selectableOptions, value, currentSystemOS)
+											if isAvailable {
+												//key has one value but needs to be sent in array type
+												var values []interface{}
+												values = append(values, value)
+												jsonObjCookbookPost.SetP(values, key)
 											}
 
 										} else {
@@ -764,11 +771,6 @@ var systemCookbookCreateCmd = &cobra.Command{
 											message := fmt.Sprintf("Given Value: '%v' NOT an option for given key: '%v'.", value, key)
 											err = errors.New(message)
 										}
-
-										// key has one value but needs to be sent in array type
-										var values []interface{}
-										values = append(values, value)
-										jsonObjCookbookPost.SetP(values, key)
 
 									}
 								} else {
@@ -793,16 +795,48 @@ var systemCookbookCreateCmd = &cobra.Command{
 				if err != nil {
 					log.Fatalln(err)
 				}
-				log.Println("custom")
-				log.Print(jsonObjCookbookPost.StringIndent("", " "))
-				// Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+				// log.Println("custom")
+				// log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			} else {
-				log.Println("standaard")
-				log.Print(jsonObjCookbookPost.StringIndent("", " "))
-				// Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+				// log.Println("standaard")
+				// log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			}
 
 		}
 
 	},
+}
+
+func isValueValidForParameter(container gabs.Container, value interface{}, currentOS string) (bool, bool) {
+
+	// convert value to string
+	valueAsString := fmt.Sprintf("%v", value)
+	var option types.CookbookParameterOption
+	var isAvailableforSystemOS bool = false
+
+	// unmarshal into struct, to easy and clearly manipulate options data
+	err := json.Unmarshal([]byte(container.Search(valueAsString).String()), &option)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// loop over all possible OS systems for the chosen value
+	// and check if it matches the current system OS
+	for _, optionalOS := range option.OperatingSystemVersions {
+		if optionalOS.Name == currentOS || currentOS == "" {
+			log.Printf("optOS: %v | currentOS %v", optionalOS.Name, currentOS)
+			isAvailableforSystemOS = true
+
+		}
+	}
+	if !isAvailableforSystemOS {
+		message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentOS)
+		err = errors.New(message)
+
+		log.Fatal(err)
+	}
+
+	return isAvailableforSystemOS, option.Exclusive
 }
