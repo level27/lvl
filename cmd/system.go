@@ -116,15 +116,17 @@ func init() {
 
 	// -- flags needed to create a check
 	flags = systemCheckCreateCmd.Flags()
-	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
+	flags.StringVarP(&systemCheckCreateType, "type", "t", "", "Check type (non-editable)")
 	systemCheckCreateCmd.MarkFlagRequired("type")
 
 	// -- optional flags, only for creating a http check
-	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
-	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
-	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
-	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
-	// #endregion
+	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+
+	// ---- GET PARAMETERS (for specific checktype)
+	systemCheckCmd.AddCommand(systemChecktypeParametersGetCmd)
+
+	// flags needed to get checktype parameters
+	systemChecktypeParametersGetCmd.Flags().StringVarP(&systemCheckCreateType, "type", "t", "", "Check type to see all its available parameters")
 
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
 	// #region SYSTEMS/CHECKS ACTIONS
@@ -139,12 +141,6 @@ func init() {
 	// --- UPDATE CHECK (ONLY FOR HTTP REQUEST)
 	systemCheckCmd.AddCommand(systemCheckUpdateCmd)
 
-	// -- flags, only for updating a http check
-	flags = systemCheckUpdateCmd.Flags()
-	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
-	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
-	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
-	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
@@ -163,7 +159,7 @@ func init() {
 	// flags needed to add new cookbook to a system
 	flags = systemCookbookAddCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
-	flags.StringArrayVarP(&systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
 
 	systemCookbookAddCmd.MarkFlagRequired("type")
 	// #endregion
@@ -479,70 +475,33 @@ func getSystemChecks(id int) []types.SystemCheck {
 }
 
 // ---------------- CREATE CHECK
-var systemCheckCreate, systemCreateCheckUrl, systemCreateCheckContent, systemCreateCheckHost string
-var systemCreateCheckPort int
-
+var systemCheckCreateType string
 var systemCheckCreateCmd = &cobra.Command{
 	Use:   "create [system ID] [parameters]",
 	Short: "create a new check for a specific system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid system ID
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		// check for valid system ID
+		//id:= checkSingleIntID(args, "check")
 
-		// get the value of the flag type set by user
+		// // get the value of the flag type set by user
 		checkTypeInput := cmd.Flag("type").Value.String()
 
-		// bool value to see if user input is valid, and bool to check if chosen type is http
-		var isChecktypeValid, isCheckTypeHttp bool
-		if cmd.Flag("type").Changed {
+		Level27Client.SystemCheckTypeGet(checkTypeInput)
 
-			// GET REQUEST to see what all curent valid checktypes are (function gives back an array of valid types)
-			systemCheckCreateArray := Level27Client.SystemCheckTypeGet()
+	},
+}
 
-			//when user input is one of the valid options -> validation bool is true
-			for _, validOption := range systemCheckCreateArray {
-				if strings.ToLower(checkTypeInput) == validOption {
+// ------------- GET CHECK PARAMETERS (for specific checktype)
+var systemChecktypeParametersGetCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Show all default parameters for a specific checktype.",
+	Run: func(cmd *cobra.Command, args []string) {
+		chosenType := cmd.Flag("type").Value.String()
 
-					checkTypeInput = validOption
+		parameters := Level27Client.SystemCheckTypeGet(chosenType)
 
-					// check if chosen type is http
-					if checkTypeInput == "http" {
-						isCheckTypeHttp = true
-					}
-					isChecktypeValid = true
-
-				}
-			}
-			// if user input not in valid options array -> error
-			if !isChecktypeValid {
-				log.Fatalln("Given checktype is not valid")
-			} else {
-				//when user chose http type, aditional flags can be set
-				if isCheckTypeHttp {
-					request := types.SystemCheckRequestHttp{
-						Checktype: checkTypeInput,
-						Port:      systemCreateCheckPort,
-						Url:       systemCreateCheckUrl,
-						Hostname:  systemCreateCheckHost,
-						Content:   systemCreateCheckContent,
-					}
-					Level27Client.SystemCheckCreate(id, request)
-					//when chosen type NOT http -> only checktype will be needed for request
-				} else {
-					request := types.SystemCheckRequest{
-						Checktype: checkTypeInput,
-					}
-					Level27Client.SystemCheckCreate(id, request)
-				}
-
-			}
-
-		}
-
+		log.Print(parameters)
 	},
 }
 
@@ -775,7 +734,7 @@ func CheckforValidType(input string, validTypes []string) (string, bool) {
 }
 
 // ----------- ADD COOKBOOK TO SPECIFIC SYSTEM
-var systemCookbookAddParams []string
+var systemDynamicParams []string
 var systemCreateCookbookType string
 var systemCookbookAddCmd = &cobra.Command{
 	Use:   "add [systemID] [flags]",
@@ -823,7 +782,7 @@ var systemCookbookAddCmd = &cobra.Command{
 			if cmd.Flag("parameters").Changed {
 
 				// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
-				customParameterDict, err := SplitCustomParameters(systemCookbookAddParams)
+				customParameterDict, err := SplitCustomParameters(systemDynamicParams)
 
 				// loop over the filtered parameters set by the user
 				for key, value := range customParameterDict {

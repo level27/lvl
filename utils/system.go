@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -163,29 +164,6 @@ func (c *Client) SecurityUpdateDates() []string {
 	return updates.SecurityUpdateDates
 }
 
-//----------------- POST
-//Get request to see all curent checktypes (valid checktype needed to create new check)
-func (c *Client) SystemCheckTypeGet() []string {
-	var checks struct {
-		Data types.SystemCheckTypeName `json:"checktypes"`
-	}
-
-	endpoint := "checktypes"
-	err := c.invokeAPI("GET", endpoint, nil, &checks)
-	AssertApiError(err, "checktypes")
-
-	//creating an array from the maps keys. the keys of the map are the possible checktypes
-	validTypes := make([]string, 0, len(checks.Data))
-	values := make([]types.SystemCheckType, 0, len(checks.Data))
-
-	for K, V := range checks.Data {
-		validTypes = append(validTypes, K)
-		values = append(values, V)
-	}
-
-	return validTypes
-
-}
 
 // CREATE SYSTEM [lvl system create <parmeters>]
 func (c *Client) SystemCreate(req types.SystemPost) {
@@ -241,7 +219,7 @@ func (c *Client) SystemDeleteForce(id int) {
 	AssertApiError(err, "SystemDelete")
 }
 
-// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
+// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST / PARAMETERS) ------------------------------------
 // ------------- GET CHECKS
 func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
 
@@ -270,6 +248,37 @@ func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 	AssertApiError(err, "System checks")
 	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
+
+// ------------- GET CHECK PARAMETERS (for specific checktype)
+func (c *Client) SystemCheckTypeGet(checktype string) (types.SystemCheckType) {
+	var checktypes struct {
+		Data types.SystemCheckTypeName `json:"checktypes"`
+	}
+	endpoint := "checktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &checktypes)
+	AssertApiError(err, "checktypes")
+
+
+	// check if the given type by user is one of the possible types we got back from the API
+	var isTypeValid = false
+	for validType := range checktypes.Data {
+		if checktype == validType {
+			isTypeValid = true
+			log.Print()
+		}
+	}
+
+	// when given type is not valid -> error
+	if !isTypeValid {
+		message := fmt.Sprintf("given type: '%v' is no valid checktype.", checktype)
+		err := errors.New(message)
+		log.Fatal(err)
+	}
+
+	// return the chosen valid type and its specific data
+	return checktypes.Data[checktype]
+}
+
 
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
 // ------------- DESCRIBE A SPECIFIC CHECK
