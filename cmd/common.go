@@ -16,6 +16,9 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
+	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -34,6 +37,15 @@ func addCommonGetFlags(cmd *cobra.Command) {
 	pf.StringVarP(&optGetParameters.Filter, "filter", "f", optGetParameters.Filter, "How to filter API results?")
 }
 
+//check for valid ID as type INT.
+func checkSingleIntID(ids []string, entity string) int {
+	id, err := strconv.Atoi(ids[0])
+	if err != nil {
+		log.Fatalf("Not a valid %v ID!", entity)
+	}
+	return id
+}
+
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
 func CheckForMultipleIDs(ids []string) []string {
 	var currIds []string
@@ -44,6 +56,42 @@ func CheckForMultipleIDs(ids []string) []string {
 	}
 
 	return currIds
+}
+
+// function used for commands with dynamic parameters. (different parameters defined by 1 flag)
+func SplitCustomParameters(customP []string) (map[string]interface{}, error) {
+	checkedParameters := make(map[string]interface{})
+	var err error
+	// loop over raw data set by user with -p flag
+	for _, setParameter := range customP {
+		// check if correct way is used to define parameters -> key=value
+		if strings.Contains(setParameter, "=") {
+
+			// split each parameter set by user into its key and value. put them in the dictionary
+			line := strings.Split(setParameter, "=")
+			// some keys can use multiple values. check if values seperated by comma
+			if strings.Contains(line[1], ",") {
+				values := strings.Split(line[1], ",")
+				//removing spaces from splitted values
+				for i, _ := range values {
+					values[i] = strings.Trim(values[i], " ")
+				}
+				// add key value pair to dict
+				checkedParameters[strings.Trim(line[0], " ")] = values
+			} else {
+				// add key value pair to dict
+				checkedParameters[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
+			}
+
+		} else {
+			// when there is no '=' in the parameter -> error
+			message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
+			err = errors.New(message)
+
+		}
+
+	}
+	return checkedParameters, err
 }
 
 // Add a string setting flag to a command, that will be stored in a map.

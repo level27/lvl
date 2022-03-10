@@ -263,6 +263,26 @@ type SystemCheckRequestHttp struct {
 }
 
 // ----------------------------------- COOKBOOKS ----------------------------------
+// parameteroptions
+type CookbookParameterName map[string]CookbookParameter
+
+type CookbookParameter struct {
+	CookbookParameterOption
+}
+
+type CookbookParameterOption struct {
+	Name                    string      `json:"name"`
+	Exclusive               bool        `json:"exclusive"`
+	Value                   interface{} `json:"value"`
+	OperatingSystemVersions []struct {
+		Name    string `json:"name"`
+		Default bool   `json:"default"`
+	} `json:"operatingsystem_versions"`
+}
+type CookbookParameterOptions struct {
+	ParameterName struct {
+	}
+}
 
 // Cookbooktype (used to see all current valid cookbooktypes)
 type CookbookTypeName map[string]CookbookType
@@ -294,10 +314,10 @@ type Cookbook struct {
 	} `json:"system"`
 }
 
-// Add cookbook to a system request
-type CookbookAdd struct {
-	Cookbooktype string `json:"cookbooktype"`
-}
+// // Add cookbook to a system request
+// type CookbookAdd struct {
+// 	Cookbooktype string `json:"cookbooktype"`
+// }
 
 type SystemProviderConfigurationRef struct {
 	ID          int    `json:"id"`

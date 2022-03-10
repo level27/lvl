@@ -296,8 +296,8 @@ func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	//creating an array from the maps keys. the keys of the map are the possible cookbooktypes
 	validTypes := make([]string, 0, len(cookbookTypes.Data))
 
-	for K, _ := range cookbookTypes.Data {
-		validTypes = append(validTypes, K)
+	for i := range cookbookTypes.Data {
+		validTypes = append(validTypes, i)
 
 	}
 
@@ -313,7 +313,6 @@ func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	
 	return validTypes, jsonParsed
 }
 

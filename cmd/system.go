@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -465,10 +465,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
-		systemID, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		systemID := checkSingleIntID(args, "system")
 
 		//check for valid system checkID
 		checkID, err := strconv.Atoi(args[1])
@@ -594,10 +591,8 @@ var systemCookbookGetCmd = &cobra.Command{
 	Short: "Gets a list of all cookbooks from a system.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		// check for valid system ID
+		id := checkSingleIntID(args, "system")
 
 		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
 	},
@@ -671,10 +666,14 @@ var systemCookbookCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		_, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		id := checkSingleIntID(args, "system")
+
+		// get information about the chosen system [systemID]
+		currentSystem := Level27Client.SystemGetSingle(id)
+		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
+
+		log.Print(currentSystem.SystemImage.Name)
+
 		// get all current valid cookbooktypes and a gabs container with all data for each type
 		validCookbooktypes, allCookbooktypesData := Level27Client.SystemCookbookTypesGet()
 
@@ -682,18 +681,17 @@ var systemCookbookCreateCmd = &cobra.Command{
 		inputType := cmd.Flag("type").Value.String()
 
 		//check if chosen type is one of valid options
-		result, isTypeValid := CheckforValidType(inputType, validCookbooktypes)
+		typeResult, isTypeValid := CheckforValidType(inputType, validCookbooktypes)
 		// when chosen cookbooktype is not valid -> error
 		if !isTypeValid {
 			log.Fatalln("Given cookbooktype is not valid")
 		} else {
-			// input gets checked in lowercase. if type and input match -> input needs to stay lowercase
-			inputType = result
-			// based on the given cookbooktype from user we load in the data such as its parameters
-			allDataForType := allCookbooktypesData.Search("cookbooktypes").Search(inputType).String()
 
-			//creating a gabs obj with only the parameteroptions if available. this makes it easy later to manipulate this data
-			selectableOptions := allCookbooktypesData.Search("cookbooktypes").Search(inputType).Search("cookbooktype").Search("parameterOptions")
+			// based on the given cookbooktype from user we load in the data such as its parameters in string form from the GabsJSON container
+			allDataForType := allCookbooktypesData.Search("cookbooktypes").Search(typeResult).String()
+			//creating a gabs obj with only parameteroptions if available. this makes it easy later to manipulate this data (only used if a value type is 'select')
+			selectableParameters := allCookbooktypesData.Search("cookbooktypes").Search(typeResult).Search("cookbooktype").Search("parameterOptions")
+
 			// converting the filtered json string back into a cookbooktype
 			// this makes it easy to use and manipulate the data for a post request
 			var chosenType types.CookbookType
@@ -702,101 +700,98 @@ var systemCookbookCreateCmd = &cobra.Command{
 				log.Fatal(erro.Error())
 			}
 
-			// creating JSON gabs container with all parameters and its default values. used to compare user input
-			jsonObjCookbookCompare := gabs.New()
-			jsonObjCookbookCompare.Set(inputType, "cookbooktype")
-
-			// for each parameter possible, create a json line with its default values
-			for i, _ := range chosenType.CookbookType.Parameters {
-				jsonObjCookbookCompare.Set(chosenType.CookbookType.Parameters[i].DefaultValue, chosenType.CookbookType.Parameters[i].Name)
-			}
-
-			// creaet base of json container, will be used for post request and eventually filled with custom parameters
+			// create base of json container, will be used for post request and eventually filled with custom parameters
 			jsonObjCookbookPost := gabs.New()
-			jsonObjCookbookPost.Set(inputType, "cookbooktype")
+			jsonObjCookbookPost.Set(typeResult, "cookbooktype")
 
 			// when user wants to use custom parameters
 			if cmd.Flag("parameters").Changed {
-				// dictionary to keep track of the set parameters and their values
-				customParameterDict := make(map[string]interface{})
-				var errorParameters []string
 
-				// loop over raw data set by user with -p flag
-				for _, setParameter := range systemCookbookAddParams {
-					// check if correct way is used to define parameters -> key=value
-					if strings.Contains(setParameter, "=") {
-
-						// split each parameter set by user into its key and value. put them in the dictionary
-						line := strings.Split(setParameter, "=")
-						// some keys can use multiple values. check if values seperated by comma
-						if strings.Contains(line[1], ",") {
-							values := strings.Split(line[1], ",")
-							//removing spaces from splitted values
-							for i, _ := range values {
-								values[i] = strings.Trim(values[i], " ")
-							}
-							// add key value pair to dict
-							customParameterDict[strings.Trim(line[0], " ")] = values
-						} else {
-							// add key value pair to dict
-							customParameterDict[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
-						}
-
-					} else {
-						// when there is no '=' in the parameter -> error
-						message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
-						errorParameters = append(errorParameters, message)
-					}
-
-				}
+				// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (key=value).
+				customParameterDict, err := SplitCustomParameters(systemCookbookAddParams)
 
 				// loop over the filtered parameters set by the user
 				for key, value := range customParameterDict {
-					// check if json path/key exists in our early created json object (parameters).
-					if jsonObjCookbookCompare.ExistsP(key) {
-						//loop over all possible parameters for the chosen type
-						for _, parameter := range chosenType.CookbookType.Parameters {
-							if parameter.Name == key {
 
-								// when parameter type is select -> value can only be one of the selectable options
-								if parameter.Type == "select" {
-									// check in json obj with all selectable options for the cookbooktype if parameteroptions exists
-									if selectableOptions.ExistsP(parameter.Name) {
-										// check wich type the value currently is. needed to know to filter possible values
-										valueType := reflect.TypeOf(value)
+					var isValidParameter bool = false
 
-										// when value = array or slice -> key contains multiple values
-										if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
-											jsonObjCookbookPost.SetP(value, key)
-										} else {
-											var values []interface{}
-											values = append(values, value)
-											jsonObjCookbookPost.SetP(values, key)
+					//loop over all possible parameters for the chosen type
+					for _, parameter := range chosenType.CookbookType.Parameters {
+						if parameter.Name == key {
+							isValidParameter = true
+							// when parameter type is select -> value can only be one of the selectable options + value has specific rules
+							if parameter.Type == "select" {
+								// var isValidValue bool = false
+								// check in json obj with all selectable options for the cookbooktype if parameteroptions exists
+								if selectableParameters.ExistsP(key) {
 
-										}
+									selectableOptions := selectableParameters.Search(key)
+									// check wich type the value currently is. value needs to be of type array for selectable parameter + see if value is 1 or multiple values for 1 key
+									valueType := reflect.TypeOf(value)
+
+									// when value = array or slice -> key contains multiple values
+									if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
+										jsonObjCookbookPost.SetP(value, key)
+
 									} else {
-										message := fmt.Sprintf("No parameter options found for: '%v'.", key)
-										errorParameters = append(errorParameters, message)
+										// in this case we have a single value asigned to a key
+										valueAsString := fmt.Sprintf("%v", value)
+										// given value is one of the possible options for the given parameter key
+										if selectableOptions.Exists(valueAsString) {
+											var option types.CookbookParameterOption
+											// unmarshal into struct, to easy and clearly manipulate options data
+											err := json.Unmarshal([]byte(selectableOptions.Search(valueAsString).String()), &option)
+											if err != nil {
+												log.Fatal(err)
+											}
+
+											var isAvailableforSystemOS bool = false
+											for _, optionalOS := range option.OperatingSystemVersions {
+												if optionalOS.Name == currentSystemOS {
+													log.Printf("optOS: %v | currentOS %v", optionalOS.Name, currentSystemOS)
+													isAvailableforSystemOS = true
+												}
+											}
+											if !isAvailableforSystemOS {
+												message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentSystemOS)
+												err = errors.New(message)
+												
+												log.Fatal(err)
+											}
+
+										} else {
+
+											message := fmt.Sprintf("Given Value: '%v' NOT an option for given key: '%v'.", value, key)
+											err = errors.New(message)
+										}
+
+										// key has one value but needs to be sent in array type
+										var values []interface{}
+										values = append(values, value)
+										jsonObjCookbookPost.SetP(values, key)
+
 									}
 								} else {
-
-									jsonObjCookbookPost.SetP(value, key)
+									message := fmt.Sprintf("No parameter options found for: '%v'.", key)
+									err = errors.New(message)
 								}
+							} else {
+
+								jsonObjCookbookPost.SetP(value, key)
 							}
 						}
-
-					} else {
-						message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
-						errorParameters = append(errorParameters, message)
 					}
+
+					if !isValidParameter {
+						message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
+						err = errors.New(message)
+					}
+
 				}
 
-				// when parameters are not found for chosen cookbooktype. show errors and stop command
-				if errorParameters != nil {
-					for _, message := range errorParameters {
-						log.Print(message)
-					}
-					os.Exit(1)
+				// when parameters or values are not valid -> error, close command
+				if err != nil {
+					log.Fatalln(err)
 				}
 				log.Println("custom")
 				log.Print(jsonObjCookbookPost.StringIndent("", " "))
