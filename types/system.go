@@ -85,12 +85,13 @@ type System struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"bootVolume"`
-	Cookbooks []SystemCookbook `json:"cookbooks"`
+	Cookbooks             []SystemCookbook `json:"cookbooks"`
+	Preferredparentsystem string           `json:"preferredparentsystem"`
 }
 
 type DescribeSystem struct {
 	System
-	SshKeys                      []SshKey           `json:"sshKeys"`
+	SshKeys                      []SystemSshkey     `json:"sshKeys"`
 	InstallSecurityUpdatesString string             `json:"installSecurityUpdatesString"`
 	HasNetworks                  []SystemHasNetwork `json:"hasNetworks"`
 	Volumes                      []SystemVolume     `json:"volumes"`
@@ -127,6 +128,23 @@ type SshKey struct {
 	Status       string          `json:"status"`
 	Fingerprint  string          `json:"fingerprint"`
 	Organisation OrganisationRef `json:"organisation"`
+}
+
+type SystemSshkey struct {
+	ID           int             `json:"id"`
+	Description  string          `json:"description"`
+	Fingerprint  string          `json:"fingerprint"`
+	Organisation OrganisationRef `json:"organisation"`
+	User         struct {
+		ID             int    `json:"id"`
+		FirstName      string `json:"firstName"`
+		LastName       string `json:"lastName"`
+		Status         string `json:"status"`
+		StatusCategory string `json:"statusCategory"`
+	} `json:"user"`
+	ShsID             int    `json:"shsId"`
+	ShsStatusCategory string `json:"shsStatusCategory"`
+	ShsStatus         string `json:"shsStatus"`
 }
 
 type SystemNetwork struct {
@@ -339,4 +357,25 @@ type SystemProviderConfiguration struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"systemprovider"`
+}
+
+type SystemPut struct {
+	Id                          int    `json:"id"`
+	Name                        string `json:"name"`
+	Type                        string `json:"type"`
+	Cpu                         int    `json:"cpu"`
+	Memory                      int    `json:"memory"`
+	Disk                        string `json:"disk"`
+	ManagementType              string `json:"managementType"`
+	Organisation                int    `json:"organisation"`
+	SystemImage                 int    `json:"systemimage"`
+	OperatingsystemVersion      int    `json:"operatingsystemVersion"`
+	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
+	Zone                        int    `json:"zone"`
+	PublicNetworking            bool   `json:"publicNetworking"`
+	Preferredparentsystem       string `json:"preferredparentsystem"`
+	Remarks                     string `json:"remarks"`
+	InstallSecurityUpdates      int    `json:"installSecurityUpdates"`
+	LimitRiops                  int    `json:"limitRiops"`
+	LimitWiops                  int    `json:"limitWiops"`
 }

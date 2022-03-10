@@ -55,9 +55,9 @@ func (c *Client) SystemGetSingle(id int) types.System {
 
 }
 
-func (c *Client) SystemGetSshKeys(id int, get types.CommonGetParams) []types.SshKey {
+func (c *Client) SystemGetSshKeys(id int, get types.CommonGetParams) []types.SystemSshkey {
 	var keys struct {
-		SshKeys []types.SshKey `json:"sshKeys"`
+		SshKeys []types.SystemSshkey `json:"sshkeys"`
 	}
 
 	endpoint := fmt.Sprintf("systems/%d/sshkeys?%s", id, formatCommonGetParams(get))
@@ -65,6 +65,66 @@ func (c *Client) SystemGetSshKeys(id int, get types.CommonGetParams) []types.Ssh
 
 	AssertApiError(err, "System SSH Keys")
 	return keys.SshKeys
+}
+
+func (c *Client) SystemGetNonAddedSshKeys(systemID int, organisationID int, userID int, get types.CommonGetParams) []types.SshKey {
+	var keys struct {
+		SshKeys []types.SshKey `json:"sshKeys"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/organisations/%d/users/%d/nonadded-sshkeys?%s", systemID, organisationID, userID, formatCommonGetParams(get))
+	err := c.invokeAPI("GET", endpoint, nil, &keys)
+
+	AssertApiError(err, "system nonadded SSH Keys")
+	return keys.SshKeys
+}
+
+func (c *Client) SystemAddSshKey(id int, keyID int) types.SshKey {
+	var key struct {
+		Sshkey types.SshKey `json:"sshKey"`
+	}
+
+	var data struct {
+		Sshkey int `json:"sshkey"`
+	}
+
+	data.Sshkey = keyID
+
+	endpoint := fmt.Sprintf("systems/%d/sshkeys", id)
+	err := c.invokeAPI("POST", endpoint, &data, &key)
+
+	AssertApiError(err, "Add SSH key")
+	return key.Sshkey
+}
+
+func (c *Client) SystemRemoveSshKey(id int, keyID int) {
+
+	endpoint := fmt.Sprintf("systems/%d/sshkeys/%d", id, keyID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "Add SSH key")
+}
+
+func (c *Client) LookupSystemSshkey(systemID int, name string) *types.SystemSshkey {
+	keys := c.SystemGetSshKeys(systemID, types.CommonGetParams{ Filter: name })
+	for _, key := range keys {
+		if key.Description == name {
+			return &key
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) LookupSystemNonAddedSshkey(systemID int, organisationID int, userID int, name string) *types.SshKey {
+	keys := c.SystemGetNonAddedSshKeys(systemID, organisationID, userID, types.CommonGetParams{ Filter: name })
+	for _, key := range keys {
+		if key.Description == name {
+			return &key
+		}
+	}
+
+	return nil
 }
 
 func (c *Client) SystemGetHasNetworks(id int) []types.SystemHasNetwork {
@@ -141,6 +201,12 @@ func (c *Client) SystemCreate(req types.SystemPost) {
 
 }
 
+func (c *Client) SystemUpdate(id int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("systems/%d", id)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "SystemUpdate")
+}
+
 // SYSTEM ACTION
 
 func (c *Client) SystemAction(id int, action string) types.System {
@@ -158,6 +224,21 @@ func (c *Client) SystemAction(id int, action string) types.System {
 	AssertApiError(err, "SystemAction")
 
 	return response.System
+}
+
+// Delete
+func (c *Client) SystemDelete(id int) {
+	endpoint := fmt.Sprintf("systems/%v", id)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "SystemDelete")
+}
+
+func (c *Client) SystemDeleteForce(id int) {
+	endpoint := fmt.Sprintf("systems/%v/force", id)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "SystemDelete")
 }
 
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------

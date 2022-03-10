@@ -16,13 +16,17 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -57,6 +61,7 @@ func CheckForMultipleIDs(ids []string) []string {
 
 	return currIds
 }
+// --------------------------- DYNAMICALY SETTING PARAMETERS
 
 // function used for commands with dynamic parameters. (different parameters defined by 1 flag)
 func SplitCustomParameters(customP []string) (map[string]interface{}, error) {
@@ -92,6 +97,84 @@ func SplitCustomParameters(customP []string) (map[string]interface{}, error) {
 
 	}
 	return checkedParameters, err
+}
+
+// VALIDATION OF PARAMETER VALUES BASED ON JSON
+func isValueValidForParameter(container gabs.Container, value interface{}, currentOS string) (bool, bool) {
+
+	// convert value to string
+	valueAsString := fmt.Sprintf("%v", value)
+	var option types.CookbookParameterOption
+	var isAvailableforSystemOS bool = false
+
+	// unmarshal into struct, to easy and clearly manipulate options data
+	err := json.Unmarshal([]byte(container.Search(valueAsString).String()), &option)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// loop over all possible OS systems for the chosen value
+	// and check if it matches the current system OS
+	for _, optionalOS := range option.OperatingSystemVersions {
+		if optionalOS.Name == currentOS || currentOS == "" {
+		
+			isAvailableforSystemOS = true
+
+		}
+	}
+	if !isAvailableforSystemOS {
+		message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentOS)
+		err = errors.New(message)
+
+		log.Fatal(err)
+	}
+
+	return isAvailableforSystemOS, option.Exclusive
+}
+// Open a file passed as an argument.
+// This handles the convention of "-" opening stdin.
+func openArgFile(file string) io.ReadCloser {
+	if file == "-" {
+		return os.Stdin
+	} else {
+		f, err := os.Open(file)
+		cobra.CheckErr(err)
+		return f
+	}
+}
+
+// Load JSON settings from arg-specified file and merge it with override settings from other args.
+func loadMergeSettings(fileName string, override map[string]interface{}) map[string]interface{} {
+	if fileName == "" {
+		return override
+	}
+
+	file := openArgFile(fileName)
+
+	defer func(){ cobra.CheckErr(file.Close()) }()
+
+	jsonBytes, err := io.ReadAll(file)
+	cobra.CheckErr(err)
+
+	var jsonSettings map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &jsonSettings)
+	cobra.CheckErr(err)
+
+	return mergeMaps(jsonSettings, override)
+}
+
+func mergeMaps(base map[string]interface{}, override map[string]interface{}) map[string]interface{} {
+	var newMap = map[string]interface{}{}
+
+	for k, v := range base {
+		newMap[k] = v
+	}
+
+	for k, v := range override {
+		newMap[k] = v
+	}
+
+	return newMap
 }
 
 // Add a string setting flag to a command, that will be stored in a map.

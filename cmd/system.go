@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // MAIN COMMAND
@@ -26,6 +27,8 @@ func init() {
 	RootCmd.AddCommand(systemCmd)
 
 	//-------------------------------------  Toplevel SYSTEM COMMANDS (get/post) --------------------------------------
+	// #region Toplevel SYSTEM COMMANDS (get/post)
+
 	// --- GET
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
@@ -62,8 +65,11 @@ func init() {
 	for _, flag := range requiredFlags {
 		systemCreateCmd.MarkFlagRequired(flag)
 	}
+	// #endregion
 
-	// --- ACTIONS
+	// ------------------------------------ ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
+
+	// #region ACTIONS ON SPECIFIC SYSTEM
 	systemCmd.AddCommand(systemActionsCmd)
 
 	systemActionsCmd.AddCommand(systemActionsStartCmd)
@@ -76,8 +82,30 @@ func init() {
 	systemActionsCmd.AddCommand(systemActionsActivateCmd)
 	systemActionsCmd.AddCommand(systemActionsAutoInstallCmd)
 
-	// #region SYSTEM/ CHECKS TOPLEVEL (GET/POST)
+	// --- UPDATE
+
+	systemCmd.AddCommand(systemUpdateCmd)
+	systemUpdateCmd.Flags().StringVarP(&systemUpdateSettingsFile, "settings-file", "s", "", "JSON file to read settings from. Pass '-' to read from stdin.")
+	settingString(systemUpdateCmd, systemUpdateSettings, "name", "New name for this system")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "cpu", "Set amount of CPU cores of the system")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "memory", "Set amount of memory in GB of the system")
+	settingString(systemUpdateCmd, systemUpdateSettings, "managementType", "Set management type of the system")
+	settingString(systemUpdateCmd, systemUpdateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "publicNetworking", "")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "limitRiops", "Set read IOPS limit")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "limitWiops", "Set write IOPS limit")
+	settingInt(systemUpdateCmd, systemUpdateSettings, "installSecurityUpdates", "Set security updates mode index")
+	settingString(systemUpdateCmd, systemUpdateSettings, "remarks", "")
+
+	// --- Delete
+
+	systemCmd.AddCommand(systemDeleteCmd)
+	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
+	// #endregion
+
 	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
+
+	// #region SYSTEMS/CHECKS TOPLEVEL
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
@@ -99,6 +127,7 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
+	// #region SYSTEMS/CHECKS ACTIONS
 	// --- DESCRIBE CHECK
 	systemCheckCmd.AddCommand(systemCheckGetSingleCmd)
 	// --- DELETE CHECK
@@ -116,13 +145,32 @@ func init() {
 	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
 	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
 	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
+	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
+
+	// #region SYSTEMS/COOKBOOKS TOPLEVEL (get/post)
+
 	// adding cookbook subcommand to system command
 	systemCmd.AddCommand(systemCookbookCmd)
 
 	// ---- GET cookbooks
 	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
+
+	// ---- ADD cookbook (to system)
+	systemCookbookCmd.AddCommand(systemCookbookAddCmd)
+
+	// flags needed to add new cookbook to a system
+	flags = systemCookbookAddCmd.Flags()
+	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
+	flags.StringArrayVarP(&systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+
+	systemCookbookAddCmd.MarkFlagRequired("type")
+	// #endregion
+
+	//-------------------------------------  SYSTEMS/COOKBOOKS PARAMETERS (get) --------------------------------------
+
+	// #region SYSTEMS/COOKBOOKS PARAMETERS (get)
 
 	// ---- GET COOKBOOKTYPES PARAMETERS
 	systemCookbookCmd.AddCommand(SystemCookbookTypesGetCmd)
@@ -130,17 +178,21 @@ func init() {
 	//flags needed to get specific parameters info
 	SystemCookbookTypesGetCmd.Flags().StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
 	SystemCookbookTypesGetCmd.MarkFlagRequired("type")
+	// #endregion
 
-	// ---- ADD cookbook (to system)
-	systemCookbookCmd.AddCommand(systemCookbookCreateCmd)
+	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 
-	// flags needed to add new cookbook to a system
-	flags = systemCookbookCreateCmd.Flags()
-	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
-	flags.StringArrayVarP(&systemCookbookAddParams, "parameters", "p", systemCookbookAddParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
-	systemCookbookCreateCmd.MarkFlagRequired("type")
+	// SSH KEYS
+	systemCmd.AddCommand(systemSshKeysCmd)
 
+	systemSshKeysCmd.AddCommand(systemSshKeysGetCmd)
+	addCommonGetFlags(systemSshKeysGetCmd)
+
+	systemSshKeysCmd.AddCommand(systemSshKeysAddCmd)
+	systemSshKeysCmd.AddCommand(systemSshKeysRemoveCmd)
+	// #endregion
 }
 
 // Resolve an integer or name domain.
@@ -331,6 +383,68 @@ var systemCreateCmd = &cobra.Command{
 
 // #endregion
 
+var systemUpdateSettings = map[string]interface{}{}
+var systemUpdateSettingsFile string
+
+var systemUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update settings on a system",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(systemUpdateSettingsFile, systemUpdateSettings)
+
+		systemID := resolveSystem(args[0])
+
+		system := Level27Client.SystemGetSingle(systemID)
+
+		systemPut := types.SystemPut{
+			Id:                          system.Id,
+			Name:                        system.Name,
+			Type:                        system.Type,
+			Cpu:                         system.Cpu,
+			Memory:                      system.Memory,
+			Disk:                        system.Disk,
+			ManagementType:              system.ManagementType,
+			Organisation:                system.Organisation.ID,
+			SystemImage:                 system.SystemImage.Id,
+			OperatingsystemVersion:      system.OperatingSystemVersion.Id,
+			SystemProviderConfiguration: system.SystemProviderConfiguration.ID,
+			Zone:                        system.Zone.Id,
+			PublicNetworking:            system.PublicNetworking,
+			Preferredparentsystem:       system.Preferredparentsystem,
+			Remarks:                     system.Remarks,
+			InstallSecurityUpdates:      system.InstallSecurityUpdates,
+			LimitRiops:                  system.LimitRiops,
+			LimitWiops:                  system.LimitWiops,
+		}
+
+		data := roundTripJson(systemPut).(map[string]interface{})
+		data = mergeMaps(data, settings)
+
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+
+		Level27Client.SystemUpdate(systemID, data)
+	},
+}
+
+var systemDeleteForce bool
+var systemDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete a system",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		if systemDeleteForce {
+			Level27Client.SystemDeleteForce(systemID)
+		} else {
+			Level27Client.SystemDelete(systemID)
+		}
+	},
+}
+
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
 var systemCheckCmd = &cobra.Command{
@@ -508,7 +622,8 @@ var systemCheckUpdateCmd = &cobra.Command{
 	},
 }
 
-//------------------------------------------------- SYSTEM ACTIONS ----------------------------------
+// ---------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
+
 // #region SYSTEM ACTIONS
 
 var systemActionsCmd = &cobra.Command{
@@ -578,43 +693,7 @@ func runAction(action string, args []string) {
 	Level27Client.SystemAction(id, action)
 }
 
-//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
-// ---------------- MAIN COMMAND (checks)
-var systemCookbookCmd = &cobra.Command{
-	Use:   "cookbooks",
-	Short: "Manage systems cookbooks",
-}
-
-// ---------- GET COOKBOOKS
-var systemCookbookGetCmd = &cobra.Command{
-	Use:   "get [system ID]",
-	Short: "Gets a list of all cookbooks from a system.",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		// check for valid system ID
-		id := checkSingleIntID(args, "system")
-
-		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
-	},
-}
-
-func getSystemCookbooks(id int) []types.Cookbook {
-
-	return Level27Client.SystemCookbookGetList(id)
-}
-
-func CheckforValidType(input string, validTypes []string) (string, bool) {
-	var isTypeValid bool
-	// check if given cookbooktype is 1 of valid options
-	for _, cookbooktype := range validTypes {
-		if strings.ToLower(input) == cookbooktype {
-			input = cookbooktype
-			isTypeValid = true
-			return input, isTypeValid
-		}
-	}
-	return "", isTypeValid
-}
+//------------------------------------------------- SYSTEM/COOKBOOKS PARAMETERS GET ----------------------------------
 
 // ----------- GET COOKBOOKTYPE PARAMETERS
 // seperate command used to see wich parameters can be used for a specific cookbooktype. also shows the description and default values
@@ -657,10 +736,48 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 	},
 }
 
+//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCookbookCmd = &cobra.Command{
+	Use:   "cookbooks",
+	Short: "Manage systems cookbooks",
+}
+
+// ---------- GET COOKBOOKS
+var systemCookbookGetCmd = &cobra.Command{
+	Use:   "get [system ID]",
+	Short: "Gets a list of all cookbooks from a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system ID
+		id := checkSingleIntID(args, "system")
+
+		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
+	},
+}
+
+func getSystemCookbooks(id int) []types.Cookbook {
+
+	return Level27Client.SystemCookbookGetList(id)
+}
+
+func CheckforValidType(input string, validTypes []string) (string, bool) {
+	var isTypeValid bool
+	// check if given cookbooktype is 1 of valid options
+	for _, cookbooktype := range validTypes {
+		if strings.ToLower(input) == cookbooktype {
+			input = cookbooktype
+			isTypeValid = true
+			return input, isTypeValid
+		}
+	}
+	return "", isTypeValid
+}
+
 // ----------- ADD COOKBOOK TO SPECIFIC SYSTEM
 var systemCookbookAddParams []string
 var systemCreateCookbookType string
-var systemCookbookCreateCmd = &cobra.Command{
+var systemCookbookAddCmd = &cobra.Command{
 	Use:   "add [systemID] [flags]",
 	Short: "add a cookbook to a system",
 	Args:  cobra.ExactArgs(1),
@@ -800,7 +917,7 @@ var systemCookbookCreateCmd = &cobra.Command{
 				//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			} else {
 				// log.Println("standaard")
-				 log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				log.Print(jsonObjCookbookPost.StringIndent("", " "))
 				//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			}
 
@@ -809,34 +926,72 @@ var systemCookbookCreateCmd = &cobra.Command{
 	},
 }
 
-func isValueValidForParameter(container gabs.Container, value interface{}, currentOS string) (bool, bool) {
+// ------------------------------------------------------ SSH KEYS
 
-	// convert value to string
-	valueAsString := fmt.Sprintf("%v", value)
-	var option types.CookbookParameterOption
-	var isAvailableforSystemOS bool = false
+var systemSshKeysCmd = &cobra.Command{
+	Use: "sshkeys",
+}
 
-	// unmarshal into struct, to easy and clearly manipulate options data
-	err := json.Unmarshal([]byte(container.Search(valueAsString).String()), &option)
-	if err != nil {
-		log.Fatal(err)
-	}
+var systemSshKeysGetCmd = &cobra.Command{
+	Use: "get",
 
-	// loop over all possible OS systems for the chosen value
-	// and check if it matches the current system OS
-	for _, optionalOS := range option.OperatingSystemVersions {
-		if optionalOS.Name == currentOS || currentOS == "" {
-		
-			isAvailableforSystemOS = true
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		id := resolveSystem(args[0])
 
+		outputFormatTable(Level27Client.SystemGetSshKeys(id, optGetParameters), []string{"ID", "DESCRIPTION", "STATUS", "FINGERPRINT"}, []string{"ID", "Description", "ShsStatus", "Fingerprint"})
+	},
+}
+
+var systemSshKeysAddCmd = &cobra.Command{
+	Use: "add",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		keyName := args[1]
+		keyID, err := strconv.Atoi(keyName)
+		if err != nil {
+			user := viper.GetInt("user_id")
+			org := viper.GetInt("org_id")
+			system := Level27Client.LookupSystemNonAddedSshkey(systemID, org, user, keyName)
+			if system == nil {
+				existing := Level27Client.LookupSystemSshkey(systemID, keyName)
+				if existing != nil {
+					fmt.Println("SSH key already exists on system!")
+					return
+				} else {
+					cobra.CheckErr("Unable to find SSH key to add")
+					return
+				}
+			}
+			keyID = system.Id
 		}
-	}
-	if !isAvailableforSystemOS {
-		message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentOS)
-		err = errors.New(message)
 
-		log.Fatal(err)
-	}
+		Level27Client.SystemAddSshKey(systemID, keyID)
+	},
+}
 
-	return isAvailableforSystemOS, option.Exclusive
+var systemSshKeysRemoveCmd = &cobra.Command{
+	Use: "remove",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		keyName := args[1]
+		keyID, err := strconv.Atoi(keyName)
+		if err != nil {
+			existing := Level27Client.LookupSystemSshkey(systemID, keyName)
+			if existing == nil {
+				cobra.CheckErr("Unable to find SSH key to remove!")
+				return
+			}
+
+			keyID = existing.ID
+		}
+
+		Level27Client.SystemRemoveSshKey(systemID, keyID)
+	},
 }
