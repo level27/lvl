@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/Jeffail/gabs/v2"
 )
 
 // --------------------------- TOPLEVEL SYSTEM ACTIONS (GET / POST) ------------------------------------
@@ -29,7 +31,7 @@ func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 }
 
 func (c *Client) LookupSystem(name string) *types.System {
-	systems := c.SystemGetList(types.CommonGetParams{ Filter: name })
+	systems := c.SystemGetList(types.CommonGetParams{Filter: name})
 	for _, system := range systems {
 		if system.Name == name {
 			return &system
@@ -257,6 +259,18 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 
 }
 
+// ------------- CREATE A CHECK
+func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+	var SystemCheck struct {
+		Data types.SystemCheck `json:"check"`
+	}
+	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
+	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+
+	AssertApiError(err, "System checks")
+	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
+}
+
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
 // ------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
@@ -267,9 +281,6 @@ func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemChec
 	err := c.invokeAPI("GET", endpoint, nil, &check)
 	AssertApiError(err, "system check")
 
-	// result, err := json.Marshal(check.Data)
-	// jsonParsed, err := gabs.ParseJSON([]byte(result))
-	// log.Print(jsonParsed)
 	return check.Data
 }
 
@@ -309,16 +320,15 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 
 }
 
-// ------------- CREATE A CHECK
-func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+// ------------- UPDATE A SPECIFIC CHECK
+func (c *Client) SystemCheckUpdate(systemId int, checkId int, req types.SystemCheckRequestHttp) {
 	var SystemCheck struct {
 		Data types.SystemCheck `json:"check"`
 	}
 	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
-	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+	err := c.invokeAPI("PUT", endpoint, req, &SystemCheck)
 
 	AssertApiError(err, "System checks")
-	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
 
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
@@ -338,6 +348,56 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 	return systemCookbooks.Data
 
 }
+
+// ------------- ADD COOKBOOK
+func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
+
+	// var to show result of API after succesfull adding cookbook
+	var cookbook struct{
+		Data types.Cookbook `json:"cookbook"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks", systemID)
+	err := c.invokeAPI("POST", endpoint, req, &cookbook)
+	AssertApiError(err, "cookbooktype")
+
+
+}
+
+// --------------------------- SPECIFIC COOKBOOKTYPES (GET) ------------------------------------
+// ------- GET ALL CURRENT COOKBOOKTYPES
+func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
+	var cookbookTypes struct {
+		Data types.CookbookTypeName `json:"cookbooktypes"`
+	}
+	endpoint := "cookbooktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &cookbookTypes)
+	AssertApiError(err, "cookbooktypes")
+
+	//creating an array from the maps keys. the keys of the map are the possible cookbooktypes
+	validTypes := make([]string, 0, len(cookbookTypes.Data))
+
+	for i := range cookbookTypes.Data {
+		validTypes = append(validTypes, i)
+
+	}
+
+	// marshal all current data into a byteslice to parse it into json.
+	result, err := json.Marshal(cookbookTypes)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	// parse the slice of bytes into json, this way we can dynamicaly use unknown incomming data
+	jsonParsed, err := gabs.ParseJSON([]byte(result))
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return validTypes, jsonParsed
+}
+
+// ------------------ GET PROVIDERS
 
 func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {
 	var response struct {
