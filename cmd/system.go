@@ -796,12 +796,12 @@ var systemCookbookCreateCmd = &cobra.Command{
 					log.Fatalln(err)
 				}
 				// log.Println("custom")
-				// log.Print(jsonObjCookbookPost.StringIndent("", " "))
-				Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+				log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			} else {
 				// log.Println("standaard")
-				// log.Print(jsonObjCookbookPost.StringIndent("", " "))
-				Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+				 log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			}
 
 		}
@@ -826,7 +826,7 @@ func isValueValidForParameter(container gabs.Container, value interface{}, curre
 	// and check if it matches the current system OS
 	for _, optionalOS := range option.OperatingSystemVersions {
 		if optionalOS.Name == currentOS || currentOS == "" {
-			log.Printf("optOS: %v | currentOS %v", optionalOS.Name, currentOS)
+		
 			isAvailableforSystemOS = true
 
 		}
