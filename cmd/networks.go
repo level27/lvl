@@ -39,11 +39,11 @@ var networksGetCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		networks := Level27Client.GetNetworks(optGetParameters)
-		outputFormatTableFuncs(networks, []string{"ID", "Type", "Name", "VLAN", "Organisation"}, []interface{}{"ID", func(net types.Network) string {
+		outputFormatTableFuncs(networks, []string{"ID", "Type", "Name", "VLAN", "Organisation", "Zone"}, []interface{}{"ID", func(net types.Network) string {
 			if net.Public { return "public" }
 			if net.Customer { return "customer" }
 			if net.Internal { return "internal" }
 			return ""
-		}, "Name", "Vlan", "Organisation.Name"})
+		}, "Name", "Vlan", "Organisation.Name", "Zone.Name"})
 	},
 }
