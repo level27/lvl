@@ -41,6 +41,16 @@ func (c *Client) LookupNetwork(name string) *types.Network {
 	return nil
 }
 
+func (c *Client) NetworkLocate(networkID int) types.NetworkLocate {
+	var response types.NetworkLocate
+
+	endpoint := fmt.Sprintf("networks/%d/locate", networkID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+
+	AssertApiError(err, "NetworkLocate")
+	return response
+}
+
 func Ipv4IntToString(ipv4 int) string {
 	a := (ipv4 >> 24) & 0xFF
 	b := (ipv4 >> 16) & 0xFF

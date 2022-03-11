@@ -1,0 +1,19 @@
+{{- /* NETWORKS */ -}}
+{{vt "yellow"}}Networks: {{ range $index, $_ := .Networks -}}
+{{ $hasNet := index $.HasNetworks $index }}  
+{{ vt "brightblue"}}- {{ vt "yellow"}}Name:         {{ vt "brightwhite"}}{{ $hasNet.Network.Description }} ({{ .Name }})
+  {{ vt "yellow"}}ID:           {{ vt "brightwhite"}}{{ .ID }}
+  {{ vt "yellow"}}Network ID:   {{ vt "brightwhite"}}{{ .NetworkID }}
+  {{ vt "yellow"}}Status:       {{template "statusVt" $hasNet.StatusCategory}}{{ $hasNet.Status }}
+  {{ vt "yellow"}}Type:         {{ vt "brightwhite"}}
+  {{- if .NetPublic }}Public{{ else if .NetInternal }}Internal {{ else if .NetCustomer }}Customer{{ end }} 
+  {{ vt "yellow"}}VLAN:         {{ vt "brightwhite"}}{{ .Vlan }}
+  {{ vt "yellow"}}MAC:          {{ vt "brightwhite"}}{{ .Mac }}
+  {{ vt "yellow"}}IPv4 Range:   {{ vt "brightwhite"}}{{ .NetIpv4 }}/{{ .NetMaskv4 }}
+  {{ vt "yellow"}}IPv4 Gateway: {{ vt "brightwhite"}}{{ .NetGatewayv4 }}
+  {{ vt "yellow"}}IPv6 Range:   {{ vt "brightwhite"}}{{ .NetIpv6 }}/{{ .NetMaskv6 }}
+  {{ vt "yellow"}}IPv6 Gateway: {{ vt "brightwhite"}}{{ .NetGatewayv6 }}
+  {{ vt "yellow"}}Addresses: {{ range .Ips }}
+  {{ vt "brightblue"}}- {{ vt "brightwhite"}}{{ .PublicIpv4 }}{{ .Ipv4 }}{{ .PublicIpv6 }}{{ .Ipv6 }} {{vt "cyan" }}{{ .Hostname }} 
+{{- end }} 
+{{- end -}}

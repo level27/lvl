@@ -44,3 +44,8 @@ type NetworkRef struct {
 	Customer    bool        `json:"customer"`
 	Internal    bool        `json:"internal"`
 }
+
+type NetworkLocate struct {
+	Ipv4 []string `json:"ipv4"`
+	Ipv6 []string `json:"ipv6"`
+}

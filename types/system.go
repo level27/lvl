@@ -96,6 +96,12 @@ type DescribeSystem struct {
 	HasNetworks                  []SystemHasNetwork `json:"hasNetworks"`
 	Volumes                      []SystemVolume     `json:"volumes"`
 }
+
+type DescribeSystemNetworks struct {
+	Networks    []SystemNetwork    `json:"networks"`
+	HasNetworks []SystemHasNetwork `json:"hasNetworks"`
+}
+
 type SystemVolume struct {
 	ID           int         `json:"id"`
 	Name         string      `json:"name"`
@@ -183,6 +189,34 @@ type SystemHasNetwork struct {
 	StatusCategory string      `json:"statusCategory"`
 	ExternalID     interface{} `json:"externalId"`
 	Network        NetworkRef  `json:"network"`
+}
+
+type SystemHasNetworkIp struct {
+	ID               int         `json:"id"`
+	Ipv4             string      `json:"ipv4"`
+	PublicIpv4       string      `json:"publicIpv4"`
+	Ipv6             string      `json:"ipv6"`
+	PublicIpv6       string      `json:"publicIpv6"`
+	Hostname         string      `json:"hostname"`
+	Status           string      `json:"status"`
+	ExternalID       interface{} `json:"externalId"`
+	SystemHasNetwork struct {
+		ID     int `json:"id"`
+		System struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"system"`
+	} `json:"systemHasNetwork"`
+	StatusCategory string `json:"statusCategory"`
+}
+
+type SystemHasNetworkIpAdd struct {
+	Ipv4       string      `json:"ipv4"`
+	PublicIpv4 string      `json:"publicIpv4"`
+	Ipv6       string      `json:"ipv6"`
+	PublicIpv6 string      `json:"publicIpv6"`
+	Hostname   string      `json:"hostname"`
+	ExternalID interface{} `json:"externalId"`
 }
 
 type SystemCookbook struct {

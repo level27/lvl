@@ -349,3 +349,76 @@ func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfigu
 
 	return response.ProviderConfigurations
 }
+
+// NETWORKS
+
+func (c *Client) LookupSystemHasNetworks(systemID int, name string) *types.SystemHasNetwork {
+	networks := c.SystemGetHasNetworks(systemID)
+	for _, network := range networks {
+		if network.Network.Name == name {
+			return &network
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) GetSystemHasNetwork(systemID int, systemHasNetworkID int) types.SystemHasNetwork {
+	var response struct {
+		SystemHasNetwork types.SystemHasNetwork `json:"systemHasNetwork"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/networks/%d", systemID, systemHasNetworkID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "GetSystemHasNetwork")
+
+	return response.SystemHasNetwork
+}
+
+func (c *Client) SystemAddHasNetwork(systemID int, networkID int) types.SystemHasNetwork {
+	var response struct {
+		SystemHasNetwork types.SystemHasNetwork `json:"systemHasNetwork"`
+	}
+
+	var request struct {
+		Network int `json:"network"`
+	}
+
+	request.Network = networkID
+
+	endpoint := fmt.Sprintf("systems/%d/networks", systemID)
+	err := c.invokeAPI("POST", endpoint, &request, &response)
+	AssertApiError(err, "SystemAddHasNetwork")
+
+	return response.SystemHasNetwork
+}
+
+func (c *Client) SystemRemoveHasNetwork(systemID int, hasNetworkID int) {
+	endpoint := fmt.Sprintf("systems/%d/networks/%d", systemID, hasNetworkID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "SystemRemoveHasNetwork")
+}
+
+func (c *Client) SystemGetHasNetworkIps(systemID int, hasNetworkID int) []types.SystemHasNetworkIp {
+	var response struct {
+		SystemHasNetworkIps []types.SystemHasNetworkIp `json:"systemHasNetworkIps"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/networks/%d/ips", systemID, hasNetworkID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+
+	AssertApiError(err, "SystemGetHasNetworkIps")
+	return response.SystemHasNetworkIps
+}
+
+func (c *Client) SystemAddHasNetworkIps(systemID int, hasNetworkID int, add types.SystemHasNetworkIpAdd) types.SystemHasNetworkIp {
+	var response struct {
+		HasNetwork types.SystemHasNetworkIp `json:"systemHasNetworkIp"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/networks/%d/ips", systemID, hasNetworkID)
+	err := c.invokeAPI("POST", endpoint, add, &response)
+
+	AssertApiError(err, "SystemAddHasNetworkIps")
+	return response.HasNetwork
+}
