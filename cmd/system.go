@@ -863,13 +863,13 @@ var systemCookbookAddCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalln(err)
 			}
-			log.Println("custom")
-			log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+			//log.Println("custom")
+			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+			Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 		} else {
-			log.Println("standaard")
-			log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+			//log.Println("standaard")
+			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+			Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 		}
 
 	},
