@@ -276,12 +276,6 @@ type SystemCheckRequestHttp struct {
 
 // ----------------------------------- COOKBOOKS ----------------------------------
 // parameteroptions
-type CookbookParameterName map[string]CookbookParameter
-
-type CookbookParameter struct {
-	CookbookParameterOption
-}
-
 type CookbookParameterOption struct {
 	Name                    string      `json:"name"`
 	Exclusive               bool        `json:"exclusive"`
@@ -291,10 +285,7 @@ type CookbookParameterOption struct {
 		Default bool   `json:"default"`
 	} `json:"operatingsystem_versions"`
 }
-type CookbookParameterOptions struct {
-	ParameterName struct {
-	}
-}
+
 
 // Cookbooktype (used to see all current valid cookbooktypes)
 type CookbookTypeName map[string]CookbookType
