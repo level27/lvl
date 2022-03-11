@@ -1,6 +1,5 @@
 {{- /* BASIC INFO */ -}}
 
-
 {{vt "yellow"}}ID:               {{vt "brightwhite"}}{{ .Id }}
 {{vt "yellow"}}Name:             {{vt "brightwhite"}}{{ .Name }}
 {{vt "yellow"}}Status:           {{template "statusVt" .StatusCategory}}{{ .Status }}
@@ -8,9 +7,9 @@
 {{vt "yellow"}}Host name:        {{vt "brightwhite"}}{{ .Hostname }}
 {{vt "yellow"}}FQDN:             {{vt "brightwhite"}}{{ .Fqdn }}
 {{vt "yellow"}}UID:              {{vt "brightwhite"}}{{ .Uid }}
-{{vt "yellow"}}CPU:              {{vt "brightwhite"}}{{ .Cpu }} cores
-{{vt "yellow"}}Memory:           {{vt "brightwhite"}}{{ .Memory }} GB
-{{vt "yellow"}}Disk:             {{vt "brightwhite"}}{{ .Disk }} GB
+{{vt "yellow"}}CPU:              {{vt "brightwhite"}}{{ .Cpu }} cores {{ template "statsSummary" .StatsSummary.Cpu }}
+{{vt "yellow"}}Memory:           {{vt "brightwhite"}}{{ .Memory }} GB {{ template "statsSummary" .StatsSummary.Memory }}
+{{vt "yellow"}}Disk:             {{vt "brightwhite"}}{{ .Disk }} GB {{ template "statsSummary" .StatsSummary.DiskSpace }}
 {{vt "yellow"}}IOPS limit:       {{vt "brightwhite"}}{{ .LimitRiops }} {{vt "yellow"}}R {{vt "reset"}}/ {{vt "brightwhite"}}{{ .LimitWiops }} {{vt "yellow"}}W
 {{vt "yellow"}}Image:            {{vt "brightwhite"}}{{ .SystemImage.Name }}
 {{vt "yellow"}}Organisation:     {{vt "brightwhite"}}{{ .Organisation.Name }} ({{ .Organisation.ID }})
