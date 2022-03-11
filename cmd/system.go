@@ -477,18 +477,52 @@ func getSystemChecks(id int) []types.SystemCheck {
 // ---------------- CREATE CHECK
 var systemCheckCreateType string
 var systemCheckCreateCmd = &cobra.Command{
-	Use:   "create [system ID] [parameters]",
-	Short: "create a new check for a specific system",
+	Use:   "add [system ID] [parameters]",
+	Short: "add a new check to a specific system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		//id:= checkSingleIntID(args, "check")
+		id:= checkSingleIntID(args, "check")
 
-		// // get the value of the flag type set by user
+		var err error
+		// get the value of the flag type set by user
 		checkTypeInput := cmd.Flag("type").Value.String()
 
-		Level27Client.SystemCheckTypeGet(checkTypeInput)
+		//get all data from the chosen checktype returned as Systemchecktype struct
+		checktypeResult := Level27Client.SystemCheckTypeGet(checkTypeInput)
+		possibleParameters := checktypeResult.ServiceType.Parameters
 
+		// create base of json container, will be used for post request and eventually filled with custom parameters
+		jsonObjCheckPost := gabs.New()
+		jsonObjCheckPost.Set(checkTypeInput, "checktype")
+
+		// if user wants to use custom parameters
+		if cmd.Flag("parameters").Changed {
+			// check if given parameters and usage of -p flag is correct
+			customParameterDict := SplitCustomParameters(systemDynamicParams)
+
+			// loop over all given custom parameters by user
+			for customParameterName, customParameterValue := range customParameterDict {
+				var isCustomParameterValid bool = false
+				// loop over all possible parameters we got back form the API
+				for i := range possibleParameters {
+					possibleParName := possibleParameters[i].Name
+
+					//when match found between custom paramater and possible parameter
+					if possibleParName == customParameterName {
+						isCustomParameterValid = true
+						jsonObjCheckPost.Set(customParameterValue, customParameterName)
+					}
+				}
+				if !isCustomParameterValid {
+					err = fmt.Errorf("given parameter name is not valid: '%v'", customParameterName)
+					log.Fatal(err)
+				}
+			}
+
+		}
+		//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+		Level27Client.SystemCheckCreate(id , jsonObjCheckPost)
 	},
 }
 
@@ -499,9 +533,9 @@ var systemChecktypeParametersGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		chosenType := cmd.Flag("type").Value.String()
 
-		parameters := Level27Client.SystemCheckTypeGet(chosenType)
+		checktypeResult := Level27Client.SystemCheckTypeGet(chosenType)
 
-		outputFormatTable(parameters.ServiceType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
+		outputFormatTable(checktypeResult.ServiceType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
 
 	},
 }
@@ -745,6 +779,7 @@ var systemCookbookAddCmd = &cobra.Command{
 		//checking for valid system ID
 		id := checkSingleIntID(args, "system")
 
+		var err error
 		// get information about the chosen system [systemID]
 		currentSystem := Level27Client.SystemGetSingle(id)
 		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
@@ -783,7 +818,7 @@ var systemCookbookAddCmd = &cobra.Command{
 			if cmd.Flag("parameters").Changed {
 
 				// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
-				customParameterDict, err := SplitCustomParameters(systemDynamicParams)
+				customParameterDict := SplitCustomParameters(systemDynamicParams)
 
 				// loop over the filtered parameters set by the user
 				for key, value := range customParameterDict {
@@ -873,12 +908,12 @@ var systemCookbookAddCmd = &cobra.Command{
 					log.Fatalln(err)
 				}
 				// log.Println("custom")
-				log.Print(jsonObjCookbookPost.StringIndent("", " "))
-				//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+				//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			} else {
 				// log.Println("standaard")
-				log.Print(jsonObjCookbookPost.StringIndent("", " "))
-				//Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+				//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+				Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
 			}
 
 		}

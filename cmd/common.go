@@ -64,7 +64,7 @@ func CheckForMultipleIDs(ids []string) []string {
 // --------------------------- DYNAMICALY SETTING PARAMETERS
 
 // function used for commands with dynamic parameters. (different parameters defined by 1 flag)
-func SplitCustomParameters(customP []string) (map[string]interface{}, error) {
+func SplitCustomParameters(customP []string) (map[string]interface{}) {
 	checkedParameters := make(map[string]interface{})
 	var err error
 	// loop over raw data set by user with -p flag
@@ -92,11 +92,12 @@ func SplitCustomParameters(customP []string) (map[string]interface{}, error) {
 			// when there is no '=' in the parameter -> error
 			message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
 			err = errors.New(message)
+			log.Fatal(err)
 
 		}
 
 	}
-	return checkedParameters, err
+	return checkedParameters
 }
 
 // VALIDATION OF PARAMETER VALUES BASED ON JSON
