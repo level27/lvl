@@ -501,7 +501,8 @@ var systemChecktypeParametersGetCmd = &cobra.Command{
 
 		parameters := Level27Client.SystemCheckTypeGet(chosenType)
 
-		log.Print(parameters)
+		outputFormatTable(parameters.ServiceType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
+
 	},
 }
 
