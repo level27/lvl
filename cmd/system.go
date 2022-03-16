@@ -1059,7 +1059,20 @@ var systemCookbookUpdateCmd = &cobra.Command{
 		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
-		log.Print(systemId, cookbookId)
+		currentData := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+
+		// create base form of json for PUT request (cookbooktype is non-editable)
+		requestData := gabs.New()
+		requestData.Set(currentData.CookbookType, "cookbooktype")
+
+		// loop over current data and check if values are default. (default values dont need to be in put request)
+		for key, value := range currentData.CookbookParameters{
+			if !value.Default {
+				requestData.Set(value.Value, key)
+			}
+		}
+
+		log.Print(requestData.StringIndent(""," "))
 
 	},
 }
