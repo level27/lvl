@@ -102,8 +102,16 @@ func init() {
 	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
 	// #endregion
 
-	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
+	//-------------------------------------  SYSTEMS/CHECKS PARAMETERS (get parameters) --------------------------------------
+	// #region GET CHECK PARAMETERS
+	// ---- GET PARAMETERS (for specific checktype)
+	systemCheckCmd.AddCommand(systemChecktypeParametersGetCmd)
 
+	// flags needed to get checktype parameters
+	systemChecktypeParametersGetCmd.Flags().StringVarP(&systemCheckCreateType, "type", "t", "", "Check type to see all its available parameters")
+	// #endregion
+
+	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get / post) --------------------------------------
 	// #region SYSTEMS/CHECKS TOPLEVEL
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
@@ -118,14 +126,10 @@ func init() {
 	flags.StringVarP(&systemCheckCreateType, "type", "t", "", "Check type (non-editable)")
 	systemCheckCreateCmd.MarkFlagRequired("type")
 
-	// -- optional flags, only for creating a http check
-	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	// -- optional flag
+	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
 
-	// ---- GET PARAMETERS (for specific checktype)
-	systemCheckCmd.AddCommand(systemChecktypeParametersGetCmd)
-
-	// flags needed to get checktype parameters
-	systemChecktypeParametersGetCmd.Flags().StringVarP(&systemCheckCreateType, "type", "t", "", "Check type to see all its available parameters")
+	// #endregion
 
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
 	// #region SYSTEMS/CHECKS ACTIONS
@@ -139,6 +143,10 @@ func init() {
 
 	// --- UPDATE CHECK (ONLY FOR HTTP REQUEST)
 	systemCheckCmd.AddCommand(systemCheckUpdateCmd)
+
+	// flag needed to update a specific check
+	systemCheckUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	systemCheckUpdateCmd.MarkFlagRequired("parameters")
 
 	// #endregion
 
@@ -378,6 +386,8 @@ var systemCreateCmd = &cobra.Command{
 
 // #endregion
 
+//------------------------------------------------- SYSTEM SPECIFIC (UPDATE / FORCE DELETE ) ----------------------------------
+// #region SYSTEM SPECIFIC (UPDATE / FORCE DELETE)
 var systemUpdateSettings = map[string]interface{}{}
 var systemUpdateSettingsFile string
 
@@ -440,15 +450,18 @@ var systemDeleteCmd = &cobra.Command{
 	},
 }
 
+// #endregion
+
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
+
 // ---------------- MAIN COMMAND (checks)
 var systemCheckCmd = &cobra.Command{
 	Use:   "checks",
 	Short: "Manage systems checks",
 }
 
-// ---------------- GET
 
+// ---------------- GET
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
 	Short: "Get a list of all checks from a system",
@@ -481,7 +494,7 @@ var systemCheckCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		id := checkSingleIntID(args, "check")
+		id := checkSingleIntID(args[0], "check")
 
 		var err error
 		// get the value of the flag type set by user
@@ -572,7 +585,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
-		systemID := checkSingleIntID(args, "system")
+		systemID := checkSingleIntID(args[0], "system")
 
 		//check for valid system checkID
 		checkID, err := strconv.Atoi(args[1])
@@ -590,28 +603,56 @@ var systemCheckUpdateCmd = &cobra.Command{
 	Short: "update a specific check from a system",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		// //check for valid system ID
-		// systemID, err := strconv.Atoi(args[0])
-		// if err != nil {
-		// 	log.Fatalln("Not a valid system ID!")
-		// }
+		// check for valid system ID
+		systemID := checkSingleIntID(args[0], "system")
+		// check for valid check ID
+		checkID := checkSingleIntID(args[1], "check")
 
-		// //check for valid system checkID
-		// checkID, err := strconv.Atoi(args[1])
-		// if err != nil {
-		// 	log.Fatalln("Not a valid check ID!")
-		// }
-		// // get the current data from the check
-		// currentData := Level27Client.SystemCheckDescribe(systemID, checkID)
+		// get the current data from the check
+		currentData := Level27Client.SystemCheckDescribe(systemID, checkID)
+		
 
-		// request := types.SystemCheckRequestHttp{
-		// 	Checktype: currentData.CheckType,
-		// 	Port: ,
-		// }
-		// if cmd.Flag("port").Changed {
-		// 	currentData.CheckParameters.p
-		// }
-		// Level27Client.SystemCheckUpdate(systemID, checkID, nil)
+		// create base of PUT request in JSON (checktype required and cannot be changed)
+		updateCheckJson := gabs.New()
+		updateCheckJson.Set(currentData.CheckType, "checktype")
+
+		// keep track of possbile parameters for current checktype
+		var possibleParameters []string
+		// loop over current parameters for the check.
+		// if parameter value is not default -> it needs to be sent in put request again.
+		for key, value := range currentData.CheckParameters {
+			// put each possible parrameter in array for later
+			possibleParameters = append(possibleParameters, key)
+
+			if !value.Default {
+				updateCheckJson.Set(value.Value, key)
+			}
+		}
+
+		// check wich parameters the user gave in. 
+		// also check if way of using parameter flag is correct
+		customParamaterDict := SplitCustomParameters(systemDynamicParams)
+
+		
+		// check for each given parameter if its one of the possible parameters
+		for givenParameter, givenValue := range customParamaterDict{
+			var isValidParameter bool = false
+			for i := range possibleParameters{
+				if givenParameter == possibleParameters[i]{
+					isValidParameter = true
+					updateCheckJson.Set(givenValue, givenParameter)
+				}
+			}
+
+			if !isValidParameter {
+				message := fmt.Sprintf("given parameter key: '%v' is not valid for checktype %v.", givenParameter, currentData.CheckType)
+				log.Fatalln(message)	
+			}
+		}
+
+
+		//log.Print(updateCheckJson.StringIndent(""," "))
+		Level27Client.SystemCheckUpdate(systemID, checkID, updateCheckJson)
 	},
 }
 
@@ -720,7 +761,7 @@ var systemCookbookGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		id := checkSingleIntID(args, "system")
+		id := checkSingleIntID(args[0], "system")
 
 		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
 	},
@@ -753,7 +794,7 @@ var systemCookbookAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		id := checkSingleIntID(args, "system")
+		id := checkSingleIntID(args[0], "system")
 
 		var err error
 		// get information about the current chosen system [systemID]
@@ -845,6 +886,7 @@ var systemCookbookAddCmd = &cobra.Command{
 								message := fmt.Sprintf("No parameter options found for: '%v'.", value)
 								err = errors.New(message)
 							}
+							// when parameters is not of selectable type
 						} else {
 
 							jsonObjCookbookPost.SetP(value, key)

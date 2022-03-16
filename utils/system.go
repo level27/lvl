@@ -327,12 +327,12 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 }
 
 // ------------- UPDATE A SPECIFIC CHECK
-func (c *Client) SystemCheckUpdate(systemId int, checkId int, req types.SystemCheckRequestHttp) {
-	var SystemCheck struct {
-		Data types.SystemCheck `json:"check"`
-	}
-	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
-	err := c.invokeAPI("PUT", endpoint, req, &SystemCheck)
+func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
+	// var SystemCheck struct {
+	// 	Data types.SystemCheck `json:"check"`
+	// }
+	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
 
 	AssertApiError(err, "System checks")
 }
@@ -395,7 +395,7 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 		log.Fatal(err)
 	}
 
-	// from the valid type we make a JSON string with selectable parameters. 
+	// from the valid type we make a JSON string with selectable parameters.
 	// we do this because we dont know beforehand if there will be any and how they will be named
 	result, err := json.Marshal(cookbookTypes.Data[cookbooktype].CookbookType.ParameterOptions)
 	if err != nil {
@@ -407,8 +407,6 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-
 
 	// return the chosen valid type and its specific data
 	return cookbookTypes.Data[cookbooktype], jsonParsed
