@@ -188,7 +188,7 @@ func (c *Client) SystemUpdate(id int, data map[string]interface{}) {
 	AssertApiError(err, "SystemUpdate")
 }
 
-// SYSTEM ACTION
+// --------------------------- SYSTEM ACTION ---------------------------
 
 func (c *Client) SystemAction(id int, action string) types.System {
 	var request struct {
@@ -207,7 +207,7 @@ func (c *Client) SystemAction(id int, action string) types.System {
 	return response.System
 }
 
-// Delete
+// ---------------- Delete
 func (c *Client) SystemDelete(id int) {
 	endpoint := fmt.Sprintf("systems/%v", id)
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
@@ -260,7 +260,7 @@ func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 // --------------------------- SYSTEM/CHECKS PARAMETERS (GET) ------------------------------------
 // #region SYSTEM/CHECKS PARAMETERS (GET)
 
-// ------------- GET CHECK PARAMETERS (for specific checktype)
+// ---------------- GET CHECK PARAMETERS (for specific checktype)
 func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 	var checktypes struct {
 		Data types.SystemCheckTypeName `json:"checktypes"`
@@ -293,7 +293,7 @@ func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 
 // --------------------------- SYSTEM/CHECKS SPECIFIC ACTIONS (DESCRIBE / DELETE / UPDATE) ------------------------------------
 // #region SYSTEM/CHECKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
-// ------------- DESCRIBE A SPECIFIC CHECK
+// ---------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
 	var check struct {
 		Data types.SystemCheck `json:"check"`
@@ -305,7 +305,7 @@ func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemChec
 	return check.Data
 }
 
-// ------------- DELETE A SPECIFIC CHECK
+// ---------------- DELETE A SPECIFIC CHECK
 func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed bool) {
 
 	// when confirmation flag is set, delete check without confirmation question
@@ -341,7 +341,7 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 
 }
 
-// ------------- UPDATE A SPECIFIC CHECK
+// ---------------- UPDATE A SPECIFIC CHECK
 func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
 
 	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
@@ -355,7 +355,7 @@ func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
 // #region SYSTEM/COOKBOOKS TOPLEVEL (GET / ADD)
 
-// ------------- GET COOKBOOK
+// ---------------- GET COOKBOOK
 func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 	// creating array of cookbooks to return
 	var systemCookbooks struct {
@@ -371,7 +371,7 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 
 }
 
-// ------------- ADD COOKBOOK
+// ---------------- ADD COOKBOOK
 func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
 
 	// var to show result of API after succesfull adding cookbook
@@ -389,7 +389,7 @@ func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
 
 // --------------------------- SYSTEM/COOKBOOKS PARAMETERS (GET) ------------------------------------
 // #region SYSTEM/COOKBOOKS PARAMETERS (GET)
-// ------- GET COOKBOOKTYPES parameters
+// ---------------- GET COOKBOOKTYPES parameters
 func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType, *gabs.Container) {
 	var cookbookTypes struct {
 		Data types.CookbookTypeName `json:"cookbooktypes"`
@@ -434,7 +434,7 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 // #endregion
 
 // --------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ------------------------------------
-// -- DESCRIBE
+// ---------------- DESCRIBE
 func (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cookbook {
 	var cookbook struct {
 		Data types.Cookbook `json:"cookbook"`
@@ -447,7 +447,7 @@ func (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cook
 	return cookbook.Data
 }
 
-// -- DELETE
+// ---------------- DELETE
 func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConfirmed bool) {
 
 	// when confirmation flag is set, delete check without confirmation question

@@ -19,12 +19,13 @@ import (
 var systemCmd = &cobra.Command{
 	Use:   "system",
 	Short: "Commands for managing systems",
+	
 }
 
 func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemCmd)
-
+	
 	//-------------------------------------  Toplevel SYSTEM COMMANDS (get/post) --------------------------------------
 	// #region Toplevel SYSTEM COMMANDS (get/post)
 
@@ -190,6 +191,10 @@ func init() {
 	// optional flags
 	systemCookbookDeleteCmd.Flags().BoolVarP(&systemCookbookDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a cookbook")
 
+	// --- UPDATE 
+	systemCookbookCmd.AddCommand(systemCookbookUpdateCmd)
+	// flags for update
+	
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
@@ -942,7 +947,7 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 
 //------------------------------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ----------------------------------
 
-// --- DESCRIBE
+// ---------------- DESCRIBE
 var systemCookbookDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "show detailed info about a cookbook on a system",
@@ -959,11 +964,12 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	},
 }
 
-// --- DELETE
+// ---------------- DELETE
 var systemCookbookDeleteConfirmed bool
 var systemCookbookDeleteCmd = &cobra.Command{
-	Use:   "delete",
+	Use:   "delete [systemID] [cookbookID]",
 	Short: "delete a cookbook from a system.",
+	
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
@@ -977,6 +983,17 @@ var systemCookbookDeleteCmd = &cobra.Command{
 		Level27Client.SystemCookbookChangesApply(systemId)
 
 	},
+}
+
+// ---------------- UPDATE
+var systemCookbookUpdateCmd = &cobra.Command{
+	Use: "update [systemID] [cookbookID]",
+	Short: "update existing cookbook from a system",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+
 }
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
