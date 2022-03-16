@@ -67,7 +67,6 @@ func init() {
 	// #endregion
 
 	// ------------------------------------ ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
-
 	// #region ACTIONS ON SPECIFIC SYSTEM
 	systemCmd.AddCommand(systemActionsCmd)
 
@@ -151,7 +150,6 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
-
 	// #region SYSTEMS/COOKBOOKS TOPLEVEL (get/post)
 
 	// adding cookbook subcommand to system command
@@ -172,7 +170,6 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS PARAMETERS (get) --------------------------------------
-
 	// #region SYSTEMS/COOKBOOKS PARAMETERS (get)
 
 	// ---- GET COOKBOOKTYPES PARAMETERS
@@ -183,6 +180,11 @@ func init() {
 	SystemCookbookTypesGetCmd.MarkFlagRequired("type")
 	// #endregion
 
+	//-------------------------------------  SYSTEMS/COOKBOOKS SPECIFIC (describe / delete / update) --------------------------------------
+	
+	systemCookbookCmd.AddCommand(systemCookbookDescribeCmd)
+	
+	
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
@@ -452,6 +454,8 @@ var systemDeleteCmd = &cobra.Command{
 
 // #endregion
 
+
+
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
 
 // ---------------- MAIN COMMAND (checks)
@@ -460,6 +464,7 @@ var systemCheckCmd = &cobra.Command{
 	Short: "Manage systems checks",
 }
 
+// #region SYSTEM/CHECKS (GET / CREATE)
 
 // ---------------- GET
 var systemCheckGetCmd = &cobra.Command{
@@ -538,6 +543,11 @@ var systemCheckCreateCmd = &cobra.Command{
 	},
 }
 
+// #endregion
+
+//------------------------------------------------- SYSTEM/CHECKS PARAMETERS (GET) ----------------------------------
+// #region SYSTEM/CHECKS PARAMETERS (GET)
+
 // ------------- GET CHECK PARAMETERS (for specific checktype)
 var systemChecktypeParametersGetCmd = &cobra.Command{
 	Use:   "parameters",
@@ -552,7 +562,11 @@ var systemChecktypeParametersGetCmd = &cobra.Command{
 	},
 }
 
+// #endregion
+
 //------------------------------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ----------------------------------
+// #region SYSTEM/CHECKS (GET / DELETE / UPDATE)
+
 // -------------- GET DETAILS FROM A CHECK
 var systemCheckGetSingleCmd = &cobra.Command{
 	Use:   "describe [systemID] [checkID]",
@@ -610,7 +624,6 @@ var systemCheckUpdateCmd = &cobra.Command{
 
 		// get the current data from the check
 		currentData := Level27Client.SystemCheckDescribe(systemID, checkID)
-		
 
 		// create base of PUT request in JSON (checktype required and cannot be changed)
 		updateCheckJson := gabs.New()
@@ -629,17 +642,16 @@ var systemCheckUpdateCmd = &cobra.Command{
 			}
 		}
 
-		// check wich parameters the user gave in. 
+		// check wich parameters the user gave in.
 		// also check if way of using parameter flag is correct
 		customParamaterDict := SplitCustomParameters(systemDynamicParams)
 
-		
 		// check for each given parameter if its one of the possible parameters
 		// if parameter = valid -> add key/value to json object for put request
-		for givenParameter, givenValue := range customParamaterDict{
+		for givenParameter, givenValue := range customParamaterDict {
 			var isValidParameter bool = false
-			for i := range possibleParameters{
-				if givenParameter == possibleParameters[i]{
+			for i := range possibleParameters {
+				if givenParameter == possibleParameters[i] {
 					isValidParameter = true
 					updateCheckJson.Set(givenValue, givenParameter)
 				}
@@ -647,18 +659,20 @@ var systemCheckUpdateCmd = &cobra.Command{
 
 			if !isValidParameter {
 				message := fmt.Sprintf("given parameter key: '%v' is not valid for checktype %v.", givenParameter, currentData.CheckType)
-				log.Fatalln(message)	
+				log.Fatalln(message)
 			}
 		}
-
 
 		//log.Print(updateCheckJson.StringIndent(""," "))
 		Level27Client.SystemCheckUpdate(systemID, checkID, updateCheckJson)
 	},
 }
 
-// ---------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
+// #endregion
 
+
+
+// ---------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
 // #region SYSTEM ACTIONS
 
 var systemActionsCmd = &cobra.Command{
@@ -728,25 +742,7 @@ func runAction(action string, args []string) {
 	Level27Client.SystemAction(id, action)
 }
 
-//------------------------------------------------- SYSTEM/COOKBOOKS PARAMETERS GET ----------------------------------
 
-// ----------- GET COOKBOOKTYPE PARAMETERS
-// seperate command used to see wich parameters can be used for a specific cookbooktype. also shows the description and default values
-var SystemCookbookTypesGetCmd = &cobra.Command{
-	Use:   "parameters",
-	Short: "Show all default parameters for a specific cookbooktype.",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		// get the user input from the type flag
-		inputType := cmd.Flag("type").Value.String()
-
-		// Get request to get all cookbooktypes data
-		validCookbooktype, _ := Level27Client.SystemCookbookTypeGet(inputType)
-
-		outputFormatTable(validCookbooktype.CookbookType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
-
-	},
-}
 
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
@@ -754,6 +750,8 @@ var systemCookbookCmd = &cobra.Command{
 	Use:   "cookbooks",
 	Short: "Manage systems cookbooks",
 }
+
+// #region SYSTEM/COOKBOOKS TOPLEVEL (GET / ADD )
 
 // ---------- GET COOKBOOKS
 var systemCookbookGetCmd = &cobra.Command{
@@ -917,6 +915,48 @@ var systemCookbookAddCmd = &cobra.Command{
 
 	},
 }
+
+// #endregion
+
+//------------------------------------------------- SYSTEM/COOKBOOKS PARAMETERS GET ----------------------------------
+// #region SYSTEM/COOKBOOKS PARAMETERS (GET)
+
+// ----------- GET COOKBOOKTYPE PARAMETERS
+// seperate command used to see wich parameters can be used for a specific cookbooktype. also shows the description and default values
+var SystemCookbookTypesGetCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Show all default parameters for a specific cookbooktype.",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// get the user input from the type flag
+		inputType := cmd.Flag("type").Value.String()
+
+		// Get request to get all cookbooktypes data
+		validCookbooktype, _ := Level27Client.SystemCookbookTypeGet(inputType)
+
+		outputFormatTable(validCookbooktype.CookbookType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
+
+	},
+}
+
+// #endregion
+
+//------------------------------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ----------------------------------
+
+var systemCookbookDescribeCmd = &cobra.Command{
+	Use:   "describe",
+	Short: "show detailed info about a cookbook on a system",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system id
+		systemId := checkSingleIntID(args[0], "system")
+		// chekc for valid cookbook id
+		cookbookId := checkSingleIntID(args[1], "cookbook")
+		log.Print(systemId, cookbookId)
+	},
+}
+
+
 
 // // ------------------------------------------------------ SSH KEYS
 

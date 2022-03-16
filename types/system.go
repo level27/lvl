@@ -273,16 +273,32 @@ type SystemCheck struct {
 }
 
 // ----------------------------------- COOKBOOKS ----------------------------------
-// parameteroptions
-type CookbookParameterOption struct {
-	Name                    string      `json:"name"`
-	Exclusive               bool        `json:"exclusive"`
-	Value                   interface{} `json:"value"`
-	OperatingSystemVersions []struct {
-		Name    string `json:"name"`
-		Default bool   `json:"default"`
-	} `json:"operatingsystem_versions"`
+// --- COOKBOOK
+type Cookbook struct {
+	Id                             int                          `json:"id"`
+	CookbookType                   string                       `json:"cookbooktype"`
+	CookbookParameters             CookbookParameterName        `json:"cookbookparameters"`
+	CookbookParametersDescriptions CookbookParameterDescription `json:"cookbookparameterDescriptions"`
+	PreviousCookbookParameters     interface{}                  `json:"previousCookbookparameters"`
+	Status                         string                       `json:"status"`
+	System                         struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"system"`
 }
+
+// we dont know this value beforehand (the key of cookbookparameter)
+type CookbookParameterName map[string]CookbookParameter
+
+type CookbookParameter struct {
+	Value   interface{} `json:"value"`
+	Default bool        `json:"default"`
+}
+
+// we dont know this value beforehand (key of cookbookParameterDescription)
+type CookbookParameterDescription map[string]interface{}
+
+// --- COOKBOOKTYPE
 
 // Cookbooktype (used to see all current valid cookbooktypes)
 type CookbookTypeName map[string]CookbookType
@@ -301,24 +317,18 @@ type CookbookType struct {
 	} `json:"cookbooktype"`
 }
 
-type Cookbook struct {
-	Id                             int         `json:"id"`
-	CookbookType                   string      `json:"cookbooktype"`
-	CookbookParameters             interface{} `json:"cookbookparameters"`
-	CookbookParametersDescriptions interface{} `json:"cookbookparameterDescriptions"`
-	PreviousCookbookParameters     interface{} `json:"previousCookbookparameters"`
-	Status                         string      `json:"status"`
-	System                         struct {
-		Id   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"system"`
+// parameteroptions
+type CookbookParameterOption struct {
+	Name                    string      `json:"name"`
+	Exclusive               bool        `json:"exclusive"`
+	Value                   interface{} `json:"value"`
+	OperatingSystemVersions []struct {
+		Name    string `json:"name"`
+		Default bool   `json:"default"`
+	} `json:"operatingsystem_versions"`
 }
 
-// // Add cookbook to a system request
-// type CookbookAdd struct {
-// 	Cookbooktype string `json:"cookbooktype"`
-// }
-
+// -------------------
 type SystemProviderConfigurationRef struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
