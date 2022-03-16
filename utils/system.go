@@ -12,8 +12,8 @@ import (
 )
 
 // --------------------------- TOPLEVEL SYSTEM ACTIONS (GET / POST) ------------------------------------
+// #region SYSTEM TOPLEVEL (GET / CREATE)
 //------------------ GET
-
 // returning a list of all current systems [lvl system get]
 func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 
@@ -31,6 +31,24 @@ func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 
 }
 
+// CREATE SYSTEM [lvl system create <parmeters>]
+func (c *Client) SystemCreate(req types.SystemPost) {
+
+	var System struct {
+		Data types.System `json:"system"`
+	}
+
+	err := c.invokeAPI("POST", "systems", req, &System)
+	AssertApiError(err, "SystemCreate")
+
+	log.Printf("System created! [Fullname: '%v' , ID: '%v']", System.Data.Name, System.Data.Id)
+
+}
+
+// #endregion
+
+// --------------------------- @PJ please fill in comments about code ------------------------------------
+// #region  @PJ please fill in comments about code
 func (c *Client) LookupSystem(name string) *types.System {
 	systems := c.SystemGetList(types.CommonGetParams{Filter: name})
 	for _, system := range systems {
@@ -164,20 +182,6 @@ func (c *Client) SecurityUpdateDates() []string {
 	return updates.SecurityUpdateDates
 }
 
-// CREATE SYSTEM [lvl system create <parmeters>]
-func (c *Client) SystemCreate(req types.SystemPost) {
-
-	var System struct {
-		Data types.System `json:"system"`
-	}
-
-	err := c.invokeAPI("POST", "systems", req, &System)
-	AssertApiError(err, "SystemCreate")
-
-	log.Printf("System created! [Fullname: '%v' , ID: '%v']", System.Data.Name, System.Data.Id)
-
-}
-
 func (c *Client) SystemUpdate(id int, data map[string]interface{}) {
 	endpoint := fmt.Sprintf("systems/%d", id)
 	err := c.invokeAPI("PUT", endpoint, data, nil)
@@ -218,7 +222,10 @@ func (c *Client) SystemDeleteForce(id int) {
 	AssertApiError(err, "SystemDelete")
 }
 
-// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST / PARAMETERS) ------------------------------------
+// #endregion
+
+// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST ) ------------------------------------
+// #region SYSTEM/CHECKS TOPLEVEL (GET / ADD)
 // ------------- GET CHECKS
 func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
 
@@ -236,7 +243,7 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 
 }
 
-// ------------- CREATE A CHECK
+// ------------- ADD A CHECK
 func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 	var SystemCheck struct {
 		Data types.SystemCheck `json:"check"`
@@ -247,6 +254,11 @@ func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 	AssertApiError(err, "System checks")
 	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
+
+// #endregion
+
+// --------------------------- SYSTEM/CHECKS PARAMETERS (GET) ------------------------------------
+// #region SYSTEM/CHECKS PARAMETERS (GET)
 
 // ------------- GET CHECK PARAMETERS (for specific checktype)
 func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
@@ -277,7 +289,10 @@ func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 	return checktypes.Data[checktype]
 }
 
-// --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
+// #endregion
+
+// --------------------------- SYSTEM/CHECKS SPECIFIC ACTIONS (DESCRIBE / DELETE / UPDATE) ------------------------------------
+// #region SYSTEM/CHECKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 // ------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
 	var check struct {
@@ -328,18 +343,19 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 
 // ------------- UPDATE A SPECIFIC CHECK
 func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
-	// var SystemCheck struct {
-	// 	Data types.SystemCheck `json:"check"`
-	// }
+
 	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
 	err := c.invokeAPI("PUT", endpoint, req, nil)
 
 	AssertApiError(err, "System checks")
 }
 
-// --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
-// ------------- GET COOKBOOK
+// #endregion
 
+// --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
+// #region SYSTEM/COOKBOOKS TOPLEVEL (GET / ADD)
+
+// ------------- GET COOKBOOK
 func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 	// creating array of cookbooks to return
 	var systemCookbooks struct {
@@ -369,7 +385,10 @@ func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
 
 }
 
-// --------------------------- SPECIFIC COOKBOOKTYPES (GET) ------------------------------------
+// #endregion
+
+// --------------------------- SYSTEM/COOKBOOKS PARAMETERS (GET) ------------------------------------
+// #region SYSTEM/COOKBOOKS PARAMETERS (GET)
 // ------- GET COOKBOOKTYPES parameters
 func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType, *gabs.Container) {
 	var cookbookTypes struct {
@@ -410,6 +429,71 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 
 	// return the chosen valid type and its specific data
 	return cookbookTypes.Data[cookbooktype], jsonParsed
+}
+
+// #endregion
+
+// --------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ------------------------------------
+// -- DESCRIBE
+func (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cookbook {
+	var cookbook struct {
+		Data types.Cookbook `json:"cookbook"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
+	err := c.invokeAPI("GET", endpoint, nil, &cookbook)
+	AssertApiError(err, "system check")
+
+	return cookbook.Data
+}
+
+// -- DELETE
+func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConfirmed bool) {
+
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "system cookbook")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the systems cookbook with ID: %v? Please type [y]es or [n]o: ", cookbookId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "system cookbook")
+		case "n", "no":
+			log.Printf("Delete canceled for system check: %v", cookbookId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.SystemCookbookDelete(systemId, cookbookId, false)
+		}
+
+	}
+
+}
+
+// ------------------ APPLY COOKBOOKCHANGES ON A SYSTEM
+func (c *Client) SystemCookbookChangesApply(systemId int) {
+	// create json format for post request
+	// this function is specifically for updating cookbook status on a system
+	requestData := gabs.New()
+	requestData.Set("update_cookbooks", "type")
+
+	endpoint := fmt.Sprintf("systems/%v/actions", systemId)
+	err := c.invokeAPI("POST", endpoint, requestData, nil)
+	AssertApiError(err, "systems/cookbook")
+
 }
 
 // ------------------ GET PROVIDERS
