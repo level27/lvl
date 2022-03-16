@@ -283,6 +283,7 @@ type Cookbook struct {
 	Status                         string                       `json:"status"`
 	System                         struct {
 		Id   int    `json:"id"`
+		Fqdn string `json:"fqdn"`
 		Name string `json:"name"`
 	} `json:"system"`
 }

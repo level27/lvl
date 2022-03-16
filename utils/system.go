@@ -295,7 +295,7 @@ func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 
 // #endregion
 
-// --------------------------- SYSTEM/CHECKS SPECIFI ACTIONS (DESCRIBE / DELETE / UPDATE) ------------------------------------
+// --------------------------- SYSTEM/CHECKS SPECIFIC ACTIONS (DESCRIBE / DELETE / UPDATE) ------------------------------------
 // #region SYSTEM/CHECKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 // ------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
@@ -439,6 +439,19 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 
 // #endregion
 
+// --------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ------------------------------------
+
+func  (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cookbook{
+	var cookbook struct{
+		Data types.Cookbook `json:"cookbook"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
+	err := c.invokeAPI("GET", endpoint, nil, &cookbook)
+	AssertApiError(err, "system check")
+
+	return cookbook.Data
+}
 // ------------------ GET PROVIDERS
 
 func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {

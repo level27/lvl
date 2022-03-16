@@ -564,8 +564,8 @@ var systemChecktypeParametersGetCmd = &cobra.Command{
 
 // #endregion
 
-//------------------------------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ----------------------------------
-// #region SYSTEM/CHECKS (GET / DELETE / UPDATE)
+//------------------------------------------------- SYSTEM/CHECKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ----------------------------------
+// #region SYSTEM/CHECKS (DESCRIBE / DELETE / UPDATE)
 
 // -------------- GET DETAILS FROM A CHECK
 var systemCheckGetSingleCmd = &cobra.Command{
@@ -952,7 +952,10 @@ var systemCookbookDescribeCmd = &cobra.Command{
 		systemId := checkSingleIntID(args[0], "system")
 		// chekc for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
-		log.Print(systemId, cookbookId)
+		
+		result := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		
+		outputFormatTemplate(result, "templates/systemCookbook.tmpl")
 	},
 }
 
