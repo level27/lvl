@@ -483,6 +483,19 @@ func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConf
 
 }
 
+// ------------------ APPLY COOKBOOKCHANGES ON A SYSTEM
+func (c *Client) SystemCookbookChangesApply(systemId int) {
+	// create json format for post request
+	// this function is specifically for updating cookbook status on a system
+	requestData := gabs.New()
+	requestData.Set("update_cookbooks", "type")
+
+	endpoint := fmt.Sprintf("systems/%v/actions", systemId)
+	err := c.invokeAPI("POST", endpoint, requestData, nil)
+	AssertApiError(err, "systems/cookbook")
+
+}
+
 // ------------------ GET PROVIDERS
 
 func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {

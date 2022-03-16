@@ -743,7 +743,7 @@ func runAction(action string, args []string) {
 // #endregion
 
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
-// ---------------- MAIN COMMAND (checks)
+// ---------------- MAIN COMMAND (cookbooks)
 var systemCookbookCmd = &cobra.Command{
 	Use:   "cookbooks",
 	Short: "Manage systems cookbooks",
@@ -791,11 +791,11 @@ var systemCookbookAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		id := checkSingleIntID(args[0], "system")
+		systemId := checkSingleIntID(args[0], "system")
 
 		var err error
 		// get information about the current chosen system [systemID]
-		currentSystem := Level27Client.SystemGetSingle(id)
+		currentSystem := Level27Client.SystemGetSingle(systemId)
 		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
 
 		// get the user input from the type flag (cookbooktype)
@@ -904,13 +904,14 @@ var systemCookbookAddCmd = &cobra.Command{
 			}
 			//log.Println("custom")
 			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
 		} else {
 			//log.Println("standaard")
 			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
 		}
 
+		Level27Client.SystemCookbookChangesApply(systemId)
 	},
 }
 
@@ -970,9 +971,10 @@ var systemCookbookDeleteCmd = &cobra.Command{
 		// chekc for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
-		
 		Level27Client.SystemCookbookDelete(systemId, cookbookId, systemCookbookDeleteConfirmed)
 
+		//apply changes
+		Level27Client.SystemCookbookChangesApply(systemId)
 
 	},
 }
