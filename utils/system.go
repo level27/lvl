@@ -47,8 +47,6 @@ func (c *Client) SystemCreate(req types.SystemPost) {
 
 // #endregion
 
-
-
 // --------------------------- @PJ please fill in comments about code ------------------------------------
 // #region  @PJ please fill in comments about code
 func (c *Client) LookupSystem(name string) *types.System {
@@ -226,8 +224,6 @@ func (c *Client) SystemDeleteForce(id int) {
 
 // #endregion
 
-
-
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST ) ------------------------------------
 // #region SYSTEM/CHECKS TOPLEVEL (GET / ADD)
 // ------------- GET CHECKS
@@ -356,8 +352,6 @@ func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
 
 // #endregion
 
-
-
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
 // #region SYSTEM/COOKBOOKS TOPLEVEL (GET / ADD)
 
@@ -440,9 +434,9 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 // #endregion
 
 // --------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ------------------------------------
-
-func  (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cookbook{
-	var cookbook struct{
+// -- DESCRIBE
+func (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cookbook {
+	var cookbook struct {
 		Data types.Cookbook `json:"cookbook"`
 	}
 
@@ -452,6 +446,43 @@ func  (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Coo
 
 	return cookbook.Data
 }
+
+// -- DELETE
+func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConfirmed bool) {
+
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "system cookbook")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the systems cookbook with ID: %v? Please type [y]es or [n]o: ", cookbookId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "system cookbook")
+		case "n", "no":
+			log.Printf("Delete canceled for system check: %v", cookbookId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.SystemCookbookDelete(systemId, cookbookId, false)
+		}
+
+	}
+
+}
+
 // ------------------ GET PROVIDERS
 
 func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {

@@ -181,12 +181,16 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS SPECIFIC (describe / delete / update) --------------------------------------
-	
-	systemCookbookCmd.AddCommand(systemCookbookDescribeCmd)
-	
-	
-	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 
+	// --- DESCRIBE
+	systemCookbookCmd.AddCommand(systemCookbookDescribeCmd)
+
+	// --- DELETE
+	systemCookbookCmd.AddCommand(systemCookbookDeleteCmd)
+	// optional flags
+	systemCookbookDeleteCmd.Flags().BoolVarP(&systemCookbookDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a cookbook")
+
+	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
 	// SSH KEYS
@@ -454,8 +458,6 @@ var systemDeleteCmd = &cobra.Command{
 
 // #endregion
 
-
-
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
 
 // ---------------- MAIN COMMAND (checks)
@@ -670,9 +672,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 
 // #endregion
 
-
-
-// ---------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
+//------------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
 // #region SYSTEM ACTIONS
 
 var systemActionsCmd = &cobra.Command{
@@ -734,15 +734,13 @@ var systemActionsAutoInstallCmd = &cobra.Command{
 	Run:  func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
 }
 
-// #endregion
-
 func runAction(action string, args []string) {
 	id := resolveSystem(args[0])
 
 	Level27Client.SystemAction(id, action)
 }
 
-
+// #endregion
 
 //------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
 // ---------------- MAIN COMMAND (checks)
@@ -943,6 +941,7 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 
 //------------------------------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ----------------------------------
 
+// --- DESCRIBE
 var systemCookbookDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "show detailed info about a cookbook on a system",
@@ -952,21 +951,41 @@ var systemCookbookDescribeCmd = &cobra.Command{
 		systemId := checkSingleIntID(args[0], "system")
 		// chekc for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
-		
+
 		result := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
-		
+
 		outputFormatTemplate(result, "templates/systemCookbook.tmpl")
 	},
 }
 
+// --- DELETE
+var systemCookbookDeleteConfirmed bool
+var systemCookbookDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "delete a cookbook from a system.",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system id
+		systemId := checkSingleIntID(args[0], "system")
+		// chekc for valid cookbook id
+		cookbookId := checkSingleIntID(args[1], "cookbook")
+
+		
+		Level27Client.SystemCookbookDelete(systemId, cookbookId, systemCookbookDeleteConfirmed)
 
 
-// // ------------------------------------------------------ SSH KEYS
+	},
+}
+
+//------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
 var systemSshKeysCmd = &cobra.Command{
 	Use: "sshkeys",
 }
 
+// #region SYSTEMS/SHH KEYS (GET / ADD / DELETE)
+
+// --- GET
 var systemSshKeysGetCmd = &cobra.Command{
 	Use: "get",
 
@@ -978,6 +997,7 @@ var systemSshKeysGetCmd = &cobra.Command{
 	},
 }
 
+// --- ADD
 var systemSshKeysAddCmd = &cobra.Command{
 	Use: "add",
 
@@ -1008,6 +1028,7 @@ var systemSshKeysAddCmd = &cobra.Command{
 	},
 }
 
+// --- DELETE
 var systemSshKeysRemoveCmd = &cobra.Command{
 	Use: "remove",
 
@@ -1030,3 +1051,5 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 		Level27Client.SystemRemoveSshKey(systemID, keyID)
 	},
 }
+
+// #endregion
