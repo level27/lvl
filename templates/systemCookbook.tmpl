@@ -1,7 +1,7 @@
 ID: {{.Id}}
 Cookbooktype:  {{.CookbookType}}
 Status: {{.Status}}
-System: {{.System.Name}}  ID: {{.System.Id}}
+System: {{.System.Name}}  SYSTEM_ID: {{.System.Id}}
 
 
 
@@ -9,7 +9,7 @@ System: {{.System.Name}}  ID: {{.System.Id}}
 
   {{- $anyParams := false }}
 
-  COOKBOOKPARAMETERS: {{ range $key, $dat := .CookbookParameters }}{{ if not $dat.Default }}
+  CUSTOM_COOKBOOKPARAMETERS: {{ range $key, $dat := .CookbookParameters }}{{ if not $dat.Default }}
     {{- $anyParams = true }}
     {{ $key }}: {{vt "brightwhite"}}{{ $dat.Value}}    
   {{ end }}{{ end }}{{if not $anyParams}}(none){{ end -}}
