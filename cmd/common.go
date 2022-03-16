@@ -42,8 +42,8 @@ func addCommonGetFlags(cmd *cobra.Command) {
 }
 
 //check for valid ID as type INT.
-func checkSingleIntID(ids []string, entity string) int {
-	id, err := strconv.Atoi(ids[0])
+func checkSingleIntID(arg string, entity string) int {
+	id, err := strconv.Atoi(arg)
 	if err != nil {
 		log.Fatalf("Not a valid %v ID!", entity)
 	}

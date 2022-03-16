@@ -107,7 +107,7 @@ func (c *Client) SystemRemoveSshKey(id int, keyID int) {
 }
 
 func (c *Client) LookupSystemSshkey(systemID int, name string) *types.SystemSshkey {
-	keys := c.SystemGetSshKeys(systemID, types.CommonGetParams{ Filter: name })
+	keys := c.SystemGetSshKeys(systemID, types.CommonGetParams{Filter: name})
 	for _, key := range keys {
 		if key.Description == name {
 			return &key
@@ -118,7 +118,7 @@ func (c *Client) LookupSystemSshkey(systemID int, name string) *types.SystemSshk
 }
 
 func (c *Client) LookupSystemNonAddedSshkey(systemID int, organisationID int, userID int, name string) *types.SshKey {
-	keys := c.SystemGetNonAddedSshKeys(systemID, organisationID, userID, types.CommonGetParams{ Filter: name })
+	keys := c.SystemGetNonAddedSshKeys(systemID, organisationID, userID, types.CommonGetParams{Filter: name})
 	for _, key := range keys {
 		if key.Description == name {
 			return &key
@@ -163,7 +163,6 @@ func (c *Client) SecurityUpdateDates() []string {
 	AssertApiError(err, "Security updates")
 	return updates.SecurityUpdateDates
 }
-
 
 // CREATE SYSTEM [lvl system create <parmeters>]
 func (c *Client) SystemCreate(req types.SystemPost) {
@@ -250,14 +249,13 @@ func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 }
 
 // ------------- GET CHECK PARAMETERS (for specific checktype)
-func (c *Client) SystemCheckTypeGet(checktype string) (types.SystemCheckType) {
+func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 	var checktypes struct {
 		Data types.SystemCheckTypeName `json:"checktypes"`
 	}
 	endpoint := "checktypes"
 	err := c.invokeAPI("GET", endpoint, nil, &checktypes)
 	AssertApiError(err, "checktypes")
-
 
 	// check if the given type by user is one of the possible types we got back from the API
 	var isTypeValid = false
@@ -278,7 +276,6 @@ func (c *Client) SystemCheckTypeGet(checktype string) (types.SystemCheckType) {
 	// return the chosen valid type and its specific data
 	return checktypes.Data[checktype]
 }
-
 
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
 // ------------- DESCRIBE A SPECIFIC CHECK
@@ -330,12 +327,12 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 }
 
 // ------------- UPDATE A SPECIFIC CHECK
-func (c *Client) SystemCheckUpdate(systemId int, checkId int, req types.SystemCheckRequestHttp) {
-	var SystemCheck struct {
-		Data types.SystemCheck `json:"check"`
-	}
-	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
-	err := c.invokeAPI("PUT", endpoint, req, &SystemCheck)
+func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
+	// var SystemCheck struct {
+	// 	Data types.SystemCheck `json:"check"`
+	// }
+	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
 
 	AssertApiError(err, "System checks")
 }
@@ -362,7 +359,7 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
 
 	// var to show result of API after succesfull adding cookbook
-	var cookbook struct{
+	var cookbook struct {
 		Data types.Cookbook `json:"cookbook"`
 	}
 
@@ -370,12 +367,11 @@ func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
 	err := c.invokeAPI("POST", endpoint, req, &cookbook)
 	AssertApiError(err, "cookbooktype")
 
-
 }
 
 // --------------------------- SPECIFIC COOKBOOKTYPES (GET) ------------------------------------
-// ------- GET ALL CURRENT COOKBOOKTYPES
-func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
+// ------- GET COOKBOOKTYPES parameters
+func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType, *gabs.Container) {
 	var cookbookTypes struct {
 		Data types.CookbookTypeName `json:"cookbooktypes"`
 	}
@@ -383,27 +379,37 @@ func (c *Client) SystemCookbookTypesGet() ([]string, *gabs.Container) {
 	err := c.invokeAPI("GET", endpoint, nil, &cookbookTypes)
 	AssertApiError(err, "cookbooktypes")
 
-	//creating an array from the maps keys. the keys of the map are the possible cookbooktypes
-	validTypes := make([]string, 0, len(cookbookTypes.Data))
+	// check if the given type by user is one of the possible types we got back from the API
+	var isTypeValid = false
+	for validType := range cookbookTypes.Data {
+		if cookbooktype == validType {
+			isTypeValid = true
 
-	for i := range cookbookTypes.Data {
-		validTypes = append(validTypes, i)
-
+		}
 	}
 
-	// marshal all current data into a byteslice to parse it into json.
-	result, err := json.Marshal(cookbookTypes)
+	// when given type is not valid -> error
+	if !isTypeValid {
+		message := fmt.Sprintf("given type: '%v' is no valid cookbooktype.", cookbooktype)
+		err := errors.New(message)
+		log.Fatal(err)
+	}
+
+	// from the valid type we make a JSON string with selectable parameters.
+	// we do this because we dont know beforehand if there will be any and how they will be named
+	result, err := json.Marshal(cookbookTypes.Data[cookbooktype].CookbookType.ParameterOptions)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
 	// parse the slice of bytes into json, this way we can dynamicaly use unknown incomming data
 	jsonParsed, err := gabs.ParseJSON([]byte(result))
 
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	return validTypes, jsonParsed
+
+	// return the chosen valid type and its specific data
+	return cookbookTypes.Data[cookbooktype], jsonParsed
 }
 
 // ------------------ GET PROVIDERS
