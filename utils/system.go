@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/Jeffail/gabs/v2"
 )
 
 // --------------------------- TOPLEVEL SYSTEM ACTIONS (GET / POST) ------------------------------------
@@ -29,7 +32,7 @@ func (c *Client) SystemGetList(getParams types.CommonGetParams) []types.System {
 }
 
 func (c *Client) LookupSystem(name string) *types.System {
-	systems := c.SystemGetList(types.CommonGetParams{ Filter: name })
+	systems := c.SystemGetList(types.CommonGetParams{Filter: name})
 	for _, system := range systems {
 		if system.Name == name {
 			return &system
@@ -104,7 +107,7 @@ func (c *Client) SystemRemoveSshKey(id int, keyID int) {
 }
 
 func (c *Client) LookupSystemSshkey(systemID int, name string) *types.SystemSshkey {
-	keys := c.SystemGetSshKeys(systemID, types.CommonGetParams{ Filter: name })
+	keys := c.SystemGetSshKeys(systemID, types.CommonGetParams{Filter: name})
 	for _, key := range keys {
 		if key.Description == name {
 			return &key
@@ -115,7 +118,7 @@ func (c *Client) LookupSystemSshkey(systemID int, name string) *types.SystemSshk
 }
 
 func (c *Client) LookupSystemNonAddedSshkey(systemID int, organisationID int, userID int, name string) *types.SshKey {
-	keys := c.SystemGetNonAddedSshKeys(systemID, organisationID, userID, types.CommonGetParams{ Filter: name })
+	keys := c.SystemGetNonAddedSshKeys(systemID, organisationID, userID, types.CommonGetParams{Filter: name})
 	for _, key := range keys {
 		if key.Description == name {
 			return &key
@@ -159,30 +162,6 @@ func (c *Client) SecurityUpdateDates() []string {
 
 	AssertApiError(err, "Security updates")
 	return updates.SecurityUpdateDates
-}
-
-//----------------- POST
-//Get request to see all curent checktypes (valid checktype needed to create new check)
-func (c *Client) SystemCheckTypeGet() []string {
-	var checks struct {
-		Data types.SystemCheckTypeName `json:"checktypes"`
-	}
-
-	endpoint := "checktypes"
-	err := c.invokeAPI("GET", endpoint, nil, &checks)
-	AssertApiError(err, "checktypes")
-
-	//creating an array from the maps keys. the keys of the map are the possible checktypes
-	validTypes := make([]string, 0, len(checks.Data))
-	values := make([]types.SystemCheckType, 0, len(checks.Data))
-
-	for K, V := range checks.Data {
-		validTypes = append(validTypes, K)
-		values = append(values, V)
-	}
-
-	return validTypes
-
 }
 
 // CREATE SYSTEM [lvl system create <parmeters>]
@@ -239,7 +218,7 @@ func (c *Client) SystemDeleteForce(id int) {
 	AssertApiError(err, "SystemDelete")
 }
 
-// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST) ------------------------------------
+// --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST / PARAMETERS) ------------------------------------
 // ------------- GET CHECKS
 func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
 
@@ -257,6 +236,47 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 
 }
 
+// ------------- CREATE A CHECK
+func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+	var SystemCheck struct {
+		Data types.SystemCheck `json:"check"`
+	}
+	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
+	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+
+	AssertApiError(err, "System checks")
+	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
+}
+
+// ------------- GET CHECK PARAMETERS (for specific checktype)
+func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
+	var checktypes struct {
+		Data types.SystemCheckTypeName `json:"checktypes"`
+	}
+	endpoint := "checktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &checktypes)
+	AssertApiError(err, "checktypes")
+
+	// check if the given type by user is one of the possible types we got back from the API
+	var isTypeValid = false
+	for validType := range checktypes.Data {
+		if checktype == validType {
+			isTypeValid = true
+			log.Print()
+		}
+	}
+
+	// when given type is not valid -> error
+	if !isTypeValid {
+		message := fmt.Sprintf("given type: '%v' is no valid checktype.", checktype)
+		err := errors.New(message)
+		log.Fatal(err)
+	}
+
+	// return the chosen valid type and its specific data
+	return checktypes.Data[checktype]
+}
+
 // --------------------------- SYSTEM/CHECKS ACTIONS (GET / DELETE / UPDATE) ------------------------------------
 // ------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
@@ -267,9 +287,6 @@ func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemChec
 	err := c.invokeAPI("GET", endpoint, nil, &check)
 	AssertApiError(err, "system check")
 
-	// result, err := json.Marshal(check.Data)
-	// jsonParsed, err := gabs.ParseJSON([]byte(result))
-	// log.Print(jsonParsed)
 	return check.Data
 }
 
@@ -309,16 +326,15 @@ func (c *Client) SystemCheckDelete(systemId int, checkId int, isDeleteConfirmed 
 
 }
 
-// ------------- CREATE A CHECK
-func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
-	var SystemCheck struct {
-		Data types.SystemCheck `json:"check"`
-	}
-	endpoint := fmt.Sprintf("systems/%v/checks", systemId)
-	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
+// ------------- UPDATE A SPECIFIC CHECK
+func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
+	// var SystemCheck struct {
+	// 	Data types.SystemCheck `json:"check"`
+	// }
+	endpoint := fmt.Sprintf("systems/%v/checks/%v", systemId, checkId)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
 
 	AssertApiError(err, "System checks")
-	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
 
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
@@ -338,6 +354,65 @@ func (c *Client) SystemCookbookGetList(systemId int) []types.Cookbook {
 	return systemCookbooks.Data
 
 }
+
+// ------------- ADD COOKBOOK
+func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
+
+	// var to show result of API after succesfull adding cookbook
+	var cookbook struct {
+		Data types.Cookbook `json:"cookbook"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/cookbooks", systemID)
+	err := c.invokeAPI("POST", endpoint, req, &cookbook)
+	AssertApiError(err, "cookbooktype")
+
+}
+
+// --------------------------- SPECIFIC COOKBOOKTYPES (GET) ------------------------------------
+// ------- GET COOKBOOKTYPES parameters
+func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType, *gabs.Container) {
+	var cookbookTypes struct {
+		Data types.CookbookTypeName `json:"cookbooktypes"`
+	}
+	endpoint := "cookbooktypes"
+	err := c.invokeAPI("GET", endpoint, nil, &cookbookTypes)
+	AssertApiError(err, "cookbooktypes")
+
+	// check if the given type by user is one of the possible types we got back from the API
+	var isTypeValid = false
+	for validType := range cookbookTypes.Data {
+		if cookbooktype == validType {
+			isTypeValid = true
+
+		}
+	}
+
+	// when given type is not valid -> error
+	if !isTypeValid {
+		message := fmt.Sprintf("given type: '%v' is no valid cookbooktype.", cookbooktype)
+		err := errors.New(message)
+		log.Fatal(err)
+	}
+
+	// from the valid type we make a JSON string with selectable parameters.
+	// we do this because we dont know beforehand if there will be any and how they will be named
+	result, err := json.Marshal(cookbookTypes.Data[cookbooktype].CookbookType.ParameterOptions)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	// parse the slice of bytes into json, this way we can dynamicaly use unknown incomming data
+	jsonParsed, err := gabs.ParseJSON([]byte(result))
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	// return the chosen valid type and its specific data
+	return cookbookTypes.Data[cookbooktype], jsonParsed
+}
+
+// ------------------ GET PROVIDERS
 
 func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfiguration {
 	var response struct {

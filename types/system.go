@@ -49,21 +49,9 @@ type System struct {
 	Networks         []SystemNetwork `json:"networks"`
 	PublicNetworking bool            `json:"publicNetworking"`
 	StatsSummary     struct {
-		DiskSpace struct {
-			Unit  string      `json:"unit"`
-			Value interface{} `json:"value"`
-			Max   interface{} `json:"max"`
-		} `json:"diskspace"`
-		Memory struct {
-			Unit  string      `json:"unit"`
-			Value interface{} `json:"value"`
-			Max   interface{} `json:"max"`
-		} `json:"Memory"`
-		Cpu struct {
-			Unit  string      `json:"unit"`
-			Value interface{} `json:"value"`
-			Max   interface{} `json:"max"`
-		} `json:"cpu"`
+		DiskSpace StatSummary `json:"diskspace"`
+		Memory    StatSummary `json:"Memory"`
+		Cpu       StatSummary `json:"cpu"`
 	} `json:"statsSummary"`
 	DtExpires     int    `json:"dtExpires"`
 	BillingStatus string `json:"billingStatus"`
@@ -87,6 +75,12 @@ type System struct {
 	} `json:"bootVolume"`
 	Cookbooks             []SystemCookbook `json:"cookbooks"`
 	Preferredparentsystem string           `json:"preferredparentsystem"`
+}
+
+type StatSummary struct {
+	Unit  string      `json:"unit"`
+	Value interface{} `json:"value"`
+	Max   interface{} `json:"max"`
 }
 
 type DescribeSystem struct {
@@ -257,6 +251,7 @@ type SystemPost struct {
 
 // ----------------------------------- CHECKS ----------------------------------
 
+//--  used to get all current checktypes.
 type SystemCheckTypeName map[string]SystemCheckType
 
 type SystemCheckType struct {
@@ -278,43 +273,67 @@ type SystemCheckType struct {
 	} `json:"servicetype"`
 }
 
+// -- structure of specific check on a system
+
+// create parameter name dynamicaly
+type systemCheckParameterName map[string]systemCheckParameter
+
+type systemCheckParameter struct {
+	Value   interface{} `json:"value"`
+	Default bool        `json:"default"`
+}
+
+// create parameter description name dynamicaly
+type systemCheckParameterDescription map[string]interface{}
+
 type SystemCheck struct {
-	Id                   int    `json:"id"`
-	CheckType            string `json:"checktype"`
-	ChecktypeLocation    string `json:"checktypeLocation"`
-	Status               string `json:"status"`
-	StatusInformation    string `json:"statusInformation"`
-	DtLastMonitorEnabled int    `json:"dtLastMonitoringEnabled"`
-	DtLastStatusChanged  int64  `json:"dtLastStatusChange"`
-	DtNextCheck          int    `json:"dtNextCheck"`
-	DtLastCheck          int    `json:"dtLastCheck"`
-	CheckParameters      interface {
-	} `json:"checkparameters"`
-	CheckParametersDescriptions interface {
-	} `json:"checkparameterDescriptions"`
-	Location string `json:"location"`
-	System   struct {
+	Id                          int                             `json:"id"`
+	CheckType                   string                          `json:"checktype"`
+	ChecktypeLocation           string                          `json:"checktypeLocation"`
+	Status                      string                          `json:"status"`
+	StatusInformation           string                          `json:"statusInformation"`
+	DtLastMonitorEnabled        int                             `json:"dtLastMonitoringEnabled"`
+	DtLastStatusChanged         int64                           `json:"dtLastStatusChange"`
+	DtNextCheck                 int                             `json:"dtNextCheck"`
+	DtLastCheck                 int                             `json:"dtLastCheck"`
+	CheckParameters             systemCheckParameterName        `json:"checkparameters"`
+	CheckParametersDescriptions systemCheckParameterDescription `json:"checkparameterDescriptions"`
+	Location                    string                          `json:"location"`
+	System                      struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"system"`
 	Alerts []interface{} `json:"alerts"`
 }
 
-// ---- Check create request
-type SystemCheckRequest struct {
-	Checktype string `json:"checktype"`
-}
-
-// ---- check create request for http type
-type SystemCheckRequestHttp struct {
-	Checktype string `json:"checktype"`
-	Port      int    `json:"port"`
-	Hostname  string `json:"hostname"`
-	Url       string `json:"url"`
-	Content   string `json:"content"`
-}
-
 // ----------------------------------- COOKBOOKS ----------------------------------
+// parameteroptions
+type CookbookParameterOption struct {
+	Name                    string      `json:"name"`
+	Exclusive               bool        `json:"exclusive"`
+	Value                   interface{} `json:"value"`
+	OperatingSystemVersions []struct {
+		Name    string `json:"name"`
+		Default bool   `json:"default"`
+	} `json:"operatingsystem_versions"`
+}
+
+// Cookbooktype (used to see all current valid cookbooktypes)
+type CookbookTypeName map[string]CookbookType
+type CookbookType struct {
+	CookbookType struct {
+		Name        string `json:"name"`
+		DisplayName string `json:"displayName"`
+		Description string `json:"description"`
+		Parameters  []struct {
+			Name         string      `json:"name"`
+			Description  string      `json:"description"`
+			Type         string      `json:"type"`
+			DefaultValue interface{} `json:"defaultValue"`
+		} `json:"parameters"`
+		ParameterOptions interface{} `json:"parameterOptions"`
+	} `json:"cookbooktype"`
+}
 
 type Cookbook struct {
 	Id                             int         `json:"id"`
@@ -323,7 +342,16 @@ type Cookbook struct {
 	CookbookParametersDescriptions interface{} `json:"cookbookparameterDescriptions"`
 	PreviousCookbookParameters     interface{} `json:"previousCookbookparameters"`
 	Status                         string      `json:"status"`
+	System                         struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"system"`
 }
+
+// // Add cookbook to a system request
+// type CookbookAdd struct {
+// 	Cookbooktype string `json:"cookbooktype"`
+// }
 
 type SystemProviderConfigurationRef struct {
 	ID          int    `json:"id"`

@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
+	"reflect"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
+	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,7 +26,9 @@ func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemCmd)
 
-	//-------------------------------------  Toplevel subcommands (get/post) --------------------------------------
+	//-------------------------------------  Toplevel SYSTEM COMMANDS (get/post) --------------------------------------
+	// #region Toplevel SYSTEM COMMANDS (get/post)
+
 	// --- GET
 	systemCmd.AddCommand(systemGetCmd)
 	addCommonGetFlags(systemGetCmd)
@@ -60,8 +65,11 @@ func init() {
 	for _, flag := range requiredFlags {
 		systemCreateCmd.MarkFlagRequired(flag)
 	}
+	// #endregion
 
-	// --- ACTIONS
+	// ------------------------------------ ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
+
+	// #region ACTIONS ON SPECIFIC SYSTEM
 	systemCmd.AddCommand(systemActionsCmd)
 
 	systemActionsCmd.AddCommand(systemActionsStartCmd)
@@ -93,8 +101,19 @@ func init() {
 
 	systemCmd.AddCommand(systemDeleteCmd)
 	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
+	// #endregion
 
-	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get/post) --------------------------------------
+	//-------------------------------------  SYSTEMS/CHECKS PARAMETERS (get parameters) --------------------------------------
+	// #region GET CHECK PARAMETERS
+	// ---- GET PARAMETERS (for specific checktype)
+	systemCheckCmd.AddCommand(systemChecktypeParametersGetCmd)
+
+	// flags needed to get checktype parameters
+	systemChecktypeParametersGetCmd.Flags().StringVarP(&systemCheckCreateType, "type", "t", "", "Check type to see all its available parameters")
+	// #endregion
+
+	//-------------------------------------  SYSTEMS/CHECKS TOPLEVEL (get / post) --------------------------------------
+	// #region SYSTEMS/CHECKS TOPLEVEL
 	systemCmd.AddCommand(systemCheckCmd)
 	// ---- GET LIST OF ALL CHECKS
 	systemCheckCmd.AddCommand(systemCheckGetCmd)
@@ -105,16 +124,16 @@ func init() {
 
 	// -- flags needed to create a check
 	flags = systemCheckCreateCmd.Flags()
-	flags.StringVarP(&systemCheckCreate, "type", "t", "", "Check type (non-editable)")
+	flags.StringVarP(&systemCheckCreateType, "type", "t", "", "Check type (non-editable)")
 	systemCheckCreateCmd.MarkFlagRequired("type")
 
-	// -- optional flags, only for creating a http check
-	flags.IntVarP(&systemCreateCheckPort, "port", "p", 80, "Port for http checktype.")
-	flags.StringVarP(&systemCreateCheckHost, "host", "", "", "Hostname for http checktype.")
-	flags.StringVarP(&systemCreateCheckUrl, "url", "", "", "Url for http checktype.")
-	flags.StringVarP(&systemCreateCheckContent, "content", "c", "", "Content for http checktype.")
+	// -- optional flag
+	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+
+	// #endregion
 
 	//-------------------------------------  SYSTEMS/CHECKS ACTIONS (get/ delete/ update) --------------------------------------
+	// #region SYSTEMS/CHECKS ACTIONS
 	// --- DESCRIBE CHECK
 	systemCheckCmd.AddCommand(systemCheckGetSingleCmd)
 	// --- DELETE CHECK
@@ -123,12 +142,51 @@ func init() {
 	//flag to skip confirmation when deleting a check
 	systemCheckDeleteCmd.Flags().BoolVarP(&systemCheckDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
 
+	// --- UPDATE CHECK (ONLY FOR HTTP REQUEST)
+	systemCheckCmd.AddCommand(systemCheckUpdateCmd)
+
+	// flag needed to update a specific check
+	systemCheckUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	systemCheckUpdateCmd.MarkFlagRequired("parameters")
+
+	// #endregion
+
 	//-------------------------------------  SYSTEMS/COOKBOOKS TOPLEVEL (get/post) --------------------------------------
+
+	// #region SYSTEMS/COOKBOOKS TOPLEVEL (get/post)
+
 	// adding cookbook subcommand to system command
 	systemCmd.AddCommand(systemCookbookCmd)
 
 	// ---- GET cookbooks
 	systemCookbookCmd.AddCommand(systemCookbookGetCmd)
+
+	// ---- ADD cookbook (to system)
+	systemCookbookCmd.AddCommand(systemCookbookAddCmd)
+
+	// flags needed to add new cookbook to a system
+	flags = systemCookbookAddCmd.Flags()
+	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
+	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+
+	systemCookbookAddCmd.MarkFlagRequired("type")
+	// #endregion
+
+	//-------------------------------------  SYSTEMS/COOKBOOKS PARAMETERS (get) --------------------------------------
+
+	// #region SYSTEMS/COOKBOOKS PARAMETERS (get)
+
+	// ---- GET COOKBOOKTYPES PARAMETERS
+	systemCookbookCmd.AddCommand(SystemCookbookTypesGetCmd)
+
+	//flags needed to get specific parameters info
+	SystemCookbookTypesGetCmd.Flags().StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
+	SystemCookbookTypesGetCmd.MarkFlagRequired("type")
+	// #endregion
+
+	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
+
+	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
 	// SSH KEYS
 	systemCmd.AddCommand(systemSshKeysCmd)
@@ -138,6 +196,8 @@ func init() {
 
 	systemSshKeysCmd.AddCommand(systemSshKeysAddCmd)
 	systemSshKeysCmd.AddCommand(systemSshKeysRemoveCmd)
+
+	// #endregion
 
 	// NETWORKS
 
@@ -165,7 +225,6 @@ func init() {
 	systemNetworkIpCmd.AddCommand(systemNetworkIpUpdateCmd)
 	settingsFileFlag(systemNetworkIpUpdateCmd)
 	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
-
 }
 
 // Resolve an integer or name domain.
@@ -183,7 +242,6 @@ func resolveSystem(arg string) int {
 	}
 	return system.Id
 }
-
 func resolveSystemProviderConfiguration(region int, arg string) int {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
@@ -231,7 +289,8 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
 }
 
 
-//------------------------------------------------- SYSTEM TOPLEVEL (GET / CREATE) ----------------------------------
+//------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
+// #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
 //----------------------------------------- GET ---------------------------------------
 var systemGetCmd = &cobra.Command{
 	Use:   "get",
@@ -384,10 +443,14 @@ var systemCreateCmd = &cobra.Command{
 	},
 }
 
+// #endregion
+
+//------------------------------------------------- SYSTEM SPECIFIC (UPDATE / FORCE DELETE ) ----------------------------------
+// #region SYSTEM SPECIFIC (UPDATE / FORCE DELETE)
 var systemUpdateCmd = &cobra.Command{
-	Use: "update",
+	Use:   "update",
 	Short: "Update settings on a system",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		settings := loadMergeSettings(updateSettingsFile, updateSettings)
 
@@ -396,24 +459,24 @@ var systemUpdateCmd = &cobra.Command{
 		system := Level27Client.SystemGetSingle(systemID)
 
 		systemPut := types.SystemPut{
-			Id: system.Id,
-			Name: system.Name,
-			Type: system.Type,
-			Cpu: system.Cpu,
-			Memory: system.Memory,
-			Disk: system.Disk,
-			ManagementType: system.ManagementType,
-			Organisation: system.Organisation.ID,
-			SystemImage: system.SystemImage.Id,
-			OperatingsystemVersion: system.OperatingSystemVersion.Id,
+			Id:                          system.Id,
+			Name:                        system.Name,
+			Type:                        system.Type,
+			Cpu:                         system.Cpu,
+			Memory:                      system.Memory,
+			Disk:                        system.Disk,
+			ManagementType:              system.ManagementType,
+			Organisation:                system.Organisation.ID,
+			SystemImage:                 system.SystemImage.Id,
+			OperatingsystemVersion:      system.OperatingSystemVersion.Id,
 			SystemProviderConfiguration: system.SystemProviderConfiguration.ID,
-			Zone: system.Zone.Id,
-			PublicNetworking: system.PublicNetworking,
-			Preferredparentsystem: system.Preferredparentsystem,
-			Remarks: system.Remarks,
-			InstallSecurityUpdates: system.InstallSecurityUpdates,
-			LimitRiops: system.LimitRiops,
-			LimitWiops: system.LimitWiops,
+			Zone:                        system.Zone.Id,
+			PublicNetworking:            system.PublicNetworking,
+			Preferredparentsystem:       system.Preferredparentsystem,
+			Remarks:                     system.Remarks,
+			InstallSecurityUpdates:      system.InstallSecurityUpdates,
+			LimitRiops:                  system.LimitRiops,
+			LimitWiops:                  system.LimitWiops,
 		}
 
 		data := roundTripJson(systemPut).(map[string]interface{})
@@ -429,9 +492,9 @@ var systemUpdateCmd = &cobra.Command{
 
 var systemDeleteForce bool
 var systemDeleteCmd = &cobra.Command{
-	Use: "delete",
+	Use:   "delete",
 	Short: "Delete a system",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		systemID := resolveSystem(args[0])
 
@@ -443,18 +506,21 @@ var systemDeleteCmd = &cobra.Command{
 	},
 }
 
+// #endregion
+
 //------------------------------------------------- SYSTEM/CHECKS TOPLEVEL (GET / CREATE) ----------------------------------
+
 // ---------------- MAIN COMMAND (checks)
 var systemCheckCmd = &cobra.Command{
 	Use:   "checks",
 	Short: "Manage systems checks",
 }
 
-// ---------------- GET
 
+// ---------------- GET
 var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
-	Short: "Get a list of all checks for a system",
+	Short: "Get a list of all checks from a system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
@@ -465,9 +531,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 		// Creating readable output
 		outputFormatTableFuncs(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-			[]interface{}{"Id", "CheckType", "Status",func(s types.SystemCheck) string {return utils.FormatUnixTime(s.DtLastStatusChanged)}, "StatusInformation"})
-
-
+			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheck) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
 
 	},
 }
@@ -479,69 +543,67 @@ func getSystemChecks(id int) []types.SystemCheck {
 }
 
 // ---------------- CREATE CHECK
-var systemCheckCreate, systemCreateCheckUrl, systemCreateCheckContent, systemCreateCheckHost string
-var systemCreateCheckPort int
-
+var systemCheckCreateType string
 var systemCheckCreateCmd = &cobra.Command{
-	Use:   "create [system ID] [parameters]",
-	Short: "create a new check for a specific system",
+	Use:   "add [system ID] [parameters]",
+	Short: "add a new check to a specific system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid system ID
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		// check for valid system ID
+		id := checkSingleIntID(args[0], "check")
 
+		var err error
 		// get the value of the flag type set by user
 		checkTypeInput := cmd.Flag("type").Value.String()
 
-		// bool value to see if user input is valid, and bool to check if chosen type is http
-		var isChecktypeValid, isCheckTypeHttp bool
-		if cmd.Flag("type").Changed {
+		//get all data from the chosen checktype returned as Systemchecktype struct
+		checktypeResult := Level27Client.SystemCheckTypeGet(checkTypeInput)
+		possibleParameters := checktypeResult.ServiceType.Parameters
 
-			// GET REQUEST to see what all curent valid checktypes are (function gives back an array of valid types)
-			systemCheckCreateArray := Level27Client.SystemCheckTypeGet()
+		// create base of json container, will be used for post request and eventually filled with custom parameters
+		jsonObjCheckPost := gabs.New()
+		jsonObjCheckPost.Set(checkTypeInput, "checktype")
 
-			//when user input is one of the valid options -> validation bool is true
-			for _, validOption := range systemCheckCreateArray {
-				if strings.ToLower(checkTypeInput) == validOption {
+		// if user wants to use custom parameters
+		if cmd.Flag("parameters").Changed {
+			// check if given parameters and usage of -p flag is correct
+			customParameterDict := SplitCustomParameters(systemDynamicParams)
 
-					checkTypeInput = validOption
+			// loop over all given custom parameters by user
+			for customParameterName, customParameterValue := range customParameterDict {
+				var isCustomParameterValid bool = false
+				// loop over all possible parameters we got back form the API
+				for i := range possibleParameters {
+					possibleParName := possibleParameters[i].Name
 
-					// check if chosen type is http
-					if checkTypeInput == "http" {
-						isCheckTypeHttp = true
+					//when match found between custom paramater and possible parameter
+					if possibleParName == customParameterName {
+						isCustomParameterValid = true
+						jsonObjCheckPost.Set(customParameterValue, customParameterName)
 					}
-					isChecktypeValid = true
-
 				}
-			}
-			// if user input not in valid options array -> error
-			if !isChecktypeValid {
-				log.Fatalln("Given checktype is not valid")
-			} else {
-				//when user chose http type, aditional flags can be set
-				if isCheckTypeHttp {
-					request := types.SystemCheckRequestHttp{
-						Checktype: checkTypeInput,
-						Port:      systemCreateCheckPort,
-						Url:       systemCreateCheckUrl,
-						Hostname:  systemCreateCheckHost,
-						Content:   systemCreateCheckContent,
-					}
-					Level27Client.SystemCheckCreate(id, request)
-					//when chosen type NOT http -> only checktype will be needed for request
-				} else {
-					request := types.SystemCheckRequest{
-						Checktype: checkTypeInput,
-					}
-					Level27Client.SystemCheckCreate(id, request)
+				if !isCustomParameterValid {
+					err = fmt.Errorf("given parameter name is not valid: '%v'", customParameterName)
+					log.Fatal(err)
 				}
-
 			}
 
 		}
+		//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+		Level27Client.SystemCheckCreate(id, jsonObjCheckPost)
+	},
+}
+
+// ------------- GET CHECK PARAMETERS (for specific checktype)
+var systemChecktypeParametersGetCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Show all default parameters for a specific checktype.",
+	Run: func(cmd *cobra.Command, args []string) {
+		chosenType := cmd.Flag("type").Value.String()
+
+		checktypeResult := Level27Client.SystemCheckTypeGet(chosenType)
+
+		outputFormatTable(checktypeResult.ServiceType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
 
 	},
 }
@@ -579,10 +641,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
-		systemID, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		systemID := checkSingleIntID(args[0], "system")
 
 		//check for valid system checkID
 		checkID, err := strconv.Atoi(args[1])
@@ -594,35 +653,69 @@ var systemCheckDeleteCmd = &cobra.Command{
 	},
 }
 
-//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
-// ---------------- MAIN COMMAND (checks)
-var systemCookbookCmd = &cobra.Command{
-	Use:   "cookbook",
-	Short: "Manage systems cookbooks",
-}
-
-// ---------- GET COOKBOOKS
-var systemCookbookGetCmd = &cobra.Command{
-	Use:   "get [system ID]",
-	Short: "Gets a list of all cookbooks from a system.",
-	Args:  cobra.ExactArgs(1),
+// -------------- UPDATE SPECIFIC CHECK
+var systemCheckUpdateCmd = &cobra.Command{
+	Use:   "update [SystemID] [CheckID]",
+	Short: "update a specific check from a system",
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
+		// check for valid system ID
+		systemID := checkSingleIntID(args[0], "system")
+		// check for valid check ID
+		checkID := checkSingleIntID(args[1], "check")
+
+		// get the current data from the check
+		currentData := Level27Client.SystemCheckDescribe(systemID, checkID)
+
+
+		// create base of PUT request in JSON (checktype required and cannot be changed)
+		updateCheckJson := gabs.New()
+		updateCheckJson.Set(currentData.CheckType, "checktype")
+
+		// keep track of possbile parameters for current checktype
+		var possibleParameters []string
+		// loop over current parameters for the check.
+		// if parameter value is not default -> it needs to be sent in put request again.
+		for key, value := range currentData.CheckParameters {
+			// put each possible parrameter in array for later
+			possibleParameters = append(possibleParameters, key)
+
+			if !value.Default {
+				updateCheckJson.Set(value.Value, key)
+			}
 		}
 
-		outputFormatTable(getSystemCookbooks(id), []string{"ID", "CHECKTYPE", "STATUS"}, []string{"Id", "Checktype", "Status"})
+		// check wich parameters the user gave in.
+		// also check if way of using parameter flag is correct
+		customParamaterDict := SplitCustomParameters(systemDynamicParams)
+
+
+		// check for each given parameter if its one of the possible parameters
+		// if parameter = valid -> add key/value to json object for put request
+		for givenParameter, givenValue := range customParamaterDict{
+			var isValidParameter bool = false
+			for i := range possibleParameters{
+				if givenParameter == possibleParameters[i]{
+					isValidParameter = true
+					updateCheckJson.Set(givenValue, givenParameter)
+				}
+			}
+
+			if !isValidParameter {
+				message := fmt.Sprintf("given parameter key: '%v' is not valid for checktype %v.", givenParameter, currentData.CheckType)
+				log.Fatalln(message)
+			}
+		}
+
+
+		//log.Print(updateCheckJson.StringIndent(""," "))
+		Level27Client.SystemCheckUpdate(systemID, checkID, updateCheckJson)
 	},
 }
 
-func getSystemCookbooks(id int) []types.Cookbook {
+// ---------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
 
-	return Level27Client.SystemCookbookGetList(id)
-
-}
-
-// -------- SYSTEM ACTIONS
+// #region SYSTEM ACTIONS
 
 var systemActionsCmd = &cobra.Command{
 	Use:   "actions",
@@ -683,13 +776,205 @@ var systemActionsAutoInstallCmd = &cobra.Command{
 	Run:  func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
 }
 
+// #endregion
+
 func runAction(action string, args []string) {
 	id := resolveSystem(args[0])
 
 	Level27Client.SystemAction(id, action)
 }
 
-// SSH KEYS
+//------------------------------------------------- SYSTEM/COOKBOOKS PARAMETERS GET ----------------------------------
+
+// ----------- GET COOKBOOKTYPE PARAMETERS
+// seperate command used to see wich parameters can be used for a specific cookbooktype. also shows the description and default values
+var SystemCookbookTypesGetCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Show all default parameters for a specific cookbooktype.",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// get the user input from the type flag
+		inputType := cmd.Flag("type").Value.String()
+
+		// Get request to get all cookbooktypes data
+		validCookbooktype, _ := Level27Client.SystemCookbookTypeGet(inputType)
+
+		outputFormatTable(validCookbooktype.CookbookType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
+
+	},
+}
+
+//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
+// ---------------- MAIN COMMAND (checks)
+var systemCookbookCmd = &cobra.Command{
+	Use:   "cookbooks",
+	Short: "Manage systems cookbooks",
+}
+
+// ---------- GET COOKBOOKS
+var systemCookbookGetCmd = &cobra.Command{
+	Use:   "get [system ID]",
+	Short: "Gets a list of all cookbooks from a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system ID
+		id := checkSingleIntID(args[0], "system")
+
+		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
+	},
+}
+
+func getSystemCookbooks(id int) []types.Cookbook {
+
+	return Level27Client.SystemCookbookGetList(id)
+}
+
+func CheckforValidType(input string, validTypes []string) (string, bool) {
+	var isTypeValid bool
+	// check if given cookbooktype is 1 of valid options
+	for _, cookbooktype := range validTypes {
+		if strings.ToLower(input) == cookbooktype {
+			input = cookbooktype
+			isTypeValid = true
+			return input, isTypeValid
+		}
+	}
+	return "", isTypeValid
+}
+
+// ----------- ADD COOKBOOK TO SPECIFIC SYSTEM
+var systemDynamicParams []string
+var systemCreateCookbookType string
+var systemCookbookAddCmd = &cobra.Command{
+	Use:   "add [systemID] [flags]",
+	Short: "add a cookbook to a system",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//checking for valid system ID
+		id := checkSingleIntID(args[0], "system")
+
+		var err error
+		// get information about the current chosen system [systemID]
+		currentSystem := Level27Client.SystemGetSingle(id)
+		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
+
+		// get the user input from the type flag (cookbooktype)
+		inputType := cmd.Flag("type").Value.String()
+
+		// get all data from the chossen cookbooktype and its parameteroptions if there are any
+		validCookbooktype, parameterOptions := Level27Client.SystemCookbookTypeGet(inputType)
+
+		// // create base of json container, will be used for post request and eventually filled with custom parameters
+		jsonObjCookbookPost := gabs.New()
+		jsonObjCookbookPost.Set(inputType, "cookbooktype")
+
+		// // when user wants to use custom parameters
+		if cmd.Flag("parameters").Changed {
+
+			// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
+			customParameterDict := SplitCustomParameters(systemDynamicParams)
+
+			// loop over the filtered parameters set by the user
+			for key, value := range customParameterDict {
+
+				var isValidParameter bool = false
+
+				//loop over all possible parameters for the chosen type
+				for _, parameter := range validCookbooktype.CookbookType.Parameters {
+					if parameter.Name == key {
+						isValidParameter = true
+						// when parameter type is select -> value can only be one of the selectable options + value has specific rules
+						if parameter.Type == "select" {
+
+							// var isValidValue bool = false
+							// check in json obj with all selectable options for the cookbooktype if parameteroption exists
+							if parameterOptions.Exists(key) {
+
+								// check wich type the value currently is. value needs to be of type array for selectable parameter + see if value is 1 or multiple values for 1 key
+								valueType := reflect.TypeOf(value)
+
+								// when value = array or slice -> key contains multiple values (PHP versions -> 7.2 + 7.3)
+								if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
+									rawValues := reflect.ValueOf(value)
+
+									// need to convert interface to a go slice
+									values := make([]interface{}, rawValues.Len())
+									for i := 0; i < rawValues.Len(); i++ {
+										values[i] = rawValues.Index(i).Interface()
+									}
+
+									// loop over each value
+									for i := range values {
+
+										// check if value can be installed on the os and if the value needs to be exclusive
+										_, isExclusive := isValueValidForParameter(*parameterOptions.Search(key), values[i], currentSystemOS)
+
+										// when value is exclusive -> cannot be installed with other values of same sort
+										if isExclusive {
+											message := fmt.Sprintf("Given Value: '%v' NOT possible for multiselect.", values[i])
+											err := errors.New(message)
+											log.Fatal(err)
+										}
+
+									}
+									jsonObjCookbookPost.SetP(value, key)
+
+								} else {
+									// --- SINGLE VALUE in this case we have a single value asigned to a key
+									valueAsString := fmt.Sprintf("%v", value)
+									// if given value is one of the possible options for the given parameter key
+									if parameterOptions.Search(key).Exists(valueAsString) {
+										isAvailable, _ := isValueValidForParameter(*parameterOptions.Search(key), value, currentSystemOS)
+										if isAvailable {
+											//key has one value but needs to be sent in array type
+											var values []interface{}
+											values = append(values, value)
+											jsonObjCookbookPost.SetP(values, key)
+										}
+
+									} else {
+
+										message := fmt.Sprintf("Given Value: '%v' NOT an option for given key: '%v'.", value, key)
+										err = errors.New(message)
+									}
+
+								}
+							} else {
+								message := fmt.Sprintf("No parameter options found for: '%v'.", value)
+								err = errors.New(message)
+							}
+							// when parameters is not of selectable type
+						} else {
+
+							jsonObjCookbookPost.SetP(value, key)
+						}
+					}
+				}
+
+				if !isValidParameter {
+					message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
+					err = errors.New(message)
+				}
+
+			}
+
+			// 	// when parameters or values are not valid -> error, close command
+			if err != nil {
+				log.Fatalln(err)
+			}
+			//log.Println("custom")
+			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+			Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+		} else {
+			//log.Println("standaard")
+			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
+			Level27Client.SystemCookbookAdd(id, jsonObjCookbookPost)
+		}
+
+	},
+}
+
+// // ------------------------------------------------------ SSH KEYS
 
 var systemSshKeysCmd = &cobra.Command{
 	Use: "sshkeys",
@@ -735,7 +1020,6 @@ var systemSshKeysAddCmd = &cobra.Command{
 		Level27Client.SystemAddSshKey(systemID, keyID)
 	},
 }
-
 
 var systemSshKeysRemoveCmd = &cobra.Command{
 	Use: "remove",

@@ -17,12 +17,16 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +41,15 @@ func addCommonGetFlags(cmd *cobra.Command) {
 	pf.StringVarP(&optGetParameters.Filter, "filter", "f", optGetParameters.Filter, "How to filter API results?")
 }
 
+//check for valid ID as type INT.
+func checkSingleIntID(arg string, entity string) int {
+	id, err := strconv.Atoi(arg)
+	if err != nil {
+		log.Fatalf("Not a valid %v ID!", entity)
+	}
+	return id
+}
+
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
 func CheckForMultipleIDs(ids []string) []string {
 	var currIds []string
@@ -48,7 +61,77 @@ func CheckForMultipleIDs(ids []string) []string {
 
 	return currIds
 }
+// --------------------------- DYNAMICALY SETTING PARAMETERS
 
+// function used for commands with dynamic parameters. (different parameters defined by 1 flag)
+func SplitCustomParameters(customP []string) (map[string]interface{}) {
+	checkedParameters := make(map[string]interface{})
+	var err error
+	// loop over raw data set by user with -p flag
+	for _, setParameter := range customP {
+		// check if correct way is used to define parameters -> key=value
+		if strings.Contains(setParameter, "=") {
+
+			// split each parameter set by user into its key and value. put them in the dictionary
+			line := strings.Split(setParameter, "=")
+			// some keys can use multiple values. check if values seperated by comma
+			if strings.Contains(line[1], ",") {
+				values := strings.Split(line[1], ",")
+				//removing spaces from splitted values
+				for i, _ := range values {
+					values[i] = strings.Trim(values[i], " ")
+				}
+				// add key value pair to dict
+				checkedParameters[strings.Trim(line[0], " ")] = values
+			} else {
+				// add key value pair to dict
+				checkedParameters[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
+			}
+
+		} else {
+			// when there is no '=' in the parameter -> error
+			message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
+			err = errors.New(message)
+			log.Fatal(err)
+
+		}
+
+	}
+	return checkedParameters
+}
+
+// VALIDATION OF PARAMETER VALUES BASED ON JSON
+func isValueValidForParameter(container gabs.Container, value interface{}, currentOS string) (bool, bool) {
+
+	// convert value to string
+	valueAsString := fmt.Sprintf("%v", value)
+	var option types.CookbookParameterOption
+	var isAvailableforSystemOS bool = false
+
+	// unmarshal into struct, to easy and clearly manipulate options data
+	err := json.Unmarshal([]byte(container.Search(valueAsString).String()), &option)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// loop over all possible OS systems for the chosen value
+	// and check if it matches the current system OS
+	for _, optionalOS := range option.OperatingSystemVersions {
+		if optionalOS.Name == currentOS || currentOS == "" {
+		
+			isAvailableforSystemOS = true
+
+		}
+	}
+	if !isAvailableforSystemOS {
+		message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentOS)
+		err = errors.New(message)
+
+		log.Fatal(err)
+	}
+
+	return isAvailableforSystemOS, option.Exclusive
+}
 // Open a file passed as an argument.
 // This handles the convention of "-" opening stdin.
 func openArgFile(file string) io.ReadCloser {
