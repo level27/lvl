@@ -247,7 +247,7 @@ func AssertApiError(e error, directory string) {
 	TranslateStatusCode(e, directory)
 	if e != nil {
 
-		log.Fatalf("client.go: API error - %s\n", e.Error())
+		log.Fatalf("client.go: API error in %s - %s\n", directory, e.Error())
 	}
 }
 

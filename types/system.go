@@ -367,3 +367,7 @@ type SystemPut struct {
 	LimitRiops                  int    `json:"limitRiops"`
 	LimitWiops                  int    `json:"limitWiops"`
 }
+
+type SystemHasNetworkIpPut struct {
+	Hostname string `json:"hostname"`
+}

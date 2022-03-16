@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
 )
@@ -58,4 +60,20 @@ func Ipv4IntToString(ipv4 int) string {
 	d := (ipv4 >> 0) & 0xFF
 
 	return fmt.Sprintf("%d.%d.%d.%d", a, b, c, d)
+}
+
+func Ipv4StringIntToString(ipv4 string) string {
+	i, err := strconv.Atoi(ipv4)
+	if err != nil {
+		return ""
+	}
+
+	return Ipv4IntToString(i)
+}
+
+func IpsEqual(a string, b string) bool {
+	ipA := net.ParseIP(a)
+	ipB := net.ParseIP(b)
+
+	return ipA.Equal(ipB)
 }

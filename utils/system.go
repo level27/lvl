@@ -399,6 +399,18 @@ func (c *Client) SystemRemoveHasNetwork(systemID int, hasNetworkID int) {
 	AssertApiError(err, "SystemRemoveHasNetwork")
 }
 
+func (c *Client) SystemGetHasNetworkIp(systemID int, hasNetworkID int, systemHasNetworkIpID int) types.SystemHasNetworkIp {
+	var response struct {
+		SystemHasNetworkIp types.SystemHasNetworkIp `json:"systemHasNetworkIp"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/networks/%d/ips/%d", systemID, hasNetworkID, systemHasNetworkIpID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+
+	AssertApiError(err, "SystemGetHasNetworkIp")
+	return response.SystemHasNetworkIp
+}
+
 func (c *Client) SystemGetHasNetworkIps(systemID int, hasNetworkID int) []types.SystemHasNetworkIp {
 	var response struct {
 		SystemHasNetworkIps []types.SystemHasNetworkIp `json:"systemHasNetworkIps"`
@@ -421,4 +433,28 @@ func (c *Client) SystemAddHasNetworkIps(systemID int, hasNetworkID int, add type
 
 	AssertApiError(err, "SystemAddHasNetworkIps")
 	return response.HasNetwork
+}
+
+func (c *Client) SystemRemoveHasNetworkIps(systemID int, hasNetworkID int, ipID int) {
+	endpoint := fmt.Sprintf("systems/%d/networks/%d/ips/%d", systemID, hasNetworkID, ipID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+
+	AssertApiError(err, "SystemRemoveHasNetworkIps")
+}
+
+func (c *Client) LookupSystemHasNetworkIp(systemID int, hasNetworkID int, address string) *types.SystemHasNetworkIp {
+	ips := c.SystemGetHasNetworkIps(systemID, hasNetworkID)
+	for _, ip := range ips {
+		if IpsEqual(Ipv4StringIntToString(ip.Ipv4), address) || IpsEqual(ip.Ipv6, address) || IpsEqual(Ipv4StringIntToString(ip.PublicIpv4), address) || IpsEqual(ip.PublicIpv6, address) {
+			return &ip
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) SystemHasNetworkIpUpdate(systemID int, hasNetworkID int, hasNetworkIpID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("systems/%d/networks/%d/ips/%d", systemID, hasNetworkID, hasNetworkIpID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "SystemHasNetworkIpUpdate")
 }
