@@ -77,17 +77,17 @@ func init() {
 	// --- UPDATE
 
 	systemCmd.AddCommand(systemUpdateCmd)
-	systemUpdateCmd.Flags().StringVarP(&systemUpdateSettingsFile, "settings-file", "s", "", "JSON file to read settings from. Pass '-' to read from stdin.")
-	settingString(systemUpdateCmd, systemUpdateSettings, "name", "New name for this system")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "cpu", "Set amount of CPU cores of the system")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "memory", "Set amount of memory in GB of the system")
-	settingString(systemUpdateCmd, systemUpdateSettings, "managementType", "Set management type of the system")
-	settingString(systemUpdateCmd, systemUpdateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "publicNetworking", "")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "limitRiops", "Set read IOPS limit")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "limitWiops", "Set write IOPS limit")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "installSecurityUpdates", "Set security updates mode index")
-	settingString(systemUpdateCmd, systemUpdateSettings, "remarks", "")
+	settingsFileFlag(systemUpdateCmd)
+	settingString(systemUpdateCmd, updateSettings, "name", "New name for this system")
+	settingInt(systemUpdateCmd, updateSettings, "cpu", "Set amount of CPU cores of the system")
+	settingInt(systemUpdateCmd, updateSettings, "memory", "Set amount of memory in GB of the system")
+	settingString(systemUpdateCmd, updateSettings, "managementType", "Set management type of the system")
+	settingString(systemUpdateCmd, updateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
+	settingInt(systemUpdateCmd, updateSettings, "publicNetworking", "")
+	settingInt(systemUpdateCmd, updateSettings, "limitRiops", "Set read IOPS limit")
+	settingInt(systemUpdateCmd, updateSettings, "limitWiops", "Set write IOPS limit")
+	settingInt(systemUpdateCmd, updateSettings, "installSecurityUpdates", "Set security updates mode index")
+	settingString(systemUpdateCmd, updateSettings, "remarks", "")
 
 	// --- Delete
 
@@ -163,8 +163,8 @@ func init() {
 	systemNetworkIpCmd.AddCommand(systemNetworkIpRemoveCmd)
 
 	systemNetworkIpCmd.AddCommand(systemNetworkIpUpdateCmd)
-	systemNetworkIpUpdateCmd.Flags().StringVarP(&systemNetworkIpUpdateSettingsFile, "settings-file", "s", "", "JSON file to read settings from. Pass '-' to read from stdin.")
-	settingString(systemNetworkIpUpdateCmd, systemNetworkIpUpdateSettings, "hostname", "New hostname for this IP")
+	settingsFileFlag(systemNetworkIpUpdateCmd)
+	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
 
 }
 
@@ -384,15 +384,12 @@ var systemCreateCmd = &cobra.Command{
 	},
 }
 
-var systemUpdateSettings = map[string]interface{}{}
-var systemUpdateSettingsFile string
-
 var systemUpdateCmd = &cobra.Command{
 	Use: "update",
 	Short: "Update settings on a system",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(systemUpdateSettingsFile, systemUpdateSettings)
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
 
 		systemID := resolveSystem(args[0])
 
@@ -957,16 +954,13 @@ var systemNetworkIpRemoveCmd = &cobra.Command{
 	},
 }
 
-var systemNetworkIpUpdateSettings = map[string]interface{}{}
-var systemNetworkIpUpdateSettingsFile string
-
 var systemNetworkIpUpdateCmd = &cobra.Command{
 	Use: "update",
 	Short: "Update settings on a system network IP",
 
 	Args: cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(systemNetworkIpUpdateSettingsFile, systemNetworkIpUpdateSettings)
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
 
 		systemID := resolveSystem(args[0])
 		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
@@ -978,8 +972,7 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 			Hostname: ip.Hostname,
 		}
 
-		data := roundTripJson(ipPut).(map[string]interface{})
-		data = mergeMaps(data, settings)
+		data := mergeSettingsWithEntity(ipPut, settings)
 
 		Level27Client.SystemHasNetworkIpUpdate(systemID, hasNetworkID, ipID, data)
 	},

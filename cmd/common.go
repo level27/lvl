@@ -95,6 +95,18 @@ func mergeMaps(base map[string]interface{}, override map[string]interface{}) map
 	return newMap
 }
 
+func mergeSettingsWithEntity(entity interface{}, settings map[string]interface{}) map[string]interface{} {
+	data := roundTripJson(entity).(map[string]interface{})
+	return mergeMaps(data, settings)
+}
+
+var updateSettings = map[string]interface{}{}
+var updateSettingsFile string
+
+func settingsFileFlag(c *cobra.Command) {
+	c.Flags().StringVarP(&updateSettingsFile, "settings-file", "s", "", "JSON file to read settings from. Pass '-' to read from stdin.")
+}
+
 // Add a string setting flag to a command, that will be stored in a map.
 // This is intended to be easily used with PATCH APIs.
 func settingString(c *cobra.Command, settings map[string]interface{}, name string, usage string) {
