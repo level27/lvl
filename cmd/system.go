@@ -635,6 +635,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 
 		
 		// check for each given parameter if its one of the possible parameters
+		// if parameter = valid -> add key/value to json object for put request
 		for givenParameter, givenValue := range customParamaterDict{
 			var isValidParameter bool = false
 			for i := range possibleParameters{
