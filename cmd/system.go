@@ -20,13 +20,12 @@ import (
 var systemCmd = &cobra.Command{
 	Use:   "system",
 	Short: "Commands for managing systems",
-	
 }
 
 func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemCmd)
-	
+
 	//-------------------------------------  Toplevel SYSTEM COMMANDS (get/post) --------------------------------------
 	// #region Toplevel SYSTEM COMMANDS (get/post)
 
@@ -183,6 +182,7 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS SPECIFIC (describe / delete / update) --------------------------------------
+	// #region SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 
 	// --- DESCRIBE
 	systemCookbookCmd.AddCommand(systemCookbookDescribeCmd)
@@ -192,10 +192,13 @@ func init() {
 	// optional flags
 	systemCookbookDeleteCmd.Flags().BoolVarP(&systemCookbookDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a cookbook")
 
-	// --- UPDATE 
+	// --- UPDATE
 	systemCookbookCmd.AddCommand(systemCookbookUpdateCmd)
 	// flags for update
-	
+	systemCookbookUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
+	// #endregion
+
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
@@ -210,7 +213,8 @@ func init() {
 
 	// #endregion
 
-	// NETWORKS
+	//------------------------------------- NETWORKS -------------------------------------
+	// #region NETWORKS
 
 	systemCmd.AddCommand(systemNetworkCmd)
 
@@ -222,7 +226,7 @@ func init() {
 
 	systemNetworkCmd.AddCommand(systemNetworkRemoveCmd)
 
-	// NETWORK IPS
+	//------------------------------------- NETWORK IPS -------------------------------------
 
 	systemNetworkCmd.AddCommand(systemNetworkIpCmd)
 
@@ -236,6 +240,8 @@ func init() {
 	systemNetworkIpCmd.AddCommand(systemNetworkIpUpdateCmd)
 	settingsFileFlag(systemNetworkIpUpdateCmd)
 	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
+	// #endregion
+
 }
 
 // Resolve an integer or name domain.
@@ -298,7 +304,6 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
 
 	return ip.ID
 }
-
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
 // #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
@@ -1002,6 +1007,7 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 // #endregion
 
 //------------------------------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ----------------------------------
+// #region SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 
 // ---------------- DESCRIBE
 var systemCookbookDescribeCmd = &cobra.Command{
@@ -1011,7 +1017,7 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
 		systemId := checkSingleIntID(args[0], "system")
-		// chekc for valid cookbook id
+		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
 		result := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
@@ -1025,12 +1031,12 @@ var systemCookbookDeleteConfirmed bool
 var systemCookbookDeleteCmd = &cobra.Command{
 	Use:   "delete [systemID] [cookbookID]",
 	Short: "delete a cookbook from a system.",
-	
-	Args:  cobra.ExactArgs(2),
+
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
 		systemId := checkSingleIntID(args[0], "system")
-		// chekc for valid cookbook id
+		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
 		Level27Client.SystemCookbookDelete(systemId, cookbookId, systemCookbookDeleteConfirmed)
@@ -1043,14 +1049,25 @@ var systemCookbookDeleteCmd = &cobra.Command{
 
 // ---------------- UPDATE
 var systemCookbookUpdateCmd = &cobra.Command{
-	Use: "update [systemID] [cookbookID]",
+	Use:   "update [systemID] [cookbookID]",
 	Short: "update existing cookbook from a system",
-	Args: cobra.ExactArgs(2),
+	Example: "lvl system cookbooks update [systemID] [cookbookID] {-p}.\nSINGLE PARAMETER:		-p waf=true  \nMULTIPLE PARAMETERS:		-p waf=true -p timeout=200  \nMULTIPLE VALUES:		-p versions=''7, 5.4'' OR -p versions=7,5.4 (seperated by comma)",
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system id
+		systemId := checkSingleIntID(args[0], "system")
+		// check for valid cookbook id
+		cookbookId := checkSingleIntID(args[1], "cookbook")
+
+		log.Print(systemId, cookbookId)
 
 	},
-
 }
+
+// #endregion
+
+
+
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
@@ -1136,7 +1153,7 @@ var systemNetworkCmd = &cobra.Command{
 }
 
 var systemNetworkGetCmd = &cobra.Command{
-	Use: "get [system]",
+	Use:   "get [system]",
 	Short: "Get list of networks on a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1145,9 +1162,15 @@ var systemNetworkGetCmd = &cobra.Command{
 		system := Level27Client.SystemGetSingle(systemID)
 
 		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "MAC", "IPs"}, []interface{}{"ID", "NetworkID", func(net types.SystemNetwork) string {
-			if net.NetPublic { return "public" }
-			if net.NetCustomer { return "customer" }
-			if net.NetInternal { return "internal" }
+			if net.NetPublic {
+				return "public"
+			}
+			if net.NetCustomer {
+				return "customer"
+			}
+			if net.NetInternal {
+				return "internal"
+			}
 			return ""
 		}, "Name", "Mac", func(net types.SystemNetwork) string {
 			return strconv.Itoa(len(net.Ips))
@@ -1156,7 +1179,7 @@ var systemNetworkGetCmd = &cobra.Command{
 }
 
 var systemNetworkDescribeCmd = &cobra.Command{
-	Use: "describe [system]",
+	Use:   "describe [system]",
 	Short: "Display detailed information about all networks on a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1166,14 +1189,14 @@ var systemNetworkDescribeCmd = &cobra.Command{
 		networks := Level27Client.SystemGetHasNetworks(systemID)
 
 		outputFormatTemplate(types.DescribeSystemNetworks{
-			Networks: system.Networks,
+			Networks:    system.Networks,
 			HasNetworks: networks,
 		}, "templates/systemNetworks.tmpl")
 	},
 }
 
 var systemNetworkAddCmd = &cobra.Command{
-	Use: "add [system] [network]",
+	Use:   "add [system] [network]",
 	Short: "Add a network to a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1186,7 +1209,7 @@ var systemNetworkAddCmd = &cobra.Command{
 }
 
 var systemNetworkRemoveCmd = &cobra.Command{
-	Use: "remove [system] [network]",
+	Use:   "remove [system] [network]",
 	Short: "Remove a network from a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1199,12 +1222,12 @@ var systemNetworkRemoveCmd = &cobra.Command{
 }
 
 var systemNetworkIpCmd = &cobra.Command{
-	Use: "ip",
+	Use:   "ip",
 	Short: "Manage IP addresses on network connections",
 }
 
 var systemNetworkIpGetCmd = &cobra.Command{
-	Use: "get [system] [network]",
+	Use:   "get [system] [network]",
 	Short: "Get all IP addresses for a system network",
 
 	Args: cobra.ExactArgs(2),
@@ -1214,20 +1237,20 @@ var systemNetworkIpGetCmd = &cobra.Command{
 
 		ips := Level27Client.SystemGetHasNetworkIps(systemID, networkID)
 		outputFormatTableFuncs(ips, []string{"ID", "Public IP", "IP", "Hostname", "Status"}, []interface{}{"ID", func(i types.SystemHasNetworkIp) string {
-				if i.PublicIpv4 != "" {
-					i, _ := strconv.Atoi(i.PublicIpv4)
-					if i == 0 {
-						return ""
-					} else {
-						return utils.Ipv4IntToString(i)
-					}
-				} else if i.PublicIpv6 != "" {
-					ip := net.ParseIP(i.PublicIpv6)
-					return fmt.Sprint(ip)
-				} else {
+			if i.PublicIpv4 != "" {
+				i, _ := strconv.Atoi(i.PublicIpv4)
+				if i == 0 {
 					return ""
+				} else {
+					return utils.Ipv4IntToString(i)
 				}
-			},
+			} else if i.PublicIpv6 != "" {
+				ip := net.ParseIP(i.PublicIpv6)
+				return fmt.Sprint(ip)
+			} else {
+				return ""
+			}
+		},
 			func(i types.SystemHasNetworkIp) string {
 				if i.Ipv4 != "" {
 					i, _ := strconv.Atoi(i.Ipv4)
@@ -1242,16 +1265,16 @@ var systemNetworkIpGetCmd = &cobra.Command{
 				} else {
 					return ""
 				}
-		}, "Hostname", "Status"})
+			}, "Hostname", "Status"})
 	},
 }
 
 var systemNetworkIpAddHostname string
 
 var systemNetworkIpAddCmd = &cobra.Command{
-	Use: "add [system] [network] [address]",
+	Use:   "add [system] [network] [address]",
 	Short: "Add IP address to a system network",
-	Long: "Adds an IP address to a system network. Address can be either IPv4 or IPv6. The special values 'auto' and 'auto-v6' automatically fetch an unused address to use.",
+	Long:  "Adds an IP address to a system network. Address can be either IPv4 or IPv6. The special values 'auto' and 'auto-v6' automatically fetch an unused address to use.",
 
 	Args: cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -1307,9 +1330,8 @@ var systemNetworkIpAddCmd = &cobra.Command{
 	},
 }
 
-
 var systemNetworkIpRemoveCmd = &cobra.Command{
-	Use: "remove [system] [network] [address | id]",
+	Use:   "remove [system] [network] [address | id]",
 	Short: "Remove IP address from a system network",
 
 	Args: cobra.ExactArgs(3),
@@ -1324,7 +1346,7 @@ var systemNetworkIpRemoveCmd = &cobra.Command{
 }
 
 var systemNetworkIpUpdateCmd = &cobra.Command{
-	Use: "update",
+	Use:   "update",
 	Short: "Update settings on a system network IP",
 
 	Args: cobra.ExactArgs(3),

@@ -434,6 +434,8 @@ func (c *Client) SystemCookbookTypeGet(cookbooktype string) (types.CookbookType,
 // #endregion
 
 // --------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ------------------------------------
+// #region SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
+
 // ---------------- DESCRIBE
 func (c *Client) SystemCookbookDescribe(systemId int, cookbookId int) types.Cookbook {
 	var cookbook struct {
@@ -483,7 +485,15 @@ func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConf
 
 }
 
-// ------------------ APPLY COOKBOOKCHANGES ON A SYSTEM
+// ------------------ UPDATE
+func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req gabs.Container) {
+
+}
+
+// #endregion
+
+
+// --------------------------- APPLY COOKBOOKCHANGES ON A SYSTEM
 func (c *Client) SystemCookbookChangesApply(systemId int) {
 	// create json format for post request
 	// this function is specifically for updating cookbook status on a system
