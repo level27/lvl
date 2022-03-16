@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"reflect"
 	"strconv"
 	"strings"
@@ -83,17 +84,17 @@ func init() {
 	// --- UPDATE
 
 	systemCmd.AddCommand(systemUpdateCmd)
-	systemUpdateCmd.Flags().StringVarP(&systemUpdateSettingsFile, "settings-file", "s", "", "JSON file to read settings from. Pass '-' to read from stdin.")
-	settingString(systemUpdateCmd, systemUpdateSettings, "name", "New name for this system")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "cpu", "Set amount of CPU cores of the system")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "memory", "Set amount of memory in GB of the system")
-	settingString(systemUpdateCmd, systemUpdateSettings, "managementType", "Set management type of the system")
-	settingString(systemUpdateCmd, systemUpdateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "publicNetworking", "")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "limitRiops", "Set read IOPS limit")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "limitWiops", "Set write IOPS limit")
-	settingInt(systemUpdateCmd, systemUpdateSettings, "installSecurityUpdates", "Set security updates mode index")
-	settingString(systemUpdateCmd, systemUpdateSettings, "remarks", "")
+	settingsFileFlag(systemUpdateCmd)
+	settingString(systemUpdateCmd, updateSettings, "name", "New name for this system")
+	settingInt(systemUpdateCmd, updateSettings, "cpu", "Set amount of CPU cores of the system")
+	settingInt(systemUpdateCmd, updateSettings, "memory", "Set amount of memory in GB of the system")
+	settingString(systemUpdateCmd, updateSettings, "managementType", "Set management type of the system")
+	settingString(systemUpdateCmd, updateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
+	settingInt(systemUpdateCmd, updateSettings, "publicNetworking", "")
+	settingInt(systemUpdateCmd, updateSettings, "limitRiops", "Set read IOPS limit")
+	settingInt(systemUpdateCmd, updateSettings, "limitWiops", "Set write IOPS limit")
+	settingInt(systemUpdateCmd, updateSettings, "installSecurityUpdates", "Set security updates mode index")
+	settingString(systemUpdateCmd, updateSettings, "remarks", "")
 
 	// --- Delete
 
@@ -201,7 +202,35 @@ func init() {
 
 	systemSshKeysCmd.AddCommand(systemSshKeysAddCmd)
 	systemSshKeysCmd.AddCommand(systemSshKeysRemoveCmd)
+
 	// #endregion
+
+	// NETWORKS
+
+	systemCmd.AddCommand(systemNetworkCmd)
+
+	systemNetworkCmd.AddCommand(systemNetworkGetCmd)
+
+	systemNetworkCmd.AddCommand(systemNetworkDescribeCmd)
+
+	systemNetworkCmd.AddCommand(systemNetworkAddCmd)
+
+	systemNetworkCmd.AddCommand(systemNetworkRemoveCmd)
+
+	// NETWORK IPS
+
+	systemNetworkCmd.AddCommand(systemNetworkIpCmd)
+
+	systemNetworkIpCmd.AddCommand(systemNetworkIpGetCmd)
+
+	systemNetworkIpCmd.AddCommand(systemNetworkIpAddCmd)
+	systemNetworkIpAddCmd.Flags().StringVar(&systemNetworkIpAddHostname, "hostname", "", "Hostname for the IP address. If not specified the system hostname is used.")
+
+	systemNetworkIpCmd.AddCommand(systemNetworkIpRemoveCmd)
+
+	systemNetworkIpCmd.AddCommand(systemNetworkIpUpdateCmd)
+	settingsFileFlag(systemNetworkIpUpdateCmd)
+	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
 }
 
 // Resolve an integer or name domain.
@@ -235,6 +264,36 @@ func resolveSystemProviderConfiguration(region int, arg string) int {
 	cobra.CheckErr(fmt.Sprintf("Unable to find provider configuration: %s", arg))
 	return 0
 }
+
+func resolveSystemHasNetwork(systemID int, arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	network := Level27Client.LookupSystemHasNetworks(systemID, arg)
+	if network == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find network: %s", arg))
+		return 0
+	}
+
+	return network.ID
+}
+
+func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	ip := Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg)
+	if ip == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find IP: %s", arg))
+	}
+
+	return ip.ID
+}
+
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
 // #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
@@ -394,15 +453,12 @@ var systemCreateCmd = &cobra.Command{
 
 //------------------------------------------------- SYSTEM SPECIFIC (UPDATE / FORCE DELETE ) ----------------------------------
 // #region SYSTEM SPECIFIC (UPDATE / FORCE DELETE)
-var systemUpdateSettings = map[string]interface{}{}
-var systemUpdateSettingsFile string
-
 var systemUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update settings on a system",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(systemUpdateSettingsFile, systemUpdateSettings)
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
 
 		systemID := resolveSystem(args[0])
 
@@ -1055,3 +1111,221 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 }
 
 // #endregion
+
+// NETWORKS
+
+var systemNetworkCmd = &cobra.Command{
+	Use: "network",
+}
+
+var systemNetworkGetCmd = &cobra.Command{
+	Use: "get [system]",
+	Short: "Get list of networks on a system",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		system := Level27Client.SystemGetSingle(systemID)
+
+		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "MAC", "IPs"}, []interface{}{"ID", "NetworkID", func(net types.SystemNetwork) string {
+			if net.NetPublic { return "public" }
+			if net.NetCustomer { return "customer" }
+			if net.NetInternal { return "internal" }
+			return ""
+		}, "Name", "Mac", func(net types.SystemNetwork) string {
+			return strconv.Itoa(len(net.Ips))
+		}})
+	},
+}
+
+var systemNetworkDescribeCmd = &cobra.Command{
+	Use: "describe [system]",
+	Short: "Display detailed information about all networks on a system",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		system := Level27Client.SystemGetSingle(systemID)
+		networks := Level27Client.SystemGetHasNetworks(systemID)
+
+		outputFormatTemplate(types.DescribeSystemNetworks{
+			Networks: system.Networks,
+			HasNetworks: networks,
+		}, "templates/systemNetworks.tmpl")
+	},
+}
+
+var systemNetworkAddCmd = &cobra.Command{
+	Use: "add [system] [network]",
+	Short: "Add a network to a system",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		networkID := resolveNetwork(args[1])
+
+		Level27Client.SystemAddHasNetwork(systemID, networkID)
+	},
+}
+
+var systemNetworkRemoveCmd = &cobra.Command{
+	Use: "remove [system] [network]",
+	Short: "Remove a network from a system",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		networkID := resolveSystemHasNetwork(systemID, args[1])
+
+		Level27Client.SystemRemoveHasNetwork(systemID, networkID)
+	},
+}
+
+var systemNetworkIpCmd = &cobra.Command{
+	Use: "ip",
+	Short: "Manage IP addresses on network connections",
+}
+
+var systemNetworkIpGetCmd = &cobra.Command{
+	Use: "get [system] [network]",
+	Short: "Get all IP addresses for a system network",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		networkID := resolveSystemHasNetwork(systemID, args[1])
+
+		ips := Level27Client.SystemGetHasNetworkIps(systemID, networkID)
+		outputFormatTableFuncs(ips, []string{"ID", "Public IP", "IP", "Hostname", "Status"}, []interface{}{"ID", func(i types.SystemHasNetworkIp) string {
+				if i.PublicIpv4 != "" {
+					i, _ := strconv.Atoi(i.PublicIpv4)
+					if i == 0 {
+						return ""
+					} else {
+						return utils.Ipv4IntToString(i)
+					}
+				} else if i.PublicIpv6 != "" {
+					ip := net.ParseIP(i.PublicIpv6)
+					return fmt.Sprint(ip)
+				} else {
+					return ""
+				}
+			},
+			func(i types.SystemHasNetworkIp) string {
+				if i.Ipv4 != "" {
+					i, _ := strconv.Atoi(i.Ipv4)
+					if i == 0 {
+						return ""
+					} else {
+						return utils.Ipv4IntToString(i)
+					}
+				} else if i.Ipv6 != "" {
+					ip := net.ParseIP(i.Ipv6)
+					return fmt.Sprint(ip)
+				} else {
+					return ""
+				}
+		}, "Hostname", "Status"})
+	},
+}
+
+var systemNetworkIpAddHostname string
+
+var systemNetworkIpAddCmd = &cobra.Command{
+	Use: "add [system] [network] [address]",
+	Short: "Add IP address to a system network",
+	Long: "Adds an IP address to a system network. Address can be either IPv4 or IPv6. The special values 'auto' and 'auto-v6' automatically fetch an unused address to use.",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		system := Level27Client.SystemGetSingle(systemID)
+		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
+		network := Level27Client.GetSystemHasNetwork(systemID, hasNetworkID)
+		networkID := network.Network.ID
+		address := args[2]
+
+		if address == "auto" || address == "auto-v6" {
+			located := Level27Client.NetworkLocate(networkID)
+
+			var choices []string
+			if address == "auto" {
+				choices = located.Ipv4
+			} else {
+				choices = located.Ipv6
+			}
+
+			if len(choices) == 0 {
+				cobra.CheckErr("Unable to find a free IP address")
+			}
+
+			address = choices[0]
+		}
+
+		var data types.SystemHasNetworkIpAdd
+		public := network.Network.Public
+
+		if strings.Contains(address, ":") {
+			// IPv6
+			if public {
+				data.PublicIpv6 = address
+			} else {
+				data.Ipv6 = address
+			}
+		} else {
+			// IPv4
+			if public {
+				data.PublicIpv4 = address
+			} else {
+				data.Ipv4 = address
+			}
+		}
+
+		data.Hostname = system.Hostname
+		if systemNetworkIpAddHostname != "" {
+			data.Hostname = systemNetworkIpAddHostname
+		}
+
+		Level27Client.SystemAddHasNetworkIps(systemID, hasNetworkID, data)
+	},
+}
+
+
+var systemNetworkIpRemoveCmd = &cobra.Command{
+	Use: "remove [system] [network] [address | id]",
+	Short: "Remove IP address from a system network",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
+
+		ipID := resolveSystemHasNetworkIP(systemID, hasNetworkID, args[2])
+
+		Level27Client.SystemRemoveHasNetworkIps(systemID, hasNetworkID, ipID)
+	},
+}
+
+var systemNetworkIpUpdateCmd = &cobra.Command{
+	Use: "update",
+	Short: "Update settings on a system network IP",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+
+		systemID := resolveSystem(args[0])
+		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
+		ipID := resolveSystemHasNetworkIP(systemID, hasNetworkID, args[2])
+
+		ip := Level27Client.SystemGetHasNetworkIp(systemID, hasNetworkID, ipID)
+
+		ipPut := types.SystemHasNetworkIpPut{
+			Hostname: ip.Hostname,
+		}
+
+		data := mergeSettingsWithEntity(ipPut, settings)
+
+		Level27Client.SystemHasNetworkIpUpdate(systemID, hasNetworkID, ipID, data)
+	},
+}
