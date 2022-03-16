@@ -141,19 +141,19 @@ func init() {
 
 	// NETWORKS
 
-	systemCmd.AddCommand(systemNetworksCmd)
+	systemCmd.AddCommand(systemNetworkCmd)
 
-	systemNetworksCmd.AddCommand(systemNetworksGetCmd)
+	systemNetworkCmd.AddCommand(systemNetworkGetCmd)
 
-	systemNetworksCmd.AddCommand(systemNetworksDescribeCmd)
+	systemNetworkCmd.AddCommand(systemNetworkDescribeCmd)
 
-	systemNetworksCmd.AddCommand(systemNetworksAddCmd)
+	systemNetworkCmd.AddCommand(systemNetworkAddCmd)
 
-	systemNetworksCmd.AddCommand(systemNetworksRemoveCmd)
+	systemNetworkCmd.AddCommand(systemNetworkRemoveCmd)
 
 	// NETWORK IPS
 
-	systemNetworksCmd.AddCommand(systemNetworkIpCmd)
+	systemNetworkCmd.AddCommand(systemNetworkIpCmd)
 
 	systemNetworkIpCmd.AddCommand(systemNetworkIpGetCmd)
 
@@ -765,11 +765,11 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 
 // NETWORKS
 
-var systemNetworksCmd = &cobra.Command{
-	Use: "networks",
+var systemNetworkCmd = &cobra.Command{
+	Use: "network",
 }
 
-var systemNetworksGetCmd = &cobra.Command{
+var systemNetworkGetCmd = &cobra.Command{
 	Use: "get [system]",
 	Short: "Get list of networks on a system",
 
@@ -789,7 +789,7 @@ var systemNetworksGetCmd = &cobra.Command{
 	},
 }
 
-var systemNetworksDescribeCmd = &cobra.Command{
+var systemNetworkDescribeCmd = &cobra.Command{
 	Use: "describe [system]",
 	Short: "Display detailed information about all networks on a system",
 
@@ -806,7 +806,7 @@ var systemNetworksDescribeCmd = &cobra.Command{
 	},
 }
 
-var systemNetworksAddCmd = &cobra.Command{
+var systemNetworkAddCmd = &cobra.Command{
 	Use: "add [system] [network]",
 	Short: "Add a network to a system",
 
@@ -819,7 +819,7 @@ var systemNetworksAddCmd = &cobra.Command{
 	},
 }
 
-var systemNetworksRemoveCmd = &cobra.Command{
+var systemNetworkRemoveCmd = &cobra.Command{
 	Use: "remove [system] [network]",
 	Short: "Remove a network from a system",
 

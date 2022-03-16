@@ -24,17 +24,17 @@ func resolveNetwork(arg string) int {
 }
 
 func init() {
-	RootCmd.AddCommand(networksCmd)
+	RootCmd.AddCommand(networkCmd)
 
-	networksCmd.AddCommand(networksGetCmd)
-	addCommonGetFlags(networksCmd)
+	networkCmd.AddCommand(networkGetCmd)
+	addCommonGetFlags(networkCmd)
 }
 
-var networksCmd = &cobra.Command{
-	Use: "networks",
+var networkCmd = &cobra.Command{
+	Use: "network",
 }
 
-var networksGetCmd = &cobra.Command{
+var networkGetCmd = &cobra.Command{
 	Use: "get",
 
 	Run: func(cmd *cobra.Command, args []string) {
