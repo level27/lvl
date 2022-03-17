@@ -232,6 +232,39 @@ func init() {
 	settingsFileFlag(systemNetworkIpUpdateCmd)
 	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
 
+	// SYSTEM VOLUME
+	systemCmd.AddCommand(systemVolumeCmd)
+
+	// SYSTEM VOLUME GET
+	systemVolumeCmd.AddCommand(systemVolumeGetCmd)
+	addCommonGetFlags(systemVolumeGetCmd)
+
+	// SYSTEM VOLUME CREATE
+	systemVolumeCmd.AddCommand(systemVolumeCreateCmd)
+	systemVolumeCreateCmd.Flags().StringVar(&systemVolumeCreateName, "name", "", "Name of the new volume")
+	systemVolumeCreateCmd.Flags().StringVar(&systemVolumeCreateOrganisation, "organisation", "", "Organisation for the new volume")
+	systemVolumeCreateCmd.Flags().StringVar(&systemVolumeCreateDeviceName, "deviceName", "", "Device name for the new volume")
+	systemVolumeCreateCmd.Flags().BoolVar(&systemVolumeCreateAutoResize, "autoResize", false, "Enable automatic resizing")
+	systemVolumeCreateCmd.Flags().IntVar(&systemVolumeCreateSpace, "space", 0, "Space of the new volume (in GB)")
+
+	// SYSTEM VOLUME LINK
+	systemVolumeCmd.AddCommand(systemVolumeLinkCmd)
+
+	// SYSTEM VOLUME UNLINK
+	systemVolumeCmd.AddCommand(systemVolumeUnlinkCmd)
+
+	// SYSTEM VOLUME DELETE
+	systemVolumeCmd.AddCommand(systemVolumeDeleteCmd)
+	systemVolumeDeleteCmd.Flags().BoolVar(&systemVolumeDeleteForce, "force", false, "Do not ask for confirmation to delete the volume")
+
+	// SYSTEM VOLUME UPDATE
+	systemVolumeCmd.AddCommand(systemVolumeUpdateCmd)
+	settingsFileFlag(systemVolumeUpdateCmd)
+	settingString(systemVolumeUpdateCmd, updateSettings, "name", "New name for the volume")
+	settingBool(systemVolumeUpdateCmd, updateSettings, "autoResize", "New autoResize setting")
+	settingInt(systemVolumeUpdateCmd, updateSettings, "space", "New volume space (in GB)")
+
+
 	// ACCESS
 	systemCmd.AddCommand(systemAccessCmd)
 
@@ -301,6 +334,20 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
 	ip := Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg)
 	if ip == nil {
 		cobra.CheckErr(fmt.Sprintf("Unable to find IP: %s", arg))
+	}
+
+	return ip.ID
+}
+
+func resolveSystemVolume(systemID int, arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	ip := Level27Client.LookupSystemVolumes(systemID, arg)
+	if ip == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find volume: %s", arg))
 	}
 
 	return ip.ID
@@ -500,8 +547,6 @@ var systemUpdateCmd = &cobra.Command{
 		data := roundTripJson(systemPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
-		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
 
 		Level27Client.SystemUpdate(systemID, data)
@@ -1339,6 +1384,150 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 		data := mergeSettingsWithEntity(ipPut, settings)
 
 		Level27Client.SystemHasNetworkIpUpdate(systemID, hasNetworkID, ipID, data)
+	},
+}
+
+// VOLUMES
+
+// SYSTEM VOLUME
+var systemVolumeCmd = &cobra.Command{
+	Use: "volume",
+	Short: "Commands to manage volumes",
+}
+
+// SYSTEM VOLUME GET
+var systemVolumeGetCmd = &cobra.Command{
+	Use: "get",
+	Short: "Get all volumes on a system",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		volumes := Level27Client.SystemGetVolumes(systemID, optGetParameters)
+		outputFormatTable(
+			volumes,
+			[]string{"ID", "Name", "Status", "Space", "UID", "AutoResize", "DeviceName"},
+			[]string{"ID", "Name", "Status", "Space", "UID", "AutoResize", "DeviceName"})
+	},
+}
+
+// SYSTEM VOLUME CREATE
+var systemVolumeCreateName string
+var systemVolumeCreateSpace int
+var systemVolumeCreateOrganisation string
+var systemVolumeCreateAutoResize bool
+var systemVolumeCreateDeviceName string
+
+var systemVolumeCreateCmd = &cobra.Command{
+	Use: "create",
+	Short: "Create a new volume for a system",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		organisationID := resolveOrganisation(systemVolumeCreateOrganisation)
+
+		create := types.VolumeCreate{
+			Name: systemVolumeCreateName,
+			Space: systemVolumeCreateSpace,
+			Organisation: organisationID,
+			System: systemID,
+			AutoResize: systemVolumeCreateAutoResize,
+			DeviceName: systemVolumeCreateDeviceName,
+		}
+
+		Level27Client.VolumeCreate(create)
+	},
+}
+
+// SYSTEM VOLUME UNLINK
+var systemVolumeUnlinkCmd = &cobra.Command{
+	Use: "unlink",
+	Short: "Unlink a volume from a system",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		volumeID := resolveSystemVolume(systemID, args[1])
+
+		Level27Client.VolumeUnlink(volumeID, systemID)
+	},
+}
+
+// SYSTEM VOLUME LINK
+var systemVolumeLinkCmd = &cobra.Command{
+	Use: "link [system] [volume] [device name]",
+	Short: "Link a volume to a system",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		// To resolve from name -> ID we need the volume group
+		// Easiest way to get that is by getting the volume group ID from the first volume on the system.
+		volumeGroupID := Level27Client.SystemGetVolumes(systemID, types.CommonGetParams{})[0].Volumegroup.ID
+		volumeID := resolveVolumegroupVolume(volumeGroupID, args[1])
+		deviceName := args[2]
+
+		Level27Client.VolumeLink(volumeID, systemID, deviceName)
+	},
+}
+
+// SYSTEM VOLUME DELETE
+var systemVolumeDeleteForce bool
+var systemVolumeDeleteCmd = &cobra.Command{
+	Use: "delete [system] [volume]",
+	Short: "Unlink and delete a volume on a system",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		volumeID := resolveSystemVolume(systemID, args[1])
+
+		if !systemVolumeDeleteForce {
+			volume := Level27Client.VolumeGetSingle(volumeID)
+
+			if !confirmPrompt(fmt.Sprintf("Delete volume %s (%d)?", volume.Name, volume.ID)) {
+				return
+			}
+		}
+
+		Level27Client.VolumeDelete(volumeID)
+	},
+}
+
+// SYSTEM VOLUME UPDATE
+var systemVolumeUpdateCmd = &cobra.Command{
+	Use: "update [system] [volume]",
+	Short: "Update settings on a volume",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+
+		systemID := resolveSystem(args[0])
+		volumeID := resolveSystemVolume(systemID, args[1])
+
+		volume := Level27Client.VolumeGetSingle(volumeID)
+
+		volumePut := types.VolumePut {
+			Name: volume.Name,
+			DeviceName: volume.DeviceName,
+			Space: volume.Space,
+			Organisation: volume.Organisation.ID,
+			AutoResize: volume.AutoResize,
+			Remarks: volume.Remarks,
+			System: volume.System.Id,
+			Volumegroup: volume.Volumegroup.ID,
+		}
+
+		data := roundTripJson(volumePut).(map[string]interface{})
+		data = mergeMaps(data, settings)
+
+		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+
+		Level27Client.VolumeUpdate(volumeID, data)
 	},
 }
 
