@@ -263,6 +263,19 @@ func init() {
 	settingString(systemVolumeUpdateCmd, updateSettings, "name", "New name for the volume")
 	settingBool(systemVolumeUpdateCmd, updateSettings, "autoResize", "New autoResize setting")
 	settingInt(systemVolumeUpdateCmd, updateSettings, "space", "New volume space (in GB)")
+
+
+	// ACCESS
+	systemCmd.AddCommand(systemAccessCmd)
+
+	// ACCESS GET
+	systemAccessCmd.AddCommand(systemAccessGetCmd)
+
+	// ACCESS ADD
+	systemAccessCmd.AddCommand(systemAccessAddCmd)
+
+	// ACCESS REMOVE
+	systemAccessCmd.AddCommand(systemAccessRemoveCmd)
 }
 
 // Resolve an integer or name domain.
@@ -1515,5 +1528,62 @@ var systemVolumeUpdateCmd = &cobra.Command{
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
 
 		Level27Client.VolumeUpdate(volumeID, data)
+	},
+}
+
+
+// SYSTEM ACCESS
+var systemAccessCmd = &cobra.Command{
+	Use: "access",
+	Short: "Commands for managing access to a system",
+}
+
+// SYSTEM ACCESS GET
+var systemAccessGetCmd = &cobra.Command{
+	Use: "get",
+	Short: "List organisations with access to a system",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		organisations := Level27Client.SystemGetOrganisations(systemID)
+
+		outputFormatTableFuncs(
+			organisations,
+			[]string{"ID", "Name", "Type", "Members"},
+			[]interface{}{"ID", "Name", "Type", func(org types.OrganisationAccess) int {
+				return len(org.Users)
+			}})
+	},
+}
+
+// SYSTEM ACCESS ADD
+var systemAccessAddCmd = &cobra.Command{
+	Use: "add",
+	Short: "Grant an organisation access to a system",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		organisationID := resolveOrganisation(args[1])
+
+		Level27Client.SystemAddAcl(systemID, types.AclAdd{
+			Organisation: organisationID,
+		})
+	},
+}
+
+// SYSTEM ACCESS REMOVE
+var systemAccessRemoveCmd = &cobra.Command{
+	Use: "remove",
+	Short: "Revoke an organisation's access to a system",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+		organisationID := resolveOrganisation(args[1])
+
+		Level27Client.SystemRemoveAcl(systemID, organisationID)
 	},
 }

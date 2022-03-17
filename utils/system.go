@@ -628,3 +628,36 @@ func (c *Client) SystemHasNetworkIpUpdate(systemID int, hasNetworkID int, hasNet
 	err := c.invokeAPI("PUT", endpoint, data, nil)
 	AssertApiError(err, "SystemHasNetworkIpUpdate")
 }
+
+// GET /systems/{systemID}/organisations
+func (c *Client) SystemGetOrganisations(systemID int) []types.OrganisationAccess {
+	var response struct {
+		Organisations []types.OrganisationAccess `json:"organisations"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/organisations", systemID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "SystemGetOrganisations")
+
+	return response.Organisations
+}
+
+// POST /systems/{systemID}/acls
+func (c *Client) SystemAddAcl(systemID int, add types.AclAdd) types.Acl {
+	var response struct {
+		Acl types.Acl `json:"acl"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/acls", systemID)
+	err := c.invokeAPI("POST", endpoint, add, &response)
+	AssertApiError(err, "SystemAddAcl")
+
+	return response.Acl
+}
+
+// DELETE /systems/{systemID}/acls/{organisationID}
+func (c *Client) SystemRemoveAcl(systemID int, organisationID int) {
+	endpoint := fmt.Sprintf("systems/%d/acls/%d", systemID, organisationID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "SystemRemoveAcl")
+}
