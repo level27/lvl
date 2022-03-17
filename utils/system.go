@@ -486,7 +486,7 @@ func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConf
 }
 
 // ------------------ UPDATE
-func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req gabs.Container) {
+func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req interface{}) {
 
 	endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
 	err := c.invokeAPI("PUT", endpoint, req, nil )

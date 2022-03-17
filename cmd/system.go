@@ -859,7 +859,6 @@ var systemCookbookAddCmd = &cobra.Command{
 		//checking for valid system ID
 		systemId := checkSingleIntID(args[0], "system")
 
-		var err error
 		// get information about the current chosen system [systemID]
 		currentSystem := Level27Client.SystemGetSingle(systemId)
 		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
@@ -867,8 +866,8 @@ var systemCookbookAddCmd = &cobra.Command{
 		// get the user input from the type flag (cookbooktype)
 		inputType := cmd.Flag("type").Value.String()
 
-		// get all data from the chossen cookbooktype and its parameteroptions if there are any
-		validCookbooktype, parameterOptions := Level27Client.SystemCookbookTypeGet(inputType)
+		// get all current data for the chosen cookbooktype
+		cookbooktypeData, _ := Level27Client.SystemCookbookTypeGet(inputType)
 
 		// // create base of json container, will be used for post request and eventually filled with custom parameters
 		jsonObjCookbookPost := gabs.New()
@@ -880,103 +879,18 @@ var systemCookbookAddCmd = &cobra.Command{
 			// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
 			customParameterDict := SplitCustomParameters(systemDynamicParams)
 
-			// loop over the filtered parameters set by the user
-			for key, value := range customParameterDict {
+			completeRequest := checkForValidCookbookParameter(customParameterDict, cookbooktypeData, currentSystemOS, jsonObjCookbookPost)
 
-				var isValidParameter bool = false
-
-				//loop over all possible parameters for the chosen type
-				for _, parameter := range validCookbooktype.CookbookType.Parameters {
-					if parameter.Name == key {
-						isValidParameter = true
-						// when parameter type is select -> value can only be one of the selectable options + value has specific rules
-						if parameter.Type == "select" {
-
-							// var isValidValue bool = false
-							// check in json obj with all selectable options for the cookbooktype if parameteroption exists
-							if parameterOptions.Exists(key) {
-
-								// check wich type the value currently is. value needs to be of type array for selectable parameter + see if value is 1 or multiple values for 1 key
-								valueType := reflect.TypeOf(value)
-
-								// when value = array or slice -> key contains multiple values (PHP versions -> 7.2 + 7.3)
-								if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
-									rawValues := reflect.ValueOf(value)
-
-									// need to convert interface to a go slice
-									values := make([]interface{}, rawValues.Len())
-									for i := 0; i < rawValues.Len(); i++ {
-										values[i] = rawValues.Index(i).Interface()
-									}
-
-									// loop over each value
-									for i := range values {
-
-										// check if value can be installed on the os and if the value needs to be exclusive
-										_, isExclusive := isValueValidForParameter(*parameterOptions.Search(key), values[i], currentSystemOS)
-
-										// when value is exclusive -> cannot be installed with other values of same sort
-										if isExclusive {
-											message := fmt.Sprintf("Given Value: '%v' NOT possible for multiselect.", values[i])
-											err := errors.New(message)
-											log.Fatal(err)
-										}
-
-									}
-									jsonObjCookbookPost.SetP(value, key)
-
-								} else {
-									// --- SINGLE VALUE in this case we have a single value asigned to a key
-									valueAsString := fmt.Sprintf("%v", value)
-									// if given value is one of the possible options for the given parameter key
-									if parameterOptions.Search(key).Exists(valueAsString) {
-										isAvailable, _ := isValueValidForParameter(*parameterOptions.Search(key), value, currentSystemOS)
-										if isAvailable {
-											//key has one value but needs to be sent in array type
-											var values []interface{}
-											values = append(values, value)
-											jsonObjCookbookPost.SetP(values, key)
-										}
-
-									} else {
-
-										message := fmt.Sprintf("Given Value: '%v' NOT an option for given key: '%v'.", value, key)
-										err = errors.New(message)
-									}
-
-								}
-							} else {
-								message := fmt.Sprintf("No parameter options found for: '%v'.", value)
-								err = errors.New(message)
-							}
-							// when parameters is not of selectable type
-						} else {
-
-							jsonObjCookbookPost.SetP(value, key)
-						}
-					}
-				}
-
-				if !isValidParameter {
-					message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
-					err = errors.New(message)
-				}
-
-			}
-
-			// 	// when parameters or values are not valid -> error, close command
-			if err != nil {
-				log.Fatalln(err)
-			}
-			//log.Println("custom")
-			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
+			// //log.Println("custom")
+			//log.Print(completeRequest.StringIndent("", " "))
+			Level27Client.SystemCookbookAdd(systemId, completeRequest)
 		} else {
-			//log.Println("standaard")
+			//log.Println("standard")
 			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
 			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
 		}
 
+		//apply changes to cookbooks
 		Level27Client.SystemCookbookChangesApply(systemId)
 	},
 }
@@ -1052,35 +966,168 @@ var systemCookbookUpdateCmd = &cobra.Command{
 	Use:   "update [systemID] [cookbookID]",
 	Short: "update existing cookbook from a system",
 	Example: "lvl system cookbooks update [systemID] [cookbookID] {-p}.\nSINGLE PARAMETER:		-p waf=true  \nMULTIPLE PARAMETERS:		-p waf=true -p timeout=200  \nMULTIPLE VALUES:		-p versions=''7, 5.4'' OR -p versions=7,5.4 (seperated by comma)",
-	Args:  cobra.ExactArgs(2),
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
 		systemId := checkSingleIntID(args[0], "system")
 		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
-		currentData := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		// get current data from the current installed cookbooktype
+		currentCookbookData := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		// get current data from the chosen system
+		currentSystemData := Level27Client.SystemGetSingle(systemId)
+
+		currentSystem := fmt.Sprintf("%v %v", currentSystemData.OperatingSystemVersion.OsName, currentSystemData.OperatingSystemVersion.OsVersion)
+
+		// get all standard data that belongs to this cookbooktype in general (parameters / parameteroptions..).
+		cookbookData, _ := Level27Client.SystemCookbookTypeGet(currentCookbookData.CookbookType)
 
 		// create base form of json for PUT request (cookbooktype is non-editable)
-		requestData := gabs.New()
-		requestData.Set(currentData.CookbookType, "cookbooktype")
+		baseRequestData := gabs.New()
+		baseRequestData.Set(currentCookbookData.CookbookType, "cookbooktype")
 
 		// loop over current data and check if values are default. (default values dont need to be in put request)
-		for key, value := range currentData.CookbookParameters{
+		for key, value := range currentCookbookData.CookbookParameters {
 			if !value.Default {
-				requestData.Set(value.Value, key)
+				baseRequestData.Set(value.Value, key)
 			}
 		}
 
-		log.Print(requestData.StringIndent(""," "))
+		//check if parameter flag is used correctly
+		//split key/value pairs from parameter flag
+		customParameterDict := SplitCustomParameters(systemDynamicParams)
 
+		// check for each set parameter if its one of the possible parameters for this cookbooktype
+		// als checks if values are valid in case of selectable parameter
+		completeRequest := checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, baseRequestData)
+
+		Level27Client.SystemCookbookUpdate(systemId, cookbookId, &completeRequest)
+
+		// aplly changes to cookbooks
+		Level27Client.SystemCookbookChangesApply(systemId)
 	},
 }
 
 // #endregion
 
+//-------------------------------------------------// COOKBOOK HELPER FUNCTIONS //-------------------------------------------------
+// #region COOKBOOK HELPER FUNCTIONS
 
+// checks if a given parameter is valid for the specific cookbooktype.
+// also checks if given values are valid for chosen parameter or compatible with current system
+func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData types.CookbookType, currenSystemOs string, currenRequestData *gabs.Container) gabs.Container {
 
+	var err error
+	// for each custom set parameter, check if its one of the possible parameters for the current cookbooktype
+	for givenParameter, givenValue := range customParameters {
+		var isValidParameter bool = false
+
+		for _, possibleParameter := range allCookbookData.CookbookType.Parameters {
+			if givenParameter == possibleParameter.Name {
+				isValidParameter = true
+
+				//check if chosen parameter is of type "select" (needs extra validation)
+				if possibleParameter.Type == "select" {
+
+					AllParameterOptions := allCookbookData.CookbookType.ParameterOptions
+
+					// check type of given value (selectable parameters needs to be post in array type)
+					givenValueType := reflect.ValueOf(givenValue)
+
+					// if type of given interface value is array or slice we need to convert the interface to a go slice
+					if givenValueType.Kind() == reflect.Array || givenValueType.Kind() == reflect.Slice {
+						rawValues := reflect.ValueOf(givenValue)
+
+						// need to convert interface to a go slice
+						givenValuesSlice := make([]interface{}, rawValues.Len())
+						for i := 0; i < rawValues.Len(); i++ {
+							givenValuesSlice[i] = rawValues.Index(i).Interface()
+						}
+
+						for _, value := range givenValuesSlice {
+
+							valueString := fmt.Sprintf("%v", value)
+							// is value valid for given parameter
+							isExclusive := CheckCBValueForParameter(valueString, AllParameterOptions[givenParameter], givenParameter, currenSystemOs)
+
+							if isExclusive {
+								message := fmt.Sprintf("Value '%v' is not possible for multiselect.", value)
+								err := errors.New(message)
+								log.Fatal(err)
+							}
+						}
+						// add json line to gabs container
+						currenRequestData.SetP(givenValuesSlice, givenParameter)
+
+					} else {
+						// only a single value was given by the user for the parameter
+						valueString := fmt.Sprintf("%v", givenValue)
+						CheckCBValueForParameter(valueString, AllParameterOptions[givenParameter], givenParameter, currenSystemOs)
+						//key has one value but needs to be sent in array type
+						var values []interface{}
+						values = append(values, valueString)
+						// add json line to gabs container
+						currenRequestData.SetP(values, givenParameter)
+					}
+				} else {
+					// add json line to gabs container
+					currenRequestData.SetP(givenValue, givenParameter)
+				}
+
+			}
+		}
+
+		// when parameter is not valid for cookbooktype
+		if !isValidParameter {
+			message := fmt.Sprintf("Given parameter key: '%v' NOT valid for cookbooktype %v!", givenParameter, allCookbookData.CookbookType.Name)
+			err = errors.New(message)
+			log.Fatal(err)
+		}
+
+	}
+
+	return *currenRequestData
+}
+
+// check a value if its a valid option for the given parameter for the cookbook.
+// also do checks on compatibility with system and exlusivity
+func CheckCBValueForParameter(value string, options types.CookbookParameterOptionValue, givenParameter string, currentSystemOs string) bool {
+	parameterOptionValue, found := options[value]
+
+	// check if given value is one of the options for the chosen selectable parameter
+	if found {
+
+		//  loop over all possible OS version and check if the chosen value is compatible with current system
+		var isCompatibleWithSystem bool = false
+		for _, osVersion := range parameterOptionValue.OperatingSystemVersions {
+
+			if osVersion.Name == currentSystemOs {
+				isCompatibleWithSystem = true
+
+			}
+		}
+
+		// error when value required OS version doesnt equal current system OS version
+		if !isCompatibleWithSystem {
+			message := fmt.Sprintf("Given %v: '%v' NOT compatible with current system: %v.", givenParameter, value, currentSystemOs)
+			err := errors.New(message)
+			log.Fatal(err)
+		}
+
+		return parameterOptionValue.Exclusive
+
+		// when value is not one of the selectable parameter options
+	} else {
+		message := fmt.Sprintf("Given value: '%v' NOT a valid option for parameter '%v'", value, givenParameter)
+		err := errors.New(message)
+		log.Fatal(err)
+
+		return false
+	}
+}
+
+// #endregion
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
