@@ -170,6 +170,17 @@ func (c *Client) SystemGetVolumes(id int, get types.CommonGetParams) []types.Sys
 	return keys.Volumes
 }
 
+func (c *Client) LookupSystemVolumes(systemID int, volumeName string) *types.SystemVolume {
+	volumes := c.SystemGetVolumes(systemID, types.CommonGetParams{Filter: volumeName})
+	for _, volume := range volumes {
+		if volume.Name == volumeName {
+			return &volume
+		}
+	}
+
+	return nil
+}
+
 func (c *Client) SecurityUpdateDates() []string {
 	var updates struct {
 		SecurityUpdateDates []string `json:"securityUpdateDates"`
@@ -630,4 +641,37 @@ func (c *Client) SystemHasNetworkIpUpdate(systemID int, hasNetworkID int, hasNet
 	endpoint := fmt.Sprintf("systems/%d/networks/%d/ips/%d", systemID, hasNetworkID, hasNetworkIpID)
 	err := c.invokeAPI("PUT", endpoint, data, nil)
 	AssertApiError(err, "SystemHasNetworkIpUpdate")
+}
+
+// GET /systems/{systemID}/organisations
+func (c *Client) SystemGetOrganisations(systemID int) []types.OrganisationAccess {
+	var response struct {
+		Organisations []types.OrganisationAccess `json:"organisations"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/organisations", systemID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "SystemGetOrganisations")
+
+	return response.Organisations
+}
+
+// POST /systems/{systemID}/acls
+func (c *Client) SystemAddAcl(systemID int, add types.AclAdd) types.Acl {
+	var response struct {
+		Acl types.Acl `json:"acl"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%d/acls", systemID)
+	err := c.invokeAPI("POST", endpoint, add, &response)
+	AssertApiError(err, "SystemAddAcl")
+
+	return response.Acl
+}
+
+// DELETE /systems/{systemID}/acls/{organisationID}
+func (c *Client) SystemRemoveAcl(systemID int, organisationID int) {
+	endpoint := fmt.Sprintf("systems/%d/acls/%d", systemID, organisationID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "SystemRemoveAcl")
 }
