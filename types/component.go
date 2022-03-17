@@ -15,9 +15,7 @@ type Component struct {
 		Status string `json:"status"`
 	} `json:"apps"`
 	Systems []struct {
-		ID        int    `json:"id"`
-		Name      string `json:"name"`
-		Fqdn      string `json:"fqdn"`
+		SystemRef
 		Cookbooks []struct {
 			ID             int      `json:"id"`
 			CookbookType   string   `json:"cookbooktype"`
