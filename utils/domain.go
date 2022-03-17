@@ -252,7 +252,7 @@ func (c *Client) DomainAccesRemove(domainId int, organisationId int) {
 
 //--------------------------- CREATE (Turn invoicing on)
 //CREATE BILLABLEITEM
-func (c *Client) DomainBillableItemCreate(domainid int, req types.DomainBillPostRequest) {
+func (c *Client) DomainBillableItemCreate(domainid int, req types.BillPostRequest) {
 
 	endpoint := fmt.Sprintf("domains/%v/bill", domainid)
 

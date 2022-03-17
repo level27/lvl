@@ -699,7 +699,7 @@ var domainBillCreateCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal("no valid domain ID")
 		}
-		req := types.DomainBillPostRequest{
+		req := types.BillPostRequest{
 			ExternalInfo: externalInfo,
 		}
 
