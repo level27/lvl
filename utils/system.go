@@ -170,6 +170,17 @@ func (c *Client) SystemGetVolumes(id int, get types.CommonGetParams) []types.Sys
 	return keys.Volumes
 }
 
+func (c *Client) LookupSystemVolumes(systemID int, volumeName string) *types.SystemVolume {
+	volumes := c.SystemGetVolumes(systemID, types.CommonGetParams{Filter: volumeName})
+	for _, volume := range volumes {
+		if volume.Name == volumeName {
+			return &volume
+		}
+	}
+
+	return nil
+}
+
 func (c *Client) SecurityUpdateDates() []string {
 	var updates struct {
 		SecurityUpdateDates []string `json:"securityUpdateDates"`

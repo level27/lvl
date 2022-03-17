@@ -118,7 +118,7 @@ func isValueValidForParameter(container gabs.Container, value interface{}, curre
 	// and check if it matches the current system OS
 	for _, optionalOS := range option.OperatingSystemVersions {
 		if optionalOS.Name == currentOS || currentOS == "" {
-		
+
 			isAvailableforSystemOS = true
 
 		}
@@ -305,4 +305,28 @@ func (c *boolMapValue) Set(val string) error {
 
 func (c *boolMapValue) Type() string {
 	return "bool"
+}
+
+// Ask the user to confirm an action with a y/n prompt.
+func confirmPrompt(message string) bool {
+	for true {
+		fmt.Printf("%s [y]es/[n]o: ", message)
+		var resp string
+		_, err := fmt.Scan(&resp)
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp = strings.ToLower(resp)
+
+		if resp == "y" || resp == "yes" {
+			return true
+		} else if resp == "n" || resp == "no" {
+			fmt.Printf("Operation cancelled\n")
+			return false
+		} else {
+			continue
+		}
+	}
+
+	panic("Unreachable")
 }

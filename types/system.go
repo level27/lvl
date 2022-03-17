@@ -1,11 +1,9 @@
 package types
 
 type System struct {
-	Id                    int    `json:"id"`
+	SystemRef
 	Uid                   string `json:"uid"`
 	Hostname              string `json:"hostname"`
-	Fqdn                  string `json:"fqdn"`
-	Name                  string `json:"name"`
 	Type                  string `json:"type"`
 	Status                string `json:"status"`
 	StatusCategory        string `json:"statusCategory"`
@@ -77,6 +75,12 @@ type System struct {
 	Preferredparentsystem string           `json:"preferredparentsystem"`
 }
 
+type SystemRef struct {
+	Id   int    `json:"id"`
+	Fqdn string `json:"fqdn"`
+	Name string `json:"name"`
+}
+
 type StatSummary struct {
 	Unit  string      `json:"unit"`
 	Value interface{} `json:"value"`
@@ -109,11 +113,7 @@ type SystemVolume struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"organisation"`
-	System struct {
-		ID   int    `json:"id"`
-		Fqdn string `json:"fqdn"`
-		Name string `json:"name"`
-	} `json:"system"`
+	System      SystemRef `json:"system"`
 	Volumegroup struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
@@ -315,11 +315,7 @@ type Cookbook struct {
 	CookbookParametersDescriptions CookbookParameterDescription `json:"cookbookparameterDescriptions"`
 	PreviousCookbookParameters     interface{}                  `json:"previousCookbookparameters"`
 	Status                         string                       `json:"status"`
-	System                         struct {
-		Id   int    `json:"id"`
-		Fqdn string `json:"fqdn"`
-		Name string `json:"name"`
-	} `json:"system"`
+	System                         SystemRef                    `json:"system"`
 }
 
 // we dont know this value beforehand (the key of cookbookparameter)
