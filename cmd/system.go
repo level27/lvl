@@ -199,6 +199,14 @@ func init() {
 	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
 	// #endregion
 
+	//-------------------------------------  SYSTEMS/INTEGRITYCHECKS TOPLEVEL (get / post ) --------------------------------------
+
+	// --- MAIN COMMAND
+	systemCmd.AddCommand(systemIntegritychecksCmd)
+
+	// --- GET
+	systemIntegritychecksCmd.AddCommand(systemIntegritychecksGetCmd)
+
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
@@ -1128,6 +1136,23 @@ func CheckCBValueForParameter(value string, options types.CookbookParameterOptio
 }
 
 // #endregion
+
+//------------------------------------------------- SYSTEMS/INTEGRITYCHECKS TOPLEVEL (GET / POST)-------------------------------------------------
+// ---------------- MAIN COMMAND (integrity)
+var systemIntegritychecksCmd = &cobra.Command{
+	Use: "integrity",
+	Short: "Manage integritychecks for a system",
+}
+
+
+// ---------- GET INTEGRITYCHECKS
+var systemIntegritychecksGetCmd = &cobra.Command{
+	Use:   "get [systemID]",
+	Short: "Show list of current integritychecks on a system.",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
