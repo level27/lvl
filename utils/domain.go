@@ -297,9 +297,9 @@ func (c *Client) DomainIntegrityCheck(domainId int, checkId int) types.DomainInt
 	return result.IntegrityCheck
 }
 
-func (c *Client) DomainIntegrityChecks(domainId int, getParams types.CommonGetParams) []types.IntegrityCheckSummary {
+func (c *Client) DomainIntegrityChecks(domainId int, getParams types.CommonGetParams) []types.IntegrityCheck {
 	var result struct {
-		IntegrityChecks []types.IntegrityCheckSummary `json:"integritychecks"`
+		IntegrityChecks []types.IntegrityCheck `json:"integritychecks"`
 	}
 
 	endpoint := fmt.Sprintf("domains/%d/integritychecks?%s", domainId, formatCommonGetParams(getParams))

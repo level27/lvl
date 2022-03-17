@@ -5,7 +5,7 @@ type IntegrityCreateRequest struct {
 	Forcejobs bool `json:"forcejobs"`
 }
 
-type IntegrityCheckSummary struct {
+type IntegrityCheck struct {
 	Id          int    `json:"id"`
 	DtRequested string `json:"dtRequested"`
 	Status      string `json:"status"`

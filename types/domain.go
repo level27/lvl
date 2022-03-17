@@ -337,7 +337,7 @@ type DomainJobHistoryRoot struct {
 }
 // INTEGRITY CHECKS
 type DomainIntegrityCheck struct {
-	IntegrityCheckSummary
+	IntegrityCheck
 	Object   string `json:"object"`
 	ObjectID int    `json:"objectId"`
 	Results  struct {

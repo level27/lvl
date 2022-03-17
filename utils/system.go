@@ -489,13 +489,28 @@ func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConf
 func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req interface{}) {
 
 	endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
-	err := c.invokeAPI("PUT", endpoint, req, nil )
+	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "system/cookbook")
 
 }
 
 // #endregion
 
+// --------------------------- SYSTEM/INTEGRITYCHECKS TOPLEVEL (GET / CREATE) ------------------------------------
+
+// ------------------ GET
+func (c *Client) SystemIntegritychecksGet(systemID int) types.IntegrityCheck {
+
+	var integrity struct{
+		Data types.IntegrityCheck `json:"integritychecks"`
+	}
+	
+	endpoint := fmt.Sprintf("systems/%v/integritychecks", systemID)
+	err := c.invokeAPI("GET", endpoint, nil, integrity.Data)
+	AssertApiError(err, "system/integritycheck")
+
+	return integrity.Data
+}
 
 // --------------------------- APPLY COOKBOOKCHANGES ON A SYSTEM
 func (c *Client) SystemCookbookChangesApply(systemId int) {

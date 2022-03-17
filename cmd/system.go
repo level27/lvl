@@ -1149,7 +1149,14 @@ var systemIntegritychecksCmd = &cobra.Command{
 var systemIntegritychecksGetCmd = &cobra.Command{
 	Use:   "get [systemID]",
 	Short: "Show list of current integritychecks on a system.",
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		// check system ID
+		systemId := checkSingleIntID(args[0], "system")
+
+		checks := Level27Client.SystemIntegritychecksGet(systemId)
+
+		log.Print(checks)
 
 	},
 }
