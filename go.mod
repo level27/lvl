@@ -1,6 +1,6 @@
 module bitbucket.org/level27/lvl
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Jeffail/gabs/v2 v2.6.1
