@@ -199,7 +199,8 @@ func init() {
 	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
 	// #endregion
 
-	//-------------------------------------  SYSTEMS/INTEGRITYCHECKS TOPLEVEL (get / post ) --------------------------------------
+	//-------------------------------------  SYSTEMS/INTEGRITYCHECKS (get / post / download) --------------------------------------
+	// #region SYSTEM/INTEGRITYCHECKS (get/post/download)
 
 	// --- MAIN COMMAND
 	systemCmd.AddCommand(systemIntegritychecksCmd)
@@ -214,6 +215,11 @@ func init() {
 	flags.BoolVar(&systemIntegrityCheckDoJobs, "doJobs", true, "Create jobs (default: true)")
 	flags.BoolVar(&systemIntegrityCheckForceJobs, "forceJobs", false, "Create jobs even if integrity check failed (default: false)")
 
+	// --- DOWNLOAD
+	systemIntegritychecksCmd.AddCommand(systemIntegritychecksDownloadCmd)
+	// flags for download
+	systemIntegritychecksDownloadCmd.Flags().StringVarP(&systemIntegrityDownload, "filename", "f", "", "The wanted filename for the downloaded report.")
+	// #endregion
 
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
@@ -1145,7 +1151,7 @@ func CheckCBValueForParameter(value string, options types.CookbookParameterOptio
 
 // #endregion
 
-//------------------------------------------------- SYSTEMS/INTEGRITYCHECKS TOPLEVEL (GET / POST)-------------------------------------------------
+//------------------------------------------------- SYSTEMS/INTEGRITYCHECKS (GET / POST / DOWNLOAD)-------------------------------------------------
 // ---------------- MAIN COMMAND (integrity)
 var systemIntegritychecksCmd = &cobra.Command{
 	Use:   "integrity",
@@ -1169,7 +1175,7 @@ var systemIntegritychecksGetCmd = &cobra.Command{
 }
 
 // ---------- POST INTEGRITYCHECKS
-var systemIntegrityCheckDoJobs bool 
+var systemIntegrityCheckDoJobs bool
 var systemIntegrityCheckForceJobs bool
 var systemIntegritychecksCreateCmd = &cobra.Command{
 	Use:   "create [systemID]",
@@ -1180,11 +1186,37 @@ var systemIntegritychecksCreateCmd = &cobra.Command{
 		systemID := checkSingleIntID(args[0], "system")
 
 		request := types.IntegrityCreateRequest{
-			Dojobs: systemIntegrityCheckDoJobs,
+			Dojobs:    systemIntegrityCheckDoJobs,
 			Forcejobs: systemIntegrityCheckForceJobs,
 		}
 
 		Level27Client.SystemIntegritychecksCreate(systemID, request)
+	},
+}
+
+// ---------- DOWNLOAD INTEGRITYCHECK REPORT
+var systemIntegrityDownload string
+var systemIntegritychecksDownloadCmd = &cobra.Command{
+	Use:   "download [systemID] [integritycheckID]",
+	Short: "Download an integrityreport from a system to your current directory.",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid systemID
+		systemID := checkSingleIntID(args[0], "system")
+		// check for valid integritycheckID
+		integritycheckID := checkSingleIntID(args[1], "integritycheck")
+
+		if systemIntegrityDownload == "" {
+			// Auto-generate file name.
+			systemIntegrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", integritycheckID, systemID)
+		}else{
+		
+
+			systemIntegrityDownload = systemIntegrityDownload + ".pdf"
+		}
+
+		Level27Client.SystemIntegritychecksDownload(systemID, integritycheckID, systemIntegrityDownload)
+
 	},
 }
 
