@@ -13,14 +13,7 @@ type Organisation struct {
 		Name string `json:"name"`
 	} `json:"country"`
 	// ResellerOrganisation
-	Users []struct {
-		ID        int      `json:"id"`
-		Username  string   `json:"name"`
-		Email     string   `json:"email"`
-		FirstName string   `json:"firstName"`
-		LastName  string   `json:"lastName"`
-		Roles     []string `json:"roles"`
-	} `json:"users"`
+	Users []OrganisationUser `json:"users"`
 	// RemarksToprintInvoice
 	UpdateEntitiesOnly bool `json:"updateEntitiesOnly"`
 }
@@ -28,4 +21,20 @@ type Organisation struct {
 type OrganisationRef struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+// Returned from endpoints such as GET /system/{systemID}/organisations
+type OrganisationAccess struct {
+	OrganisationRef
+	Users []OrganisationUser `json:"users"`
+	Type  string             `json:"type"`
+}
+
+type OrganisationUser struct {
+	ID        int      `json:"id"`
+	Username  string   `json:"name"`
+	Email     string   `json:"email"`
+	FirstName string   `json:"firstName"`
+	LastName  string   `json:"lastName"`
+	Roles     []string `json:"roles"`
 }
