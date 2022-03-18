@@ -330,3 +330,36 @@ func confirmPrompt(message string) bool {
 
 	panic("Unreachable")
 }
+
+// Generic helper function to implement "get" commands.
+// Takes in the list of arguments, a lookup function (name -> T*),
+// a single-ID get function (int -> T) and a list function (get params -> []T)
+// Will output the list of entities.
+func resolveGets[T interface{}](
+	args []string,
+	lookup func(string) *T,
+	getSingle func(int) T,
+	getList func(types.CommonGetParams) []T) []T {
+	if len(args) == 0 {
+		// No arguments, return full list from API.
+		return getList(optGetParameters)
+	} else {
+		results := make([]T, len(args))
+		for i, val := range args {
+			id, err := strconv.Atoi(val)
+			if err == nil {
+				// Integer ID
+				results[i] = getSingle(id)
+			} else {
+				// Look up by name
+				lookedUp := lookup(val)
+				if lookedUp == nil {
+					cobra.CheckErr(fmt.Sprintf("Unable to find '%s'", val))
+				}
+				results[i] = *lookedUp
+			}
+		}
+
+		return results
+	}
+}
