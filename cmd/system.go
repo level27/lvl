@@ -182,6 +182,7 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/COOKBOOKS SPECIFIC (describe / delete / update) --------------------------------------
+	// #region SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 
 	// --- DESCRIBE
 	systemCookbookCmd.AddCommand(systemCookbookDescribeCmd)
@@ -190,6 +191,13 @@ func init() {
 	systemCookbookCmd.AddCommand(systemCookbookDeleteCmd)
 	// optional flags
 	systemCookbookDeleteCmd.Flags().BoolVarP(&systemCookbookDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a cookbook")
+
+	// --- UPDATE
+	systemCookbookCmd.AddCommand(systemCookbookUpdateCmd)
+	// flags for update
+	systemCookbookUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
+	// #endregion
 
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
@@ -205,7 +213,8 @@ func init() {
 
 	// #endregion
 
-	// NETWORKS
+	//------------------------------------- NETWORKS -------------------------------------
+	// #region NETWORKS
 
 	systemCmd.AddCommand(systemNetworkCmd)
 
@@ -217,7 +226,7 @@ func init() {
 
 	systemNetworkCmd.AddCommand(systemNetworkRemoveCmd)
 
-	// NETWORK IPS
+	//------------------------------------- NETWORK IPS -------------------------------------
 
 	systemNetworkCmd.AddCommand(systemNetworkIpCmd)
 
@@ -231,6 +240,8 @@ func init() {
 	systemNetworkIpCmd.AddCommand(systemNetworkIpUpdateCmd)
 	settingsFileFlag(systemNetworkIpUpdateCmd)
 	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
+	// #endregion
+
 
 	// SYSTEM VOLUME
 	systemCmd.AddCommand(systemVolumeCmd)
@@ -922,7 +933,6 @@ var systemCookbookAddCmd = &cobra.Command{
 		//checking for valid system ID
 		systemId := checkSingleIntID(args[0], "system")
 
-		var err error
 		// get information about the current chosen system [systemID]
 		currentSystem := Level27Client.SystemGetSingle(systemId)
 		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
@@ -930,8 +940,8 @@ var systemCookbookAddCmd = &cobra.Command{
 		// get the user input from the type flag (cookbooktype)
 		inputType := cmd.Flag("type").Value.String()
 
-		// get all data from the chossen cookbooktype and its parameteroptions if there are any
-		validCookbooktype, parameterOptions := Level27Client.SystemCookbookTypeGet(inputType)
+		// get all current data for the chosen cookbooktype
+		cookbooktypeData, _ := Level27Client.SystemCookbookTypeGet(inputType)
 
 		// // create base of json container, will be used for post request and eventually filled with custom parameters
 		jsonObjCookbookPost := gabs.New()
@@ -943,103 +953,18 @@ var systemCookbookAddCmd = &cobra.Command{
 			// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
 			customParameterDict := SplitCustomParameters(systemDynamicParams)
 
-			// loop over the filtered parameters set by the user
-			for key, value := range customParameterDict {
+			completeRequest := checkForValidCookbookParameter(customParameterDict, cookbooktypeData, currentSystemOS, jsonObjCookbookPost)
 
-				var isValidParameter bool = false
-
-				//loop over all possible parameters for the chosen type
-				for _, parameter := range validCookbooktype.CookbookType.Parameters {
-					if parameter.Name == key {
-						isValidParameter = true
-						// when parameter type is select -> value can only be one of the selectable options + value has specific rules
-						if parameter.Type == "select" {
-
-							// var isValidValue bool = false
-							// check in json obj with all selectable options for the cookbooktype if parameteroption exists
-							if parameterOptions.Exists(key) {
-
-								// check wich type the value currently is. value needs to be of type array for selectable parameter + see if value is 1 or multiple values for 1 key
-								valueType := reflect.TypeOf(value)
-
-								// when value = array or slice -> key contains multiple values (PHP versions -> 7.2 + 7.3)
-								if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
-									rawValues := reflect.ValueOf(value)
-
-									// need to convert interface to a go slice
-									values := make([]interface{}, rawValues.Len())
-									for i := 0; i < rawValues.Len(); i++ {
-										values[i] = rawValues.Index(i).Interface()
-									}
-
-									// loop over each value
-									for i := range values {
-
-										// check if value can be installed on the os and if the value needs to be exclusive
-										_, isExclusive := isValueValidForParameter(*parameterOptions.Search(key), values[i], currentSystemOS)
-
-										// when value is exclusive -> cannot be installed with other values of same sort
-										if isExclusive {
-											message := fmt.Sprintf("Given Value: '%v' NOT possible for multiselect.", values[i])
-											err := errors.New(message)
-											log.Fatal(err)
-										}
-
-									}
-									jsonObjCookbookPost.SetP(value, key)
-
-								} else {
-									// --- SINGLE VALUE in this case we have a single value asigned to a key
-									valueAsString := fmt.Sprintf("%v", value)
-									// if given value is one of the possible options for the given parameter key
-									if parameterOptions.Search(key).Exists(valueAsString) {
-										isAvailable, _ := isValueValidForParameter(*parameterOptions.Search(key), value, currentSystemOS)
-										if isAvailable {
-											//key has one value but needs to be sent in array type
-											var values []interface{}
-											values = append(values, value)
-											jsonObjCookbookPost.SetP(values, key)
-										}
-
-									} else {
-
-										message := fmt.Sprintf("Given Value: '%v' NOT an option for given key: '%v'.", value, key)
-										err = errors.New(message)
-									}
-
-								}
-							} else {
-								message := fmt.Sprintf("No parameter options found for: '%v'.", value)
-								err = errors.New(message)
-							}
-							// when parameters is not of selectable type
-						} else {
-
-							jsonObjCookbookPost.SetP(value, key)
-						}
-					}
-				}
-
-				if !isValidParameter {
-					message := fmt.Sprintf("Parameter: '%v' NOT known for cookbooktype %v.", key, inputType)
-					err = errors.New(message)
-				}
-
-			}
-
-			// 	// when parameters or values are not valid -> error, close command
-			if err != nil {
-				log.Fatalln(err)
-			}
-			//log.Println("custom")
-			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
+			// //log.Println("custom")
+			//log.Print(completeRequest.StringIndent("", " "))
+			Level27Client.SystemCookbookAdd(systemId, completeRequest)
 		} else {
-			//log.Println("standaard")
+			//log.Println("standard")
 			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
 			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
 		}
 
+		//apply changes to cookbooks
 		Level27Client.SystemCookbookChangesApply(systemId)
 	},
 }
@@ -1070,8 +995,9 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 // #endregion
 
 //------------------------------------------------- SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE) ----------------------------------
+// #region SYSTEM/COOKBOOKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 
-// --- DESCRIBE
+// ---------------- DESCRIBE
 var systemCookbookDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "show detailed info about a cookbook on a system",
@@ -1079,7 +1005,7 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
 		systemId := checkSingleIntID(args[0], "system")
-		// chekc for valid cookbook id
+		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
 		result := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
@@ -1088,16 +1014,17 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	},
 }
 
-// --- DELETE
+// ---------------- DELETE
 var systemCookbookDeleteConfirmed bool
 var systemCookbookDeleteCmd = &cobra.Command{
-	Use:   "delete",
+	Use:   "delete [systemID] [cookbookID]",
 	Short: "delete a cookbook from a system.",
-	Args:  cobra.ExactArgs(2),
+
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
 		systemId := checkSingleIntID(args[0], "system")
-		// chekc for valid cookbook id
+		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
 		Level27Client.SystemCookbookDelete(systemId, cookbookId, systemCookbookDeleteConfirmed)
@@ -1107,6 +1034,174 @@ var systemCookbookDeleteCmd = &cobra.Command{
 
 	},
 }
+
+// ---------------- UPDATE
+var systemCookbookUpdateCmd = &cobra.Command{
+	Use:   "update [systemID] [cookbookID]",
+	Short: "update existing cookbook from a system",
+	Example: "lvl system cookbooks update [systemID] [cookbookID] {-p}.\nSINGLE PARAMETER:		-p waf=true  \nMULTIPLE PARAMETERS:		-p waf=true -p timeout=200  \nMULTIPLE VALUES:		-p versions=''7, 5.4'' OR -p versions=7,5.4 (seperated by comma)",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid system id
+		systemId := checkSingleIntID(args[0], "system")
+		// check for valid cookbook id
+		cookbookId := checkSingleIntID(args[1], "cookbook")
+
+		// get current data from the current installed cookbooktype
+		currentCookbookData := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		// get current data from the chosen system
+		currentSystemData := Level27Client.SystemGetSingle(systemId)
+
+		currentSystem := fmt.Sprintf("%v %v", currentSystemData.OperatingSystemVersion.OsName, currentSystemData.OperatingSystemVersion.OsVersion)
+
+		// get all standard data that belongs to this cookbooktype in general (parameters / parameteroptions..).
+		cookbookData, _ := Level27Client.SystemCookbookTypeGet(currentCookbookData.CookbookType)
+
+		// create base form of json for PUT request (cookbooktype is non-editable)
+		baseRequestData := gabs.New()
+		baseRequestData.Set(currentCookbookData.CookbookType, "cookbooktype")
+
+		// loop over current data and check if values are default. (default values dont need to be in put request)
+		for key, value := range currentCookbookData.CookbookParameters {
+			if !value.Default {
+				baseRequestData.Set(value.Value, key)
+			}
+		}
+
+		//check if parameter flag is used correctly
+		//split key/value pairs from parameter flag
+		customParameterDict := SplitCustomParameters(systemDynamicParams)
+
+		// check for each set parameter if its one of the possible parameters for this cookbooktype
+		// als checks if values are valid in case of selectable parameter
+		completeRequest := checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, baseRequestData)
+
+		Level27Client.SystemCookbookUpdate(systemId, cookbookId, &completeRequest)
+
+		// aplly changes to cookbooks
+		Level27Client.SystemCookbookChangesApply(systemId)
+	},
+}
+
+// #endregion
+
+//-------------------------------------------------// COOKBOOK HELPER FUNCTIONS //-------------------------------------------------
+// #region COOKBOOK HELPER FUNCTIONS
+
+// checks if a given parameter is valid for the specific cookbooktype.
+// also checks if given values are valid for chosen parameter or compatible with current system
+func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData types.CookbookType, currenSystemOs string, currenRequestData *gabs.Container) gabs.Container {
+
+	var err error
+	// for each custom set parameter, check if its one of the possible parameters for the current cookbooktype
+	for givenParameter, givenValue := range customParameters {
+		var isValidParameter bool = false
+
+		for _, possibleParameter := range allCookbookData.CookbookType.Parameters {
+			if givenParameter == possibleParameter.Name {
+				isValidParameter = true
+
+				//check if chosen parameter is of type "select" (needs extra validation)
+				if possibleParameter.Type == "select" {
+
+					AllParameterOptions := allCookbookData.CookbookType.ParameterOptions
+
+					// check type of given value (selectable parameters needs to be post in array type)
+					givenValueType := reflect.ValueOf(givenValue)
+
+					// if type of given interface value is array or slice we need to convert the interface to a go slice
+					if givenValueType.Kind() == reflect.Array || givenValueType.Kind() == reflect.Slice {
+						rawValues := reflect.ValueOf(givenValue)
+
+						// need to convert interface to a go slice
+						givenValuesSlice := make([]interface{}, rawValues.Len())
+						for i := 0; i < rawValues.Len(); i++ {
+							givenValuesSlice[i] = rawValues.Index(i).Interface()
+						}
+
+						for _, value := range givenValuesSlice {
+
+							valueString := fmt.Sprintf("%v", value)
+							// is value valid for given parameter
+							isExclusive := CheckCBValueForParameter(valueString, AllParameterOptions[givenParameter], givenParameter, currenSystemOs)
+
+							if isExclusive {
+								message := fmt.Sprintf("Value '%v' is not possible for multiselect.", value)
+								err := errors.New(message)
+								log.Fatal(err)
+							}
+						}
+						// add json line to gabs container
+						currenRequestData.SetP(givenValuesSlice, givenParameter)
+
+					} else {
+						// only a single value was given by the user for the parameter
+						valueString := fmt.Sprintf("%v", givenValue)
+						CheckCBValueForParameter(valueString, AllParameterOptions[givenParameter], givenParameter, currenSystemOs)
+						//key has one value but needs to be sent in array type
+						var values []interface{}
+						values = append(values, valueString)
+						// add json line to gabs container
+						currenRequestData.SetP(values, givenParameter)
+					}
+				} else {
+					// add json line to gabs container
+					currenRequestData.SetP(givenValue, givenParameter)
+				}
+
+			}
+		}
+
+		// when parameter is not valid for cookbooktype
+		if !isValidParameter {
+			message := fmt.Sprintf("Given parameter key: '%v' NOT valid for cookbooktype %v!", givenParameter, allCookbookData.CookbookType.Name)
+			err = errors.New(message)
+			log.Fatal(err)
+		}
+
+	}
+
+	return *currenRequestData
+}
+
+// check a value if its a valid option for the given parameter for the cookbook.
+// also do checks on compatibility with system and exlusivity
+func CheckCBValueForParameter(value string, options types.CookbookParameterOptionValue, givenParameter string, currentSystemOs string) bool {
+	parameterOptionValue, found := options[value]
+
+	// check if given value is one of the options for the chosen selectable parameter
+	if found {
+
+		//  loop over all possible OS version and check if the chosen value is compatible with current system
+		var isCompatibleWithSystem bool = false
+		for _, osVersion := range parameterOptionValue.OperatingSystemVersions {
+
+			if osVersion.Name == currentSystemOs {
+				isCompatibleWithSystem = true
+
+			}
+		}
+
+		// error when value required OS version doesnt equal current system OS version
+		if !isCompatibleWithSystem {
+			message := fmt.Sprintf("Given %v: '%v' NOT compatible with current system: %v.", givenParameter, value, currentSystemOs)
+			err := errors.New(message)
+			log.Fatal(err)
+		}
+
+		return parameterOptionValue.Exclusive
+
+		// when value is not one of the selectable parameter options
+	} else {
+		message := fmt.Sprintf("Given value: '%v' NOT a valid option for parameter '%v'", value, givenParameter)
+		err := errors.New(message)
+		log.Fatal(err)
+
+		return false
+	}
+}
+
+// #endregion
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
@@ -1192,7 +1287,7 @@ var systemNetworkCmd = &cobra.Command{
 }
 
 var systemNetworkGetCmd = &cobra.Command{
-	Use: "get [system]",
+	Use:   "get [system]",
 	Short: "Get list of networks on a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1201,9 +1296,15 @@ var systemNetworkGetCmd = &cobra.Command{
 		system := Level27Client.SystemGetSingle(systemID)
 
 		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "MAC", "IPs"}, []interface{}{"ID", "NetworkID", func(net types.SystemNetwork) string {
-			if net.NetPublic { return "public" }
-			if net.NetCustomer { return "customer" }
-			if net.NetInternal { return "internal" }
+			if net.NetPublic {
+				return "public"
+			}
+			if net.NetCustomer {
+				return "customer"
+			}
+			if net.NetInternal {
+				return "internal"
+			}
 			return ""
 		}, "Name", "Mac", func(net types.SystemNetwork) string {
 			return strconv.Itoa(len(net.Ips))
@@ -1212,7 +1313,7 @@ var systemNetworkGetCmd = &cobra.Command{
 }
 
 var systemNetworkDescribeCmd = &cobra.Command{
-	Use: "describe [system]",
+	Use:   "describe [system]",
 	Short: "Display detailed information about all networks on a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1222,14 +1323,14 @@ var systemNetworkDescribeCmd = &cobra.Command{
 		networks := Level27Client.SystemGetHasNetworks(systemID)
 
 		outputFormatTemplate(types.DescribeSystemNetworks{
-			Networks: system.Networks,
+			Networks:    system.Networks,
 			HasNetworks: networks,
 		}, "templates/systemNetworks.tmpl")
 	},
 }
 
 var systemNetworkAddCmd = &cobra.Command{
-	Use: "add [system] [network]",
+	Use:   "add [system] [network]",
 	Short: "Add a network to a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1242,7 +1343,7 @@ var systemNetworkAddCmd = &cobra.Command{
 }
 
 var systemNetworkRemoveCmd = &cobra.Command{
-	Use: "remove [system] [network]",
+	Use:   "remove [system] [network]",
 	Short: "Remove a network from a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1255,12 +1356,12 @@ var systemNetworkRemoveCmd = &cobra.Command{
 }
 
 var systemNetworkIpCmd = &cobra.Command{
-	Use: "ip",
+	Use:   "ip",
 	Short: "Manage IP addresses on network connections",
 }
 
 var systemNetworkIpGetCmd = &cobra.Command{
-	Use: "get [system] [network]",
+	Use:   "get [system] [network]",
 	Short: "Get all IP addresses for a system network",
 
 	Args: cobra.ExactArgs(2),
@@ -1270,20 +1371,20 @@ var systemNetworkIpGetCmd = &cobra.Command{
 
 		ips := Level27Client.SystemGetHasNetworkIps(systemID, networkID)
 		outputFormatTableFuncs(ips, []string{"ID", "Public IP", "IP", "Hostname", "Status"}, []interface{}{"ID", func(i types.SystemHasNetworkIp) string {
-				if i.PublicIpv4 != "" {
-					i, _ := strconv.Atoi(i.PublicIpv4)
-					if i == 0 {
-						return ""
-					} else {
-						return utils.Ipv4IntToString(i)
-					}
-				} else if i.PublicIpv6 != "" {
-					ip := net.ParseIP(i.PublicIpv6)
-					return fmt.Sprint(ip)
-				} else {
+			if i.PublicIpv4 != "" {
+				i, _ := strconv.Atoi(i.PublicIpv4)
+				if i == 0 {
 					return ""
+				} else {
+					return utils.Ipv4IntToString(i)
 				}
-			},
+			} else if i.PublicIpv6 != "" {
+				ip := net.ParseIP(i.PublicIpv6)
+				return fmt.Sprint(ip)
+			} else {
+				return ""
+			}
+		},
 			func(i types.SystemHasNetworkIp) string {
 				if i.Ipv4 != "" {
 					i, _ := strconv.Atoi(i.Ipv4)
@@ -1298,16 +1399,16 @@ var systemNetworkIpGetCmd = &cobra.Command{
 				} else {
 					return ""
 				}
-		}, "Hostname", "Status"})
+			}, "Hostname", "Status"})
 	},
 }
 
 var systemNetworkIpAddHostname string
 
 var systemNetworkIpAddCmd = &cobra.Command{
-	Use: "add [system] [network] [address]",
+	Use:   "add [system] [network] [address]",
 	Short: "Add IP address to a system network",
-	Long: "Adds an IP address to a system network. Address can be either IPv4 or IPv6. The special values 'auto' and 'auto-v6' automatically fetch an unused address to use.",
+	Long:  "Adds an IP address to a system network. Address can be either IPv4 or IPv6. The special values 'auto' and 'auto-v6' automatically fetch an unused address to use.",
 
 	Args: cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -1363,9 +1464,8 @@ var systemNetworkIpAddCmd = &cobra.Command{
 	},
 }
 
-
 var systemNetworkIpRemoveCmd = &cobra.Command{
-	Use: "remove [system] [network] [address | id]",
+	Use:   "remove [system] [network] [address | id]",
 	Short: "Remove IP address from a system network",
 
 	Args: cobra.ExactArgs(3),
@@ -1380,7 +1480,7 @@ var systemNetworkIpRemoveCmd = &cobra.Command{
 }
 
 var systemNetworkIpUpdateCmd = &cobra.Command{
-	Use: "update",
+	Use:   "update",
 	Short: "Update settings on a system network IP",
 
 	Args: cobra.ExactArgs(3),

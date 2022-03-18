@@ -344,11 +344,16 @@ type CookbookType struct {
 			Type         string      `json:"type"`
 			DefaultValue interface{} `json:"defaultValue"`
 		} `json:"parameters"`
-		ParameterOptions interface{} `json:"parameterOptions"`
+		ParameterOptions CookbookParameterOptionName `json:"parameterOptions"`
 	} `json:"cookbooktype"`
 }
 
-// parameteroptions
+// parameteroptionCategory
+type CookbookParameterOptionName map[string]CookbookParameterOptionValue
+// parameterOptionValue
+type CookbookParameterOptionValue map[string]CookbookParameterOption
+
+// parameteroptionsData
 type CookbookParameterOption struct {
 	Name                    string      `json:"name"`
 	Exclusive               bool        `json:"exclusive"`
