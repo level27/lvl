@@ -499,17 +499,28 @@ func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req interfac
 // --------------------------- SYSTEM/INTEGRITYCHECKS TOPLEVEL (GET / CREATE) ------------------------------------
 
 // ------------------ GET
-func (c *Client) SystemIntegritychecksGet(systemID int) types.IntegrityCheck {
+func (c *Client) SystemIntegritychecksGet(systemID int) []types.IntegrityCheck {
 
 	var integrity struct{
-		Data types.IntegrityCheck `json:"integritychecks"`
+		Data []types.IntegrityCheck `json:"integritychecks"`
 	}
 	
 	endpoint := fmt.Sprintf("systems/%v/integritychecks", systemID)
-	err := c.invokeAPI("GET", endpoint, nil, integrity.Data)
+	err := c.invokeAPI("GET", endpoint, nil, &integrity)
 	AssertApiError(err, "system/integritycheck")
 
 	return integrity.Data
+}
+
+// ------------------ CREATE
+func (c *Client) SystemIntegritychecksCreate (systemID int , req types.IntegrityCreateRequest){
+
+	endpoint := fmt.Sprintf("systems/%v/integritychecks", systemID)
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "system/integritycheck")
+	
+
+
 }
 
 // --------------------------- APPLY COOKBOOKCHANGES ON A SYSTEM

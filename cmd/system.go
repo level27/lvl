@@ -207,6 +207,14 @@ func init() {
 	// --- GET
 	systemIntegritychecksCmd.AddCommand(systemIntegritychecksGetCmd)
 
+	// --- POST
+	systemIntegritychecksCmd.AddCommand(systemIntegritychecksCreateCmd)
+	// flags for post request
+	flags = systemIntegritychecksCreateCmd.Flags()
+	flags.BoolVar(&systemIntegrityCheckDoJobs, "doJobs", true, "Create jobs (default: true)")
+	flags.BoolVar(&systemIntegrityCheckForceJobs, "forceJobs", false, "Create jobs even if integrity check failed (default: false)")
+
+
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
@@ -1140,24 +1148,43 @@ func CheckCBValueForParameter(value string, options types.CookbookParameterOptio
 //------------------------------------------------- SYSTEMS/INTEGRITYCHECKS TOPLEVEL (GET / POST)-------------------------------------------------
 // ---------------- MAIN COMMAND (integrity)
 var systemIntegritychecksCmd = &cobra.Command{
-	Use: "integrity",
+	Use:   "integrity",
 	Short: "Manage integritychecks for a system",
 }
-
 
 // ---------- GET INTEGRITYCHECKS
 var systemIntegritychecksGetCmd = &cobra.Command{
 	Use:   "get [systemID]",
 	Short: "Show list of current integritychecks on a system.",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check system ID
 		systemId := checkSingleIntID(args[0], "system")
 
 		checks := Level27Client.SystemIntegritychecksGet(systemId)
 
-		log.Print(checks)
+		outputFormatIntegrityCheckTable(checks)
 
+	},
+}
+
+// ---------- POST INTEGRITYCHECKS
+var systemIntegrityCheckDoJobs bool 
+var systemIntegrityCheckForceJobs bool
+var systemIntegritychecksCreateCmd = &cobra.Command{
+	Use:   "create [systemID]",
+	Short: "Create a new integrity report for a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check single system ID
+		systemID := checkSingleIntID(args[0], "system")
+
+		request := types.IntegrityCreateRequest{
+			Dojobs: systemIntegrityCheckDoJobs,
+			Forcejobs: systemIntegrityCheckForceJobs,
+		}
+
+		Level27Client.SystemIntegritychecksCreate(systemID, request)
 	},
 }
 
