@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -238,11 +240,11 @@ func (c *Client) SystemDeleteForce(id int) {
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST ) ------------------------------------
 // #region SYSTEM/CHECKS TOPLEVEL (GET / ADD)
 // ------------- GET CHECKS
-func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
+func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheckGet {
 
 	//creating an array of systems.
 	var systemChecks struct {
-		Data []types.SystemCheck `json:"checks"`
+		Data []types.SystemCheckGet `json:"checks"`
 	}
 
 	//creating endpoint
@@ -500,13 +502,69 @@ func (c *Client) SystemCookbookDelete(systemId int, cookbookId int, isDeleteConf
 func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req interface{}) {
 
 	endpoint := fmt.Sprintf("systems/%v/cookbooks/%v", systemId, cookbookId)
-	err := c.invokeAPI("PUT", endpoint, req, nil )
+	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "system/cookbook")
 
 }
 
 // #endregion
 
+// --------------------------- SYSTEM/INTEGRITYCHECKS TOPLEVEL (GET / CREATE) ------------------------------------
+
+// ------------------ GET
+func (c *Client) SystemIntegritychecksGet(systemID int) []types.IntegrityCheck {
+
+	var integrity struct {
+		Data []types.IntegrityCheck `json:"integritychecks"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/integritychecks", systemID)
+	err := c.invokeAPI("GET", endpoint, nil, &integrity)
+	AssertApiError(err, "system/integritycheck")
+
+	return integrity.Data
+}
+
+// ------------------ CREATE
+func (c *Client) SystemIntegritychecksCreate(systemID int, req types.IntegrityCreateRequest) {
+
+	endpoint := fmt.Sprintf("systems/%v/integritychecks", systemID)
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "system/integritycheck")
+
+}
+
+// ------------------ DOWNLOAD
+func (c *Client) SystemIntegritychecksDownload(systemID int, integritycheckID int, filename string) {
+
+	endpoint := fmt.Sprintf("systems/%v/integritychecks/%v/report", systemID, integritycheckID)
+	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/pdf"})
+
+	if err == nil {
+		defer res.Body.Close()
+
+		if isErrorCode(res.StatusCode) {
+			var body []byte
+			body, err = io.ReadAll(res.Body)
+			if err == nil {
+				err = formatRequestError(res.StatusCode, body)
+			}
+		}
+	}
+
+	AssertApiError(err, "systemIntegrityCheckDownload")
+
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("Failed to create file! %s", err.Error())
+	}
+
+	fmt.Printf("Saving report to %s\n", filename)
+
+	defer file.Close()
+
+	io.Copy(file, res.Body)
+}
 
 // --------------------------- APPLY COOKBOOKCHANGES ON A SYSTEM
 func (c *Client) SystemCookbookChangesApply(systemId int) {

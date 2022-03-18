@@ -5,11 +5,11 @@ import (
 	"bitbucket.org/level27/lvl/utils"
 )
 
-func outputFormatIntegrityCheckTable(checks []types.IntegrityCheckSummary) {
+func outputFormatIntegrityCheckTable(checks []types.IntegrityCheck) {
 	outputFormatTableFuncs(
 		checks,
 		[]string{"ID", "STATUS", "DATE"},
-		[]interface{}{"Id", "Status", func(s types.IntegrityCheckSummary) string {
+		[]interface{}{"Id", "Status", func(s types.IntegrityCheck) string {
 			return utils.FormatUnixTime(s.DtRequested)
 		}})
 }

@@ -306,6 +306,28 @@ type SystemCheck struct {
 	Alerts []interface{} `json:"alerts"`
 }
 
+// recreate systemcheck for GET request. when response has empty array value it cannot be unmarhalled into systemcheck type
+
+type SystemCheckGet struct {
+	Id                          int         `json:"id"`
+	CheckType                   string      `json:"checktype"`
+	ChecktypeLocation           string      `json:"checktypeLocation"`
+	Status                      string      `json:"status"`
+	StatusInformation           string      `json:"statusInformation"`
+	DtLastMonitorEnabled        int         `json:"dtLastMonitoringEnabled"`
+	DtLastStatusChanged         int64       `json:"dtLastStatusChange"`
+	DtNextCheck                 int         `json:"dtNextCheck"`
+	DtLastCheck                 int         `json:"dtLastCheck"`
+	CheckParameters             interface{} `json:"checkparameters"`
+	CheckParametersDescriptions interface{} `json:"checkparameterDescriptions"`
+	Location                    string      `json:"location"`
+	System                      struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"system"`
+	Alerts []interface{} `json:"alerts"`
+}
+
 // ----------------------------------- COOKBOOKS ----------------------------------
 // --- COOKBOOK
 type Cookbook struct {
@@ -350,6 +372,7 @@ type CookbookType struct {
 
 // parameteroptionCategory
 type CookbookParameterOptionName map[string]CookbookParameterOptionValue
+
 // parameterOptionValue
 type CookbookParameterOptionValue map[string]CookbookParameterOption
 

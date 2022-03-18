@@ -199,6 +199,28 @@ func init() {
 	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
 	// #endregion
 
+	//-------------------------------------  SYSTEMS/INTEGRITYCHECKS (get / post / download) --------------------------------------
+	// #region SYSTEM/INTEGRITYCHECKS (get/post/download)
+
+	// --- MAIN COMMAND
+	systemCmd.AddCommand(systemIntegritychecksCmd)
+
+	// --- GET
+	systemIntegritychecksCmd.AddCommand(systemIntegritychecksGetCmd)
+
+	// --- POST
+	systemIntegritychecksCmd.AddCommand(systemIntegritychecksCreateCmd)
+	// flags for post request
+	flags = systemIntegritychecksCreateCmd.Flags()
+	flags.BoolVar(&systemIntegrityCheckDoJobs, "doJobs", true, "Create jobs (default: true)")
+	flags.BoolVar(&systemIntegrityCheckForceJobs, "forceJobs", false, "Create jobs even if integrity check failed (default: false)")
+
+	// --- DOWNLOAD
+	systemIntegritychecksCmd.AddCommand(systemIntegritychecksDownloadCmd)
+	// flags for download
+	systemIntegritychecksDownloadCmd.Flags().StringVarP(&systemIntegrityDownload, "filename", "f", "", "The wanted filename for the downloaded report.")
+	// #endregion
+
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / delete)
 
@@ -620,18 +642,14 @@ var systemCheckGetCmd = &cobra.Command{
 			log.Fatalln("Not a valid system ID!")
 		}
 
+		checks := Level27Client.SystemCheckGetList(id, optGetParameters)
 		// Creating readable output
-		outputFormatTableFuncs(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheck) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+		outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
+			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
 
 	},
 }
 
-func getSystemChecks(id int) []types.SystemCheck {
-
-	return Level27Client.SystemCheckGetList(id, optGetParameters)
-
-}
 
 // ---------------- CREATE CHECK
 var systemCheckCreateType string
@@ -1202,6 +1220,75 @@ func CheckCBValueForParameter(value string, options types.CookbookParameterOptio
 }
 
 // #endregion
+
+//------------------------------------------------- SYSTEMS/INTEGRITYCHECKS (GET / POST / DOWNLOAD)-------------------------------------------------
+// ---------------- MAIN COMMAND (integrity)
+var systemIntegritychecksCmd = &cobra.Command{
+	Use:   "integrity",
+	Short: "Manage integritychecks for a system",
+}
+
+// ---------- GET INTEGRITYCHECKS
+var systemIntegritychecksGetCmd = &cobra.Command{
+	Use:   "get [systemID]",
+	Short: "Show list of current integritychecks on a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check system ID
+		systemId := checkSingleIntID(args[0], "system")
+
+		checks := Level27Client.SystemIntegritychecksGet(systemId)
+
+		outputFormatIntegrityCheckTable(checks)
+
+	},
+}
+
+// ---------- POST INTEGRITYCHECKS
+var systemIntegrityCheckDoJobs bool
+var systemIntegrityCheckForceJobs bool
+var systemIntegritychecksCreateCmd = &cobra.Command{
+	Use:   "create [systemID]",
+	Short: "Create a new integrity report for a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check single system ID
+		systemID := checkSingleIntID(args[0], "system")
+
+		request := types.IntegrityCreateRequest{
+			Dojobs:    systemIntegrityCheckDoJobs,
+			Forcejobs: systemIntegrityCheckForceJobs,
+		}
+
+		Level27Client.SystemIntegritychecksCreate(systemID, request)
+	},
+}
+
+// ---------- DOWNLOAD INTEGRITYCHECK REPORT
+var systemIntegrityDownload string
+var systemIntegritychecksDownloadCmd = &cobra.Command{
+	Use:   "download [systemID] [integritycheckID]",
+	Short: "Download an integrityreport from a system to your current directory.",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid systemID
+		systemID := checkSingleIntID(args[0], "system")
+		// check for valid integritycheckID
+		integritycheckID := checkSingleIntID(args[1], "integritycheck")
+
+		if systemIntegrityDownload == "" {
+			// Auto-generate file name.
+			systemIntegrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", integritycheckID, systemID)
+		}else{
+		
+
+			systemIntegrityDownload = systemIntegrityDownload + ".pdf"
+		}
+
+		Level27Client.SystemIntegritychecksDownload(systemID, integritycheckID, systemIntegrityDownload)
+
+	},
+}
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 

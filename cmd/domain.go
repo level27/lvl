@@ -830,14 +830,14 @@ var domainIntegrityGetCmd = &cobra.Command{
 	},
 }
 
-func getDomainIntegrityChecks(domainId int, ids []int) []types.IntegrityCheckSummary {
+func getDomainIntegrityChecks(domainId int, ids []int) []types.IntegrityCheck {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.DomainIntegrityChecks(domainId, optGetParameters)
 	} else {
-		domains := make([]types.IntegrityCheckSummary, len(ids))
+		domains := make([]types.IntegrityCheck, len(ids))
 		for idx, id := range ids {
-			domains[idx] = c.DomainIntegrityCheck(domainId, id).IntegrityCheckSummary
+			domains[idx] = c.DomainIntegrityCheck(domainId, id).IntegrityCheck
 		}
 		return domains
 	}
