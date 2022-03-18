@@ -733,3 +733,24 @@ func (c *Client) SystemRemoveAcl(systemID int, organisationID int) {
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
 	AssertApiError(err, "SystemRemoveAcl")
 }
+
+//
+// -------------- BILLABLE ITEMS
+//
+
+// POST /systems/{systemID}/bill
+func (c *Client) SystemBillableItemCreate(systemID int, req types.BillPostRequest) {
+
+	endpoint := fmt.Sprintf("systems/%v/bill", systemID)
+
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "SystemBillableItemCreate")
+}
+
+// DELETE /systems/{systemID}/billableitem
+func (c *Client) SystemBillableItemDelete(systemID int) {
+	endpoint := fmt.Sprintf("systems/%v/billableitem", systemID)
+
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "SystemBillableItemDelete")
+}

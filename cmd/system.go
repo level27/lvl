@@ -309,6 +309,22 @@ func init() {
 
 	// ACCESS REMOVE
 	systemAccessCmd.AddCommand(systemAccessRemoveCmd)
+
+	//
+	// ------ BILLING
+	//
+
+	// SYSTEM BILLING
+	systemCmd.AddCommand(systemBillingCmd)
+
+	// SYSTEM BILLING ON
+	systemBillingCmd.AddCommand(systemBillingOnCmd)
+	flags = systemBillingOnCmd.Flags()
+	flags.StringVarP(&systemBillingOnExternalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
+
+	// SYSTEM BILLING OFF
+	systemBillingCmd.AddCommand(systemBillingOffCmd)
+
 }
 
 // Resolve an integer or name domain.
@@ -1772,5 +1788,41 @@ var systemAccessRemoveCmd = &cobra.Command{
 		organisationID := resolveOrganisation(args[1])
 
 		Level27Client.SystemRemoveAcl(systemID, organisationID)
+	},
+}
+
+// SYSTEM BILLING
+var systemBillingCmd = &cobra.Command{
+	Use:   "billing",
+	Short: "Manage system's invoicing (BillableItem)",
+}
+
+// SYSTEM BILLING ON
+var systemBillingOnExternalInfo string
+
+var systemBillingOnCmd = &cobra.Command{
+	Use:   "on [domain] [flags]",
+	Short: "Turn on billing for a system (admin only)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		req := types.BillPostRequest{
+			ExternalInfo: systemBillingOnExternalInfo,
+		}
+
+		Level27Client.SystemBillableItemCreate(systemID, req)
+	},
+}
+
+// SYSTEM BILLING OFF
+var systemBillingOffCmd = &cobra.Command{
+	Use:   "off [domainID]",
+	Short: "Turn off the billing for system (admin only)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		systemID := resolveSystem(args[0])
+
+		Level27Client.SystemBillableItemDelete(systemID)
 	},
 }
