@@ -63,7 +63,7 @@ type BillableItemUpdateRequest struct {
 }
 
 // request data for posting billableItem
-type DomainBillPostRequest struct {
+type BillPostRequest struct {
 	ExternalInfo string `json:"externalInfo"`
 }
 
