@@ -626,18 +626,14 @@ var systemCheckGetCmd = &cobra.Command{
 			log.Fatalln("Not a valid system ID!")
 		}
 
+		checks := Level27Client.SystemCheckGetList(id, optGetParameters)
 		// Creating readable output
-		outputFormatTableFuncs(getSystemChecks(id), []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheck) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+		outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
+			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
 
 	},
 }
 
-func getSystemChecks(id int) []types.SystemCheck {
-
-	return Level27Client.SystemCheckGetList(id, optGetParameters)
-
-}
 
 // ---------------- CREATE CHECK
 var systemCheckCreateType string

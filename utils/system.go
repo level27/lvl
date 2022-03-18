@@ -240,11 +240,11 @@ func (c *Client) SystemDeleteForce(id int) {
 // --------------------------- SYSTEM/CHECKS TOPLEVEL (GET / POST ) ------------------------------------
 // #region SYSTEM/CHECKS TOPLEVEL (GET / ADD)
 // ------------- GET CHECKS
-func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheck {
+func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParams) []types.SystemCheckGet {
 
 	//creating an array of systems.
 	var systemChecks struct {
-		Data []types.SystemCheck `json:"checks"`
+		Data []types.SystemCheckGet `json:"checks"`
 	}
 
 	//creating endpoint
