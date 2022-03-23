@@ -221,8 +221,16 @@ func init() {
 	systemIntegritychecksDownloadCmd.Flags().StringVarP(&systemIntegrityDownload, "filename", "f", "", "The wanted filename for the downloaded report.")
 	// #endregion
 
+	//-------------------------------------  SYSTEMS/GROUPS (get/ add / describe / delete) --------------------------------------
+	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
+
+	systemCmd.AddCommand(systemGroupsCmd)
+
+	// --- GET 
+	systemGroupsCmd.AddCommand(systemGroupsGetCmd)
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
-	// #region SYSTEMS/SSH KEYS (get/ add / delete)
+	// #region SYSTEMS/GROUPS (get/ add / delete)
+
 
 	// SSH KEYS
 	systemCmd.AddCommand(systemSshKeysCmd)
@@ -264,7 +272,6 @@ func init() {
 	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
 	// #endregion
 
-
 	// SYSTEM VOLUME
 	systemCmd.AddCommand(systemVolumeCmd)
 
@@ -296,7 +303,6 @@ func init() {
 	settingString(systemVolumeUpdateCmd, updateSettings, "name", "New name for the volume")
 	settingBool(systemVolumeUpdateCmd, updateSettings, "autoResize", "New autoResize setting")
 	settingInt(systemVolumeUpdateCmd, updateSettings, "space", "New volume space (in GB)")
-
 
 	// ACCESS
 	systemCmd.AddCommand(systemAccessCmd)
@@ -401,7 +407,6 @@ func resolveSystemVolume(systemID int, arg string) int {
 
 	return ip.ID
 }
-
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
 // #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
@@ -649,7 +654,6 @@ var systemCheckGetCmd = &cobra.Command{
 
 	},
 }
-
 
 // ---------------- CREATE CHECK
 var systemCheckCreateType string
@@ -1279,14 +1283,35 @@ var systemIntegritychecksDownloadCmd = &cobra.Command{
 		if systemIntegrityDownload == "" {
 			// Auto-generate file name.
 			systemIntegrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", integritycheckID, systemID)
-		}else{
-		
+		} else {
 
 			systemIntegrityDownload = systemIntegrityDownload + ".pdf"
 		}
 
 		Level27Client.SystemIntegritychecksDownload(systemID, integritycheckID, systemIntegrityDownload)
 
+	},
+}
+
+//------------------------------------------------- SYSTEMS/GROUPS (GET / ADD / DESCRIBE / DELETE)-------------------------------------------------
+// ---------------- MAIN COMMAND (groups)
+var systemGroupsCmd = &cobra.Command{
+	Use:   "groups",
+	Short: "Manage a system's groups.",
+}
+
+// ---------------- GET GROUPS
+var systemGroupsGetCmd = &cobra.Command{
+	Use: "get [systemID]",
+	Short: "Show list of all groups from a system.",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid systemID
+		systemId := checkSingleIntID(args[0], "system")
+
+		groups := Level27Client.SystemGroupsGet(systemId)
+
+		outputFormatTable(groups , []string{"ID","NAME"}, []string{"ID", "Name"})
 	},
 }
 
@@ -1594,13 +1619,13 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 
 // SYSTEM VOLUME
 var systemVolumeCmd = &cobra.Command{
-	Use: "volume",
+	Use:   "volume",
 	Short: "Commands to manage volumes",
 }
 
 // SYSTEM VOLUME GET
 var systemVolumeGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "Get all volumes on a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1623,7 +1648,7 @@ var systemVolumeCreateAutoResize bool
 var systemVolumeCreateDeviceName string
 
 var systemVolumeCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create a new volume for a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1633,12 +1658,12 @@ var systemVolumeCreateCmd = &cobra.Command{
 		organisationID := resolveOrganisation(systemVolumeCreateOrganisation)
 
 		create := types.VolumeCreate{
-			Name: systemVolumeCreateName,
-			Space: systemVolumeCreateSpace,
+			Name:         systemVolumeCreateName,
+			Space:        systemVolumeCreateSpace,
 			Organisation: organisationID,
-			System: systemID,
-			AutoResize: systemVolumeCreateAutoResize,
-			DeviceName: systemVolumeCreateDeviceName,
+			System:       systemID,
+			AutoResize:   systemVolumeCreateAutoResize,
+			DeviceName:   systemVolumeCreateDeviceName,
 		}
 
 		Level27Client.VolumeCreate(create)
@@ -1647,7 +1672,7 @@ var systemVolumeCreateCmd = &cobra.Command{
 
 // SYSTEM VOLUME UNLINK
 var systemVolumeUnlinkCmd = &cobra.Command{
-	Use: "unlink",
+	Use:   "unlink",
 	Short: "Unlink a volume from a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1661,7 +1686,7 @@ var systemVolumeUnlinkCmd = &cobra.Command{
 
 // SYSTEM VOLUME LINK
 var systemVolumeLinkCmd = &cobra.Command{
-	Use: "link [system] [volume] [device name]",
+	Use:   "link [system] [volume] [device name]",
 	Short: "Link a volume to a system",
 
 	Args: cobra.ExactArgs(3),
@@ -1680,7 +1705,7 @@ var systemVolumeLinkCmd = &cobra.Command{
 // SYSTEM VOLUME DELETE
 var systemVolumeDeleteForce bool
 var systemVolumeDeleteCmd = &cobra.Command{
-	Use: "delete [system] [volume]",
+	Use:   "delete [system] [volume]",
 	Short: "Unlink and delete a volume on a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1702,7 +1727,7 @@ var systemVolumeDeleteCmd = &cobra.Command{
 
 // SYSTEM VOLUME UPDATE
 var systemVolumeUpdateCmd = &cobra.Command{
-	Use: "update [system] [volume]",
+	Use:   "update [system] [volume]",
 	Short: "Update settings on a volume",
 
 	Args: cobra.ExactArgs(2),
@@ -1714,15 +1739,15 @@ var systemVolumeUpdateCmd = &cobra.Command{
 
 		volume := Level27Client.VolumeGetSingle(volumeID)
 
-		volumePut := types.VolumePut {
-			Name: volume.Name,
-			DeviceName: volume.DeviceName,
-			Space: volume.Space,
+		volumePut := types.VolumePut{
+			Name:         volume.Name,
+			DeviceName:   volume.DeviceName,
+			Space:        volume.Space,
 			Organisation: volume.Organisation.ID,
-			AutoResize: volume.AutoResize,
-			Remarks: volume.Remarks,
-			System: volume.System.Id,
-			Volumegroup: volume.Volumegroup.ID,
+			AutoResize:   volume.AutoResize,
+			Remarks:      volume.Remarks,
+			System:       volume.System.Id,
+			Volumegroup:  volume.Volumegroup.ID,
 		}
 
 		data := roundTripJson(volumePut).(map[string]interface{})
@@ -1734,16 +1759,15 @@ var systemVolumeUpdateCmd = &cobra.Command{
 	},
 }
 
-
 // SYSTEM ACCESS
 var systemAccessCmd = &cobra.Command{
-	Use: "access",
+	Use:   "access",
 	Short: "Commands for managing access to a system",
 }
 
 // SYSTEM ACCESS GET
 var systemAccessGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "List organisations with access to a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1763,7 +1787,7 @@ var systemAccessGetCmd = &cobra.Command{
 
 // SYSTEM ACCESS ADD
 var systemAccessAddCmd = &cobra.Command{
-	Use: "add",
+	Use:   "add",
 	Short: "Grant an organisation access to a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1779,7 +1803,7 @@ var systemAccessAddCmd = &cobra.Command{
 
 // SYSTEM ACCESS REMOVE
 var systemAccessRemoveCmd = &cobra.Command{
-	Use: "remove",
+	Use:   "remove",
 	Short: "Revoke an organisation's access to a system",
 
 	Args: cobra.ExactArgs(2),

@@ -219,10 +219,10 @@ func outputFormatTableText(objects interface{}, titles []string, fields []interf
 			}
 
 			if !first {
-				fmt.Fprintf(w, "\t");
+				fmt.Fprintf(w, "\t")
 			}
 
-			first = false;
+			first = false
 			fmt.Fprintf(w, "%v", fld.Interface())
 		}
 

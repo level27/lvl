@@ -352,7 +352,7 @@ func resolveGets[T interface{}](
 				results[i] = getSingle(id)
 			} else {
 				// Look up by name
-				lookedUp := lookup(val)
+				lookedUp := lookup(val) 
 				if lookedUp == nil {
 					cobra.CheckErr(fmt.Sprintf("Unable to find '%s'", val))
 				}
@@ -361,5 +361,6 @@ func resolveGets[T interface{}](
 		}
 
 		return results
+		 
 	}
 }
