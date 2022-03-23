@@ -40,3 +40,8 @@ type MailgroupPut struct {
 	Systemgroup  int    `json:"systemgroup"`
 	AutoTeams    string `json:"autoTeams"`
 }
+
+type MailgroupDomainAdd struct {
+	Domain        int  `json:"domain"`
+	HandleMailDns bool `json:"handleMailDns"`
+}

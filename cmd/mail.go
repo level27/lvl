@@ -40,6 +40,25 @@ func init() {
 
 	// MAIL ACTIONS DEACTIVATE
 	mailActionsCmd.AddCommand(mailActionsDeactivateCmd)
+
+
+	// MAIL DOMAIN
+	mailCmd.AddCommand(mailDomainCmd)
+
+	// MAIL DOMAIN LINK
+	mailDomainCmd.AddCommand(mailDomainLinkCmd)
+	mailDomainLinkCmd.Flags().BoolVar(&mailDomainLinkNoHandleDns, "no-handle-dns", false, "Disable automatic creation of domain records")
+
+	// MAIL DOMAIN UNLINK
+	mailDomainCmd.AddCommand(mailDomainUnlinkCmd)
+
+	// MAIL DOMAIN SETPRIMARY
+	mailDomainCmd.AddCommand(mailDomainSetPrimaryCmd)
+
+	// MAIL DOMAIN UPDATE
+	mailDomainCmd.AddCommand(mailDomainUpdateCmd)
+	settingsFileFlag(mailDomainUpdateCmd)
+	settingString(mailDomainUpdateCmd, updateSettings, "handleMailDns", "")
 }
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
@@ -212,3 +231,73 @@ var mailActionsDeactivateCmd = &cobra.Command{
 		Level27Client.MailgroupsAction(mailgroupID, "deactivate")
 	},
 }
+
+
+// MAIL DOMAIN
+var mailDomainCmd = &cobra.Command{
+	Use: "domain",
+}
+
+// MAIL DOMAIN LINK
+var mailDomainLinkNoHandleDns bool;
+var mailDomainLinkCmd = &cobra.Command{
+	Use: "link [mailgroup] [domain]",
+	Short: "Add a domain to a mail group",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+		domainID := resolveDomain(args[1])
+
+		Level27Client.MailgroupsDomainsLink(mailgroupID, types.MailgroupDomainAdd{
+			Domain: domainID,
+			HandleMailDns: !mailDomainLinkNoHandleDns,
+		})
+	},
+}
+
+// MAIL DOMAIN UNLINK
+var mailDomainUnlinkCmd = &cobra.Command{
+	Use: "unlink [mailgroup] [domain]",
+	Short: "Remove a domain from a mail group",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+		domainID := resolveDomain(args[1])
+
+		Level27Client.MailgroupsDomainsUnlink(mailgroupID, domainID)
+	},
+}
+
+// MAIL DOMAIN SETPRIMARY
+var mailDomainSetPrimaryCmd = &cobra.Command{
+	Use: "setprimary [mailgroup] [domain]",
+	Short: "Set a domain on a mail group as primary",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+		domainID := resolveDomain(args[1])
+
+		Level27Client.MailgroupsDomainsSetPrimary(mailgroupID, domainID)
+	},
+}
+
+
+// MAIL DOMAIN UPDATE
+var mailDomainUpdateCmd = &cobra.Command{
+	Use: "update [mailgroup] [domain]",
+	Short: "Update settings on a domain",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+
+		mailgroupID := resolveMailgroup(args[0])
+		domainID := resolveDomain(args[1])
+
+		Level27Client.MailgroupsDomainsPatch(mailgroupID, domainID, settings)
+	},
+}
+
