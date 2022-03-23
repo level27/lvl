@@ -224,16 +224,16 @@ func init() {
 	//-------------------------------------  SYSTEMS/GROUPS (get/ add / describe / delete) --------------------------------------
 	// #region SYSTEMS/GROUPS (get/ add / delete / describe)
 
-	systemCmd.AddCommand(systemGroupsCmd)
+	systemCmd.AddCommand(SystemSystemgroupsCmd)
 
 	// --- GET
-	systemGroupsCmd.AddCommand(systemGroupsGetCmd)
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsGetCmd)
 
 	// --- ADD
-	systemGroupsCmd.AddCommand(systemGroupsAddCmd)
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsAddCmd)
 
 	// --- DELETE
-	systemGroupsCmd.AddCommand(systemGroupsRemoveCmd)
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsRemoveCmd)
 
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
@@ -1305,7 +1305,7 @@ var systemIntegritychecksDownloadCmd = &cobra.Command{
 
 //------------------------------------------------- SYSTEMS/GROUPS (GET / ADD  / DELETE)-------------------------------------------------
 // ---------------- MAIN COMMAND (groups)
-var systemGroupsCmd = &cobra.Command{
+var SystemSystemgroupsCmd = &cobra.Command{
 	Use:   "groups",
 	Short: "Manage a system's groups.",
 }
@@ -1313,7 +1313,7 @@ var systemGroupsCmd = &cobra.Command{
 // #region SYSTEMS/GROUPS (GET / ADD  / DELETE)
 
 // ---------------- GET GROUPS
-var systemGroupsGetCmd = &cobra.Command{
+var SystemSystemgroupsGetCmd = &cobra.Command{
 	Use:   "get [systemID]",
 	Short: "Show list of all groups from a system.",
 	Args:  cobra.ExactArgs(1),
@@ -1321,14 +1321,14 @@ var systemGroupsGetCmd = &cobra.Command{
 		//check for valid systemID
 		systemId := checkSingleIntID(args[0], "system")
 
-		groups := Level27Client.SystemGroupsGet(systemId)
+		groups := Level27Client.SystemSystemgroupsGet(systemId)
 
 		outputFormatTable(groups, []string{"ID", "NAME"}, []string{"ID", "Name"})
 	},
 }
 
 // ---------------- LINK SYSTEM TO A GROUP (ADD)
-var systemGroupsAddCmd = &cobra.Command{
+var SystemSystemgroupsAddCmd = &cobra.Command{
 	Use:   "add [systemID] [systemgroupID]",
 	Short: "Link a system with a systemgroup.",
 	Args:  cobra.ExactArgs(2),
@@ -1339,12 +1339,12 @@ var systemGroupsAddCmd = &cobra.Command{
 		groupId := checkSingleIntID(args[1], "systemgroup")
 		jsonRequest := gabs.New()
 		jsonRequest.Set(groupId, "systemgroup")
-		Level27Client.SystemGroupsAdd(systemID, jsonRequest)
+		Level27Client.SystemSystemgroupsAdd(systemID, jsonRequest)
 	},
 }
 
 // ---------------- UNLINK SYSTEM FROM A GROUP (DELETE)
-var systemGroupsRemoveCmd = &cobra.Command{
+var SystemSystemgroupsRemoveCmd = &cobra.Command{
 	Use:   "remove [systemID] [systemgroupID]",
 	Short: "Unlink a system from a systemgroup.",
 	Args:  cobra.ExactArgs(2),
@@ -1354,7 +1354,7 @@ var systemGroupsRemoveCmd = &cobra.Command{
 		// check for valid systemgroupId
 		groupId := checkSingleIntID(args[1], "systemgroup")
 
-		Level27Client.SystemGroupsRemove(systemId, groupId)
+		Level27Client.SystemSystemgroupsRemove(systemId, groupId)
 	},
 }
 
