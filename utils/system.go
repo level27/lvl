@@ -598,6 +598,24 @@ func (c *Client) SystemGroupsGet(systemId int) []types.Systemgroup{
 	return groups.Data
 }
 
+// ---------------- LINK SYSTEM TO A SYSTEMGROUP
+func (c *Client) SystemGroupsAdd(systemID int, req interface{}){
+
+	endpoint := fmt.Sprintf("systems/%v/groups", systemID)
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "systemgroup")
+}
+
+
+// ---------------- UNLINK A SYSTEM FROM SYSTEMGROUP
+func (c *Client) SystemGroupsRemove(systemId int, systemgroupId int){
+	endpoint := fmt.Sprintf("systems/%v/groups/%v", systemId, systemgroupId)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "systemgroup")
+
+}
+
+
 
 // ------------------ GET PROVIDERS
 
