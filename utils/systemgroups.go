@@ -8,7 +8,7 @@ import (
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 
-// ---------------- GET SINGLE
+// ---------------- GET SINGLE (describe)
 func (c *Client) SystemgroupsgetSingle(systemgroupId int) types.Systemgroup{
 	// var to store API response
 	var systemgroup struct {

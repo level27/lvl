@@ -55,6 +55,7 @@ var systemgroupDescribeCmd = &cobra.Command{
 
 		systemgroup := Level27Client.SystemgroupsgetSingle(systemgroupID)
 
+		// create output on template
 		outputFormatTemplate(systemgroup, "templates/systemgroup.tmpl")
 	},
 }
