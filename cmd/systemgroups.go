@@ -41,6 +41,11 @@ func init() {
 	flags.StringVarP(&systemgroupUpdateName, "name", "n", "", "The name you want to give the systemgroup.")
 	flags.StringVarP(&systemgroupUpdateOrg, "organisation", "", "", "The name of the organisation this systemgroup belongs to.")
 
+	// --- DELETE
+	systemgroupCmd.AddCommand(systemgroupsDeleteCmd)
+	//flag to skip confirmation when deleting a systemgroup
+	systemgroupsDeleteCmd.Flags().BoolVarP(&systemgroupDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a systemgroup")
+
 }
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
@@ -148,6 +153,23 @@ var systemgroupsUpdateCmd = &cobra.Command{
 			Level27Client.SystemgroupsUpdate(systemgroupID, request)
 
 		}
+
+	},
+}
+
+// ---------------- DELETE
+var systemgroupDeleteConfirmed bool
+var systemgroupsDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete a systemgroup",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+
+		//check for valid systemgroupId type 
+		// systemgroupId := checkSingleIntID(args[0], "systemgroup")
+
+		log.Print(systemgroupDeleteConfirmed)
+		// Level27Client.SystemgroupDelete(systemgroupId, systemgroupDeleteConfirmed)
 
 	},
 }

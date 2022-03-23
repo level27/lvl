@@ -9,7 +9,7 @@ import (
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 
 // ---------------- GET SINGLE (describe)
-func (c *Client) SystemgroupsgetSingle(systemgroupId int) types.Systemgroup{
+func (c *Client) SystemgroupsgetSingle(systemgroupId int) types.Systemgroup {
 	// var to store API response
 	var systemgroup struct {
 		Data types.Systemgroup `json:"systemgroup"`
@@ -23,22 +23,21 @@ func (c *Client) SystemgroupsgetSingle(systemgroupId int) types.Systemgroup{
 
 }
 
-// ---------------- GET 
+// ---------------- GET
 func (c *Client) SystemgroupsGet(optParameters types.CommonGetParams) []types.Systemgroup {
 	// var to store API response
 	var systemgroups struct {
 		Data []types.Systemgroup `json:"systemgroups"`
 	}
-	endpoint := fmt.Sprintf("systemgroups?%v",formatCommonGetParams(optParameters))
+	endpoint := fmt.Sprintf("systemgroups?%v", formatCommonGetParams(optParameters))
 	err := c.invokeAPI("GET", endpoint, nil, &systemgroups)
 	AssertApiError(err, "systemgroups")
 
 	return systemgroups.Data
 }
 
-
 // ---------------- CREATE
-func (c *Client) SystemgroupsCreate(req types.SystemgroupRequest) types.Systemgroup{
+func (c *Client) SystemgroupsCreate(req types.SystemgroupRequest) types.Systemgroup {
 	// var to store API response
 	var systemgroup struct {
 		Data types.Systemgroup `json:"systemgroup"`
@@ -51,10 +50,18 @@ func (c *Client) SystemgroupsCreate(req types.SystemgroupRequest) types.Systemgr
 	return systemgroup.Data
 }
 
-
-// ---------------- UPDATE 
-func (c *Client) SystemgroupsUpdate(systemgroupId int, req types.SystemgroupRequest){
+// ---------------- UPDATE
+func (c *Client) SystemgroupsUpdate(systemgroupId int, req types.SystemgroupRequest) {
 	endpoint := fmt.Sprintf("systemgroups/%v", systemgroupId)
 	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "systemgroup")
+}
+
+func (c *Client) SystemgroupDelete(systemgroupId int, isDeleteConfirmed bool) {
+	endpoint := fmt.Sprintf("systemgroups/%v", systemgroupId)
+	// when delete already confirmed by flag -> execute.
+	if isDeleteConfirmed {
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "systemgroup")
+	}
 }
