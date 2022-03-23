@@ -1325,7 +1325,7 @@ var systemGroupsGetCmd = &cobra.Command{
 
 // ---------------- LINK SYSTEM TO A GROUP (ADD) 
 var systemGroupsAddCmd = &cobra.Command{
-	Use: "add",
+	Use: "add [systemID] [systemgroupID]",
 	Short: "Link a system with a systemgroup.",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
