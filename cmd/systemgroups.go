@@ -166,10 +166,9 @@ var systemgroupsDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		//check for valid systemgroupId type 
-		// systemgroupId := checkSingleIntID(args[0], "systemgroup")
+		systemgroupId := checkSingleIntID(args[0], "systemgroup")
 
-		log.Print(systemgroupDeleteConfirmed)
-		// Level27Client.SystemgroupDelete(systemgroupId, systemgroupDeleteConfirmed)
+		Level27Client.SystemgroupDelete(systemgroupId, systemgroupDeleteConfirmed)
 
 	},
 }
