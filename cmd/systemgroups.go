@@ -22,37 +22,59 @@ func init() {
 	// add optional get parameters (filters)
 	addCommonGetFlags(systemgroupsGetCmd)
 
-	// --- CREATE 
+	// --- DESCRIBE 
+	systemgroupCmd.AddCommand(systemgroupDescribeCmd)
+
+	// --- CREATE
 	systemgroupCmd.AddCommand(systemgroupsCreateCmd)
 	// flags for creating systemgroup
 	flags := systemgroupsCreateCmd.Flags()
-	flags.StringVarP(&systemgroupCreateName, "name" , "n", "", "The name you want to give the systemgroup.")
+	flags.StringVarP(&systemgroupCreateName, "name", "n", "", "The name you want to give the systemgroup.")
 	flags.StringVarP(&systemgroupCreateOrg, "organisation", "", "", "The name of the organisation this systemgroup belongs to.")
 	systemgroupsCreateCmd.MarkFlagRequired("name")
 	systemgroupsCreateCmd.MarkFlagRequired("organisation")
 
+	// --- UPDATE
+	systemgroupCmd.AddCommand(systemgroupsUpdateCmd)
+	// flags for creating systemgroup
+	flags = systemgroupsUpdateCmd.Flags()
+	flags.StringVarP(&systemgroupUpdateName, "name", "n", "", "The name you want to give the systemgroup.")
+	flags.StringVarP(&systemgroupUpdateOrg, "organisation", "", "", "The name of the organisation this systemgroup belongs to.")
+
 }
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
-// ---------------- GET 
+// ---------------- DESCRIBE
+var systemgroupDescribeCmd = &cobra.Command{
+	Use: "describe",
+	Short: "Get detailed info about a systemgroup",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid systemgroupId type
+		systemgroupID := checkSingleIntID(args[0], "systemgroup")
+
+		systemgroup := Level27Client.SystemgroupsgetSingle(systemgroupID)
+
+		log.Print(systemgroup)
+	},
+}
+// ---------------- GET
 var systemgroupsGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Show list of all available systemgroups.",
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 		systemgroups := Level27Client.SystemgroupsGet(optGetParameters)
-		
+
 		outputFormatTable(systemgroups, []string{"ID", "NAME", "ORGANISATION"}, []string{"ID", "Name", "Organisation.Name"})
-		
+
 	},
 }
-
-
 
 // ---------------- CREATE
 var systemgroupCreateName, systemgroupCreateOrg string
 var systemgroupsCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create a new systemgroup.",
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -67,7 +89,7 @@ var systemgroupsCreateCmd = &cobra.Command{
 
 		// fill in given data in request type
 		request := types.SystemgroupRequest{
-			Name: systemgroupCreateName,
+			Name:         systemgroupCreateName,
 			Organisation: organisationId,
 		}
 
@@ -76,6 +98,55 @@ var systemgroupsCreateCmd = &cobra.Command{
 		// will only print if systemgroup is created successfully
 		log.Printf("systemgroup succesfully created. [ID: '%v' - NAME: '%v'].", systemgroup.ID, systemgroup.Name)
 
+	},
+}
+
+// ---------------- UPDATE
+var systemgroupUpdateName, systemgroupUpdateOrg string
+var systemgroupsUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "update a systemgroups name or organisation.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+
+		//check for valid systemgroupId type
+		systemgroupID := checkSingleIntID(args[0], "systemgroup")
+
+		// when no flag has been set. -> dont need to do an update
+		if !cmd.Flag("name").Changed && !cmd.Flag("organisation").Changed {
+			cobra.CheckErr("Use at least one flag to change a value of the systemgroup.")
+		} else {
+			// get current data from the systemgroup
+			currentData := Level27Client.SystemgroupsgetSingle(systemgroupID)
+
+			// fill in current data in request type (case only one thing has to change. the other one still needs to be send aswell (put))
+			request := types.SystemgroupRequest{
+				Name:         currentData.Name,
+				Organisation: currentData.Organisation.ID,
+			}
+
+		
+			// when organisation flag is used
+			if cmd.Flag("organisation").Changed {
+				// this function accepts the organisation name (string)
+				// and will look up the ID if the name is found
+				organisationId := resolveOrganisation(systemgroupUpdateOrg)
+				request.Organisation = organisationId
+			}
+
+			// when name flag is used
+			if cmd.Flag("name").Changed {
+				// when given an empty string as name for systemgroup
+				if len(systemgroupUpdateName) == 0 {
+					cobra.CheckErr("Name cannot be empty!")
+				}else{
+					request.Name = systemgroupUpdateName
+				}
+			}
+			
+			Level27Client.SystemgroupsUpdate(systemgroupID, request)
+
+		}
 
 	},
 }
