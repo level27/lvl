@@ -16,3 +16,9 @@ type Systemgroup struct {
 		Name string `json:"name"`
 	} `json:"organisation"`
 }
+
+// request type for creating systemgroup.
+type SystemgroupRequest struct {
+	Name         string `json:"name"`
+	Organisation int    `json:"organisation"`
+}

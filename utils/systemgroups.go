@@ -6,7 +6,12 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
+//------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
+
+
+// ---------------- GET 
 func (c *Client) SystemgroupsGet(optParameters types.CommonGetParams) []types.Systemgroup {
+	// var to store API response
 	var systemgroups struct {
 		Data []types.Systemgroup `json:"systemgroups"`
 	}
@@ -15,4 +20,19 @@ func (c *Client) SystemgroupsGet(optParameters types.CommonGetParams) []types.Sy
 	AssertApiError(err, "systemgroups")
 
 	return systemgroups.Data
+}
+
+
+// ---------------- CREATE
+func (c *Client) SystemgroupsCreate(req types.SystemgroupRequest) types.Systemgroup{
+	// var to store API response
+	var systemgroup struct {
+		Data types.Systemgroup `json:"systemgroup"`
+	}
+
+	endpoint := "systemgroups"
+	err := c.invokeAPI("POST", endpoint, req, &systemgroup)
+	AssertApiError(err, "systemgroup")
+
+	return systemgroup.Data
 }
