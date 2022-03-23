@@ -31,6 +31,15 @@ func init() {
 	settingsFileFlag(mailUpdateCmd)
 	settingString(mailUpdateCmd, updateSettings, "organisation", "New organisation for the mailgroup")
 	settingString(mailUpdateCmd, updateSettings, "name", "New name for the mailgroup")
+
+	// MAIL ACTIONS
+	mailCmd.AddCommand(mailActionsCmd)
+
+	// MAIL ACTIONS ACTIVATE
+	mailActionsCmd.AddCommand(mailActionsActivateCmd)
+
+	// MAIL ACTIONS DEACTIVATE
+	mailActionsCmd.AddCommand(mailActionsDeactivateCmd)
 }
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
@@ -173,4 +182,33 @@ func mailgroupDisplayName(m types.Mailgroup) string {
 	}
 
 	return fmt.Sprintf("%s.%s", domain.Name, domain.Domaintype.Extension)
+}
+
+// MAIL ACTIONS
+var mailActionsCmd = &cobra.Command{
+	Use: "actions",
+}
+
+// MAIL ACTIONS ACTIVATE
+var mailActionsActivateCmd = &cobra.Command{
+	Use: "activate",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+
+		Level27Client.MailgroupsAction(mailgroupID, "activate")
+	},
+}
+
+// MAIL ACTIONS ACTIVATE
+var mailActionsDeactivateCmd = &cobra.Command{
+	Use: "deactivate",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+
+		Level27Client.MailgroupsAction(mailgroupID, "deactivate")
+	},
 }

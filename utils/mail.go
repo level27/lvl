@@ -77,3 +77,21 @@ func (c *Client) MailgroupsUpdate(mailgroupID int, data map[string]interface{}) 
 	err := c.invokeAPI("PUT", endpoint, data, nil)
 	AssertApiError(err, "MailgroupsUpdate")
 }
+
+// POST /mailgroups/{mailgroupID}/actions
+func (c *Client) MailgroupsAction(mailgroupID int, action string) types.Mailgroup {
+	var response struct {
+		Mailgroup types.Mailgroup `json:"mailgroup"`
+	}
+
+	var request struct {
+		Type string `json:"type"`
+	}
+	request.Type = action;
+
+	endpoint := fmt.Sprintf("mailgroups/%d/actions", mailgroupID)
+	err := c.invokeAPI("POST", endpoint, request, &response)
+	AssertApiError(err, "MailgroupsAction")
+
+	return response.Mailgroup
+}
