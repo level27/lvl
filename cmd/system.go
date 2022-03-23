@@ -226,19 +226,17 @@ func init() {
 
 	systemCmd.AddCommand(systemGroupsCmd)
 
-	// --- GET 
+	// --- GET
 	systemGroupsCmd.AddCommand(systemGroupsGetCmd)
 
-	// --- ADD 
+	// --- ADD
 	systemGroupsCmd.AddCommand(systemGroupsAddCmd)
-
 
 	// --- DELETE
 	systemGroupsCmd.AddCommand(systemGroupsRemoveCmd)
 
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
-
 
 	// SSH KEYS
 	systemCmd.AddCommand(systemSshKeysCmd)
@@ -1240,6 +1238,8 @@ var systemIntegritychecksCmd = &cobra.Command{
 	Short: "Manage integritychecks for a system",
 }
 
+// #region  SYSTEMS/INTEGRITYCHECKS (GET / POST / DOWNLOAD)
+
 // ---------- GET INTEGRITYCHECKS
 var systemIntegritychecksGetCmd = &cobra.Command{
 	Use:   "get [systemID]",
@@ -1301,33 +1301,37 @@ var systemIntegritychecksDownloadCmd = &cobra.Command{
 	},
 }
 
-//------------------------------------------------- SYSTEMS/GROUPS (GET / ADD / DESCRIBE / DELETE)-------------------------------------------------
+// #endregion
+
+//------------------------------------------------- SYSTEMS/GROUPS (GET / ADD  / DELETE)-------------------------------------------------
 // ---------------- MAIN COMMAND (groups)
 var systemGroupsCmd = &cobra.Command{
 	Use:   "groups",
 	Short: "Manage a system's groups.",
 }
 
+// #region SYSTEMS/GROUPS (GET / ADD  / DELETE)
+
 // ---------------- GET GROUPS
 var systemGroupsGetCmd = &cobra.Command{
-	Use: "get [systemID]",
+	Use:   "get [systemID]",
 	Short: "Show list of all groups from a system.",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid systemID
 		systemId := checkSingleIntID(args[0], "system")
 
 		groups := Level27Client.SystemGroupsGet(systemId)
 
-		outputFormatTable(groups , []string{"ID","NAME"}, []string{"ID", "Name"})
+		outputFormatTable(groups, []string{"ID", "NAME"}, []string{"ID", "Name"})
 	},
 }
 
-// ---------------- LINK SYSTEM TO A GROUP (ADD) 
+// ---------------- LINK SYSTEM TO A GROUP (ADD)
 var systemGroupsAddCmd = &cobra.Command{
-	Use: "add [systemID] [systemgroupID]",
+	Use:   "add [systemID] [systemgroupID]",
 	Short: "Link a system with a systemgroup.",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid systemID
 		systemID := checkSingleIntID(args[0], "system")
@@ -1341,9 +1345,9 @@ var systemGroupsAddCmd = &cobra.Command{
 
 // ---------------- UNLINK SYSTEM FROM A GROUP (DELETE)
 var systemGroupsRemoveCmd = &cobra.Command{
-	Use: "remove [systemID] [systemgroupID]",
+	Use:   "remove [systemID] [systemgroupID]",
 	Short: "Unlink a system from a systemgroup.",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid systemId
 		systemId := checkSingleIntID(args[0], "system")
@@ -1354,6 +1358,7 @@ var systemGroupsRemoveCmd = &cobra.Command{
 	},
 }
 
+// #endregion
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
