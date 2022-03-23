@@ -234,6 +234,9 @@ func init() {
 	// flags needed to link a system to a group
 	systemGroupsAddCmd.Flags().IntVarP(&systemGroupsAddGroupID, "group", "g", 0, "The unique identifier of a systemgroup.")
 	systemGroupsAddCmd.MarkFlagRequired("group")
+
+	// --- DELETE
+	systemGroupsCmd.AddCommand(systemGroupsRemoveCmd)
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
 	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
 
@@ -1321,7 +1324,7 @@ var systemGroupsGetCmd = &cobra.Command{
 	},
 }
 
-// ---------------- ADD SYSTEM TO A GROUP
+// ---------------- LINK SYSTEM TO A GROUP
 var systemGroupsAddGroupID int 
 var systemGroupsAddCmd = &cobra.Command{
 	Use: "add",
@@ -1336,6 +1339,22 @@ var systemGroupsAddCmd = &cobra.Command{
 		Level27Client.SystemGroupsAdd(systemID, jsonRequest)
 	},
 }
+
+// ---------------- UNLINK SYSTEM FROM A GROUP
+var systemGroupsRemoveCmd = &cobra.Command{
+	Use: "remove [systemID] [systemgroupID]",
+	Short: "Unlink a system from a systemgroup.",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid systemId
+		systemId := checkSingleIntID(args[0], "system")
+		// check for valid systemgroupId
+		groupId := checkSingleIntID(args[1], "systemgroup")
+
+		Level27Client.SystemGroupsRemove(systemId, groupId)
+	},
+}
+
 
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
