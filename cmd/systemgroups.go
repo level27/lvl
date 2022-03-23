@@ -6,7 +6,7 @@ import (
 
 // MAIN COMMAND
 var systemgroupCmd = &cobra.Command{
-	Use:   "systemgroup",
+	Use:   "systemgroups",
 	Short: "Commands for managing systemgroups",
 }
 
@@ -16,6 +16,8 @@ func init() {
 
 	// --- GET (LIST)
 	systemgroupCmd.AddCommand(systemgroupsGetCmd)
+	// add optional get parameters (filters)
+	addCommonGetFlags(systemgroupsGetCmd)
 
 }
 
@@ -25,6 +27,10 @@ var systemgroupsGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Show list of all available systemgroups.",
 	Run: func(cmd *cobra.Command, args []string) {
-		loginCmd.Print("hi")
+		
+		systemgroups := Level27Client.SystemgroupsGet(optGetParameters)
+		
+		outputFormatTable(systemgroups, []string{"ID", "NAME", "ORGANISATION"}, []string{"ID", "Name", "Organisation.Name"})
+		
 	},
 }
