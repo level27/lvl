@@ -222,14 +222,20 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/GROUPS (get/ add / describe / delete) --------------------------------------
-	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
+	// #region SYSTEMS/GROUPS (get/ add / delete)
 
 	systemCmd.AddCommand(systemGroupsCmd)
 
 	// --- GET 
 	systemGroupsCmd.AddCommand(systemGroupsGetCmd)
+
+	// --- ADD 
+	systemGroupsCmd.AddCommand(systemGroupsAddCmd)
+	// flags needed to link a system to a group
+	systemGroupsAddCmd.Flags().IntVarP(&systemGroupsAddGroupID, "group", "g", 0, "The unique identifier of a systemgroup.")
+	systemGroupsAddCmd.MarkFlagRequired("group")
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
-	// #region SYSTEMS/GROUPS (get/ add / delete)
+	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
 
 
 	// SSH KEYS
@@ -1314,6 +1320,23 @@ var systemGroupsGetCmd = &cobra.Command{
 		outputFormatTable(groups , []string{"ID","NAME"}, []string{"ID", "Name"})
 	},
 }
+
+// ---------------- ADD SYSTEM TO A GROUP
+var systemGroupsAddGroupID int 
+var systemGroupsAddCmd = &cobra.Command{
+	Use: "add",
+	Short: "Link a system with a systemgroup.",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid systemID
+		systemID := checkSingleIntID(args[0], "system")
+		// check for valid groupID type (int)
+		groupId := systemGroupsAddGroupID
+		jsonRequest := gabs.New()
+		jsonRequest.Set(groupId, "systemgroup")
+		Level27Client.SystemGroupsAdd(systemID, jsonRequest)
+	},
+}
+
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
