@@ -95,3 +95,37 @@ func (c *Client) MailgroupsAction(mailgroupID int, action string) types.Mailgrou
 
 	return response.Mailgroup
 }
+
+// POST /mailgroups/{mailgroupID}/domains
+func (c *Client) MailgroupsDomainsLink(mailgroupID int, data types.MailgroupDomainAdd) types.Mailgroup {
+	var response struct {
+		Mailgroup types.Mailgroup `json:"mailgroup"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/domains", mailgroupID)
+	err := c.invokeAPI("POST", endpoint, data, &response)
+	AssertApiError(err, "MailgroupsDomainsAdd")
+
+	return response.Mailgroup
+}
+
+// DELETE /mailgroups/{mailgroupID}/domains/{domainId}
+func (c *Client) MailgroupsDomainsUnlink(mailgroupID int, domainId int) {
+	endpoint := fmt.Sprintf("mailgroups/%d/domains/%d", mailgroupID, domainId)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "MailgroupsDomainsRemove")
+}
+
+// PATCH /mailgroups/{mailgroupID}/domains/{domainId}/setprimary
+func (c *Client) MailgroupsDomainsSetPrimary(mailgroupID int, domainId int) {
+	endpoint := fmt.Sprintf("mailgroups/%d/domains/%d/setprimary", mailgroupID, domainId)
+	err := c.invokeAPI("PATCH", endpoint, nil, nil)
+	AssertApiError(err, "MailgroupsDomainsSetPrimary")
+}
+
+// PATCH /mailgroups/{mailgroupID}/domains/{domainID}
+func (c *Client) MailgroupsDomainsPatch(mailgroupID int, domainID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("mailgroups/%d/domains/%d", mailgroupID, domainID)
+	err := c.invokeAPI("PATCH", endpoint, data, nil)
+	AssertApiError(err, "MailgroupsDomainsPatch")
+}
