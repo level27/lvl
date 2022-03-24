@@ -305,6 +305,7 @@ func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 // #endregion
 
 // --------------------------- SYSTEM/CHECKS SPECIFIC ACTIONS (DESCRIBE / DELETE / UPDATE) ------------------------------------
+
 // #region SYSTEM/CHECKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 // ---------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {

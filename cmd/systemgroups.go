@@ -17,12 +17,14 @@ func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemgroupCmd)
 
+	//------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
+
 	// --- GET (LIST)
 	systemgroupCmd.AddCommand(systemgroupsGetCmd)
 	// add optional get parameters (filters)
 	addCommonGetFlags(systemgroupsGetCmd)
 
-	// --- DESCRIBE 
+	// --- DESCRIBE
 	systemgroupCmd.AddCommand(systemgroupDescribeCmd)
 
 	// --- CREATE
@@ -41,23 +43,30 @@ func init() {
 	flags.StringVarP(&systemgroupUpdateName, "name", "n", "", "The name you want to give the systemgroup.")
 	flags.StringVarP(&systemgroupUpdateOrg, "organisation", "", "", "The name of the organisation this systemgroup belongs to.")
 
+	// --- DELETE
+	systemgroupCmd.AddCommand(systemgroupsDeleteCmd)
+	//flag to skip confirmation when deleting a systemgroup
+	systemgroupsDeleteCmd.Flags().BoolVarP(&systemgroupDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a systemgroup")
+
 }
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 // ---------------- DESCRIBE
 var systemgroupDescribeCmd = &cobra.Command{
-	Use: "describe",
+	Use:   "describe",
 	Short: "Get detailed info about a systemgroup",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid systemgroupId type
 		systemgroupID := checkSingleIntID(args[0], "systemgroup")
 
 		systemgroup := Level27Client.SystemgroupsgetSingle(systemgroupID)
 
-		log.Print(systemgroup)
+		// create output on template
+		outputFormatTemplate(systemgroup, "templates/systemgroup.tmpl")
 	},
 }
+
 // ---------------- GET
 var systemgroupsGetCmd = &cobra.Command{
 	Use:   "get",
@@ -125,7 +134,6 @@ var systemgroupsUpdateCmd = &cobra.Command{
 				Organisation: currentData.Organisation.ID,
 			}
 
-		
 			// when organisation flag is used
 			if cmd.Flag("organisation").Changed {
 				// this function accepts the organisation name (string)
@@ -139,14 +147,30 @@ var systemgroupsUpdateCmd = &cobra.Command{
 				// when given an empty string as name for systemgroup
 				if len(systemgroupUpdateName) == 0 {
 					cobra.CheckErr("Name cannot be empty!")
-				}else{
+				} else {
 					request.Name = systemgroupUpdateName
 				}
 			}
-			
+
 			Level27Client.SystemgroupsUpdate(systemgroupID, request)
 
 		}
+
+	},
+}
+
+// ---------------- DELETE
+var systemgroupDeleteConfirmed bool
+var systemgroupsDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete a systemgroup",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+
+		//check for valid systemgroupId type
+		systemgroupId := checkSingleIntID(args[0], "systemgroup")
+
+		Level27Client.SystemgroupDelete(systemgroupId, systemgroupDeleteConfirmed)
 
 	},
 }

@@ -10,7 +10,7 @@ type Systemgroup struct {
 	Systems []struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
-	} `json:"systems"`
+	} `json:"sg-systems"`
 	Organisation struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
