@@ -17,6 +17,8 @@ func init() {
 	//adding main command to root
 	RootCmd.AddCommand(systemgroupCmd)
 
+	//------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
+
 	// --- GET (LIST)
 	systemgroupCmd.AddCommand(systemgroupsGetCmd)
 	// add optional get parameters (filters)
@@ -165,7 +167,7 @@ var systemgroupsDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		//check for valid systemgroupId type 
+		//check for valid systemgroupId type
 		systemgroupId := checkSingleIntID(args[0], "systemgroup")
 
 		Level27Client.SystemgroupDelete(systemgroupId, systemgroupDeleteConfirmed)

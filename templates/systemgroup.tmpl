@@ -4,7 +4,11 @@ SYSTEMGROUP:
     STATUS: {{.Status}}
     SHARED: {{.Shared}}
 
-
+    {{- /*ORGANISATION*/}}
+    
+    ORGANISATION:
+        ID: {{.Organisation.ID}}
+        NAME: {{.Organisation.Name}}
     {{- /* SYSTEMS */}}
 
     {{- $anySystems := false }}

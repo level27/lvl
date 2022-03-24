@@ -59,6 +59,7 @@ func (c *Client) SystemgroupsUpdate(systemgroupId int, req types.SystemgroupRequ
 	AssertApiError(err, "systemgroup")
 }
 
+// ---------------- DELETE
 func (c *Client) SystemgroupDelete(systemgroupId int, isDeleteConfirmed bool) {
 	endpoint := fmt.Sprintf("systemgroups/%v", systemgroupId)
 	// when delete already confirmed by flag -> execute.
@@ -90,3 +91,5 @@ func (c *Client) SystemgroupDelete(systemgroupId int, isDeleteConfirmed bool) {
 
 	}
 }
+
+
