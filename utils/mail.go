@@ -129,3 +129,133 @@ func (c *Client) MailgroupsDomainsPatch(mailgroupID int, domainID int, data map[
 	err := c.invokeAPI("PATCH", endpoint, data, nil)
 	AssertApiError(err, "MailgroupsDomainsPatch")
 }
+
+
+// GET /mailgroups/{mailgroupId}/mailboxes
+func (c *Client) MailgroupsMailboxesGetList(mailgroupID int, get types.CommonGetParams) []types.MailboxShort {
+	var response struct {
+		Mailboxes []types.MailboxShort `json:"mailboxes"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes", mailgroupID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "MailgroupsMailboxesGetList")
+
+	return response.Mailboxes
+}
+
+// POST /mailgroups/{mailgroupId}/mailboxes
+func (c *Client) MailgroupsMailboxesCreate(mailgroupID int, data types.MailboxCreate) types.Mailbox {
+	var response struct {
+		Mailbox types.Mailbox `json:"mailbox"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes", mailgroupID)
+	err := c.invokeAPI("POST", endpoint, data, &response)
+	AssertApiError(err, "MailgroupsMailboxesCreate")
+
+	return response.Mailbox
+}
+
+// GET /mailgroups/{mailgroupId}/mailboxes/{mailboxId}
+func (c *Client) MailgroupsMailboxesGetSingle(mailgroupID int, mailboxID int) types.Mailbox {
+	var response struct {
+		Mailbox types.Mailbox `json:"mailbox"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d", mailgroupID, mailboxID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "MailgroupsMailboxesGetSingle")
+
+	return response.Mailbox
+}
+
+// DELETE /mailgroups/{mailgroupId}/mailboxes/{mailboxId}
+func (c *Client) MailgroupsMailboxesDelete(mailgroupID int, mailboxID int)  {
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d", mailgroupID, mailboxID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "MailgroupsMailboxesDelete")
+}
+
+// PUT /mailgroups/{mailgroupId}/mailboxes
+func (c *Client) MailgroupsMailboxesUpdate(mailgroupID int, mailboxID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d", mailgroupID, mailboxID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "MailgroupsMailboxesUpdate")
+}
+
+
+func (c *Client) MailgroupsMailboxesLookup(mailgroupID int, name string) *types.MailboxShort {
+	mailgroups := c.MailgroupsMailboxesGetList(mailgroupID, types.CommonGetParams{Filter: name})
+	for _, val := range mailgroups {
+		if val.Name == name || val.Username == name {
+			return &val
+		}
+	}
+
+	return nil;
+}
+
+// GET /mailgroups/{mailgroupId}/mailboxes/{mailboxId}/addresses
+func (c *Client) MailgroupsMailboxesAddressesGetList(mailgroupID int, mailboxID int, get types.CommonGetParams) []types.MailboxAddress {
+	var response struct {
+		MailboxAddresses []types.MailboxAddress `json:"mailboxAddresses"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d/addresses", mailgroupID, mailboxID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "MailgroupsMailboxesAddressesGetList")
+
+	return response.MailboxAddresses
+}
+
+// POST /mailgroups/{mailgroupId}/mailboxes/{mailboxId}/addresses
+func (c *Client) MailgroupsMailboxesAddressesCreate(mailgroupID int, mailboxID int, data types.MailboxAddressCreate) types.MailboxAddress {
+	var response struct {
+		MailboxAddress types.MailboxAddress `json:"mailboxAdress"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d/addresses", mailgroupID, mailboxID)
+	err := c.invokeAPI("POST", endpoint, data, &response)
+	AssertApiError(err, "MailgroupsMailboxesAddressesCreate")
+
+	return response.MailboxAddress
+}
+
+// GET /mailgroups/{mailgroupId}/mailboxes/{mailboxId}/addresses/{addressId}
+func (c *Client) MailgroupsMailboxesAddressesGetSingle(mailgroupID int, mailboxID int, addressID int) types.MailboxAddress {
+	var response struct {
+		MailboxAddress types.MailboxAddress `json:"mailboxAddress"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d/addresses/%d", mailgroupID, mailboxID, addressID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "MailgroupsMailboxesAddressesGetSingle")
+
+	return response.MailboxAddress
+}
+
+// DELETE /mailgroups/{mailgroupId}/mailboxes/{mailboxId}/addresses/{addressId}
+func (c *Client) MailgroupsMailboxesAddressesDelete(mailgroupID int, mailboxID int, addressID int)  {
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d/addresses/%d", mailgroupID, mailboxID, addressID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "MailgroupsMailboxesAddressesDelete")
+}
+
+// PUT /mailgroups/{mailgroupId}/mailboxes/addresses/{addressId}
+func (c *Client) MailgroupsMailboxesAddressesUpdate(mailgroupID int, mailboxID int, addressID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("mailgroups/%d/mailboxes/%d/addresses/%d", mailgroupID, mailboxID, addressID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "MailgroupsMailboxesAddressesUpdate")
+}
+
+func (c *Client) MailgroupsMailboxesAddressesLookup(mailgroupID int, mailboxID int, address string) *types.MailboxAddress {
+	addresses := c.MailgroupsMailboxesAddressesGetList(mailgroupID, mailboxID, types.CommonGetParams{Filter: address})
+	for _, val := range addresses {
+		if val.Address == address {
+			return &val
+		}
+	}
+
+	return nil;
+}

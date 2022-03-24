@@ -1,0 +1,15 @@
+{{vt "yellow"}}ID:            {{vt "brightwhite"}}{{ .ID }}
+{{vt "yellow"}}Name:          {{vt "brightwhite"}}{{ .Name }}
+{{vt "yellow"}}Username:      {{vt "brightwhite"}}{{ .Username }}
+{{vt "yellow"}}Status:        {{template "statusVt" .StatusCategory}}{{ .Status }}
+{{vt "yellow"}}Out-of-office: {{vt "brightwhite"}}
+{{- if .OooEnabled -}}
+{{vt "brightwhite"}}yes
+               {{ .OooSubject }}
+{{- else -}}
+{{vt "brightblack"}}no
+{{- end }}
+{{vt "yellow"}}Addresses:     {{vt "brightwhite"}}
+{{- range .Addresses }}
+{{ vt "brightblue"}}- {{vt "brightwhite"}}{{ .Address }} ({{ .ID }})
+{{ end }}
