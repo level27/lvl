@@ -450,7 +450,7 @@ var mailBoxDeleteCmd = &cobra.Command{
 
 		if !mailBoxDeleteForce {
 			mailbox := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
-			if !confirmPrompt(fmt.Sprintf("Delete mailbox %s (%d)?", mailbox.Username, mailgroupID)) {
+			if !confirmPrompt(fmt.Sprintf("Delete mailbox %s (%d)?", mailbox.Username, mailboxID)) {
 				return
 			}
 		}
