@@ -259,3 +259,70 @@ func (c *Client) MailgroupsMailboxesAddressesLookup(mailgroupID int, mailboxID i
 
 	return nil;
 }
+
+
+// GET /mailgroups/{mailgroupId}/mailforwarders
+func (c *Client) MailgroupsMailforwardersGetList(mailgroupID int, get types.CommonGetParams) []types.Mailforwarder {
+	var response struct {
+		Mailforwarders []types.Mailforwarder `json:"mailforwarders"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailforwarders", mailgroupID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "MailgroupsMailforwardersGetList")
+
+	return response.Mailforwarders
+}
+
+// POST /mailgroups/{mailgroupId}/mailforwarders
+func (c *Client) MailgroupsMailforwardersCreate(mailgroupID int, data types.MailforwarderCreate) types.Mailforwarder {
+	var response struct {
+		Mailforwarder types.Mailforwarder `json:"mailforwarder"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailforwarders", mailgroupID)
+	err := c.invokeAPI("POST", endpoint, data, &response)
+	AssertApiError(err, "MailgroupsMailforwardersCreate")
+
+	return response.Mailforwarder
+}
+
+// GET /mailgroups/{mailgroupId}/mailforwarders/{mailforwarderId}
+func (c *Client) MailgroupsMailforwardersGetSingle(mailgroupID int, mailforwarderID int) types.Mailforwarder {
+	var response struct {
+		Mailforwarder types.Mailforwarder `json:"mailforwarder"`
+	}
+
+	endpoint := fmt.Sprintf("mailgroups/%d/mailforwarders/%d", mailgroupID, mailforwarderID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "MailgroupsMailforwardersGetSingle")
+
+	return response.Mailforwarder
+}
+
+// DELETE /mailgroups/{mailgroupId}/mailforwarders/{mailforwarderId}
+func (c *Client) MailgroupsMailforwardersDelete(mailgroupID int, mailforwarderID int)  {
+	endpoint := fmt.Sprintf("mailgroups/%d/mailforwarders/%d", mailgroupID, mailforwarderID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "MailgroupsMailforwardersDelete")
+}
+
+// PUT /mailgroups/{mailgroupId}/mailforwarders
+func (c *Client) MailgroupsMailforwardersUpdate(mailgroupID int, mailforwarderID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("mailgroups/%d/mailforwarders/%d", mailgroupID, mailforwarderID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "MailgroupsMailforwardersUpdate")
+}
+
+
+func (c *Client) MailgroupsMailforwardersLookup(mailgroupID int, name string) *types.Mailforwarder {
+	mailgroups := c.MailgroupsMailforwardersGetList(mailgroupID, types.CommonGetParams{Filter: name})
+	for _, val := range mailgroups {
+		if val.Address == name {
+			return &val
+		}
+	}
+
+	return nil;
+}
+

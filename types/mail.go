@@ -120,3 +120,33 @@ type MailboxAddress struct {
 type MailboxAddressCreate struct {
 	Address string `json:"address"`
 }
+
+type Mailforwarder struct {
+	ID          int      `json:"id"`
+	Address     string   `json:"address"`
+	Destination []string `json:"destination"`
+	Status      string   `json:"status"`
+	Mailgroup   struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"mailgroup"`
+	Domain struct {
+		ID         int    `json:"id"`
+		Name       string `json:"name"`
+		Domaintype struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"domaintype"`
+	} `json:"domain"`
+}
+
+type MailforwarderCreate struct {
+	Address     string `json:"address"`
+	Destination string `json:"destination"`
+}
+
+type MailforwarderPut struct {
+	Address     string `json:"address"`
+	Destination string `json:"destination"`
+}

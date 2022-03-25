@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
@@ -101,6 +102,36 @@ func init() {
 	// MAIL BOX ADDRESS REMOVE
 	mailBoxAddressCmd.AddCommand(mailBoxAddressRemoveCmd)
 
+
+	// MAIL FORWARDER
+	mailCmd.AddCommand(mailForwarderCmd)
+
+	// MAIL FORWARDER GET
+	mailForwarderCmd.AddCommand(mailForwarderGetCmd)
+	addCommonGetFlags(mailForwarderGetCmd)
+
+	// MAIL FORWARDER CREATE
+	mailForwarderCmd.AddCommand(mailForwarderCreateCmd)
+	mailForwarderCreateCmd.Flags().StringVar(&mailForwarderCreateAddress, "address", "", "Address of the mail forwarder")
+	mailForwarderCreateCmd.Flags().StringVar(&mailForwarderCreateDestination, "destination", "", "Comma-separated list of destination addresses to forward to")
+
+	// MAIL FORWARDER DELETE
+	mailForwarderCmd.AddCommand(mailForwarderDeleteCmd)
+	mailForwarderDeleteCmd.Flags().BoolVar(&mailForwarderDeleteForce, "force", false, "Do not ask for confirmation to delete the mail forwarder")
+
+	// MAIL FORWARDER UPDATE
+	mailForwarderCmd.AddCommand(mailForwarderUpdateCmd)
+	settingsFileFlag(mailForwarderUpdateCmd)
+	settingString(mailForwarderUpdateCmd, updateSettings, "destination", "Comma-separated list of all destinations for this forwarder")
+
+	// MAIL FORWARDER DESTINATION
+	mailForwarderCmd.AddCommand(mailForwarderDestinationCmd)
+
+	// MAIL FORWARDER DESTINATION ADD
+	mailForwarderDestinationCmd.AddCommand(mailForwarderDestinationAddCmd)
+
+	// MAIL FORWARDER DESTINATION REMOVE
+	mailForwarderDestinationCmd.AddCommand(mailForwarderDestinationRemoveCmd)
 }
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
@@ -146,6 +177,21 @@ func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) int {
 	}
 	return address.ID
 }
+
+func resolveMailforwarder(mailgroupID int, arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	mailforwarder := Level27Client.MailgroupsMailforwardersLookup(mailgroupID, arg)
+	if mailforwarder == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find mailforwarder: %s", arg))
+		return 0
+	}
+	return mailforwarder.ID
+}
+
 
 // MAIL
 var mailCmd = &cobra.Command{
@@ -525,5 +571,174 @@ var mailBoxAddressRemoveCmd = &cobra.Command{
 			mailboxID,
 			addressID,
 		)
+	},
+}
+
+
+// MAIL FORWARDER
+var mailForwarderCmd = &cobra.Command{
+	Use: "forwarder",
+	Short: "Commands for managing mail forwarders",
+
+	Aliases: []string{"fwd"},
+}
+
+// MAIL FORWARDER GET
+var mailForwarderGetCmd = &cobra.Command{
+	Use: "get [mailgroup]",
+	Short: "Get a list of mail forwarders in a mail group",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+
+		mailboxes := Level27Client.MailgroupsMailforwardersGetList(mailgroupID, optGetParameters)
+
+		outputFormatTableFuncs(
+			mailboxes,
+			[]string{"ID", "Status", "Address", "Destimations"},
+			[]interface{}{"ID", "Status", "Address", func(f types.Mailforwarder) string {
+				first := true
+				result := ""
+				for _, dest := range f.Destination {
+					if !first {
+						result += "\n\t\t\t"
+					}
+
+					first = false
+					result += dest
+				}
+
+				result += "\n\t\t\t\t"
+
+				return result
+			}})
+	},
+}
+
+// MAIL FORWARDER CREATE
+var mailForwarderCreateAddress string
+var mailForwarderCreateDestination string
+var mailForwarderCreateCmd = &cobra.Command{
+	Use: "create [mailgroup]",
+	Short: "Create a new mail forwarder",
+
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+
+		Level27Client.MailgroupsMailforwardersCreate(mailgroupID, types.MailforwarderCreate{
+			Address: mailForwarderCreateAddress,
+			Destination: mailForwarderCreateDestination,
+		})
+	},
+}
+
+// MAIL FORWARDER DELETE
+var mailForwarderDeleteForce bool
+var mailForwarderDeleteCmd = &cobra.Command{
+	Use: "delete [mailgroup] [mail forwarder]",
+	Short: "Delete a mail forwarder",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+
+		if !mailForwarderDeleteForce {
+			mailbox := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+			if !confirmPrompt(fmt.Sprintf("Delete mail forwarder %s (%d)?", mailbox.Address, mailforwarderID)) {
+				return
+			}
+		}
+
+		Level27Client.MailgroupsMailforwardersDelete(mailgroupID, mailforwarderID)
+	},
+}
+
+// MAIL FORWARDER UPDATE
+var mailForwarderUpdateCmd = &cobra.Command{
+	Use: "update [mailgroup] [mail forwarder]",
+	Short: "Update settings on a mail forwarder",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+
+		mailgroupID := resolveMailgroup(args[0])
+		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+
+		mailforwarderPut := types.MailforwarderPut {
+			Address: mailforwarder.Address,
+			Destination: strings.Join(mailforwarder.Destination, ","),
+		}
+
+		data := roundTripJson(mailforwarderPut).(map[string]interface{})
+		data = mergeMaps(data, settings)
+
+		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+	},
+}
+
+// MAIL FORWARDER DESTINATION
+var mailForwarderDestinationCmd = &cobra.Command{
+	Use: "destination",
+	Short: "Commands for managing destination addresses on a mail forwarder easily",
+
+	Aliases: []string{"dest"},
+}
+
+// MAIL FORWARDER DESTINATION ADD
+var mailForwarderDestinationAddCmd = &cobra.Command{
+	Use: "add [mail group] [mail forwarder] [new destination]",
+	Short: "Add a single destination address to a mail forwarder",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+
+		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		destination := append(mailforwarder.Destination, args[2])
+
+		mailforwarderPut := types.MailforwarderPut {
+			Address: mailforwarder.Address,
+			Destination: strings.Join(destination, ","),
+		}
+
+		data := roundTripJson(mailforwarderPut).(map[string]interface{})
+		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+	},
+}
+
+// MAIL FORWARDER DESTINATION REMOVE
+var mailForwarderDestinationRemoveCmd = &cobra.Command{
+	Use: "remove [mail group] [mail forwarder] [old destination]",
+	Short: "Remove a single destination address from a mail forwarder",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		mailgroupID := resolveMailgroup(args[0])
+		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+		destAddress := args[2]
+
+		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		destination := mailforwarder.Destination
+		idx := indexOf(destination, destAddress)
+		if idx == -1 {
+			fmt.Printf("'%s' is not a destination on this mail forwarder.", destAddress)
+			return
+		}
+
+		destination = append(destination[:idx], destination[idx+1:]...)
+
+		mailforwarderPut := types.MailforwarderPut {
+			Address: mailforwarder.Address,
+			Destination: strings.Join(destination, ","),
+		}
+
+		data := roundTripJson(mailforwarderPut).(map[string]interface{})
+		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
 	},
 }
