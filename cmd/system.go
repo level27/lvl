@@ -299,32 +299,13 @@ func init() {
 
 
 	// ACCESS
-	systemCmd.AddCommand(systemAccessCmd)
+	addAccessCmds(systemCmd, "systems", resolveSystem)
 
-	// ACCESS GET
-	systemAccessCmd.AddCommand(systemAccessGetCmd)
+	// BILLING
+	addBillingCmds(systemCmd, "systems", resolveSystem)
 
-	// ACCESS ADD
-	systemAccessCmd.AddCommand(systemAccessAddCmd)
-
-	// ACCESS REMOVE
-	systemAccessCmd.AddCommand(systemAccessRemoveCmd)
-
-	//
-	// ------ BILLING
-	//
-
-	// SYSTEM BILLING
-	systemCmd.AddCommand(systemBillingCmd)
-
-	// SYSTEM BILLING ON
-	systemBillingCmd.AddCommand(systemBillingOnCmd)
-	flags = systemBillingOnCmd.Flags()
-	flags.StringVarP(&systemBillingOnExternalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
-
-	// SYSTEM BILLING OFF
-	systemBillingCmd.AddCommand(systemBillingOffCmd)
-
+	// JOBS
+	addJobCmds(systemCmd, "system", resolveSystem)
 }
 
 // Resolve an integer or name domain.
@@ -1280,7 +1261,7 @@ var systemIntegritychecksDownloadCmd = &cobra.Command{
 			// Auto-generate file name.
 			systemIntegrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", integritycheckID, systemID)
 		}else{
-		
+
 
 			systemIntegrityDownload = systemIntegrityDownload + ".pdf"
 		}
@@ -1735,94 +1716,3 @@ var systemVolumeUpdateCmd = &cobra.Command{
 }
 
 
-// SYSTEM ACCESS
-var systemAccessCmd = &cobra.Command{
-	Use: "access",
-	Short: "Commands for managing access to a system",
-}
-
-// SYSTEM ACCESS GET
-var systemAccessGetCmd = &cobra.Command{
-	Use: "get",
-	Short: "List organisations with access to a system",
-
-	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-
-		organisations := Level27Client.SystemGetOrganisations(systemID)
-
-		outputFormatTableFuncs(
-			organisations,
-			[]string{"ID", "Name", "Type", "Members"},
-			[]interface{}{"ID", "Name", "Type", func(org types.OrganisationAccess) int {
-				return len(org.Users)
-			}})
-	},
-}
-
-// SYSTEM ACCESS ADD
-var systemAccessAddCmd = &cobra.Command{
-	Use: "add",
-	Short: "Grant an organisation access to a system",
-
-	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		organisationID := resolveOrganisation(args[1])
-
-		Level27Client.SystemAddAcl(systemID, types.AclAdd{
-			Organisation: organisationID,
-		})
-	},
-}
-
-// SYSTEM ACCESS REMOVE
-var systemAccessRemoveCmd = &cobra.Command{
-	Use: "remove",
-	Short: "Revoke an organisation's access to a system",
-
-	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		organisationID := resolveOrganisation(args[1])
-
-		Level27Client.SystemRemoveAcl(systemID, organisationID)
-	},
-}
-
-// SYSTEM BILLING
-var systemBillingCmd = &cobra.Command{
-	Use:   "billing",
-	Short: "Manage system's invoicing (BillableItem)",
-}
-
-// SYSTEM BILLING ON
-var systemBillingOnExternalInfo string
-
-var systemBillingOnCmd = &cobra.Command{
-	Use:   "on [domain] [flags]",
-	Short: "Turn on billing for a system (admin only)",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-
-		req := types.BillPostRequest{
-			ExternalInfo: systemBillingOnExternalInfo,
-		}
-
-		Level27Client.SystemBillableItemCreate(systemID, req)
-	},
-}
-
-// SYSTEM BILLING OFF
-var systemBillingOffCmd = &cobra.Command{
-	Use:   "off [domainID]",
-	Short: "Turn off the billing for system (admin only)",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-
-		Level27Client.SystemBillableItemDelete(systemID)
-	},
-}
