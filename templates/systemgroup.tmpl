@@ -1,0 +1,21 @@
+SYSTEMGROUP:
+    ID: {{.ID}}
+    NAME:  {{.Name}}
+    STATUS: {{.Status}}
+    SHARED: {{.Shared}}
+
+    {{- /*ORGANISATION*/}}
+    
+    ORGANISATION:
+        ID: {{.Organisation.ID}}
+        NAME: {{.Organisation.Name}}
+    {{- /* SYSTEMS */}}
+
+    {{- $anySystems := false }}
+
+    SYSTEMS:  {{ range .Systems }}
+        {{- $anySystems = true }}
+        ID: {{.ID}}     
+        NAME: {{.Name}} 
+    {{ end }}{{if not $anySystems}}(none){{ end -}}
+

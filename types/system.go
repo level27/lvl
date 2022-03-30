@@ -1,5 +1,6 @@
 package types
 
+// structure of system type returned by API.
 type System struct {
 	SystemRef
 	Uid                   string `json:"uid"`
@@ -71,9 +72,34 @@ type System struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"bootVolume"`
-	Cookbooks             []SystemCookbook `json:"cookbooks"`
+	Cookbooks             []Cookbook `json:"cookbooks"`
 	Preferredparentsystem string           `json:"preferredparentsystem"`
 }
+
+// data needed for POST request (create system)
+type SystemPost struct {
+	Name                        string `json:"name"`
+	CustomerFqdn                string `json:"customerFqdn"`
+	Remarks                     string `json:"remarks"`
+	Disk                        *int   `json:"disk"`
+	Cpu                         *int   `json:"cpu"`
+	Memory                      *int   `json:"memory"`
+	MamanagementType            string `json:"managementType"`
+	PublicNetworking            bool   `json:"publicNetworking"`
+	SystemImage                 int    `json:"systemimage"`
+	Organisation                int    `json:"organisation"`
+	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
+	Zone                        int    `json:"zone"`
+	// InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
+	AutoTeams              string        `json:"autoTeams"`
+	ExternalInfo           string        `json:"externalInfo"`
+	OperatingSystemVersion *int          `json:"operatingsystemVersion"`
+	ParentSystem           *int          `json:"parentsystem"`
+	Type                   string        `json:"type"`
+	AutoNetworks           []interface{} `json:"autoNetworks"`
+}
+
+// --------------------
 
 type SystemRef struct {
 	Id   int    `json:"id"`
@@ -213,42 +239,6 @@ type SystemHasNetworkIpAdd struct {
 	ExternalID interface{} `json:"externalId"`
 }
 
-type SystemCookbook struct {
-	ID                 int    `json:"id"`
-	Cookbooktype       string `json:"cookbooktype"`
-	Cookbookparameters map[string]struct {
-		Value   interface{} `json:"value"`
-		Default bool        `json:"default"`
-	} `json:"cookbookparameters"`
-	CookbookparameterDescriptions map[string]string `json:"cookbookparameterDescriptions"`
-	PreviousCookbookparameters    string            `json:"previousCookbookparameters"`
-	Status                        string            `json:"status"`
-	StatusCategory                string            `json:"statusCategory"`
-}
-
-// data needed for POST request (create system)
-type SystemPost struct {
-	Name                        string `json:"name"`
-	CustomerFqdn                string `json:"customerFqdn"`
-	Remarks                     string `json:"remarks"`
-	Disk                        *int   `json:"disk"`
-	Cpu                         *int   `json:"cpu"`
-	Memory                      *int   `json:"memory"`
-	MamanagementType            string `json:"managementType"`
-	PublicNetworking            bool   `json:"publicNetworking"`
-	SystemImage                 int    `json:"systemimage"`
-	Organisation                int    `json:"organisation"`
-	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
-	Zone                        int    `json:"zone"`
-	// InstallSecurityUpdates      *int           `json:"installSecurityUpdates"`
-	AutoTeams              string        `json:"autoTeams"`
-	ExternalInfo           string        `json:"externalInfo"`
-	OperatingSystemVersion *int          `json:"operatingsystemVersion"`
-	ParentSystem           *int          `json:"parentsystem"`
-	Type                   string        `json:"type"`
-	AutoNetworks           []interface{} `json:"autoNetworks"`
-}
-
 // ----------------------------------- CHECKS ----------------------------------
 
 //--  used to get all current checktypes.
@@ -386,6 +376,7 @@ type CookbookParameterOption struct {
 		Default bool   `json:"default"`
 	} `json:"operatingsystem_versions"`
 }
+
 
 // -------------------
 type SystemProviderConfigurationRef struct {

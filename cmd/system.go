@@ -221,8 +221,22 @@ func init() {
 	systemIntegritychecksDownloadCmd.Flags().StringVarP(&systemIntegrityDownload, "filename", "f", "", "The wanted filename for the downloaded report.")
 	// #endregion
 
+	//-------------------------------------  SYSTEMS/GROUPS (get/ add / describe / delete) --------------------------------------
+	// #region SYSTEMS/GROUPS (get/ add / delete / describe)
+
+	systemCmd.AddCommand(SystemSystemgroupsCmd)
+
+	// --- GET
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsGetCmd)
+
+	// --- ADD
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsAddCmd)
+
+	// --- DELETE
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsRemoveCmd)
+
 	//-------------------------------------  SYSTEMS/SSH KEYS (get/ add / delete) --------------------------------------
-	// #region SYSTEMS/SSH KEYS (get/ add / delete)
+	// #region SYSTEMS/SSH KEYS (get/ add / describe / delete)
 
 	// SSH KEYS
 	systemCmd.AddCommand(systemSshKeysCmd)
@@ -264,7 +278,6 @@ func init() {
 	settingString(systemNetworkIpUpdateCmd, updateSettings, "hostname", "New hostname for this IP")
 	// #endregion
 
-
 	// SYSTEM VOLUME
 	systemCmd.AddCommand(systemVolumeCmd)
 
@@ -296,7 +309,6 @@ func init() {
 	settingString(systemVolumeUpdateCmd, updateSettings, "name", "New name for the volume")
 	settingBool(systemVolumeUpdateCmd, updateSettings, "autoResize", "New autoResize setting")
 	settingInt(systemVolumeUpdateCmd, updateSettings, "space", "New volume space (in GB)")
-
 
 	// ACCESS
 	addAccessCmds(systemCmd, "systems", resolveSystem)
@@ -382,7 +394,6 @@ func resolveSystemVolume(systemID int, arg string) int {
 
 	return ip.ID
 }
-
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
 // #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
@@ -630,7 +641,6 @@ var systemCheckGetCmd = &cobra.Command{
 
 	},
 }
-
 
 // ---------------- CREATE CHECK
 var systemCheckCreateType string
@@ -1209,6 +1219,8 @@ var systemIntegritychecksCmd = &cobra.Command{
 	Short: "Manage integritychecks for a system",
 }
 
+// #region  SYSTEMS/INTEGRITYCHECKS (GET / POST / DOWNLOAD)
+
 // ---------- GET INTEGRITYCHECKS
 var systemIntegritychecksGetCmd = &cobra.Command{
 	Use:   "get [systemID]",
@@ -1260,8 +1272,7 @@ var systemIntegritychecksDownloadCmd = &cobra.Command{
 		if systemIntegrityDownload == "" {
 			// Auto-generate file name.
 			systemIntegrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", integritycheckID, systemID)
-		}else{
-
+		} else {
 
 			systemIntegrityDownload = systemIntegrityDownload + ".pdf"
 		}
@@ -1270,6 +1281,65 @@ var systemIntegritychecksDownloadCmd = &cobra.Command{
 
 	},
 }
+
+// #endregion
+
+//------------------------------------------------- SYSTEMS/GROUPS (GET / ADD  / DELETE)-------------------------------------------------
+// ---------------- MAIN COMMAND (groups)
+var SystemSystemgroupsCmd = &cobra.Command{
+	Use:   "groups",
+	Short: "Manage a system's groups.",
+}
+
+// #region SYSTEMS/GROUPS (GET / ADD  / DELETE)
+
+// ---------------- GET GROUPS
+var SystemSystemgroupsGetCmd = &cobra.Command{
+	Use:   "get [systemID]",
+	Short: "Show list of all groups from a system.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid systemID
+		systemId := checkSingleIntID(args[0], "system")
+
+		groups := Level27Client.SystemSystemgroupsGet(systemId)
+
+		outputFormatTable(groups, []string{"ID", "NAME"}, []string{"ID", "Name"})
+	},
+}
+
+// ---------------- LINK SYSTEM TO A GROUP (ADD)
+var SystemSystemgroupsAddCmd = &cobra.Command{
+	Use:   "add [systemID] [systemgroupID]",
+	Short: "Link a system with a systemgroup.",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid systemID
+		systemID := checkSingleIntID(args[0], "system")
+		// check for valid groupID type (int)
+		groupId := checkSingleIntID(args[1], "systemgroup")
+		jsonRequest := gabs.New()
+		jsonRequest.Set(groupId, "systemgroup")
+		Level27Client.SystemSystemgroupsAdd(systemID, jsonRequest)
+	},
+}
+
+// ---------------- UNLINK SYSTEM FROM A GROUP (DELETE)
+var SystemSystemgroupsRemoveCmd = &cobra.Command{
+	Use:   "remove [systemID] [systemgroupID]",
+	Short: "Unlink a system from a systemgroup.",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid systemId
+		systemId := checkSingleIntID(args[0], "system")
+		// check for valid systemgroupId
+		groupId := checkSingleIntID(args[1], "systemgroup")
+
+		Level27Client.SystemSystemgroupsRemove(systemId, groupId)
+	},
+}
+
+// #endregion
 
 //------------------------------------------------- SYSTEMS / SSH KEYS (GET / ADD / DELETE)
 
@@ -1575,13 +1645,13 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 
 // SYSTEM VOLUME
 var systemVolumeCmd = &cobra.Command{
-	Use: "volume",
+	Use:   "volume",
 	Short: "Commands to manage volumes",
 }
 
 // SYSTEM VOLUME GET
 var systemVolumeGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "Get all volumes on a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1604,7 +1674,7 @@ var systemVolumeCreateAutoResize bool
 var systemVolumeCreateDeviceName string
 
 var systemVolumeCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create a new volume for a system",
 
 	Args: cobra.ExactArgs(1),
@@ -1614,12 +1684,12 @@ var systemVolumeCreateCmd = &cobra.Command{
 		organisationID := resolveOrganisation(systemVolumeCreateOrganisation)
 
 		create := types.VolumeCreate{
-			Name: systemVolumeCreateName,
-			Space: systemVolumeCreateSpace,
+			Name:         systemVolumeCreateName,
+			Space:        systemVolumeCreateSpace,
 			Organisation: organisationID,
-			System: systemID,
-			AutoResize: systemVolumeCreateAutoResize,
-			DeviceName: systemVolumeCreateDeviceName,
+			System:       systemID,
+			AutoResize:   systemVolumeCreateAutoResize,
+			DeviceName:   systemVolumeCreateDeviceName,
 		}
 
 		Level27Client.VolumeCreate(create)
@@ -1628,7 +1698,7 @@ var systemVolumeCreateCmd = &cobra.Command{
 
 // SYSTEM VOLUME UNLINK
 var systemVolumeUnlinkCmd = &cobra.Command{
-	Use: "unlink",
+	Use:   "unlink",
 	Short: "Unlink a volume from a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1642,7 +1712,7 @@ var systemVolumeUnlinkCmd = &cobra.Command{
 
 // SYSTEM VOLUME LINK
 var systemVolumeLinkCmd = &cobra.Command{
-	Use: "link [system] [volume] [device name]",
+	Use:   "link [system] [volume] [device name]",
 	Short: "Link a volume to a system",
 
 	Args: cobra.ExactArgs(3),
@@ -1661,7 +1731,7 @@ var systemVolumeLinkCmd = &cobra.Command{
 // SYSTEM VOLUME DELETE
 var systemVolumeDeleteForce bool
 var systemVolumeDeleteCmd = &cobra.Command{
-	Use: "delete [system] [volume]",
+	Use:   "delete [system] [volume]",
 	Short: "Unlink and delete a volume on a system",
 
 	Args: cobra.ExactArgs(2),
@@ -1683,7 +1753,7 @@ var systemVolumeDeleteCmd = &cobra.Command{
 
 // SYSTEM VOLUME UPDATE
 var systemVolumeUpdateCmd = &cobra.Command{
-	Use: "update [system] [volume]",
+	Use:   "update [system] [volume]",
 	Short: "Update settings on a volume",
 
 	Args: cobra.ExactArgs(2),
@@ -1695,15 +1765,15 @@ var systemVolumeUpdateCmd = &cobra.Command{
 
 		volume := Level27Client.VolumeGetSingle(volumeID)
 
-		volumePut := types.VolumePut {
-			Name: volume.Name,
-			DeviceName: volume.DeviceName,
-			Space: volume.Space,
+		volumePut := types.VolumePut{
+			Name:         volume.Name,
+			DeviceName:   volume.DeviceName,
+			Space:        volume.Space,
 			Organisation: volume.Organisation.ID,
-			AutoResize: volume.AutoResize,
-			Remarks: volume.Remarks,
-			System: volume.System.Id,
-			Volumegroup: volume.Volumegroup.ID,
+			AutoResize:   volume.AutoResize,
+			Remarks:      volume.Remarks,
+			System:       volume.System.Id,
+			Volumegroup:  volume.Volumegroup.ID,
 		}
 
 		data := roundTripJson(volumePut).(map[string]interface{})
@@ -1714,5 +1784,3 @@ var systemVolumeUpdateCmd = &cobra.Command{
 		Level27Client.VolumeUpdate(volumeID, data)
 	},
 }
-
-

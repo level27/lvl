@@ -305,6 +305,7 @@ func (c *Client) SystemCheckTypeGet(checktype string) types.SystemCheckType {
 // #endregion
 
 // --------------------------- SYSTEM/CHECKS SPECIFIC ACTIONS (DESCRIBE / DELETE / UPDATE) ------------------------------------
+
 // #region SYSTEM/CHECKS SPECIFIC (DESCRIBE / DELETE / UPDATE)
 // ---------------- DESCRIBE A SPECIFIC CHECK
 func (c *Client) SystemCheckDescribe(systemID int, CheckID int) types.SystemCheck {
@@ -366,6 +367,20 @@ func (c *Client) SystemCheckUpdate(systemId int, checkId int, req interface{}) {
 // #endregion
 
 // --------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / POST) ------------------------------------
+
+// --------------------------- APPLY COOKBOOKCHANGES ON A SYSTEM
+func (c *Client) SystemCookbookChangesApply(systemId int) {
+	// create json format for post request
+	// this function is specifically for updating cookbook status on a system
+	requestData := gabs.New()
+	requestData.Set("update_cookbooks", "type")
+
+	endpoint := fmt.Sprintf("systems/%v/actions", systemId)
+	err := c.invokeAPI("POST", endpoint, requestData, nil)
+	AssertApiError(err, "systems/cookbook")
+
+}
+
 // #region SYSTEM/COOKBOOKS TOPLEVEL (GET / ADD)
 
 // ---------------- GET COOKBOOK
@@ -509,7 +524,8 @@ func (c *Client) SystemCookbookUpdate(systemId int, cookbookId int, req interfac
 
 // #endregion
 
-// --------------------------- SYSTEM/INTEGRITYCHECKS TOPLEVEL (GET / CREATE) ------------------------------------
+// --------------------------- SYSTEM/INTEGRITYCHECKS TOPLEVEL (GET / CREATE / DOWNLOAD) ------------------------------------
+// #region SYSTEM/INTEGRITYCHECKS TOPLEVEL (GET / CREATE / DOWNLOAD)
 
 // ------------------ GET
 func (c *Client) SystemIntegritychecksGet(systemID int) []types.IntegrityCheck {
@@ -566,18 +582,41 @@ func (c *Client) SystemIntegritychecksDownload(systemID int, integritycheckID in
 	io.Copy(file, res.Body)
 }
 
-// --------------------------- APPLY COOKBOOKCHANGES ON A SYSTEM
-func (c *Client) SystemCookbookChangesApply(systemId int) {
-	// create json format for post request
-	// this function is specifically for updating cookbook status on a system
-	requestData := gabs.New()
-	requestData.Set("update_cookbooks", "type")
+// #endregion
 
-	endpoint := fmt.Sprintf("systems/%v/actions", systemId)
-	err := c.invokeAPI("POST", endpoint, requestData, nil)
-	AssertApiError(err, "systems/cookbook")
+// --------------------------- SYSTEM/GROUPS (GET / ADD / DESCRIBE / DELETE) ------------------------------------
+
+// ---------------- GET GROUPS
+func (c *Client) SystemSystemgroupsGet(systemId int) []types.Systemgroup{
+	var groups struct{
+		Data []types.Systemgroup `json:"systemgroups"`
+	}
+
+	endpoint := fmt.Sprintf("systems/%v/groups", systemId)
+	err := c.invokeAPI("GET", endpoint, nil, &groups)
+	AssertApiError(err, "systemgroups")
+
+	return groups.Data
+}
+
+// ---------------- LINK SYSTEM TO A SYSTEMGROUP
+func (c *Client) SystemSystemgroupsAdd(systemID int, req interface{}){
+
+	endpoint := fmt.Sprintf("systems/%v/groups", systemID)
+	err := c.invokeAPI("POST", endpoint, req, nil)
+	AssertApiError(err, "systemgroup")
+}
+
+
+// ---------------- UNLINK A SYSTEM FROM SYSTEMGROUP
+func (c *Client) SystemSystemgroupsRemove(systemId int, systemgroupId int){
+	endpoint := fmt.Sprintf("systems/%v/groups/%v", systemId, systemgroupId)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "systemgroup")
 
 }
+
+
 
 // ------------------ GET PROVIDERS
 
@@ -700,6 +739,4 @@ func (c *Client) SystemHasNetworkIpUpdate(systemID int, hasNetworkID int, hasNet
 	err := c.invokeAPI("PUT", endpoint, data, nil)
 	AssertApiError(err, "SystemHasNetworkIpUpdate")
 }
-
-
 
