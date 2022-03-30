@@ -132,6 +132,13 @@ func init() {
 
 	// MAIL FORWARDER DESTINATION REMOVE
 	mailForwarderDestinationCmd.AddCommand(mailForwarderDestinationRemoveCmd)
+
+	// MAIL ACCESS
+	addAccessCmds(mailCmd, "mailgroups", resolveMailgroup)
+	// MAIL BILLING
+	addBillingCmds(mailCmd, "mailgroups", resolveMailgroup)
+	// MAIL JOBS
+	addJobCmds(mailCmd, "mailgroup", resolveMailgroup)
 }
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
