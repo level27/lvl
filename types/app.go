@@ -1,5 +1,6 @@
 package types
 
+// main structure of an app
 type App struct {
 	ID            int    `json:"id"`
 	Name          string `json:"name"`
@@ -16,4 +17,12 @@ type App struct {
 		Category         string `json:"category"`
 		AppComponentType string `json:"appcomponenttype"`
 	} `json:"components"`
+}
+
+//type to create an app (post request)
+type AppPostRequest struct {
+	Name         string `json:"name"`
+	Organisation string `json:"organisation"`
+	AutoTeams    string `json:"autoTeams"`
+	ExternalInfo string `json:"externalInfo"`
 }
