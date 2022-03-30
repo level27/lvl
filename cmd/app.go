@@ -22,7 +22,7 @@ func init() {
 	// flags used for creating app
 	flags := appCreateCmd.Flags()
 	flags.StringVarP(&appCreateName, "name", "n", "", "Name of the app.")
-	flags.StringVarP(&appCreateOrg, "organisation", "", "", "organisation/owner of the app.")
+	flags.StringVarP(&appCreateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
 	flags.StringSlice("autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
 	appCreateCmd.MarkFlagRequired("name")
@@ -33,11 +33,20 @@ func init() {
 	//flag to skip confirmation when deleting an app
 	appDeleteCmd.Flags().BoolVarP(&isAppDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
 
+
+	// ---- UPDATE APP
+	appCmd.AddCommand(appUpdateCmd)
+	// flags needed for update command 
+	flags = appUpdateCmd.Flags()
+	flags.StringVarP(&appUpdateName, "name", "n", "", "Name of the app.")
+	flags.StringVarP(&appUpdateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
+	flags.StringSlice("autoTeams", appUpdateTeams, "A csv list of team ID's.")
 }
 
 var appCmd = &cobra.Command{
 	Use:   "app",
 	Short: "Commands to manage apps",
+	Example: "lvl app [subcommmand]",
 }
 
 //------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
@@ -96,7 +105,7 @@ var appCreateCmd = &cobra.Command{
 			Name:         appCreateName,
 			Organisation: organisation,
 			AutoTeams:    autoTeams,
-			ExternalInfo: &appCreateExtInfo,
+			ExternalInfo: appCreateExtInfo,
 		}
 
 		// when succesfully creating app. app will be returned
@@ -118,5 +127,46 @@ var appDeleteCmd = &cobra.Command{
 		appId := checkSingleIntID(args[0], "app")
 
 		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
+	},
+}
+
+// ---- UPDATE AN APP
+var appUpdateName, appUpdateOrg string
+var appUpdateTeams []string
+var appUpdateCmd = &cobra.Command{
+	Use: "update [appID]",
+	Short: "Update an app.",
+	Example: "lvl app update 2067 --name myUpdatedName",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check if appId is valid 
+		appId := checkSingleIntID(args[0], "app")
+
+		//get the current data from the app. if not changed its needed for put request
+		 currentData := Level27Client.App(appId)
+
+		 // fill in request with the current data.
+		 request := types.AppPutRequest{
+			 Name: currentData.Name,
+			 Organisation: currentData.Organisation.ID,
+			 AutoTeams: currentData.Teams,
+		 }
+
+		 //when flags have been set. we need the currentdata to be updated.
+		 if cmd.Flag("name").Changed {
+			request.Name = appUpdateName
+		 }
+
+		 if cmd.Flag("organisation").Changed {
+			 organisationID := resolveOrganisation(appUpdateOrg)
+			 request.Organisation = organisationID	 
+		 }
+
+		
+		 log.Print(request)
+
+		 Level27Client.AppUpdate(appId, request)
+
+		
 	},
 }

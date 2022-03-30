@@ -80,3 +80,11 @@ func (c *Client) AppDelete(appId int, isConfirmed bool) {
 		}
 	}
 }
+
+
+// ---- UPDATE APP
+func (c *Client)AppUpdate(appId int, req types.AppPutRequest){
+	endpoint := fmt.Sprintf("apps/%v", appId)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
+	AssertApiError(err, "Apps")
+}
