@@ -23,7 +23,7 @@ func init() {
 	flags := appCreateCmd.Flags()
 	flags.StringVarP(&appCreateName, "name", "n", "", "Name of the app.")
 	flags.StringVarP(&appCreateOrg, "organisation", "", "", "organisation/owner of the app.")
-	flags.StringVar(&appCreateTeams, "autoTeams", "", "A csv list of team ID's.")
+	flags.StringSlice("autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
 }
 
@@ -40,7 +40,7 @@ var appGetCmd = &cobra.Command{
 	Short:   "Shows a list of all available apps.",
 	Example: "lvl app get",
 	Args:    cobra.ArbitraryArgs,
-	Run: func(acmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
 			log.Fatalln("Invalid app ID")
@@ -67,7 +67,8 @@ func getApps(ids []int) []types.App {
 }
 
 // ---- CREATE NEW APP
-var appCreateName, appCreateOrg, appCreateTeams, appCreateExtInfo string
+var appCreateName, appCreateOrg, appCreateExtInfo string
+var appCreateTeams []string
 var appCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new app.",
@@ -77,6 +78,22 @@ var appCreateCmd = &cobra.Command{
 		if appCreateName == "" {
 			log.Fatalln("app name cannot be empty.")
 		}
+
+		// get the array values for autoteams flag
+		autoTeams := cmd.Flag("autoTeams").Value
+
+		// fill in all the props needed for the post request
+		organisation := resolveOrganisation(appCreateOrg)
+		request := types.AppPostRequest{
+			Name:         appCreateName,
+			Organisation: organisation,
+			AutoTeams:    autoTeams,
+			ExternalInfo: &appCreateExtInfo,
+		}
+
+		// when succesfully creating app. app will be returned
+		app := Level27Client.AppCreate(request)
+		log.Printf("Succesfully created app! [name: '%v' - ID: '%v']", app.Name, app.ID)
 
 	},
 }

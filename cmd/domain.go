@@ -303,10 +303,10 @@ var domainDeleteCmd = &cobra.Command{
 	Use:   "delete [domainId]",
 	Short: "Delete a domain",
 	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
-	Args: cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-			Level27Client.DomainDelete(args, isConfirmed)
+		Level27Client.DomainDelete(args, isConfirmed)
 	},
 }
 

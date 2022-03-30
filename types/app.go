@@ -21,8 +21,8 @@ type App struct {
 
 //type to create an app (post request)
 type AppPostRequest struct {
-	Name         string `json:"name"`
-	Organisation string `json:"organisation"`
-	AutoTeams    string `json:"autoTeams"`
-	ExternalInfo string `json:"externalInfo"`
+	Name         string      `json:"name"`
+	Organisation int         `json:"organisation"`
+	AutoTeams    interface{} `json:"autoTeams"`
+	ExternalInfo *string     `json:"externalInfo"`
 }

@@ -6,6 +6,8 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
+//------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+
 // Gets an app from the API
 func (c *Client) App(id int) types.App {
 	var app struct {
@@ -32,3 +34,15 @@ func (c *Client) Apps(getParams types.CommonGetParams) []types.App {
 	return apps.Apps
 }
 
+// ---- CREATE NEW APP
+func (c *Client) AppCreate(req types.AppPostRequest) types.App {
+	var app struct {
+		Data types.App `json:"app"`
+	}
+	endpoint := "apps"
+	err := c.invokeAPI("POST", endpoint, req, &app)
+
+	AssertApiError(err, "apps")
+
+	return app.Data
+}
