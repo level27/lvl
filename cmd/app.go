@@ -25,6 +25,9 @@ func init() {
 	flags.StringVarP(&appCreateOrg, "organisation", "", "", "organisation/owner of the app.")
 	flags.StringSlice("autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
+
+	// ---- DELETE APP
+	appCmd.AddCommand(appDeleteCmd)
 }
 
 var appCmd = &cobra.Command{
@@ -95,5 +98,19 @@ var appCreateCmd = &cobra.Command{
 		app := Level27Client.AppCreate(request)
 		log.Printf("Succesfully created app! [name: '%v' - ID: '%v']", app.Name, app.ID)
 
+	},
+}
+
+// ---- DELETE AN APP
+var appDeleteCmd = &cobra.Command{
+	Use:     "delete",
+	Short:   "Delete an app",
+	Example: "lvl app delete 2593",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid appID type
+		appId := checkSingleIntID(args[0], "app")
+
+		Level27Client.AppDelete(appId)
 	},
 }

@@ -46,3 +46,11 @@ func (c *Client) AppCreate(req types.AppPostRequest) types.App {
 
 	return app.Data
 }
+
+// ---- DELETE APP
+func (c *Client) AppDelete(appId int) {
+	endpoint := fmt.Sprintf("apps/%v", appId)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "Apps")
+
+}
