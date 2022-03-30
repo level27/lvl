@@ -105,20 +105,7 @@ func init() {
 	domainRecordCmd.AddCommand(domainRecordDeleteCmd)
 
 	// --------------------------------------------------- ACCESS --------------------------------------------------------
-	domainCmd.AddCommand(domainAccessCmd)
-
-	// ADD ACCESS
-	domainAccessCmd.AddCommand(domainAccessAddCmd)
-
-	flags = domainAccessAddCmd.Flags()
-	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
-	domainAccessAddCmd.MarkFlagRequired("organisation")
-
-	// REMOVE ACCESS
-	domainAccessCmd.AddCommand(domainAccessRemoveCmd)
-	flags = domainAccessRemoveCmd.Flags()
-	flags.IntVarP(&domainAccessAddOrganisation, "organisation", "", 0, "The unique identifier of an organisation")
-	domainAccessRemoveCmd.MarkFlagRequired("organisation")
+	addAccessCmds(domainCmd, "domains", resolveDomain)
 
 	/*
 		// --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
@@ -143,24 +130,14 @@ func init() {
 		addCommonGetFlags(domainNotificationsGetCmd)
 	*/
 	// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
-	domainCmd.AddCommand(domainBillableItemCmd)
-
-	// CREATE BILLABLEITEM (turn invoicing on)
-	domainBillableItemCmd.AddCommand(domainBillCreateCmd)
-	flags = domainBillCreateCmd.Flags()
-	flags.StringVarP(&externalInfo, "externalinfo", "e", "", "ExternalInfo (required when billableitemInfo entities for an Organisation exist in db)")
-
-	// DELETE BILLABLEITEM (turn invoicing off)
-	domainBillableItemCmd.AddCommand(domainBillDeleteCmd)
+	addBillingCmds(domainCmd, "domains", resolveDomain)
 
 	// --------------------------------------------------- AVAILABILITY/CHECK --------------------------------------------------------
 	// CHECK
 	domainCmd.AddCommand(domainCheckCmd)
 
 	// --------------------------------------------------- JOB HISTORY --------------------------------------------------------
-	domainCmd.AddCommand(domainJobHistoryCmd)
-
-	domainCmd.AddCommand(domainRootJobHistoryCmd)
+	addJobCmds(domainCmd, "domain", resolveDomain)
 
 	// INTEGRITY CHECKS
 	domainCmd.AddCommand(domainIntegrityCmd)
@@ -583,55 +560,6 @@ var domainRecordUpdateCmd = &cobra.Command{
 	},
 }
 
-// --------------------------------------------------- ACCESS --------------------------------------------------------
-var domainAccessCmd = &cobra.Command{
-	Use:   "access",
-	Short: "Manage the access of a domain",
-}
-
-// ADD ACCESS TO A DOMAIN
-var domainAccessAddOrganisation int
-
-var domainAccessAddCmd = &cobra.Command{
-	Use:   "add [domain] [flags]",
-	Short: "Add organisation access to a domain",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
-		}
-
-		Level27Client.DomainAccesAdd(id, types.DomainAccessRequest{
-			Organisation: domainAccessAddOrganisation,
-		})
-	},
-}
-
-// REMOVE ACCESS FROM DOMAIN
-var domainAccessRemoveCmd = &cobra.Command{
-	Use:   "delete [domain] [flags]",
-	Short: "Remove organisation access from a domain",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
-		}
-
-		var orgId int
-
-		if cmd.Flags().Changed("organisation") {
-			value := cmd.Flag("organisation").Value.String()
-			orgId, err = strconv.Atoi(value)
-			if err != nil {
-				log.Fatal("no valid organisation ID")
-			}
-			Level27Client.DomainAccesRemove(id, orgId)
-		}
-
-	},
-}
 
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 /*
@@ -680,50 +608,6 @@ var domainNotificationsGetCmd = &cobra.Command{
 	},
 }
 */
-// --------------------------------------------------- BILLABLEITEMS --------------------------------------------------------
-// MAIN COMMAND
-var domainBillableItemCmd = &cobra.Command{
-	Use:   "billing",
-	Short: "Manage domain's invoicing (BillableItem)",
-}
-
-// CREATE A BILLABLEITEM / TURN ON BILLING(ADMIN ONLY)
-var externalInfo string
-
-var domainBillCreateCmd = &cobra.Command{
-	Use:   "on [domain] [flags]",
-	Short: "Turn on billing for a domain (admin only)",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatal("no valid domain ID")
-		}
-		req := types.BillPostRequest{
-			ExternalInfo: externalInfo,
-		}
-
-		Level27Client.DomainBillableItemCreate(id, req)
-
-	},
-}
-
-//DELETE BILLABLEITEM/ TURN OF BILLING
-
-var domainBillDeleteCmd = &cobra.Command{
-	Use:   "off [domainID]",
-	Short: "Turn off the billing for domain (admin only)",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatal("no valid domain ID")
-		}
-
-		Level27Client.DomainBillableItemDelete(id)
-
-	},
-}
 
 // ---------------------------------------------- CHECK / AVAILABILITY ------------------------------------------------
 var domainCheckCmd = &cobra.Command{
@@ -737,75 +621,6 @@ var domainCheckCmd = &cobra.Command{
 		status := Level27Client.DomainCheck(name, extension)
 
 		outputFormatTemplate(status, "templates/domainCheck.tmpl")
-	},
-}
-
-// ---------------------------------------------- JOB HISTORY DOMAINS ------------------------------------------------
-
-// get list of job history
-var domainJobHistoryCmd = &cobra.Command{
-	Use:   "jobs [domainId]",
-	Short: "Manage the job history for a domain",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatal("no valid domain ID")
-		}
-		//get full history of toplevel jobs
-		history := Level27Client.EntityJobHistoryGet("domain", id)
-		// filter jobs where status is not 50.
-		notCompleted := FindNotcompletedJobs(history)
-
-		// check for every job without status 50. the subjobs who don't have status 50
-		for _, RootJob := range notCompleted {
-			fullData := Level27Client.JobHistoryRootGet(RootJob.Id)
-
-			for _, subjob := range fullData.Jobs {
-				if subjob.Status != 50 {
-					notCompleted = append(notCompleted, subjob)
-					if len(subjob.Jobs) != 0 {
-						notCompleted = append(notCompleted, FindNotcompletedJobs(subjob.Jobs)...)
-					}
-				}
-			}
-		}
-
-		outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"Id", "Status", "Message", "Dt"})
-
-	},
-}
-
-func CheckSubJobs(job types.Job) bool {
-	if len(job.Jobs) == 0 {
-		return false
-	} else {
-		return true
-	}
-}
-
-func FindNotcompletedJobs(jobs []types.Job) []types.Job {
-	var NotCompleted []types.Job
-	for _, job := range jobs {
-		if job.Status != 50 {
-			NotCompleted = append(NotCompleted, job)
-		}
-	}
-	return NotCompleted
-
-}
-
-// get detailed job history for a root job
-var domainRootJobHistoryCmd = &cobra.Command{
-	Use:   "root",
-	Short: "get detailed jobs",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatal("no valid domain ID")
-		}
-		fmt.Print(Level27Client.JobHistoryRootGet(id))
 	},
 }
 
