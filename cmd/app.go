@@ -23,7 +23,7 @@ func init() {
 	flags := appCreateCmd.Flags()
 	flags.StringVarP(&appCreateName, "name", "n", "", "Name of the app.")
 	flags.StringVarP(&appCreateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
-	flags.StringSlice("autoTeams", appCreateTeams, "A csv list of team ID's.")
+	flags.IntSliceVar( &appCreateTeams,"autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
 	appCreateCmd.MarkFlagRequired("name")
 	appCreateCmd.MarkFlagRequired("organisation")
@@ -40,7 +40,7 @@ func init() {
 	flags = appUpdateCmd.Flags()
 	flags.StringVarP(&appUpdateName, "name", "n", "", "Name of the app.")
 	flags.StringVarP(&appUpdateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
-	flags.StringSlice("autoTeams", appUpdateTeams, "A csv list of team ID's.")
+	flags.IntSliceVar(&appUpdateTeams,"autoTeams", appUpdateTeams, "A csv list of team ID's.")
 }
 
 var appCmd = &cobra.Command{
@@ -85,7 +85,7 @@ func getApps(ids []int) []types.App {
 
 // ---- CREATE NEW APP
 var appCreateName, appCreateOrg, appCreateExtInfo string
-var appCreateTeams []string
+var appCreateTeams []int
 var appCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new app.",
@@ -96,15 +96,14 @@ var appCreateCmd = &cobra.Command{
 			log.Fatalln("app name cannot be empty.")
 		}
 
-		// get the array values for autoteams flag
-		autoTeams := cmd.Flag("autoTeams").Value
+		
 
 		// fill in all the props needed for the post request
 		organisation := resolveOrganisation(appCreateOrg)
 		request := types.AppPostRequest{
 			Name:         appCreateName,
 			Organisation: organisation,
-			AutoTeams:    autoTeams,
+			AutoTeams:    appCreateTeams,
 			ExternalInfo: appCreateExtInfo,
 		}
 
@@ -132,7 +131,7 @@ var appDeleteCmd = &cobra.Command{
 
 // ---- UPDATE AN APP
 var appUpdateName, appUpdateOrg string
-var appUpdateTeams []string
+var appUpdateTeams []int
 var appUpdateCmd = &cobra.Command{
 	Use: "update [appID]",
 	Short: "Update an app.",
@@ -145,11 +144,15 @@ var appUpdateCmd = &cobra.Command{
 		//get the current data from the app. if not changed its needed for put request
 		 currentData := Level27Client.App(appId)
 
+		 var currentTeamIds []int 
+		 for _, team := range currentData.Teams{
+			currentTeamIds = append(currentTeamIds, team.ID)
+		 }
 		 // fill in request with the current data.
 		 request := types.AppPutRequest{
 			 Name: currentData.Name,
 			 Organisation: currentData.Organisation.ID,
-			 AutoTeams: currentData.Teams,
+			 AutoTeams: currentTeamIds,
 		 }
 
 		 //when flags have been set. we need the currentdata to be updated.
@@ -162,9 +165,10 @@ var appUpdateCmd = &cobra.Command{
 			 request.Organisation = organisationID	 
 		 }
 
-		
-		 log.Print(request)
+	
+		 request.AutoTeams = appUpdateTeams
 
+		 log.Print(request)
 		 Level27Client.AppUpdate(appId, request)
 
 		
