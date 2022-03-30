@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 )
@@ -48,9 +50,33 @@ func (c *Client) AppCreate(req types.AppPostRequest) types.App {
 }
 
 // ---- DELETE APP
-func (c *Client) AppDelete(appId int) {
+func (c *Client) AppDelete(appId int, isConfirmed bool) {
 	endpoint := fmt.Sprintf("apps/%v", appId)
-	err := c.invokeAPI("DELETE", endpoint, nil, nil)
-	AssertApiError(err, "Apps")
 
+	if isConfirmed {
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "Apps")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the app with ID: %v? Please type [y]es or [n]o: ", appId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "Apps")
+		case "n", "no":
+			log.Printf("Delete canceled for app: %v", appId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.AppDelete(appId, false)
+		}
+	}
 }

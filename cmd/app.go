@@ -25,9 +25,14 @@ func init() {
 	flags.StringVarP(&appCreateOrg, "organisation", "", "", "organisation/owner of the app.")
 	flags.StringSlice("autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
+	appCreateCmd.MarkFlagRequired("name")
+	appCreateCmd.MarkFlagRequired("organisation")
 
 	// ---- DELETE APP
 	appCmd.AddCommand(appDeleteCmd)
+	//flag to skip confirmation when deleting an app
+	appDeleteCmd.Flags().BoolVarP(&isAppDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+
 }
 
 var appCmd = &cobra.Command{
@@ -102,6 +107,7 @@ var appCreateCmd = &cobra.Command{
 }
 
 // ---- DELETE AN APP
+var isAppDeleteConfirmed bool
 var appDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete an app",
@@ -111,6 +117,6 @@ var appDeleteCmd = &cobra.Command{
 		// check for valid appID type
 		appId := checkSingleIntID(args[0], "app")
 
-		Level27Client.AppDelete(appId)
+		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
 	},
 }
