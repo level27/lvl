@@ -37,6 +37,17 @@ func (c *Client) Apps(getParams types.CommonGetParams) []types.App {
 	return apps.Apps
 }
 
+func (c *Client) AppLookup(name string) *types.App {
+	apps := c.Apps(types.CommonGetParams{Filter: name})
+	for _, app := range apps {
+		if app.Name == name {
+			return &app
+		}
+	}
+
+	return nil
+}
+
 // ---- CREATE NEW APP
 func (c *Client) AppCreate(req types.AppPostRequest) types.App {
 	var app struct {
