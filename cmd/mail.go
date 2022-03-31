@@ -139,6 +139,8 @@ func init() {
 	addBillingCmds(mailCmd, "mailgroups", resolveMailgroup)
 	// MAIL JOBS
 	addJobCmds(mailCmd, "mailgroup", resolveMailgroup)
+	// MAIL INTEGRITY
+	addIntegrityCheckCmds(mailCmd, "mailgroups", resolveMailgroup)
 }
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
