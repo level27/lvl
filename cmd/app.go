@@ -47,7 +47,9 @@ func init() {
 	appCmd.AddCommand(AppDescribeCmd)
 	// #endregion
 
-	//------------------------------------------------- APP (GET / CREATE / DELETE / UPDATE / DESCRIBE)-------------------------------------------------
+	//-------------------------------------------------  APP ACTIONS (ACTIVATE / DEACTIVATE) -------------------------------------------------
+	// #region  APP ACTIONS (ACTIVATE / DEACTIVATE)
+
 	// ACTION COMMAND
 	appCmd.AddCommand(AppActionCmd)
 
@@ -56,6 +58,7 @@ func init() {
 
 	// DEACTIVATE APP
 	AppActionCmd.AddCommand(AppActionDeactivateCmd)
+	// #endregion
 }
 
 // MAIN COMMAND APPS
@@ -206,7 +209,8 @@ var AppDescribeCmd = &cobra.Command{
 
 // #endregion
 
-//------------------------------------------------- APP ACTIONS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+//------------------------------------------------- APP ACTIONS (ACTIVATE / DEACTIVATE)-------------------------------------------------
+// #region APP ACTIONS (ACTIVATE / DEACTIVATE)
 
 // ---- ACTION COMMAND
 var AppActionCmd = &cobra.Command{
@@ -242,3 +246,5 @@ var AppActionDeactivateCmd = &cobra.Command{
 		Level27Client.AppAction(appId, "deactivate")
 	},
 }
+
+// #endregion
