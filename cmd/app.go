@@ -13,6 +13,7 @@ func init() {
 	RootCmd.AddCommand(appCmd)
 
 	//------------------------------------------------- APP (GET / CREATE / DELETE / UPDATE / DESCRIBE)-------------------------------------------------
+	// #region APP MAIN COMMANDS (GET / CREATE / UPDATE / DELETE / DESCRIBE)
 
 	// ---- GET
 	appCmd.AddCommand(appGetCmd)
@@ -44,8 +45,18 @@ func init() {
 
 	// ---- DESCRIBE APP
 	appCmd.AddCommand(AppDescribeCmd)
+	// #endregion
+
+	//------------------------------------------------- APP (GET / CREATE / DELETE / UPDATE / DESCRIBE)-------------------------------------------------
+	// ACTION COMMAND
+	appCmd.AddCommand(AppActionCmd)
+
+	// ACTIVATE APP
+
+	// DEACTIVATE APP
 }
 
+// MAIN COMMAND APPS
 var appCmd = &cobra.Command{
 	Use:     "app",
 	Short:   "Commands to manage apps",
@@ -53,6 +64,7 @@ var appCmd = &cobra.Command{
 }
 
 //------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+// #region APP MAIN SUBCOMMANDS (GET / CREATE / UPDATE / DELETE / DESCRIBE)
 
 // ---- GET apps
 var appGetCmd = &cobra.Command{
@@ -177,15 +189,43 @@ var appUpdateCmd = &cobra.Command{
 
 // ---- DESCRIBE APP
 var AppDescribeCmd = &cobra.Command{
-	Use: "describe",
-	Short: "Get detailed info about an app.",
+	Use:     "describe",
+	Short:   "Get detailed info about an app.",
 	Example: "lvl app describe 2077",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid appId 
+		//check for valid appId
 		appId := checkSingleIntID(args[0], "app")
 		// get all data from app by appId
 		app := Level27Client.App(appId)
 		outputFormatTemplate(app, "templates/app.tmpl")
 	},
 }
+
+// #endregion
+
+//------------------------------------------------- APP ACTIONS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+
+// ---- ACTION COMMAND
+var AppActionCmd = &cobra.Command{
+	Use:   "action",
+	Short: "commands to run specific actions on an app",
+	Example: "lvl app action [subcommand]",
+}
+
+
+// ---- ACTIVATE APP
+var AppActionActivateCmd = &cobra.Command{
+	Use:   "activate",
+	Short: "Activate an app",
+	Example: "lvl app action activate 2077",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid appId
+		appId := checkSingleIntID(args[0], "app")
+
+		log.Print(appId)
+	},
+}
+
+// ---- DEACTIVATE APP
