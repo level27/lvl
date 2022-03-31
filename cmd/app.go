@@ -55,6 +55,7 @@ func init() {
 	AppActionCmd.AddCommand(AppActionActivateCmd)
 
 	// DEACTIVATE APP
+	AppActionCmd.AddCommand(AppActionDeactivateCmd)
 }
 
 // MAIN COMMAND APPS
@@ -209,24 +210,35 @@ var AppDescribeCmd = &cobra.Command{
 
 // ---- ACTION COMMAND
 var AppActionCmd = &cobra.Command{
-	Use:   "action",
-	Short: "commands to run specific actions on an app",
+	Use:     "action",
+	Short:   "commands to run specific actions on an app",
 	Example: "lvl app action [subcommand]",
 }
 
-
 // ---- ACTIVATE APP
 var AppActionActivateCmd = &cobra.Command{
-	Use:   "activate",
-	Short: "Activate an app",
+	Use:     "activate",
+	Short:   "Activate an app",
 	Example: "lvl app action activate 2077",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid appId
 		appId := checkSingleIntID(args[0], "app")
 
-		Level27Client.AppActionActivate(appId, "activate")
+		Level27Client.AppAction(appId, "activate")
 	},
 }
 
 // ---- DEACTIVATE APP
+var AppActionDeactivateCmd = &cobra.Command{
+	Use:     "deactivate",
+	Short:   "Deactivate an app",
+	Example: "lvl app action deactivate 2077",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for valid appId
+		appId := checkSingleIntID(args[0], "app")
+
+		Level27Client.AppAction(appId, "deactivate")
+	},
+}

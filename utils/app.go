@@ -93,7 +93,7 @@ func (c *Client) AppUpdate(appId int, req types.AppPutRequest) {
 
 //------------------------------------------------- APP ACTIONS (ACTIVATE / DEACTIVATE)-------------------------------------------------
 // ---- ACTION (ACTIVATE OR DEACTIVATE) ON AN APP
-func (c *Client) AppActionActivate(appId int, action string) {
+func (c *Client) AppAction(appId int, action string) {
 	request := types.AppActionRequest{
 		Type: action,
 	}
