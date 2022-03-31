@@ -59,6 +59,13 @@ func init() {
 	// DEACTIVATE APP
 	AppActionCmd.AddCommand(AppActionDeactivateCmd)
 	// #endregion
+
+	//------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+	// ----	COMPONENT COMMAND
+	appCmd.AddCommand(appComponentCmd)
+
+	// ---- GET COMPONENTS
+	appComponentCmd.AddCommand(appComponentGetCmd)
 }
 
 // MAIN COMMAND APPS
@@ -248,3 +255,21 @@ var AppActionDeactivateCmd = &cobra.Command{
 }
 
 // #endregion
+
+//------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+
+var appComponentCmd = &cobra.Command{
+	Use: "component",
+	Short: "Commands for managing appcomponents.",
+	Example: "lvl app component [subcommand]",
+}
+
+// ---- GET COMPONENTS
+var appComponentGetCmd = &cobra.Command{
+	Use: "get",
+	Short: "Show list of all available components",
+	Example: "lvl app component get",
+	Run: func(cmd *cobra.Command, args []string) {
+		
+	},
+}
