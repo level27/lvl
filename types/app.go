@@ -47,3 +47,5 @@ type AppPutRequest struct {
 type AppActionRequest struct {
 	Type string `json:"type"`
 }
+
+

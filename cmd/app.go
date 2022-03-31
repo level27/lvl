@@ -66,6 +66,7 @@ func init() {
 
 	// ---- GET COMPONENTS
 	appComponentCmd.AddCommand(appComponentGetCmd)
+	addCommonGetFlags(appComponentGetCmd)
 }
 
 // MAIN COMMAND APPS
@@ -257,11 +258,11 @@ var AppActionDeactivateCmd = &cobra.Command{
 // #endregion
 
 //------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
-
+// ---- COMPONENT COMMAND
 var appComponentCmd = &cobra.Command{
 	Use: "component",
 	Short: "Commands for managing appcomponents.",
-	Example: "lvl app component [subcommand]",
+	Example: "lvl app component get",
 }
 
 // ---- GET COMPONENTS
@@ -271,5 +272,27 @@ var appComponentGetCmd = &cobra.Command{
 	Example: "lvl app component get",
 	Run: func(cmd *cobra.Command, args []string) {
 		
+		ids, err := convertStringsToIds(args)
+		if err != nil {
+			log.Fatalln("Invalid component ID")
+		}
+		log.Print(ids)
+		// outputFormatTable(
+		// 	getComponents(ids),
+		// 	[]string{"ID", "NAME", "STATUS"},
+		// 	[]string{"ID", "Name", "Status"})
 	},
 }
+
+// func getComponents(ids []int) []types.Component {
+// 	c := Level27Client
+// 	if len(ids) == 0 {
+// 		return c.AppComponentsGet(optGetParameters)
+// 	} else {
+// 		components := make([]types.Component, len(ids))
+// 		for idx, id := range ids {
+// 			components[idx] = c.AppComponentGetSingle(id)
+// 		}
+// 		return components
+// 	}
+// }

@@ -37,3 +37,4 @@ func init() {
 func getComponents(ids []string) []types.Component {
 	return Level27Client.Components(componentCategory, componentType, optGetParameters)
 }
+
