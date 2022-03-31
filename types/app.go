@@ -40,5 +40,5 @@ type AppPostRequest struct {
 type AppPutRequest struct {
 	Name         string   `json:"name"`
 	Organisation int      `json:"organisation"`
-	AutoTeams    []int `json:"autoTeams"`
+	AutoTeams    []string `json:"autoTeams"`
 }

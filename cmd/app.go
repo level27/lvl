@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ func init() {
 	// ---- MAIN COMMAND APP
 	RootCmd.AddCommand(appCmd)
 
-	//------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+	//------------------------------------------------- APP (GET / CREATE / DELETE / UPDATE / DESCRIBE)-------------------------------------------------
 
 	// ---- GET
 	appCmd.AddCommand(appGetCmd)
@@ -23,7 +24,7 @@ func init() {
 	flags := appCreateCmd.Flags()
 	flags.StringVarP(&appCreateName, "name", "n", "", "Name of the app.")
 	flags.StringVarP(&appCreateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
-	flags.IntSliceVar( &appCreateTeams,"autoTeams", appCreateTeams, "A csv list of team ID's.")
+	flags.IntSliceVar(&appCreateTeams, "autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
 	appCreateCmd.MarkFlagRequired("name")
 	appCreateCmd.MarkFlagRequired("organisation")
@@ -33,19 +34,21 @@ func init() {
 	//flag to skip confirmation when deleting an app
 	appDeleteCmd.Flags().BoolVarP(&isAppDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
 
-
 	// ---- UPDATE APP
 	appCmd.AddCommand(appUpdateCmd)
-	// flags needed for update command 
+	// flags needed for update command
 	flags = appUpdateCmd.Flags()
 	flags.StringVarP(&appUpdateName, "name", "n", "", "Name of the app.")
 	flags.StringVarP(&appUpdateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
-	flags.IntSliceVar(&appUpdateTeams,"autoTeams", appUpdateTeams, "A csv list of team ID's.")
+	flags.StringSliceVar(&appUpdateTeams, "autoTeams", appUpdateTeams, "A csv list of team ID's.")
+
+	// ---- DESCRIBE APP
+	appCmd.AddCommand(AppDescribeCmd)
 }
 
 var appCmd = &cobra.Command{
-	Use:   "app",
-	Short: "Commands to manage apps",
+	Use:     "app",
+	Short:   "Commands to manage apps",
 	Example: "lvl app [subcommmand]",
 }
 
@@ -96,8 +99,6 @@ var appCreateCmd = &cobra.Command{
 			log.Fatalln("app name cannot be empty.")
 		}
 
-		
-
 		// fill in all the props needed for the post request
 		organisation := resolveOrganisation(appCreateOrg)
 		request := types.AppPostRequest{
@@ -131,46 +132,60 @@ var appDeleteCmd = &cobra.Command{
 
 // ---- UPDATE AN APP
 var appUpdateName, appUpdateOrg string
-var appUpdateTeams []int
+var appUpdateTeams []string
 var appUpdateCmd = &cobra.Command{
-	Use: "update [appID]",
-	Short: "Update an app.",
+	Use:     "update [appID]",
+	Short:   "Update an app.",
 	Example: "lvl app update 2067 --name myUpdatedName",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check if appId is valid 
+		//check if appId is valid
 		appId := checkSingleIntID(args[0], "app")
 
 		//get the current data from the app. if not changed its needed for put request
-		 currentData := Level27Client.App(appId)
+		currentData := Level27Client.App(appId)
 
-		 var currentTeamIds []int 
-		 for _, team := range currentData.Teams{
-			currentTeamIds = append(currentTeamIds, team.ID)
-		 }
-		 // fill in request with the current data.
-		 request := types.AppPutRequest{
-			 Name: currentData.Name,
-			 Organisation: currentData.Organisation.ID,
-			 AutoTeams: currentTeamIds,
-		 }
+		var currentTeamIds []string
+		for _, team := range currentData.Teams {
+			currentTeamIds = append(currentTeamIds, strconv.Itoa(team.ID))
+		}
+		// fill in request with the current data.
+		request := types.AppPutRequest{
+			Name:         currentData.Name,
+			Organisation: currentData.Organisation.ID,
+			AutoTeams:    currentTeamIds,
+		}
 
-		 //when flags have been set. we need the currentdata to be updated.
-		 if cmd.Flag("name").Changed {
+		//when flags have been set. we need the currentdata to be updated.
+		if cmd.Flag("name").Changed {
 			request.Name = appUpdateName
-		 }
+		}
 
-		 if cmd.Flag("organisation").Changed {
-			 organisationID := resolveOrganisation(appUpdateOrg)
-			 request.Organisation = organisationID	 
-		 }
+		if cmd.Flag("organisation").Changed {
+			organisationID := resolveOrganisation(appUpdateOrg)
+			request.Organisation = organisationID
+		}
 
-	
-		 request.AutoTeams = appUpdateTeams
+		if cmd.Flag("autoTeams").Changed {
+			request.AutoTeams = appUpdateTeams
+		}
 
-		 log.Print(request)
-		 Level27Client.AppUpdate(appId, request)
+		Level27Client.AppUpdate(appId, request)
 
-		
+	},
+}
+
+// ---- DESCRIBE APP
+var AppDescribeCmd = &cobra.Command{
+	Use: "describe",
+	Short: "Get detailed info about an app.",
+	Example: "lvl app describe 2077",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid appId 
+		appId := checkSingleIntID(args[0], "app")
+		// get all data from app by appId
+		app := Level27Client.App(appId)
+		outputFormatTemplate(app, "templates/app.tmpl")
 	},
 }
