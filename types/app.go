@@ -30,10 +30,10 @@ type App struct {
 
 //type to create an app (post request)
 type AppPostRequest struct {
-	Name         string   `json:"name"`
-	Organisation int      `json:"organisation"`
-	AutoTeams    []int `json:"autoTeams"`
-	ExternalInfo string   `json:"externalInfo"`
+	Name         string `json:"name"`
+	Organisation int    `json:"organisation"`
+	AutoTeams    []int  `json:"autoTeams"`
+	ExternalInfo string `json:"externalInfo"`
 }
 
 //type to update an app (put request)
@@ -41,4 +41,9 @@ type AppPutRequest struct {
 	Name         string   `json:"name"`
 	Organisation int      `json:"organisation"`
 	AutoTeams    []string `json:"autoTeams"`
+}
+
+// type needed to do an action on a system
+type AppActionRequest struct {
+	Type string `json:"type"`
 }

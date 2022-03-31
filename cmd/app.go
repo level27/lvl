@@ -52,6 +52,7 @@ func init() {
 	appCmd.AddCommand(AppActionCmd)
 
 	// ACTIVATE APP
+	AppActionCmd.AddCommand(AppActionActivateCmd)
 
 	// DEACTIVATE APP
 }
@@ -224,7 +225,7 @@ var AppActionActivateCmd = &cobra.Command{
 		// check for valid appId
 		appId := checkSingleIntID(args[0], "app")
 
-		log.Print(appId)
+		Level27Client.AppActionActivate(appId, "activate")
 	},
 }
 

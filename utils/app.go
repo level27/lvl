@@ -8,7 +8,8 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
-//------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+//------------------------------------------------- APP MAIN SUBCOMMANDS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+// #region APP MAIN SUBCOMMANDS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)
 
 // Gets an app from the API
 func (c *Client) App(id int) types.App {
@@ -81,10 +82,22 @@ func (c *Client) AppDelete(appId int, isConfirmed bool) {
 	}
 }
 
-
 // ---- UPDATE APP
-func (c *Client)AppUpdate(appId int, req types.AppPutRequest){
+func (c *Client) AppUpdate(appId int, req types.AppPutRequest) {
 	endpoint := fmt.Sprintf("apps/%v", appId)
 	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "Apps")
+}
+
+// #endregion
+
+//------------------------------------------------- APP ACTIONS (ACTIVATE / DEACTIVATE)-------------------------------------------------
+// ---- ACTION (ACTIVATE OR DEACTIVATE) ON AN APP
+func (c *Client) AppActionActivate(appId int, action string) {
+	request := types.AppActionRequest{
+		Type: action,
+	}
+	endpoint := fmt.Sprintf("apps/%v/actions", appId)
+	err := c.invokeAPI("POST", endpoint, request, nil)
+	AssertApiError(err, "app")
 }
