@@ -1,0 +1,36 @@
+APP/PROJECT:
+    ID: {{.ID}}
+    NAME:  {{.Name}}
+    STATUS: {{.Status}}
+    BILLINGSTATUS: {{.BillingStatus}}
+
+    {{- /*ORGANISATION*/}}
+    
+    ORGANISATION:
+        ID: {{.Organisation.ID}}
+        NAME: {{.Organisation.Name}}
+        RESELLER: {{.Organisation.Reseller}}
+
+    {{- /* COMPONENTS */}}
+
+    {{- $anyComponents := false }}
+
+    COMPONENTS:  {{ range .Components }}
+        {{- $anyComponents = true }}
+        ID: {{.ID}}     
+        NAME: {{.Name}} 
+        CATEGORY: {{.Category}}
+        APPCOMPONENT_TYPE: {{.AppComponentType}}
+    {{ end }}{{if not $anyComponents}}(none){{ end -}}   
+
+
+    {{- /* TEAMS */}}
+
+    {{- $anyTeams := false }}
+
+    TEAMS:  {{ range .Teams }}
+        {{- $anyTeams = true }}
+        ID: {{.ID}}     
+        NAME: {{.Name}} 
+        ORGANISATION ID: {{.OrganisationID}}
+    {{ end }}{{if not $anyTeams}}(none){{ end -}}

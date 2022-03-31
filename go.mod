@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.9.0
 	golang.org/x/sys v0.0.0-20220222200937-f2425489ef4c
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
