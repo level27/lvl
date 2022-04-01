@@ -104,8 +104,9 @@ func (c *Client) AppAction(appId int, action string) {
 
 
 
+//------------------------------------------------- APP COMPONENTS (GET / DESCRIBE / CREATE)-------------------------------------------------
 
-// -- GET LIST OF COMPONENTS
+// ---- GET LIST OF COMPONENTS
 func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []types.AppComponent2 {
 	var components struct {
 		Data []types.AppComponent2 `json:"components"`
@@ -120,7 +121,7 @@ func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []
 }
 
 
-// DESCRIBE COMPONENT (GET SINGLE COMPONENT)
+// ---- DESCRIBE COMPONENT (GET SINGLE COMPONENT)
 func (c *Client) AppComponentGetSingle(appId int ,id int) types.AppComponent2 {
 	var component struct {
 		Data types.AppComponent2 `json:"component"`

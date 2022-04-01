@@ -67,6 +67,9 @@ func init() {
 	// ---- GET COMPONENTS
 	appComponentCmd.AddCommand(appComponentGetCmd)
 	addCommonGetFlags(appComponentGetCmd)
+
+	// ---- CREATE COMPONENT
+	appComponentCmd.AddCommand(appComponentCreateCmd)
 }
 
 // MAIN COMMAND APPS
@@ -298,4 +301,15 @@ func getComponents(appId int ,ids []int) []types.AppComponent2 {
 		}
 		return components
 	}
+}
+
+
+// ---- CREATE COMPONENT
+var appComponentCreateCmd = &cobra.Command{
+	Use: "create",
+	Short: "Create a new appcomponent.",
+	Example: "lvl app component create -n myComponentName",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
 }
