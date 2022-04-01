@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -56,6 +57,23 @@ func init() {
 
 	// DEACTIVATE APP
 	AppActionCmd.AddCommand(AppActionDeactivateCmd)
+
+	// APP ACCESS
+	addAccessCmds(appCmd, "apps", resolveApp)
+}
+
+func resolveApp(arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	app := Level27Client.AppLookup(arg)
+	if app == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find app: %s", arg))
+		return 0
+	}
+	return app.ID
 }
 
 // MAIN COMMAND APPS
