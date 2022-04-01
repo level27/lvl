@@ -48,4 +48,38 @@ type AppActionRequest struct {
 	Type string `json:"type"`
 }
 
+//type appcomponent
+type AppComponent2 struct {
+	App struct {
+		ID             int64  `json:"id"`
+		Status         string `json:"status"`
+		Name           string `json:"name"`
+		StatusCategory string `json:"statusCategory"`
+	} `json:"app"`
+	AppcomponentparameterDescriptions interface{} `json:"appcomponentparameterDescriptions"`
+	Appcomponentparameters            interface{} `json:"appcomponentparameters"`
+	Appcomponenttype                  string      `json:"appcomponenttype"`
+	BillableitemDetailID              int64       `json:"billableitemDetailId"`
+	Category                          string      `json:"category"`
+	ID                                int64       `json:"id"`
+	Name                              string      `json:"name"`
+	Organisation                      struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	} `json:"organisation"`
+	Provider struct {
+		ID   interface{} `json:"id"`
+		Name interface{} `json:"name"`
+	} `json:"provider"`
+	SelectedSystem interface{} `json:"selectedSystem"`
+	Status         string      `json:"status"`
+	Systemgroup    interface{} `json:"systemgroup"`
+	Systems        []struct {
+		Cookbooks []interface{} `json:"cookbooks"`
+		Fqdn      string        `josn:"fqdn"`
+		ID        int64         `json:"id"`
+		Name      string        `json:"name"`
+	} `json:"systems"`
+}
 
+// type appcomponenttype

@@ -106,26 +106,27 @@ func (c *Client) AppAction(appId int, action string) {
 
 
 // -- GET LIST OF COMPONENTS
-func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []types.Component {
+func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []types.AppComponent2 {
 	var components struct {
-		Data []types.Component `json:"components"`
+		Data []types.AppComponent2 `json:"components"`
 	}
 
 	endpoint := fmt.Sprintf("apps/%v/components?%v", appid, formatCommonGetParams(getParams))
 	err := c.invokeAPI("GET", endpoint, nil, &components)
 	AssertApiError(err, "app")
 
+	log.Print("hallo")
 	return components.Data
 }
 
 
 // DESCRIBE COMPONENT (GET SINGLE COMPONENT)
-func (c *Client) AppComponentGetSingle(id int) types.Component {
+func (c *Client) AppComponentGetSingle(appId int ,id int) types.AppComponent2 {
 	var component struct {
-		Data types.Component `json:"component"`
+		Data types.AppComponent2 `json:"component"`
 	}
 
-	endpoint := fmt.Sprintf("apps/%d/components", id)
+	endpoint := fmt.Sprintf("apps/%d/components/%v", appId, id)
 	err := c.invokeAPI("GET", endpoint, nil, &component)
 	AssertApiError(err, "app")
 

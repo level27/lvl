@@ -270,29 +270,32 @@ var appComponentGetCmd = &cobra.Command{
 	Use: "get",
 	Short: "Show list of all available components",
 	Example: "lvl app component get",
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		
-		ids, err := convertStringsToIds(args)
+		//check for valid appId
+		appId := checkSingleIntID(args[0], "apps")
+		ids, err := convertStringsToIds(args[1:])
 		if err != nil {
 			log.Fatalln("Invalid component ID")
 		}
 		log.Print(ids)
-		// outputFormatTable(
-		// 	getComponents(ids),
-		// 	[]string{"ID", "NAME", "STATUS"},
-		// 	[]string{"ID", "Name", "Status"})
+		outputFormatTable(
+			getComponents(appId, ids),
+			[]string{"ID", "NAME", "STATUS"},
+			[]string{"ID", "Name", "Status"})
 	},
 }
 
-// func getComponents(ids []int) []types.Component {
-// 	c := Level27Client
-// 	if len(ids) == 0 {
-// 		return c.AppComponentsGet(optGetParameters)
-// 	} else {
-// 		components := make([]types.Component, len(ids))
-// 		for idx, id := range ids {
-// 			components[idx] = c.AppComponentGetSingle(id)
-// 		}
-// 		return components
-// 	}
-// }
+func getComponents(appId int ,ids []int) []types.AppComponent2 {
+	c := Level27Client
+	if len(ids) == 0 {
+		return c.AppComponentsGet(appId,optGetParameters)
+	} else {
+		components := make([]types.AppComponent2, len(ids))
+		for idx, id := range ids {
+			components[idx] = c.AppComponentGetSingle(appId, id)
+		}
+		return components
+	}
+}
