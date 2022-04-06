@@ -82,4 +82,8 @@ type AppComponent2 struct {
 	} `json:"systems"`
 }
 
-// type appcomponenttype
+
+// type appcomponent category
+type AppcomponentCategory struct {
+	Name string
+}

@@ -70,6 +70,9 @@ func init() {
 
 	// ---- CREATE COMPONENT
 	appComponentCmd.AddCommand(appComponentCreateCmd)
+
+	// ---- GET COMPONENT PARAMETERS 
+	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
 }
 
 // MAIN COMMAND APPS
@@ -308,8 +311,33 @@ func getComponents(appId int ,ids []int) []types.AppComponent2 {
 var appComponentCreateCmd = &cobra.Command{
 	Use: "create",
 	Short: "Create a new appcomponent.",
-	Example: "lvl app component create -n myComponentName",
+	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
+	Run: func(cmd *cobra.Command, args []string) {
+		
+	},
+}
+
+
+// ---- GET COMPONENT CATEGORIES 
+var appComponentCategoryGetCmd = &cobra.Command{
+	Use: "category",
+	Short: "shows all the different appcomponent categories.",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		// current possible categories for appcomponents 
+		categories := []string{"web-apps", "databases", "extensions"}
+
+		// type to convert string into category type
+		var AppcomponentCategories struct{
+			Data []types.AppcomponentCategory 
+		}
+
+
+		for _, category := range categories{
+			cat := types.AppcomponentCategory{Name: category}
+			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
+		}
+
+		outputFormatTable(AppcomponentCategories.Data, []string{"CATEGORY"}, []string{"Name"})
 	},
 }
