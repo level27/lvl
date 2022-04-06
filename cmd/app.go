@@ -354,6 +354,9 @@ var appComponentTypeCmd = &cobra.Command{
 	Short: "Shows a list of all current componenttypes.",
 	Example: "lvl app component types",
 	Run: func(cmd *cobra.Command, args []string) {
-		
+	
+		types := Level27Client.AppComponenttypesGet()
+
+		log.Print(types)
 	},
 }

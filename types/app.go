@@ -88,7 +88,7 @@ type AppcomponentCategory struct {
 }
 
 // type appcomponenttype
-type AppcomponenttypeName map[string]AppcomponenttypeServicetype
+type Appcomponenttype map[string]AppcomponenttypeServicetype
 
 type AppcomponenttypeServicetype struct{
 	Servicetype struct {

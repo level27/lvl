@@ -102,8 +102,6 @@ func (c *Client) AppAction(appId int, action string) {
 	AssertApiError(err, "app")
 }
 
-
-
 //------------------------------------------------- APP COMPONENTS (GET / DESCRIBE / CREATE)-------------------------------------------------
 
 // ---- GET LIST OF COMPONENTS
@@ -120,9 +118,8 @@ func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []
 	return components.Data
 }
 
-
 // ---- DESCRIBE COMPONENT (GET SINGLE COMPONENT)
-func (c *Client) AppComponentGetSingle(appId int ,id int) types.AppComponent2 {
+func (c *Client) AppComponentGetSingle(appId int, id int) types.AppComponent2 {
 	var component struct {
 		Data types.AppComponent2 `json:"component"`
 	}
@@ -132,4 +129,17 @@ func (c *Client) AppComponentGetSingle(appId int ,id int) types.AppComponent2 {
 	AssertApiError(err, "app")
 
 	return component.Data
+}
+
+//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+// ---- GET LIST OFF APPCOMPONENTTYPES
+func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
+	endpoint := "appcomponenttypes"
+	var componenttypes struct {
+		Data types.Appcomponenttype `json:"appcomponenttypes"`
+	}
+
+	c.invokeAPI("GET", endpoint, nil, &componenttypes)
+
+	return componenttypes.Data
 }
