@@ -82,8 +82,41 @@ type AppComponent2 struct {
 	} `json:"systems"`
 }
 
-
 // type appcomponent category
 type AppcomponentCategory struct {
 	Name string
 }
+
+// type appcomponenttype
+type AppcomponenttypeName map[string]AppcomponenttypeServicetype
+
+type AppcomponenttypeServicetype struct{
+	Servicetype struct {
+		Name                    string        `json:"name"`
+		Cookbook                string        `json:"cookbook"`
+		DisplayName             string        `json:"displayName"`
+		Description             string        `json:"description"`
+		URLPossible             bool          `json:"urlPossible"`
+		RestorePossible         bool          `json:"restorePossible"`
+		MigrationPossible       bool          `json:"migrationPossible"`
+		SelectingSystemPossible bool          `json:"selectingSystemPossible"`
+		DisabledOnProduction    bool          `json:"disabledOnProduction"`
+		InvisibleOnProduction   bool          `json:"invisibleOnProduction"`
+		Runlist                 string        `json:"runlist"`
+		AllowedActions          []interface{} `json:"allowedActions"`
+		Category                string        `json:"category"`
+		Parameters              []struct {
+			Name         string `json:"name"`
+			DisplayName  string `json:"displayName"`
+			Description  string `json:"description"`
+			Type         string `json:"type"`
+			DefaultValue string `json:"defaultValue"`
+			Readonly     bool   `json:"readonly"`
+			DisableEdit  bool   `json:"disableEdit"`
+			Required     bool   `json:"required"`
+			Category     string `json:"category"`
+		} `json:"parameters"`
+	} `json:"servicetype"`
+}
+
+

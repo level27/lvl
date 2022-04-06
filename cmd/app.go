@@ -71,8 +71,12 @@ func init() {
 	// ---- CREATE COMPONENT
 	appComponentCmd.AddCommand(appComponentCreateCmd)
 
-	// ---- GET COMPONENT PARAMETERS 
+	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+	// ---- GET COMPONENT CATEGORIES 
 	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
+
+	// ---- GET COMPONENTTYPES
+	appComponentCmd.AddCommand(appComponentTypeCmd)
 }
 
 // MAIN COMMAND APPS
@@ -317,11 +321,13 @@ var appComponentCreateCmd = &cobra.Command{
 	},
 }
 
+//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 
 // ---- GET COMPONENT CATEGORIES 
 var appComponentCategoryGetCmd = &cobra.Command{
-	Use: "category",
-	Short: "shows all the different appcomponent categories.",
+	Use: "categories",
+	Short: "shows a list of all current appcomponent categories.",
+	Example: "lvl app component categories",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// current possible categories for appcomponents 
@@ -339,5 +345,15 @@ var appComponentCategoryGetCmd = &cobra.Command{
 		}
 
 		outputFormatTable(AppcomponentCategories.Data, []string{"CATEGORY"}, []string{"Name"})
+	},
+}
+
+// ---- GET LIST OF APPCOMPONENT TYPES
+var appComponentTypeCmd = &cobra.Command{
+	Use: "types",
+	Short: "Shows a list of all current componenttypes.",
+	Example: "lvl app component types",
+	Run: func(cmd *cobra.Command, args []string) {
+		
 	},
 }
