@@ -370,7 +370,7 @@ var appComponentTypeCmd = &cobra.Command{
 
 	
 //-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
-
+// ---- SSL COMMAND
 var appCertificateCmd = &cobra.Command{
 	Use: "ssl",
 	Short: "Commands for managing ssl certificates.",
@@ -378,3 +378,12 @@ var appCertificateCmd = &cobra.Command{
 }
 
 
+// ---- GET LIST OF SSL CERTIFICATES
+var appCertificateGetCmd = &cobra.Command{
+	Use: "get",
+	Short: "Show list of all available ssl certificates.",
+	Example: "lvl app ssl get",
+	Run: func(cmd *cobra.Command, args []string) {
+		
+	},
+}
