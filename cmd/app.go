@@ -77,6 +77,10 @@ func init() {
 
 	// ---- GET COMPONENTTYPES
 	appComponentCmd.AddCommand(appComponentTypeCmd)
+
+	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
+	appCmd.AddCommand(appCertificateCmd)
+
 }
 
 // MAIN COMMAND APPS
@@ -360,3 +364,17 @@ var appComponentTypeCmd = &cobra.Command{
 		log.Print(types)
 	},
 }
+
+
+
+
+	
+//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
+
+var appCertificateCmd = &cobra.Command{
+	Use: "ssl",
+	Short: "Commands for managing ssl certificates.",
+	Example: "lvl app ssl get",
+}
+
+
