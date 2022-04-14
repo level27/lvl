@@ -424,6 +424,8 @@ var appCertificateAddCmd = &cobra.Command{
 		// Check for valid AppId type
 		appId := checkSingleIntID(args[0], "app")
 
+
+		var certificate types.SslCertificate
 		// checking if the chosen type is one of the valid options.
 		var isSslTypeValid bool = false
 		for _, sslType := range PossibleSslTypes{
@@ -431,7 +433,7 @@ var appCertificateAddCmd = &cobra.Command{
 			// check if type is 'own' or not. -> own -> needs special request data
 			if (appAddSslType == sslType){
 				isSslTypeValid = true
-				// wich type 
+				// type own -> different properties
 				if appAddSslType == "own" {
 					request := types.AppSslCertificateTypeOwnRequest{
 						Name:                   appAddSslName,
@@ -443,8 +445,8 @@ var appCertificateAddCmd = &cobra.Command{
 						AutoUrlLink:            appAddSslAutoUrlLink,
 						SslForce:               appAddSslForce,
 					}
-					Level27Client.AppCertificateAdd(appId, request)
-					
+					certificate = Level27Client.AppCertificateAdd(appId, request)
+				// type letsencrypt or xolphin 	
 				}else{
 					request := types.AppSslCertificateRequest{
 						Name:                   appAddSslName,
@@ -453,15 +455,19 @@ var appCertificateAddCmd = &cobra.Command{
 						AutoUrlLink:            appAddSslAutoUrlLink,
 						SslForce:               appAddSslForce,
 					}
-					Level27Client.AppCertificateAdd(appId, request)
+					certificate = Level27Client.AppCertificateAdd(appId, request)
 				}
 				
 			}
 		}
 
+		// error when given type is not valid
 		if !isSslTypeValid {
 			log.Fatal(fmt.Sprintf("Given sslType: '%v' is NOT valid.", appAddSslType))
 		}
+
+		message := fmt.Sprintf("sslCertificate created: [name: '%v' - ID: '%v'].", certificate.Name, certificate.ID)
+		fmt.Println(message)
 		
 
 		

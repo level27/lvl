@@ -157,12 +157,12 @@ func (c *Client) AppCertificateGet(appId int) []types.SslCertificate{
 
 
 // ---- ADD SSL CERTIFICATE
-func (c *Client)AppCertificateAdd(appId int, req interface{}){
+func (c *Client)AppCertificateAdd(appId int, req interface{}) types.SslCertificate{
 	var certificate struct{
 		Data types.SslCertificate `json:"sslCertificate"`
 	}
 	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
 	err := c.invokeAPI("POST", endpoint, req, &certificate)
 	AssertApiError(err, "appCertificate")
-	fmt.Print(certificate.Data)
+	return certificate.Data
 }
