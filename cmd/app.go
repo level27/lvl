@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -85,6 +86,18 @@ func init() {
 	// ---- GET SSL CERTIFICATES 
 	appCertificateCmd.AddCommand(appCertificateGetCmd)
 
+	// ---- ADD SSL CERTIFICATE
+	appCertificateCmd.AddCommand(appCertificateAddCmd)
+	// flags used for adding a certificate to an app
+	flags = appCertificateAddCmd.Flags()
+	flags.StringVarP(&appAddSslName, "name", "n", "", "The name of the certificate.")
+	flags.StringVarP(&appAddSslType, "type", "t", "", "The type of the certificate.")
+	flags.StringArrayVarP(&appAddSslAutoUrl, "certificateUrl", "c", []string{}, "AutoSslCertificateUrls: url or csv list of urls (required for type letsencrypt).")
+	flags.StringVarP(&appAddSslKey, "key", "k", "", "Ssl key (required for ssl type own).")
+	flags.StringVar(&appAddSslCrt, "crt", "", "Ssl crt (Required for ssl type own).")
+	flags.StringVar(&appAddSslCabundle, "cabundle", "", "Ssl cabundle (Required for ssl type own)." )
+	flags.BoolVar(&appAddSslAutoUrlLink, "autoUrl", false, "If 'autoUrlLink' is set to true then a certificate's urls, which don't have another cettificate, will be linked to the certificate after successful creation (default: false).")
+	flags.BoolVar(&appAddSslForce, "force", true, "Force ssl (default: true).")
 }
 
 // MAIN COMMAND APPS
@@ -397,5 +410,23 @@ var appCertificateGetCmd = &cobra.Command{
 		outputFormatTableFuncs(certificates, []string{"NAME", "TYPE", "STATUS", "EXPIRING DATE"}, 
 		[]interface{}{"Name", "SslType", "Status", func(s types.SslCertificates) string { return utils.FormatUnixTime(s.DtExpires)}})
 
+	},
+}
+
+// ---- ADD CERTIFICATE
+// vars to hold properties set by user.
+var appAddSslName, appAddSslType, appAddSslKey, appAddSslCrt, appAddSslCabundle string
+var appAddSslAutoUrl []string
+var appAddSslAutoUrlLink, appAddSslForce bool
+var appCertificateAddCmd = &cobra.Command{
+	Use: "add",
+	Short: "Add new ssl certificate to an app.",
+	Example: "lvl app ssl add 2077 -n mySslCertificateName",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// Check for valid AppId type
+		appId := checkSingleIntID(args[0], "app")
+		
+		fmt.Print(appId)
 	},
 }
