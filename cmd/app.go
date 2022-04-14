@@ -74,7 +74,7 @@ func init() {
 	appComponentCmd.AddCommand(appComponentCreateCmd)
 
 	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
-	// ---- GET COMPONENT CATEGORIES 
+	// ---- GET COMPONENT CATEGORIES
 	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
 
 	// ---- GET COMPONENTTYPES
@@ -83,7 +83,7 @@ func init() {
 	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
 	appCmd.AddCommand(appCertificateCmd)
 
-	// ---- GET SSL CERTIFICATES 
+	// ---- GET SSL CERTIFICATES
 	appCertificateCmd.AddCommand(appCertificateGetCmd)
 
 	// ---- ADD SSL CERTIFICATE
@@ -92,12 +92,16 @@ func init() {
 	flags = appCertificateAddCmd.Flags()
 	flags.StringVarP(&appAddSslName, "name", "n", "", "The name of the certificate.")
 	flags.StringVarP(&appAddSslType, "type", "t", "", "The type of the certificate.")
-	flags.StringArrayVarP(&appAddSslAutoUrl, "certificateUrl", "c", []string{}, "AutoSslCertificateUrls: url or csv list of urls (required for type letsencrypt).")
+	flags.StringVarP(&appAddSslAutoUrl, "certificateUrl", "c", "", "AutoSslCertificateUrls: url or csv list of urls (required for type letsencrypt).")
 	flags.StringVarP(&appAddSslKey, "key", "k", "", "Ssl key (required for ssl type own).")
 	flags.StringVar(&appAddSslCrt, "crt", "", "Ssl crt (Required for ssl type own).")
-	flags.StringVar(&appAddSslCabundle, "cabundle", "", "Ssl cabundle (Required for ssl type own)." )
+	flags.StringVar(&appAddSslCabundle, "cabundle", "", "Ssl cabundle (Required for ssl type own).")
 	flags.BoolVar(&appAddSslAutoUrlLink, "autoUrl", false, "If 'autoUrlLink' is set to true then a certificate's urls, which don't have another cettificate, will be linked to the certificate after successful creation (default: false).")
 	flags.BoolVar(&appAddSslForce, "force", true, "Force ssl (default: true).")
+
+	//mark required flags 
+	appCertificateAddCmd.MarkFlagRequired("name")
+	appCertificateAddCmd.MarkFlagRequired("type")
 }
 
 // MAIN COMMAND APPS
@@ -291,19 +295,19 @@ var AppActionDeactivateCmd = &cobra.Command{
 //------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
 // ---- COMPONENT COMMAND
 var appComponentCmd = &cobra.Command{
-	Use: "component",
-	Short: "Commands for managing appcomponents.",
+	Use:     "component",
+	Short:   "Commands for managing appcomponents.",
 	Example: "lvl app component get",
 }
 
 // ---- GET COMPONENTS
 var appComponentGetCmd = &cobra.Command{
-	Use: "get",
-	Short: "Show list of all available components",
+	Use:     "get",
+	Short:   "Show list of all available components",
 	Example: "lvl app component get",
-	Args: cobra.MinimumNArgs(1),
+	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 		//check for valid appId
 		appId := checkSingleIntID(args[0], "apps")
 		ids, err := convertStringsToIds(args[1:])
@@ -318,10 +322,10 @@ var appComponentGetCmd = &cobra.Command{
 	},
 }
 
-func getComponents(appId int ,ids []int) []types.AppComponent2 {
+func getComponents(appId int, ids []int) []types.AppComponent2 {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.AppComponentsGet(appId,optGetParameters)
+		return c.AppComponentsGet(appId, optGetParameters)
 	} else {
 		components := make([]types.AppComponent2, len(ids))
 		for idx, id := range ids {
@@ -331,36 +335,34 @@ func getComponents(appId int ,ids []int) []types.AppComponent2 {
 	}
 }
 
-
 // ---- CREATE COMPONENT
 var appComponentCreateCmd = &cobra.Command{
-	Use: "create",
-	Short: "Create a new appcomponent.",
+	Use:     "create",
+	Short:   "Create a new appcomponent.",
 	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 	},
 }
 
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 
-// ---- GET COMPONENT CATEGORIES 
+// ---- GET COMPONENT CATEGORIES
 var appComponentCategoryGetCmd = &cobra.Command{
-	Use: "categories",
-	Short: "shows a list of all current appcomponent categories.",
+	Use:     "categories",
+	Short:   "shows a list of all current appcomponent categories.",
 	Example: "lvl app component categories",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// current possible categories for appcomponents 
+		// current possible categories for appcomponents
 		categories := []string{"web-apps", "databases", "extensions"}
 
 		// type to convert string into category type
-		var AppcomponentCategories struct{
-			Data []types.AppcomponentCategory 
+		var AppcomponentCategories struct {
+			Data []types.AppcomponentCategory
 		}
 
-
-		for _, category := range categories{
+		for _, category := range categories {
 			cat := types.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
@@ -371,62 +373,97 @@ var appComponentCategoryGetCmd = &cobra.Command{
 
 // ---- GET LIST OF APPCOMPONENT TYPES
 var appComponentTypeCmd = &cobra.Command{
-	Use: "types",
-	Short: "Shows a list of all current componenttypes.",
+	Use:     "types",
+	Short:   "Shows a list of all current componenttypes.",
 	Example: "lvl app component types",
 	Run: func(cmd *cobra.Command, args []string) {
-	
+
 		types := Level27Client.AppComponenttypesGet()
 
 		log.Print(types)
 	},
 }
 
-
-
-
-	
 //-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
 // ---- SSL COMMAND
 var appCertificateCmd = &cobra.Command{
-	Use: "ssl",
-	Short: "Commands for managing ssl certificates.",
+	Use:     "ssl",
+	Short:   "Commands for managing ssl certificates.",
 	Example: "lvl app ssl get",
 }
 
-
 // ---- GET LIST OF SSL CERTIFICATES
 var appCertificateGetCmd = &cobra.Command{
-	Use: "get",
-	Short: "Show list of all available ssl certificates.",
+	Use:     "get",
+	Short:   "Show list of all available ssl certificates.",
 	Example: "lvl app ssl get",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check for valid AppId type
 		appId := checkSingleIntID(args[0], "app")
 
 		certificates := Level27Client.AppCertificateGet(appId)
 		// Display output in readable table
-		outputFormatTableFuncs(certificates, []string{"NAME", "TYPE", "STATUS", "EXPIRING DATE"}, 
-		[]interface{}{"Name", "SslType", "Status", func(s types.SslCertificates) string { return utils.FormatUnixTime(s.DtExpires)}})
+		outputFormatTableFuncs(certificates, []string{"NAME", "TYPE", "STATUS", "EXPIRING DATE"},
+			[]interface{}{"Name", "SslType", "Status", func(s types.SslCertificate) string { return utils.FormatUnixTime(s.DtExpires) }})
 
 	},
 }
 
 // ---- ADD CERTIFICATE
 // vars to hold properties set by user.
-var appAddSslName, appAddSslType, appAddSslKey, appAddSslCrt, appAddSslCabundle string
-var appAddSslAutoUrl []string
+var appAddSslName, appAddSslType, appAddSslKey, appAddSslCrt, appAddSslCabundle, appAddSslAutoUrl string
 var appAddSslAutoUrlLink, appAddSslForce bool
+var PossibleSslTypes = []string {"letsencrypt", "xolphin", "own"}
 var appCertificateAddCmd = &cobra.Command{
-	Use: "add",
-	Short: "Add new ssl certificate to an app.",
+	Use:     "add",
+	Short:   "Add new ssl certificate to an app.",
 	Example: "lvl app ssl add 2077 -n mySslCertificateName",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check for valid AppId type
 		appId := checkSingleIntID(args[0], "app")
+
+		// checking if the chosen type is one of the valid options.
+		var isSslTypeValid bool = false
+		for _, sslType := range PossibleSslTypes{
+			// when type is valid. 
+			// check if type is 'own' or not. -> own -> needs special request data
+			if (appAddSslType == sslType){
+				isSslTypeValid = true
+				// wich type 
+				if appAddSslType == "own" {
+					request := types.AppSslCertificateTypeOwnRequest{
+						Name:                   appAddSslName,
+						SslType:                appAddSslType,
+						AutoSslCertificateUrls: appAddSslAutoUrl,
+						SslKey:                 appAddSslKey,
+						SslCrt:                 appAddSslCrt,
+						SslCabundle:            appAddSslCabundle,
+						AutoUrlLink:            appAddSslAutoUrlLink,
+						SslForce:               appAddSslForce,
+					}
+					Level27Client.AppCertificateAdd(appId, request)
+					
+				}else{
+					request := types.AppSslCertificateRequest{
+						Name:                   appAddSslName,
+						SslType:                appAddSslType,
+						AutoSslCertificateUrls: appAddSslAutoUrl,
+						AutoUrlLink:            appAddSslAutoUrlLink,
+						SslForce:               appAddSslForce,
+					}
+					Level27Client.AppCertificateAdd(appId, request)
+				}
+				
+			}
+		}
+
+		if !isSslTypeValid {
+			log.Fatal(fmt.Sprintf("Given sslType: '%v' is NOT valid.", appAddSslType))
+		}
 		
-		fmt.Print(appId)
+
+		
 	},
 }

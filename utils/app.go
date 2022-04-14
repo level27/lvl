@@ -138,17 +138,31 @@ func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
 	}
 
 	endpoint := "appcomponenttypes"
-	c.invokeAPI("GET", endpoint, nil, &componenttypes)
+	err := c.invokeAPI("GET", endpoint, nil, &componenttypes)
+	AssertApiError(err, "appcomponent")
 	return componenttypes.Data
 }
 
 
-func (c *Client) AppCertificateGet(appId int) []types.SslCertificates{
+func (c *Client) AppCertificateGet(appId int) []types.SslCertificate{
 	var certificates struct{
-		Data []types.SslCertificates `json:"sslCertificates"`
+		Data []types.SslCertificate `json:"sslCertificates"`
 	}
 
 	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
-	c.invokeAPI("GET", endpoint, nil, &certificates)
+	err := c.invokeAPI("GET", endpoint, nil, &certificates)
+	AssertApiError(err, "appCertificate")
 	return certificates.Data
+}
+
+
+// ---- ADD SSL CERTIFICATE
+func (c *Client)AppCertificateAdd(appId int, req interface{}){
+	var certificate struct{
+		Data types.SslCertificate `json:"sslCertificate"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
+	err := c.invokeAPI("POST", endpoint, req, &certificate)
+	AssertApiError(err, "appCertificate")
+	fmt.Print(certificate.Data)
 }

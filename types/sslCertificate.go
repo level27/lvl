@@ -2,9 +2,7 @@ package types
 
 
 // -- type of ssl certificate
-
-
-type SslCertificates struct {
+type SslCertificate struct {
 	ID                 int         `json:"id"`
 	Name               string      `json:"name"`
 	SslType            string      `json:"sslType"`
@@ -16,7 +14,7 @@ type SslCertificates struct {
 	SslForce           bool        `json:"sslForce"`
 	SslStatus          string      `json:"sslStatus"`
 	Status             string      `json:"status"`
-	ReminderStatus     int         `json:"reminderStatus"`
+	ReminderStatus     string         `json:"reminderStatus"`
 	DtExpires          string      `json:"dtExpires"`
 	ValidationParams   interface{} `json:"validationParams"`
 	Source             interface{} `json:"source"`
