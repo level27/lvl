@@ -490,5 +490,7 @@ var appCertificateDeleteCmd = &cobra.Command{
 		appId := checkSingleIntID(args[0], "app")
 		//check for valid certificateID 
 		certificateID := checkSingleIntID(args[1], "appCertificate")
+
+		
 	},
 }

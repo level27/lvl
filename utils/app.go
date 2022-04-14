@@ -168,12 +168,37 @@ func (c *Client) AppCertificateAdd(appId int, req interface{}) types.SslCertific
 	return certificate.Data
 }
 
-// ---- UPDATE SSL CERTIFICATE
-func (c *Client) AppCertificateUpdate(appId int, sslId int, req interface{}) {
-	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, sslId)
-	err := c.invokeAPI("PUT", endpoint, req, nil)
-	AssertApiError(err, "appCertificate")
+// ---- DELETE SSL CERTIFICATE
+func (c *Client) AppCertificateDelete(appId int, sslId int, isDeleteConfirmed bool) {
 
-	fmt.Print("Ssl certificate updated!")
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, sslId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "appCertificate")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the ssl certificate with ID: %v? Please type [y]es or [n]o: ", sslId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, sslId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "appCertificate")
+		case "n", "no":
+			log.Printf("Delete canceled for ssl certificate: %v", sslId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
 
+			c.AppCertificateDelete(appId, sslId, false)
+		}
+
+	}
 }
