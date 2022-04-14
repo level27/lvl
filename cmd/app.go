@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
+	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -80,6 +81,9 @@ func init() {
 
 	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
 	appCmd.AddCommand(appCertificateCmd)
+
+	// ---- GET SSL CERTIFICATES 
+	appCertificateCmd.AddCommand(appCertificateGetCmd)
 
 }
 
@@ -347,7 +351,7 @@ var appComponentCategoryGetCmd = &cobra.Command{
 			cat := types.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
-
+		// display output in readable table
 		outputFormatTable(AppcomponentCategories.Data, []string{"CATEGORY"}, []string{"Name"})
 	},
 }
@@ -383,7 +387,15 @@ var appCertificateGetCmd = &cobra.Command{
 	Use: "get",
 	Short: "Show list of all available ssl certificates.",
 	Example: "lvl app ssl get",
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		
+		// Check for valid AppId type
+		appId := checkSingleIntID(args[0], "app")
+
+		certificates := Level27Client.AppCertificateGet(appId)
+		// Display output in readable table
+		outputFormatTableFuncs(certificates, []string{"NAME", "TYPE", "STATUS", "EXPIRING DATE"}, 
+		[]interface{}{"Name", "SslType", "Status", func(s types.SslCertificates) string { return utils.FormatUnixTime(s.DtExpires)}})
+
 	},
 }

@@ -127,19 +127,28 @@ func (c *Client) AppComponentGetSingle(appId int, id int) types.AppComponent2 {
 	endpoint := fmt.Sprintf("apps/%d/components/%v", appId, id)
 	err := c.invokeAPI("GET", endpoint, nil, &component)
 	AssertApiError(err, "app")
-
 	return component.Data
 }
 
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 // ---- GET LIST OFF APPCOMPONENTTYPES
 func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
-	endpoint := "appcomponenttypes"
 	var componenttypes struct {
 		Data types.Appcomponenttype `json:"appcomponenttypes"`
 	}
 
+	endpoint := "appcomponenttypes"
 	c.invokeAPI("GET", endpoint, nil, &componenttypes)
-
 	return componenttypes.Data
+}
+
+
+func (c *Client) AppCertificateGet(appId int) []types.SslCertificates{
+	var certificates struct{
+		Data []types.SslCertificates `json:"sslCertificates"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
+	c.invokeAPI("GET", endpoint, nil, &certificates)
+	return certificates.Data
 }
