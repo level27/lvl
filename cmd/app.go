@@ -103,6 +103,9 @@ func init() {
 	//mark required flags 
 	appCertificateAddCmd.MarkFlagRequired("name")
 	appCertificateAddCmd.MarkFlagRequired("type")
+
+	// ---- UPDATE SSL CERTIFICATE
+	appCertificateCmd.AddCommand(appCertificateUpdateCmd)
 }
 
 // MAIN COMMAND APPS
@@ -405,8 +408,8 @@ var appCertificateGetCmd = &cobra.Command{
 
 		certificates := Level27Client.AppCertificateGet(appId)
 		// Display output in readable table
-		outputFormatTableFuncs(certificates, []string{"NAME", "TYPE", "STATUS", "EXPIRING DATE"},
-			[]interface{}{"Name", "SslType", "Status", func(s types.SslCertificate) string { return utils.FormatUnixTime(s.DtExpires) }})
+		outputFormatTableFuncs(certificates, []string{"ID", "NAME", "TYPE", "STATUS", "EXPIRING DATE"},
+			[]interface{}{"ID", "Name", "SslType", "Status", func(s types.SslCertificate) string { return utils.FormatUnixTime(s.DtExpires) }})
 
 	},
 }
@@ -476,22 +479,16 @@ var appCertificateAddCmd = &cobra.Command{
 }
 
 
-// ---- UPDATE CERTIFICATE
-var appCertificateUpdateCmd = &cobra.Command{
-	Use: "update",
-	Short: "Update name or type of a ssl certificate.",
-	Example: "lvl app ssl update 2082 20233 -n MyNewCertificateName",
+// ---- DELETE SSL CERTIFICATE
+var appCertificateDeleteCmd = &cobra.Command{
+	Use: "delete [appID] [CertificateID]",
+	Short: "Delete a ssl certificate from an app.",
+	Example: "lvl app ssl delete --yes",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		// Check for valid appId 
+		//check for valid appId 
 		appId := checkSingleIntID(args[0], "app")
-		// check for valig certificateID 
-		sslId := checkSingleIntID(args[1], "appCertificate")
-
-		test := gabs.New()
-
-		test.Set("nieuweNaam", "name")
-		Level27Client.AppCertificateUpdate(appId, sslId, test)
-
+		//check for valid certificateID 
+		certificateID := checkSingleIntID(args[1], "appCertificate")
 	},
 }
