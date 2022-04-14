@@ -143,9 +143,11 @@ func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
 	return componenttypes.Data
 }
 
+//------------------------------------------------- APP SSL CERTIFICATES (GET/ ADD )-------------------------------------------------
 
-func (c *Client) AppCertificateGet(appId int) []types.SslCertificate{
-	var certificates struct{
+// ---- GET LIST OF SSL CERTIFICATES
+func (c *Client) AppCertificateGet(appId int) []types.SslCertificate {
+	var certificates struct {
 		Data []types.SslCertificate `json:"sslCertificates"`
 	}
 
@@ -155,14 +157,23 @@ func (c *Client) AppCertificateGet(appId int) []types.SslCertificate{
 	return certificates.Data
 }
 
-
 // ---- ADD SSL CERTIFICATE
-func (c *Client)AppCertificateAdd(appId int, req interface{}) types.SslCertificate{
-	var certificate struct{
+func (c *Client) AppCertificateAdd(appId int, req interface{}) types.SslCertificate {
+	var certificate struct {
 		Data types.SslCertificate `json:"sslCertificate"`
 	}
 	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
 	err := c.invokeAPI("POST", endpoint, req, &certificate)
 	AssertApiError(err, "appCertificate")
 	return certificate.Data
+}
+
+// ---- UPDATE SSL CERTIFICATE
+func (c *Client) AppCertificateUpdate(appId int, sslId int, req interface{}) {
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, sslId)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
+	AssertApiError(err, "appCertificate")
+
+	fmt.Print("Ssl certificate updated!")
+
 }

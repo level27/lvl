@@ -7,6 +7,7 @@ import (
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
+	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -92,11 +93,11 @@ func init() {
 	flags = appCertificateAddCmd.Flags()
 	flags.StringVarP(&appAddSslName, "name", "n", "", "The name of the certificate.")
 	flags.StringVarP(&appAddSslType, "type", "t", "", "The type of the certificate.")
-	flags.StringVarP(&appAddSslAutoUrl, "certificateUrl", "c", "", "AutoSslCertificateUrls: url or csv list of urls (required for type letsencrypt).")
+	flags.StringVar(&appAddSslAutoUrl, "AutoCertificateUrl", "", "AutoSslCertificateUrls: url list of urls in string format '1 , 2' (required for type letsencrypt).")
 	flags.StringVarP(&appAddSslKey, "key", "k", "", "Ssl key (required for ssl type own).")
 	flags.StringVar(&appAddSslCrt, "crt", "", "Ssl crt (Required for ssl type own).")
 	flags.StringVar(&appAddSslCabundle, "cabundle", "", "Ssl cabundle (Required for ssl type own).")
-	flags.BoolVar(&appAddSslAutoUrlLink, "autoUrl", false, "If 'autoUrlLink' is set to true then a certificate's urls, which don't have another cettificate, will be linked to the certificate after successful creation (default: false).")
+	flags.BoolVar(&appAddSslAutoUrlLink, "autoUrl", false, "If 'autoUrl' is set to true then a certificate's urls, which don't have another cettificate, will be linked to the certificate after successful creation (default: false).")
 	flags.BoolVar(&appAddSslForce, "force", true, "Force ssl (default: true).")
 
 	//mark required flags 
@@ -471,5 +472,26 @@ var appCertificateAddCmd = &cobra.Command{
 		
 
 		
+	},
+}
+
+
+// ---- UPDATE CERTIFICATE
+var appCertificateUpdateCmd = &cobra.Command{
+	Use: "update",
+	Short: "Update name or type of a ssl certificate.",
+	Example: "lvl app ssl update 2082 20233 -n MyNewCertificateName",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// Check for valid appId 
+		appId := checkSingleIntID(args[0], "app")
+		// check for valig certificateID 
+		sslId := checkSingleIntID(args[1], "appCertificate")
+
+		test := gabs.New()
+
+		test.Set("nieuweNaam", "name")
+		Level27Client.AppCertificateUpdate(appId, sslId, test)
+
 	},
 }
