@@ -7,7 +7,6 @@ import (
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
-	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -100,12 +99,16 @@ func init() {
 	flags.BoolVar(&appAddSslAutoUrlLink, "autoUrl", false, "If 'autoUrl' is set to true then a certificate's urls, which don't have another cettificate, will be linked to the certificate after successful creation (default: false).")
 	flags.BoolVar(&appAddSslForce, "force", true, "Force ssl (default: true).")
 
-	//mark required flags 
+	//mark required flags
 	appCertificateAddCmd.MarkFlagRequired("name")
 	appCertificateAddCmd.MarkFlagRequired("type")
 
-	// ---- UPDATE SSL CERTIFICATE
-	appCertificateCmd.AddCommand(appCertificateUpdateCmd)
+	// ---- DELETE SSL CERTIFICATE
+	appCertificateCmd.AddCommand(appCertificateDeleteCmd)
+
+	//flag to skip confirmation when deleting a certificate
+	appCertificateDeleteCmd.Flags().BoolVarP(&appCertificateDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
+
 }
 
 // MAIN COMMAND APPS
@@ -418,7 +421,7 @@ var appCertificateGetCmd = &cobra.Command{
 // vars to hold properties set by user.
 var appAddSslName, appAddSslType, appAddSslKey, appAddSslCrt, appAddSslCabundle, appAddSslAutoUrl string
 var appAddSslAutoUrlLink, appAddSslForce bool
-var PossibleSslTypes = []string {"letsencrypt", "xolphin", "own"}
+var PossibleSslTypes = []string{"letsencrypt", "xolphin", "own"}
 var appCertificateAddCmd = &cobra.Command{
 	Use:     "add",
 	Short:   "Add new ssl certificate to an app.",
@@ -428,14 +431,13 @@ var appCertificateAddCmd = &cobra.Command{
 		// Check for valid AppId type
 		appId := checkSingleIntID(args[0], "app")
 
-
 		var certificate types.SslCertificate
 		// checking if the chosen type is one of the valid options.
 		var isSslTypeValid bool = false
-		for _, sslType := range PossibleSslTypes{
-			// when type is valid. 
+		for _, sslType := range PossibleSslTypes {
+			// when type is valid.
 			// check if type is 'own' or not. -> own -> needs special request data
-			if (appAddSslType == sslType){
+			if appAddSslType == sslType {
 				isSslTypeValid = true
 				// type own -> different properties
 				if appAddSslType == "own" {
@@ -450,8 +452,8 @@ var appCertificateAddCmd = &cobra.Command{
 						SslForce:               appAddSslForce,
 					}
 					certificate = Level27Client.AppCertificateAdd(appId, request)
-				// type letsencrypt or xolphin 	
-				}else{
+					// type letsencrypt or xolphin
+				} else {
 					request := types.AppSslCertificateRequest{
 						Name:                   appAddSslName,
 						SslType:                appAddSslType,
@@ -461,7 +463,7 @@ var appCertificateAddCmd = &cobra.Command{
 					}
 					certificate = Level27Client.AppCertificateAdd(appId, request)
 				}
-				
+
 			}
 		}
 
@@ -472,25 +474,23 @@ var appCertificateAddCmd = &cobra.Command{
 
 		message := fmt.Sprintf("sslCertificate created: [name: '%v' - ID: '%v'].", certificate.Name, certificate.ID)
 		fmt.Println(message)
-		
 
-		
 	},
 }
 
-
 // ---- DELETE SSL CERTIFICATE
+var appCertificateDeleteConfirmed bool
 var appCertificateDeleteCmd = &cobra.Command{
-	Use: "delete [appID] [CertificateID]",
-	Short: "Delete a ssl certificate from an app.",
+	Use:     "delete [appID] [CertificateID]",
+	Short:   "Delete a ssl certificate from an app.",
 	Example: "lvl app ssl delete --yes",
-	Args: cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid appId 
+		//check for valid appId
 		appId := checkSingleIntID(args[0], "app")
-		//check for valid certificateID 
+		//check for valid certificateID
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
-		
+		Level27Client.AppCertificateDelete(appId, certificateID, appCertificateDeleteConfirmed)
 	},
 }
