@@ -213,14 +213,21 @@ func (c *Client) AppCertificateDelete(appId int, sslId int, isDeleteConfirmed bo
 	}
 }
 
+// ---- FIX SSL CERTIFICATE
+func (c *Client) AppCertificateFix(appID int, sslID int) {
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/fix", appID, sslID)
+	err := c.invokeAPI("POST", endpoint, nil, nil)
+	AssertApiError(err, "appCertificate")
+}
+
 //------------------------------------------------- APP SSL CERTIFICATES (ACTIONS)-------------------------------------------------
 // ACTION RETRY (SSL)
 func (c *Client) AppCertificateAction(appId int, sslID int, actionType string) {
-	// create request data 
+	// create request data
 	request := types.AppSslCertificateActionRequest{
 		Type: actionType,
 	}
-	
+
 	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/actions", appId, sslID)
 	err := c.invokeAPI("POST", endpoint, request, nil)
 	AssertApiError(err, "appCertificate")

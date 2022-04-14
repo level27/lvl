@@ -109,6 +109,9 @@ func init() {
 	//flag to skip confirmation when deleting a certificate
 	appCertificateDeleteCmd.Flags().BoolVarP(&appCertificateDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
 
+	// ---- FIX SSL CERTIFICATE
+	appCertificateCmd.AddCommand(appCertificateFixCmd)
+
 	//-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
 	// ---- ACTION COMMAND
 	appCertificateCmd.AddCommand(appCertificateActionCmd)
@@ -417,7 +420,7 @@ var appComponentTypeCmd = &cobra.Command{
 	},
 }
 
-//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE) -------------------------------------------------
+//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE/ FIX) -------------------------------------------------
 // ---- SSL COMMAND
 var appCertificateCmd = &cobra.Command{
 	Use:     "ssl",
@@ -521,6 +524,21 @@ var appCertificateDeleteCmd = &cobra.Command{
 	},
 }
 
+// ---- FIX SSL CERTIFICATE
+var appCertificateFixCmd = &cobra.Command{
+	Use: "fix",
+	Short: "Fix an invalid certificate.",
+	Example: "lvl app ssl fix 2082 3022",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid appId
+		appId := checkSingleIntID(args[0], "app")
+		//check for valid certificateID
+		certificateID := checkSingleIntID(args[1], "appCertificate")
+
+		Level27Client.AppCertificateFix(appId, certificateID)
+	},
+}
 //-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
 // ---- ACTIONS (CREATE JOB FOR CERTIFICATE)
 var appCertificateActionCmd = &cobra.Command{
