@@ -154,7 +154,7 @@ func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
 	return componenttypes.Data
 }
 
-//------------------------------------------------- APP SSL CERTIFICATES (GET/ ADD )-------------------------------------------------
+//------------------------------------------------- APP SSL CERTIFICATES (GET/ ADD/ DELETE )-------------------------------------------------
 
 // ---- GET LIST OF SSL CERTIFICATES
 func (c *Client) AppCertificateGet(appId int) []types.SslCertificate {
@@ -201,8 +201,8 @@ func (c *Client) AppCertificateDelete(appId int, sslId int, isDeleteConfirmed bo
 		switch strings.ToLower(userResponse) {
 		case "y", "yes":
 			endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, sslId)
-		err := c.invokeAPI("DELETE", endpoint, nil, nil)
-		AssertApiError(err, "appCertificate")
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "appCertificate")
 		case "n", "no":
 			log.Printf("Delete canceled for ssl certificate: %v", sslId)
 		default:
@@ -210,6 +210,20 @@ func (c *Client) AppCertificateDelete(appId int, sslId int, isDeleteConfirmed bo
 
 			c.AppCertificateDelete(appId, sslId, false)
 		}
-
 	}
+}
+
+//------------------------------------------------- APP SSL CERTIFICATES (ACTIONS)-------------------------------------------------
+// ACTION RETRY (SSL)
+func (c *Client) AppCertificateAction(appId int, sslID int, actionType string) {
+	// create request data 
+	request := types.AppSslCertificateActionRequest{
+		Type: actionType,
+	}
+	
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/actions", appId, sslID)
+	err := c.invokeAPI("POST", endpoint, request, nil)
+	AssertApiError(err, "appCertificate")
+
+	log.Println("Action retry sent to certificate.")
 }

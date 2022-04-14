@@ -132,7 +132,6 @@ type AppSslCertificateTypeOwnRequest struct {
 	SslForce               bool   `json:"sslForce"`
 }
 
-
 // type request to add a sslCertificate to an app.
 type AppSslCertificateRequest struct {
 	Name                   string `json:"name"`
@@ -140,4 +139,9 @@ type AppSslCertificateRequest struct {
 	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
 	AutoUrlLink            bool   `json:"autoUrlLink"`
 	SslForce               bool   `json:"sslForce"`
+}
+
+// request an action on a ssl certificate from an app
+type AppSslCertificateActionRequest struct {
+	Type string `json:"type"`
 }

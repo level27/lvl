@@ -80,7 +80,7 @@ func init() {
 	// ---- GET COMPONENTTYPES
 	appComponentCmd.AddCommand(appComponentTypeCmd)
 
-	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
+	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE) -------------------------------------------------
 	appCmd.AddCommand(appCertificateCmd)
 
 	// ---- GET SSL CERTIFICATES
@@ -109,7 +109,17 @@ func init() {
 	//flag to skip confirmation when deleting a certificate
 	appCertificateDeleteCmd.Flags().BoolVarP(&appCertificateDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
 
-	// APP ACCESS
+	//-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
+	// ---- ACTION COMMAND
+	appCertificateCmd.AddCommand(appCertificateActionCmd)
+
+	// ---- RETRY
+	appCertificateActionCmd.AddCommand(appCertificateActionRetryCmd)
+
+	// ---- VALIDATECHALLENGE
+	appCertificateActionCmd.AddCommand(appCertificateActionValidateCmd)
+
+	//-------------------------------------------------  APP ACCESS -------------------------------------------------
 	addAccessCmds(appCmd, "apps", resolveApp)
 }
 
@@ -407,7 +417,7 @@ var appComponentTypeCmd = &cobra.Command{
 	},
 }
 
-//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE) -------------------------------------------------
+//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE) -------------------------------------------------
 // ---- SSL COMMAND
 var appCertificateCmd = &cobra.Command{
 	Use:     "ssl",
@@ -418,7 +428,7 @@ var appCertificateCmd = &cobra.Command{
 // ---- GET LIST OF SSL CERTIFICATES
 var appCertificateGetCmd = &cobra.Command{
 	Use:     "get",
-	Short:   "Show list of all available ssl certificates.",
+	Short:   "Show list of all available ssl certificates on an app.",
 	Example: "lvl app ssl get",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -508,5 +518,44 @@ var appCertificateDeleteCmd = &cobra.Command{
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
 		Level27Client.AppCertificateDelete(appId, certificateID, appCertificateDeleteConfirmed)
+	},
+}
+
+//-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
+// ---- ACTIONS (CREATE JOB FOR CERTIFICATE)
+var appCertificateActionCmd = &cobra.Command{
+	Use:   "action",
+	Short: "commands to create a job for a ssl certificate.",
+}
+
+// ---- ACTION RETRY
+var appCertificateActionRetryCmd = &cobra.Command{
+	Use:     "retry [app] [certificateID]",
+	Short:   "Create 'retry' job for ssl certificate.",
+	Example: "lvl app ssl action retry myapp 3023",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid appId
+		appId := checkSingleIntID(args[0], "app")
+		//check for valid certificateID
+		certificateID := checkSingleIntID(args[1], "appCertificate")
+
+		Level27Client.AppCertificateAction(appId, certificateID, "retry")
+	},
+}
+
+// ---- ACTION VALIDATECHALLENGE
+var appCertificateActionValidateCmd = &cobra.Command{
+	Use:     "validateChallenge",
+	Short:   "Create 'validateChallenge' job for ssl certificate.",
+	Example: "lvl app ssl action validateChallenge 2082 1603",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		//check for valid appId
+		appId := checkSingleIntID(args[0], "app")
+		//check for valid certificateID
+		certificateID := checkSingleIntID(args[1], "appCertificate")
+
+		Level27Client.AppCertificateAction(appId, certificateID, "validateChallenge")
 	},
 }
