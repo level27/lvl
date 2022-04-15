@@ -112,6 +112,9 @@ func init() {
 	// ---- FIX SSL CERTIFICATE
 	appCertificateCmd.AddCommand(appCertificateFixCmd)
 
+	// ---- GET PRIVATE KEY (TYPE 'own' CERTIFICATE)
+	appCertificateCmd.AddCommand(appCertificateKeyCmd)
+
 	//-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
 	// ---- ACTION COMMAND
 	appCertificateCmd.AddCommand(appCertificateActionCmd)
@@ -454,7 +457,7 @@ var PossibleSslTypes = []string{"letsencrypt", "xolphin", "own"}
 var appCertificateAddCmd = &cobra.Command{
 	Use:     "add",
 	Short:   "Add new ssl certificate to an app.",
-	Example: "lvl app ssl add 2077 -n mySslCertificateName",
+	Example: "lvl app ssl add MyAppName -n mySslCertificateName",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
@@ -512,7 +515,7 @@ var appCertificateDeleteConfirmed bool
 var appCertificateDeleteCmd = &cobra.Command{
 	Use:     "delete [appID] [CertificateID]",
 	Short:   "Delete a ssl certificate from an app.",
-	Example: "lvl app ssl delete --yes",
+	Example: "lvl app ssl delete MyAppName --yes",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
@@ -528,7 +531,7 @@ var appCertificateDeleteCmd = &cobra.Command{
 var appCertificateFixCmd = &cobra.Command{
 	Use: "fix",
 	Short: "Fix an invalid certificate.",
-	Example: "lvl app ssl fix 2082 3022",
+	Example: "lvl app ssl fix MyAppName 3022",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
@@ -537,6 +540,22 @@ var appCertificateFixCmd = &cobra.Command{
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
 		Level27Client.AppCertificateFix(appId, certificateID)
+	},
+}
+
+// ---- GET PRIVATE KEY FOR TYPE 'OWN' SSL CERTIFICATES
+var appCertificateKeyCmd = &cobra.Command{
+	Use: "key",
+	Short: "Return a private key for type 'own' sslCertificate.",
+	Example: "lvl app ssl key MyAppName",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// Search appId based on name
+		appId := resolveApp(args[0])
+		//check for valid certificateID
+		certificateID := checkSingleIntID(args[1], "appCertificate")
+
+		Level27Client.AppCertificateKey(appId, certificateID)
 	},
 }
 //-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
@@ -550,7 +569,7 @@ var appCertificateActionCmd = &cobra.Command{
 var appCertificateActionRetryCmd = &cobra.Command{
 	Use:     "retry [app] [certificateID]",
 	Short:   "Create 'retry' job for ssl certificate.",
-	Example: "lvl app ssl action retry myapp 3023",
+	Example: "lvl app ssl action retry MyAppName 3023",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
@@ -566,7 +585,7 @@ var appCertificateActionRetryCmd = &cobra.Command{
 var appCertificateActionValidateCmd = &cobra.Command{
 	Use:     "validateChallenge",
 	Short:   "Create 'validateChallenge' job for ssl certificate.",
-	Example: "lvl app ssl action validateChallenge 2082 1603",
+	Example: "lvl app ssl action validateChallenge MyAppName 1603",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
