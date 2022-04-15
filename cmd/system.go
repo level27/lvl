@@ -200,26 +200,7 @@ func init() {
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/INTEGRITYCHECKS (get / post / download) --------------------------------------
-	// #region SYSTEM/INTEGRITYCHECKS (get/post/download)
-
-	// --- MAIN COMMAND
-	systemCmd.AddCommand(systemIntegritychecksCmd)
-
-	// --- GET
-	systemIntegritychecksCmd.AddCommand(systemIntegritychecksGetCmd)
-
-	// --- POST
-	systemIntegritychecksCmd.AddCommand(systemIntegritychecksCreateCmd)
-	// flags for post request
-	flags = systemIntegritychecksCreateCmd.Flags()
-	flags.BoolVar(&systemIntegrityCheckDoJobs, "doJobs", true, "Create jobs (default: true)")
-	flags.BoolVar(&systemIntegrityCheckForceJobs, "forceJobs", false, "Create jobs even if integrity check failed (default: false)")
-
-	// --- DOWNLOAD
-	systemIntegritychecksCmd.AddCommand(systemIntegritychecksDownloadCmd)
-	// flags for download
-	systemIntegritychecksDownloadCmd.Flags().StringVarP(&systemIntegrityDownload, "filename", "f", "", "The wanted filename for the downloaded report.")
-	// #endregion
+	addIntegrityCheckCmds(systemCmd, "systems", resolveSystem)
 
 	//-------------------------------------  SYSTEMS/GROUPS (get/ add / describe / delete) --------------------------------------
 	// #region SYSTEMS/GROUPS (get/ add / delete / describe)
@@ -629,10 +610,7 @@ var systemCheckGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		id := resolveSystem(args[0])
 
 		checks := Level27Client.SystemCheckGetList(id, optGetParameters)
 		// Creating readable output
@@ -650,7 +628,7 @@ var systemCheckCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		id := checkSingleIntID(args[0], "check")
+		id := resolveSystem(args[0])
 
 		var err error
 		// get the value of the flag type set by user
@@ -725,10 +703,7 @@ var systemCheckGetSingleCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
-		systemID, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Fatalln("Not a valid system ID!")
-		}
+		systemID := resolveSystem(args[0])
 
 		//check for valid system checkID
 		checkID, err := strconv.Atoi(args[1])
@@ -750,7 +725,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid system ID
-		systemID := checkSingleIntID(args[0], "system")
+		systemID := resolveSystem(args[0])
 
 		//check for valid system checkID
 		checkID, err := strconv.Atoi(args[1])
@@ -769,7 +744,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		systemID := checkSingleIntID(args[0], "system")
+		systemID := resolveSystem(args[0])
 		// check for valid check ID
 		checkID := checkSingleIntID(args[1], "check")
 
@@ -907,7 +882,7 @@ var systemCookbookGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system ID
-		id := checkSingleIntID(args[0], "system")
+		id := resolveSystem(args[0])
 
 		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
 	},
@@ -940,7 +915,7 @@ var systemCookbookAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//checking for valid system ID
-		systemId := checkSingleIntID(args[0], "system")
+		systemId := resolveSystem(args[0])
 
 		// get information about the current chosen system [systemID]
 		currentSystem := Level27Client.SystemGetSingle(systemId)
@@ -1013,7 +988,7 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
-		systemId := checkSingleIntID(args[0], "system")
+		systemId := resolveSystem(args[0])
 		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
@@ -1032,7 +1007,7 @@ var systemCookbookDeleteCmd = &cobra.Command{
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
-		systemId := checkSingleIntID(args[0], "system")
+		systemId := resolveSystem(args[0])
 		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
@@ -1052,7 +1027,7 @@ var systemCookbookUpdateCmd = &cobra.Command{
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid system id
-		systemId := checkSingleIntID(args[0], "system")
+		systemId := resolveSystem(args[0])
 		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
@@ -1212,76 +1187,6 @@ func CheckCBValueForParameter(value string, options types.CookbookParameterOptio
 
 // #endregion
 
-//------------------------------------------------- SYSTEMS/INTEGRITYCHECKS (GET / POST / DOWNLOAD)-------------------------------------------------
-// ---------------- MAIN COMMAND (integrity)
-var systemIntegritychecksCmd = &cobra.Command{
-	Use:   "integrity",
-	Short: "Manage integritychecks for a system",
-}
-
-// #region  SYSTEMS/INTEGRITYCHECKS (GET / POST / DOWNLOAD)
-
-// ---------- GET INTEGRITYCHECKS
-var systemIntegritychecksGetCmd = &cobra.Command{
-	Use:   "get [systemID]",
-	Short: "Show list of current integritychecks on a system.",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		// check system ID
-		systemId := checkSingleIntID(args[0], "system")
-
-		checks := Level27Client.SystemIntegritychecksGet(systemId)
-
-		outputFormatIntegrityCheckTable(checks)
-
-	},
-}
-
-// ---------- POST INTEGRITYCHECKS
-var systemIntegrityCheckDoJobs bool
-var systemIntegrityCheckForceJobs bool
-var systemIntegritychecksCreateCmd = &cobra.Command{
-	Use:   "create [systemID]",
-	Short: "Create a new integrity report for a system.",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		// check single system ID
-		systemID := checkSingleIntID(args[0], "system")
-
-		request := types.IntegrityCreateRequest{
-			Dojobs:    systemIntegrityCheckDoJobs,
-			Forcejobs: systemIntegrityCheckForceJobs,
-		}
-
-		Level27Client.SystemIntegritychecksCreate(systemID, request)
-	},
-}
-
-// ---------- DOWNLOAD INTEGRITYCHECK REPORT
-var systemIntegrityDownload string
-var systemIntegritychecksDownloadCmd = &cobra.Command{
-	Use:   "download [systemID] [integritycheckID]",
-	Short: "Download an integrityreport from a system to your current directory.",
-	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		// check for valid systemID
-		systemID := checkSingleIntID(args[0], "system")
-		// check for valid integritycheckID
-		integritycheckID := checkSingleIntID(args[1], "integritycheck")
-
-		if systemIntegrityDownload == "" {
-			// Auto-generate file name.
-			systemIntegrityDownload = fmt.Sprintf("integritycheck_%d_Domain_%d.pdf", integritycheckID, systemID)
-		} else {
-
-			systemIntegrityDownload = systemIntegrityDownload + ".pdf"
-		}
-
-		Level27Client.SystemIntegritychecksDownload(systemID, integritycheckID, systemIntegrityDownload)
-
-	},
-}
-
 // #endregion
 
 //------------------------------------------------- SYSTEMS/GROUPS (GET / ADD  / DELETE)-------------------------------------------------
@@ -1300,7 +1205,7 @@ var SystemSystemgroupsGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid systemID
-		systemId := checkSingleIntID(args[0], "system")
+		systemId := resolveSystem(args[0])
 
 		groups := Level27Client.SystemSystemgroupsGet(systemId)
 
@@ -1315,7 +1220,7 @@ var SystemSystemgroupsAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid systemID
-		systemID := checkSingleIntID(args[0], "system")
+		systemID := resolveSystem(args[0])
 		// check for valid groupID type (int)
 		groupId := checkSingleIntID(args[1], "systemgroup")
 		jsonRequest := gabs.New()
@@ -1331,7 +1236,7 @@ var SystemSystemgroupsRemoveCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid systemId
-		systemId := checkSingleIntID(args[0], "system")
+		systemId := resolveSystem(args[0])
 		// check for valid systemgroupId
 		groupId := checkSingleIntID(args[1], "systemgroup")
 

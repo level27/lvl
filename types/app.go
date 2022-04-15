@@ -90,7 +90,7 @@ type AppcomponentCategory struct {
 // type appcomponenttype
 type Appcomponenttype map[string]AppcomponenttypeServicetype
 
-type AppcomponenttypeServicetype struct{
+type AppcomponenttypeServicetype struct {
 	Servicetype struct {
 		Name                    string        `json:"name"`
 		Cookbook                string        `json:"cookbook"`
@@ -119,4 +119,29 @@ type AppcomponenttypeServicetype struct{
 	} `json:"servicetype"`
 }
 
+// type request to add a sslCertificate to an app.
+// this type is specificly used when ssl certificate of type "own" is chosen
+type AppSslCertificateTypeOwnRequest struct {
+	Name                   string `json:"name"`
+	SslType                string `json:"sslType"`
+	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
+	SslKey                 string `json:"sslKey"`
+	SslCrt                 string `json:"sslCrt"`
+	SslCabundle            string `json:"sslCabundle"`
+	AutoUrlLink            bool   `json:"autoUrlLink"`
+	SslForce               bool   `json:"sslForce"`
+}
 
+// type request to add a sslCertificate to an app.
+type AppSslCertificateRequest struct {
+	Name                   string `json:"name"`
+	SslType                string `json:"sslType"`
+	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
+	AutoUrlLink            bool   `json:"autoUrlLink"`
+	SslForce               bool   `json:"sslForce"`
+}
+
+// request an action on a ssl certificate from an app
+type AppSslCertificateActionRequest struct {
+	Type string `json:"type"`
+}
