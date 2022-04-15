@@ -86,6 +86,8 @@ func init() {
 	// flags needed to get parameters of a type
 	appComponentParametersCmd.Flags().StringVarP(&appComponentType, "type", "t", "", "The type name to show its parameters.")
 	appComponentParametersCmd.MarkFlagRequired("type")
+
+
 	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE) -------------------------------------------------
 	appCmd.AddCommand(appCertificateCmd)
 
@@ -354,13 +356,13 @@ var appComponentGetCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		//check for valid appId
-		appId := checkSingleIntID(args[0], "apps")
+		//search for appId based on Appname
+		appId := resolveApp(args[0])
 		ids, err := convertStringsToIds(args[1:])
 		if err != nil {
 			log.Fatalln("Invalid component ID")
 		}
-		log.Print(ids)
+		
 		outputFormatTable(
 			getComponents(appId, ids),
 			[]string{"ID", "NAME", "STATUS"},

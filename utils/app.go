@@ -125,7 +125,6 @@ func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []
 	err := c.invokeAPI("GET", endpoint, nil, &components)
 	AssertApiError(err, "app")
 
-	log.Print("hallo")
 	return components.Data
 }
 
