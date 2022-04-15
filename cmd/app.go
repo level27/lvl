@@ -81,6 +81,9 @@ func init() {
 
 	// ---- GET COMPONENTTYPE PARAMATERS
 	appComponentCmd.AddCommand(appComponentParametersCmd)
+	// flags needed to get parameters of a type
+	appComponentParametersCmd.Flags().StringVarP(&appComponentType, "type", "t", "", "The type name to show its parameters.")
+	appComponentParametersCmd.MarkFlagRequired("type")
 }
 
 
@@ -387,12 +390,18 @@ var appComponentTypeCmd = &cobra.Command{
 
 
 // ---- (PARAMETERS) GET LIST OF PARAMETERS FOR A SPECIFIC APPCOMPONENT TYPE
+var appComponentType string
 var appComponentParametersCmd = &cobra.Command{
 	Use: "parameters",
 	Short: "Show list of all possible parameters with their default values of a specific componenttype.",
 	Example: "lvl app component parameters -t python",
 	Args: cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		// get map of all types (and their parameters) back from API (API doesnt give slice back in this case.)
+		types := Level27Client.AppComponenttypesGet()
 
+		for key , _ := range types{
+			log.Println(key)
+		}
 	},
 }
