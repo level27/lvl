@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
@@ -73,12 +74,24 @@ func init() {
 	// ---- CREATE COMPONENT
 	appComponentCmd.AddCommand(appComponentCreateCmd)
 
-	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+	// ---- DELETE COMPONENTS
+	appComponentCmd.AddCommand(AppComponentDeleteCmd)
+	//flag to skip confirmation when deleting an appcomponent
+	AppComponentDeleteCmd.Flags().BoolVarP(&isComponentDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+
+
+	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ COMPONENTTYPES/ PARAMETERS )-------------------------------------------------
 	// ---- GET COMPONENT CATEGORIES
 	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
 
 	// ---- GET COMPONENTTYPES
 	appComponentCmd.AddCommand(appComponentTypeCmd)
+
+	// ---- GET COMPONENTTYPE PARAMATERS
+	appComponentCmd.AddCommand(appComponentParametersCmd)
+	// flags needed to get parameters of a type
+	appComponentParametersCmd.Flags().StringVarP(&appComponentType, "type", "t", "", "The type name to show its parameters.")
+	appComponentParametersCmd.MarkFlagRequired("type")
 
 	//-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE) -------------------------------------------------
 	appCmd.AddCommand(appCertificateCmd)
@@ -141,6 +154,21 @@ func resolveApp(arg string) int {
 		return 0
 	}
 	return app.ID
+}
+
+func resolveAppComponent(appId int ,arg string) int {
+	// if arg already int, this is the ID
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	appcomponent := Level27Client.AppComponentLookup(appId, arg)
+	if appcomponent == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find component: %s", arg))
+		return 0
+	}
+	return int(appcomponent.ID)
 }
 
 // MAIN COMMAND APPS
@@ -341,19 +369,19 @@ var appComponentCmd = &cobra.Command{
 
 // ---- GET COMPONENTS
 var appComponentGetCmd = &cobra.Command{
-	Use:     "get",
-	Short:   "Show list of all available components",
-	Example: "lvl app component get",
+	Use:     "get [App]",
+	Short:   "Show list of all available components on an app.",
+	Example: "lvl app component get MyAppName",
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		//check for valid appId
-		appId := checkSingleIntID(args[0], "apps")
+		//search for appId based on Appname
+		appId := resolveApp(args[0])
 		ids, err := convertStringsToIds(args[1:])
 		if err != nil {
 			log.Fatalln("Invalid component ID")
 		}
-		log.Print(ids)
+
 		outputFormatTable(
 			getComponents(appId, ids),
 			[]string{"ID", "NAME", "STATUS"},
@@ -361,12 +389,12 @@ var appComponentGetCmd = &cobra.Command{
 	},
 }
 
-func getComponents(appId int, ids []int) []types.AppComponent2 {
+func getComponents(appId int, ids []int) []types.AppComponent {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.AppComponentsGet(appId, optGetParameters)
 	} else {
-		components := make([]types.AppComponent2, len(ids))
+		components := make([]types.AppComponent, len(ids))
 		for idx, id := range ids {
 			components[idx] = c.AppComponentGetSingle(appId, id)
 		}
@@ -384,24 +412,41 @@ var appComponentCreateCmd = &cobra.Command{
 	},
 }
 
-//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+// ---- DELETE COMPONENT
+var isComponentDeleteConfirmed bool
+var AppComponentDeleteCmd = &cobra.Command{
+	Use: "delete",
+	Short: "Delete component from an app.",
+	Example: "lvl app component delete MyAppName MyComponentName",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on appName
+		appId := resolveApp(args[0])
+		
+	},
+}
 
-// ---- GET COMPONENT CATEGORIES
+
+//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ TYPES/ PARAMETERS )-------------------------------------------------
+
+// current possible current categories for appcomponents
+var currentComponentCategories = []string{"web-apps", "databases", "extensions"}
+
+// #region APP COMPONENTS HELPERS (CATEGORY/ TYPES/ PARAMETERS )
+
+// ---- (CATEGORY) GET COMPONENT CATEGORIES
 var appComponentCategoryGetCmd = &cobra.Command{
 	Use:     "categories",
 	Short:   "shows a list of all current appcomponent categories.",
 	Example: "lvl app component categories",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// current possible categories for appcomponents
-		categories := []string{"web-apps", "databases", "extensions"}
-
 		// type to convert string into category type
 		var AppcomponentCategories struct {
 			Data []types.AppcomponentCategory
 		}
 
-		for _, category := range categories {
+		for _, category := range currentComponentCategories {
 			cat := types.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
@@ -410,18 +455,67 @@ var appComponentCategoryGetCmd = &cobra.Command{
 	},
 }
 
-// ---- GET LIST OF APPCOMPONENT TYPES
+// ---- (TYPES) GET LIST OF APPCOMPONENT TYPES
 var appComponentTypeCmd = &cobra.Command{
 	Use:     "types",
 	Short:   "Shows a list of all current componenttypes.",
 	Example: "lvl app component types",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		// get map of all types back from API (API doesnt give slice back in this case.)
 		types := Level27Client.AppComponenttypesGet()
 
-		log.Print(types)
+		//create a type that contains an appcomponenttype name and category
+		type typeInfo struct {
+			Name     string
+			Category string
+		}
+
+		//create slice of type typeInfo -> used to generate readable output for user
+		allTypes := []typeInfo{}
+
+		// loop over result and filter out the types Name and category into the right format.
+		for key, value := range types {
+			allTypes = append(allTypes, typeInfo{Name: key, Category: value.Servicetype.Category})
+		}
+
+		// sort slice based on category
+		sort.Slice(allTypes, func(i, j int) bool {
+			return allTypes[i].Category < allTypes[j].Category
+		})
+
+		// print result for user
+		outputFormatTable(allTypes, []string{"NAME", "CATEGORY"}, []string{"Name", "Category"})
+
 	},
 }
+
+// ---- (PARAMETERS) GET LIST OF PARAMETERS FOR A SPECIFIC APPCOMPONENT TYPE
+var appComponentType string
+var appComponentParametersCmd = &cobra.Command{
+	Use:     "parameters",
+	Short:   "Show list of all possible parameters with their default values of a specific componenttype.",
+	Example: "lvl app component parameters -t python",
+	Args:    cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		// get map of all types (and their parameters) back from API (API doesnt give slice back in this case.)
+		types := Level27Client.AppComponenttypesGet()
+
+		// check if chosen componenttype is found
+		componenttype, isTypeFound := types[appComponentType]
+
+		if isTypeFound {
+			outputFormatTable(componenttype.Servicetype.Parameters,
+				[]string{"NAME", "DESCRIPTION", "TYPE", "DEFAULT_VALUE", "REQUIRED"},
+				[]string{"Name", "Description", "Type", "DefaultValue", "Required"})
+		} else {
+			log.Fatalf("Given componenttype: '%v' NOT found!", appComponentType)
+		}
+
+	},
+}
+
+// #endregion
 
 //-------------------------------------------------  APP SSL CERTIFICATES (GET / CREATE/ DELETE/ FIX) -------------------------------------------------
 // ---- SSL COMMAND
@@ -430,6 +524,8 @@ var appCertificateCmd = &cobra.Command{
 	Short:   "Commands for managing ssl certificates.",
 	Example: "lvl app ssl get",
 }
+
+// #region APP SSL CERTIFICATES (GET / CREATE/ DELETE/ FIX)
 
 // ---- GET LIST OF SSL CERTIFICATES
 var appCertificateGetCmd = &cobra.Command{
@@ -529,10 +625,10 @@ var appCertificateDeleteCmd = &cobra.Command{
 
 // ---- FIX SSL CERTIFICATE
 var appCertificateFixCmd = &cobra.Command{
-	Use: "fix",
-	Short: "Fix an invalid certificate.",
+	Use:     "fix",
+	Short:   "Fix an invalid certificate.",
 	Example: "lvl app ssl fix MyAppName 3022",
-	Args: cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
 		appId := resolveApp(args[0])
@@ -545,10 +641,10 @@ var appCertificateFixCmd = &cobra.Command{
 
 // ---- GET PRIVATE KEY FOR TYPE 'OWN' SSL CERTIFICATES
 var appCertificateKeyCmd = &cobra.Command{
-	Use: "key",
-	Short: "Return a private key for type 'own' sslCertificate.",
+	Use:     "key",
+	Short:   "Return a private key for type 'own' sslCertificate.",
 	Example: "lvl app ssl key MyAppName",
-	Args: cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Search appId based on name
 		appId := resolveApp(args[0])
@@ -558,12 +654,16 @@ var appCertificateKeyCmd = &cobra.Command{
 		Level27Client.AppCertificateKey(appId, certificateID)
 	},
 }
+
+// #endregion
 //-------------------------------------------------  APP SSL CERTIFICATES (ACTIONS) -------------------------------------------------
 // ---- ACTIONS (CREATE JOB FOR CERTIFICATE)
 var appCertificateActionCmd = &cobra.Command{
 	Use:   "action",
 	Short: "commands to create a job for a ssl certificate.",
 }
+
+// #region APP SSL CERTIFICATES (ACTIONS)
 
 // ---- ACTION RETRY
 var appCertificateActionRetryCmd = &cobra.Command{
@@ -596,3 +696,5 @@ var appCertificateActionValidateCmd = &cobra.Command{
 		Level27Client.AppCertificateAction(appId, certificateID, "validateChallenge")
 	},
 }
+
+// #endregion
