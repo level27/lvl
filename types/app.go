@@ -47,3 +47,101 @@ type AppPutRequest struct {
 type AppActionRequest struct {
 	Type string `json:"type"`
 }
+
+//type appcomponent
+type AppComponent2 struct {
+	App struct {
+		ID             int64  `json:"id"`
+		Status         string `json:"status"`
+		Name           string `json:"name"`
+		StatusCategory string `json:"statusCategory"`
+	} `json:"app"`
+	AppcomponentparameterDescriptions interface{} `json:"appcomponentparameterDescriptions"`
+	Appcomponentparameters            interface{} `json:"appcomponentparameters"`
+	Appcomponenttype                  string      `json:"appcomponenttype"`
+	BillableitemDetailID              int64       `json:"billableitemDetailId"`
+	Category                          string      `json:"category"`
+	ID                                int64       `json:"id"`
+	Name                              string      `json:"name"`
+	Organisation                      struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	} `json:"organisation"`
+	Provider struct {
+		ID   interface{} `json:"id"`
+		Name interface{} `json:"name"`
+	} `json:"provider"`
+	SelectedSystem interface{} `json:"selectedSystem"`
+	Status         string      `json:"status"`
+	Systemgroup    interface{} `json:"systemgroup"`
+	Systems        []struct {
+		Cookbooks []interface{} `json:"cookbooks"`
+		Fqdn      string        `josn:"fqdn"`
+		ID        int64         `json:"id"`
+		Name      string        `json:"name"`
+	} `json:"systems"`
+}
+
+// type appcomponent category
+type AppcomponentCategory struct {
+	Name string
+}
+
+// type appcomponenttype
+type Appcomponenttype map[string]AppcomponenttypeServicetype
+
+type AppcomponenttypeServicetype struct {
+	Servicetype struct {
+		Name                    string        `json:"name"`
+		Cookbook                string        `json:"cookbook"`
+		DisplayName             string        `json:"displayName"`
+		Description             string        `json:"description"`
+		URLPossible             bool          `json:"urlPossible"`
+		RestorePossible         bool          `json:"restorePossible"`
+		MigrationPossible       bool          `json:"migrationPossible"`
+		SelectingSystemPossible bool          `json:"selectingSystemPossible"`
+		DisabledOnProduction    bool          `json:"disabledOnProduction"`
+		InvisibleOnProduction   bool          `json:"invisibleOnProduction"`
+		Runlist                 string        `json:"runlist"`
+		AllowedActions          []interface{} `json:"allowedActions"`
+		Category                string        `json:"category"`
+		Parameters              []struct {
+			Name         string `json:"name"`
+			DisplayName  string `json:"displayName"`
+			Description  string `json:"description"`
+			Type         string `json:"type"`
+			DefaultValue string `json:"defaultValue"`
+			Readonly     bool   `json:"readonly"`
+			DisableEdit  bool   `json:"disableEdit"`
+			Required     bool   `json:"required"`
+			Category     string `json:"category"`
+		} `json:"parameters"`
+	} `json:"servicetype"`
+}
+
+// type request to add a sslCertificate to an app.
+// this type is specificly used when ssl certificate of type "own" is chosen
+type AppSslCertificateTypeOwnRequest struct {
+	Name                   string `json:"name"`
+	SslType                string `json:"sslType"`
+	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
+	SslKey                 string `json:"sslKey"`
+	SslCrt                 string `json:"sslCrt"`
+	SslCabundle            string `json:"sslCabundle"`
+	AutoUrlLink            bool   `json:"autoUrlLink"`
+	SslForce               bool   `json:"sslForce"`
+}
+
+// type request to add a sslCertificate to an app.
+type AppSslCertificateRequest struct {
+	Name                   string `json:"name"`
+	SslType                string `json:"sslType"`
+	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
+	AutoUrlLink            bool   `json:"autoUrlLink"`
+	SslForce               bool   `json:"sslForce"`
+}
+
+// request an action on a ssl certificate from an app
+type AppSslCertificateActionRequest struct {
+	Type string `json:"type"`
+}
