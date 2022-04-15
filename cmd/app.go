@@ -72,13 +72,17 @@ func init() {
 	// ---- CREATE COMPONENT
 	appComponentCmd.AddCommand(appComponentCreateCmd)
 
-	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ COMPONENTTYPES/ PARAMETERS )-------------------------------------------------
 	// ---- GET COMPONENT CATEGORIES
 	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
 
 	// ---- GET COMPONENTTYPES
 	appComponentCmd.AddCommand(appComponentTypeCmd)
+
+	// ---- GET COMPONENTTYPE PARAMATERS
+	appComponentCmd.AddCommand(appComponentParametersCmd)
 }
+
 
 // MAIN COMMAND APPS
 var appCmd = &cobra.Command{
@@ -278,9 +282,9 @@ var appComponentCmd = &cobra.Command{
 
 // ---- GET COMPONENTS
 var appComponentGetCmd = &cobra.Command{
-	Use:     "get",
-	Short:   "Show list of all available components",
-	Example: "lvl app component get",
+	Use:     "get [App]",
+	Short:   "Show list of all available components on an app.",
+	Example: "lvl app component get MyAppName",
 	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -321,24 +325,25 @@ var appComponentCreateCmd = &cobra.Command{
 	},
 }
 
-//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ TYPES/ PARAMETERS )-------------------------------------------------
 
-// ---- GET COMPONENT CATEGORIES
+// current possible current categories for appcomponents
+var currentComponentCategories = []string{"web-apps", "databases", "extensions"}
+
+// ---- (CATEGORY) GET COMPONENT CATEGORIES
 var appComponentCategoryGetCmd = &cobra.Command{
 	Use:     "categories",
 	Short:   "shows a list of all current appcomponent categories.",
 	Example: "lvl app component categories",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// current possible categories for appcomponents
-		categories := []string{"web-apps", "databases", "extensions"}
-
+		
 		// type to convert string into category type
 		var AppcomponentCategories struct {
 			Data []types.AppcomponentCategory
 		}
 
-		for _, category := range categories {
+		for _, category := range currentComponentCategories {
 			cat := types.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
@@ -347,7 +352,7 @@ var appComponentCategoryGetCmd = &cobra.Command{
 	},
 }
 
-// ---- GET LIST OF APPCOMPONENT TYPES
+// ---- (TYPES) GET LIST OF APPCOMPONENT TYPES
 var appComponentTypeCmd = &cobra.Command{
 	Use:     "types",
 	Short:   "Shows a list of all current componenttypes.",
@@ -376,6 +381,18 @@ var appComponentTypeCmd = &cobra.Command{
 			return allTypes[i].Category < allTypes[j].Category
 		})
 		outputFormatTable(allTypes, []string{"NAME", "CATEGORY"}, []string{"Name", "Category"})
+
+	},
+}
+
+
+// ---- (PARAMETERS) GET LIST OF PARAMETERS FOR A SPECIFIC APPCOMPONENT TYPE
+var appComponentParametersCmd = &cobra.Command{
+	Use: "parameters",
+	Short: "Show list of all possible parameters with their default values of a specific componenttype.",
+	Example: "lvl app component parameters -t python",
+	Args: cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
 
 	},
 }
