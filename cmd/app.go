@@ -221,7 +221,7 @@ var appDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// try to find appId based on name
 		appId := resolveApp(args[0])
-		
+
 		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
 	},
 }
@@ -436,7 +436,7 @@ var appCertificateGetCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check for valid AppId type
-		appId := checkSingleIntID(args[0], "app")
+		appId := resolveApp(args[0])
 
 		certificates := Level27Client.AppCertificateGet(appId)
 		// Display output in readable table
