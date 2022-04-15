@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"sort"
 	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
@@ -72,7 +73,7 @@ func init() {
 	appComponentCmd.AddCommand(appComponentCreateCmd)
 
 	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
-	// ---- GET COMPONENT CATEGORIES 
+	// ---- GET COMPONENT CATEGORIES
 	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
 
 	// ---- GET COMPONENTTYPES
@@ -270,19 +271,19 @@ var AppActionDeactivateCmd = &cobra.Command{
 //------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
 // ---- COMPONENT COMMAND
 var appComponentCmd = &cobra.Command{
-	Use: "component",
-	Short: "Commands for managing appcomponents.",
+	Use:     "component",
+	Short:   "Commands for managing appcomponents.",
 	Example: "lvl app component get",
 }
 
 // ---- GET COMPONENTS
 var appComponentGetCmd = &cobra.Command{
-	Use: "get",
-	Short: "Show list of all available components",
+	Use:     "get",
+	Short:   "Show list of all available components",
 	Example: "lvl app component get",
-	Args: cobra.MinimumNArgs(1),
+	Args:    cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 		//check for valid appId
 		appId := checkSingleIntID(args[0], "apps")
 		ids, err := convertStringsToIds(args[1:])
@@ -297,10 +298,10 @@ var appComponentGetCmd = &cobra.Command{
 	},
 }
 
-func getComponents(appId int ,ids []int) []types.AppComponent2 {
+func getComponents(appId int, ids []int) []types.AppComponent2 {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.AppComponentsGet(appId,optGetParameters)
+		return c.AppComponentsGet(appId, optGetParameters)
 	} else {
 		components := make([]types.AppComponent2, len(ids))
 		for idx, id := range ids {
@@ -310,36 +311,34 @@ func getComponents(appId int ,ids []int) []types.AppComponent2 {
 	}
 }
 
-
 // ---- CREATE COMPONENT
 var appComponentCreateCmd = &cobra.Command{
-	Use: "create",
-	Short: "Create a new appcomponent.",
+	Use:     "create",
+	Short:   "Create a new appcomponent.",
 	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 	},
 }
 
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 
-// ---- GET COMPONENT CATEGORIES 
+// ---- GET COMPONENT CATEGORIES
 var appComponentCategoryGetCmd = &cobra.Command{
-	Use: "categories",
-	Short: "shows a list of all current appcomponent categories.",
+	Use:     "categories",
+	Short:   "shows a list of all current appcomponent categories.",
 	Example: "lvl app component categories",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// current possible categories for appcomponents 
+		// current possible categories for appcomponents
 		categories := []string{"web-apps", "databases", "extensions"}
 
 		// type to convert string into category type
-		var AppcomponentCategories struct{
-			Data []types.AppcomponentCategory 
+		var AppcomponentCategories struct {
+			Data []types.AppcomponentCategory
 		}
 
-
-		for _, category := range categories{
+		for _, category := range categories {
 			cat := types.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
@@ -350,13 +349,33 @@ var appComponentCategoryGetCmd = &cobra.Command{
 
 // ---- GET LIST OF APPCOMPONENT TYPES
 var appComponentTypeCmd = &cobra.Command{
-	Use: "types",
-	Short: "Shows a list of all current componenttypes.",
+	Use:     "types",
+	Short:   "Shows a list of all current componenttypes.",
 	Example: "lvl app component types",
 	Run: func(cmd *cobra.Command, args []string) {
-	
+
+		// get map of all types back from API (API doesnt give slice back in this case.)
 		types := Level27Client.AppComponenttypesGet()
 
-		log.Print(types)
+		//create a type that contains an appcomponenttype name and category
+		type typeInfo struct {
+			Name     string
+			Category string
+		}
+
+		//create slice of type typeInfo -> used to generate readable output for user
+		allTypes := []typeInfo{}
+
+		// loop over result and filter out the types Name and category into the right format.
+		for key, value := range types {
+			allTypes = append(allTypes, typeInfo{Name: key, Category: value.Servicetype.Category})
+		}
+
+		// sort slice based on category
+		sort.Slice(allTypes, func(i, j int) bool {
+			return allTypes[i].Category < allTypes[j].Category
+		})
+		outputFormatTable(allTypes, []string{"NAME", "CATEGORY"}, []string{"Name", "Category"})
+
 	},
 }
