@@ -435,7 +435,7 @@ var appCertificateGetCmd = &cobra.Command{
 	Example: "lvl app ssl get",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// Check for valid AppId type
+		// Search appId based on name
 		appId := resolveApp(args[0])
 
 		certificates := Level27Client.AppCertificateGet(appId)
@@ -457,8 +457,8 @@ var appCertificateAddCmd = &cobra.Command{
 	Example: "lvl app ssl add 2077 -n mySslCertificateName",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// Check for valid AppId type
-		appId := checkSingleIntID(args[0], "app")
+		// Search appId based on name
+		appId := resolveApp(args[0])
 
 		var certificate types.SslCertificate
 		// checking if the chosen type is one of the valid options.
@@ -515,8 +515,8 @@ var appCertificateDeleteCmd = &cobra.Command{
 	Example: "lvl app ssl delete --yes",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		// Search appId based on name
+		appId := resolveApp(args[0])
 		//check for valid certificateID
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
@@ -531,8 +531,8 @@ var appCertificateFixCmd = &cobra.Command{
 	Example: "lvl app ssl fix 2082 3022",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		// Search appId based on name
+		appId := resolveApp(args[0])
 		//check for valid certificateID
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
@@ -553,8 +553,8 @@ var appCertificateActionRetryCmd = &cobra.Command{
 	Example: "lvl app ssl action retry myapp 3023",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		// Search appId based on name
+		appId := resolveApp(args[0])
 		//check for valid certificateID
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
@@ -569,8 +569,8 @@ var appCertificateActionValidateCmd = &cobra.Command{
 	Example: "lvl app ssl action validateChallenge 2082 1603",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		// Search appId based on name
+		appId := resolveApp(args[0])
 		//check for valid certificateID
 		certificateID := checkSingleIntID(args[1], "appCertificate")
 
