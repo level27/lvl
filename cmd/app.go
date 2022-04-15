@@ -144,7 +144,7 @@ func resolveApp(arg string) int {
 var appCmd = &cobra.Command{
 	Use:     "app",
 	Short:   "Commands to manage apps",
-	Example: "lvl app [subcommmand]",
+	Example: "lvl app get -f searchThisApp\nlvl app action activate",
 }
 
 //------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
@@ -216,12 +216,12 @@ var isAppDeleteConfirmed bool
 var appDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete an app",
-	Example: "lvl app delete 2593",
+	Example: "lvl app delete NameOfMyApp",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// check for valid appID type
-		appId := checkSingleIntID(args[0], "app")
-
+		// try to find appId based on name
+		appId := resolveApp(args[0])
+		
 		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
 	},
 }
