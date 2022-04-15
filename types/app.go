@@ -110,7 +110,7 @@ type AppcomponenttypeServicetype struct {
 			DisplayName  string `json:"displayName"`
 			Description  string `json:"description"`
 			Type         string `json:"type"`
-			DefaultValue string `json:"defaultValue"`
+			DefaultValue interface{} `json:"defaultValue"`
 			Readonly     bool   `json:"readonly"`
 			DisableEdit  bool   `json:"disableEdit"`
 			Required     bool   `json:"required"`

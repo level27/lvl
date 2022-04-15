@@ -448,6 +448,8 @@ var appComponentTypeCmd = &cobra.Command{
 		sort.Slice(allTypes, func(i, j int) bool {
 			return allTypes[i].Category < allTypes[j].Category
 		})
+
+		// print result for user
 		outputFormatTable(allTypes, []string{"NAME", "CATEGORY"}, []string{"Name", "Category"})
 
 	},
@@ -465,9 +467,17 @@ var appComponentParametersCmd = &cobra.Command{
 		// get map of all types (and their parameters) back from API (API doesnt give slice back in this case.)
 		types := Level27Client.AppComponenttypesGet()
 
-		for key , _ := range types{
-			log.Println(key)
+		// check if chosen componenttype is found
+		componenttype, isTypeFound := types[appComponentType]
+
+		if isTypeFound {
+			outputFormatTable(componenttype.Servicetype.Parameters, 
+				[]string{"NAME", "DESCRIPTION", "TYPE", "DEFAULT_VALUE", "REQUIRED"},
+			[]string{"Name", "Description", "Type", "DefaultValue", "Required"})
+		}else{
+			log.Fatalf("Given componenttype: '%v' NOT found!", appComponentType)
 		}
+		
 	},
 }
 
