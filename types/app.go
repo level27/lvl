@@ -49,7 +49,7 @@ type AppActionRequest struct {
 }
 
 //type appcomponent
-type AppComponent2 struct {
+type AppComponent struct {
 	App struct {
 		ID             int64  `json:"id"`
 		Status         string `json:"status"`
