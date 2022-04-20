@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"bitbucket.org/level27/lvl/utils"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/spf13/cobra"
 )
@@ -144,6 +145,23 @@ func openArgFile(file string) io.ReadCloser {
 	}
 }
 
+// Get the value of an argument. If the argument begins with "@",
+// it is interpreted as a file name and the contents of said file are read instead.
+func readArgFileSupported(arg string) string {
+	if strings.HasPrefix(arg, "@") {
+		filename := arg[1:]
+		file := openArgFile(filename)
+		contents, err := io.ReadAll(file)
+		if err != nil {
+			cobra.CheckErr(fmt.Sprintf("Error while reading file %s: %s", filename, err.Error()))
+		}
+
+		return string(contents)
+	}
+
+	return arg
+}
+
 // Load JSON settings from arg-specified file and merge it with override settings from other args.
 func loadMergeSettings(fileName string, override map[string]interface{}) map[string]interface{} {
 	if fileName == "" {
@@ -179,7 +197,7 @@ func mergeMaps(base map[string]interface{}, override map[string]interface{}) map
 }
 
 func mergeSettingsWithEntity(entity interface{}, settings map[string]interface{}) map[string]interface{} {
-	data := roundTripJson(entity).(map[string]interface{})
+	data := utils.RoundTripJson(entity).(map[string]interface{})
 	return mergeMaps(data, settings)
 }
 
@@ -352,7 +370,7 @@ func resolveGets[T interface{}](
 				results[i] = getSingle(id)
 			} else {
 				// Look up by name
-				lookedUp := lookup(val) 
+				lookedUp := lookup(val)
 				if lookedUp == nil {
 					cobra.CheckErr(fmt.Sprintf("Unable to find '%s'", val))
 				}
@@ -361,6 +379,6 @@ func resolveGets[T interface{}](
 		}
 
 		return results
-		 
+
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -300,7 +301,7 @@ var mailUpdateCmd = &cobra.Command{
 			Systemgroup: mailgroup.Systemgroup.ID,
 		}
 
-		data := roundTripJson(mailgroupPut).(map[string]interface{})
+		data := utils.RoundTripJson(mailgroupPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
@@ -534,7 +535,7 @@ var mailBoxUpdateCmd = &cobra.Command{
 			OooSubject: mailbox.OooSubject,
 		}
 
-		data := roundTripJson(mailboxPut).(map[string]interface{})
+		data := utils.RoundTripJson(mailboxPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		Level27Client.MailgroupsMailboxesUpdate(mailgroupID, mailboxID, data)
@@ -683,7 +684,7 @@ var mailForwarderUpdateCmd = &cobra.Command{
 			Destination: strings.Join(mailforwarder.Destination, ","),
 		}
 
-		data := roundTripJson(mailforwarderPut).(map[string]interface{})
+		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
@@ -716,7 +717,7 @@ var mailForwarderDestinationAddCmd = &cobra.Command{
 			Destination: strings.Join(destination, ","),
 		}
 
-		data := roundTripJson(mailforwarderPut).(map[string]interface{})
+		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
 		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
 	},
 }
@@ -747,7 +748,7 @@ var mailForwarderDestinationRemoveCmd = &cobra.Command{
 			Destination: strings.Join(destination, ","),
 		}
 
-		data := roundTripJson(mailforwarderPut).(map[string]interface{})
+		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
 		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
 	},
 }

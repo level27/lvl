@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -112,3 +113,112 @@ func (c *Client) AppAction(appId int, action string) {
 	err := c.invokeAPI("POST", endpoint, request, nil)
 	AssertApiError(err, "app")
 }
+
+
+// APP SSL CERTIFICATES
+
+// GET /apps/{appID}/sslcertificates
+func (c *Client) AppSslCertificatesGetList(appID int, sslType string, status string, get types.CommonGetParams) []types.AppSslCertificate {
+	var response struct {
+		SslCertificates []types.AppSslCertificate `json:"sslCertificates"`
+	}
+
+	endpoint := fmt.Sprintf(
+		"apps/%d/sslcertificates?sslType=%s&status=%s&%s",
+		appID,
+		url.QueryEscape(sslType),
+		url.QueryEscape(status),
+		formatCommonGetParams(get))
+
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesGetList")
+
+	return response.SslCertificates
+}
+
+// GET /apps/{appID}/sslcertificates/{sslCertificateID}
+func (c *Client) AppSslCertificatesGetSingle(appID int, sslCertificateID int) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d", appID, sslCertificateID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesGetSingle")
+
+	return response.SslCertificate
+}
+
+// POST /apps/{appID}/sslcertificates
+func (c *Client) AppSslCertificatesCreate(appID int, create types.AppSslCertificateCreate) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	requestData := RoundTripJson(create).(map[string]interface{})
+
+	if create.SslType != "own" {
+		delete(requestData, "sslKey")
+		delete(requestData, "sslCabundle")
+		delete(requestData, "sslCrt")
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates", appID)
+	err := c.invokeAPI("POST", endpoint, requestData, &response)
+	AssertApiError(err, "AppSslCertificatesCreate")
+
+	return response.SslCertificate
+}
+
+// DELETE /apps/{appID}/sslcertificates/{sslCertificateID}
+func (c *Client) AppSslCertificatesDelete(appID int, sslCertificateID int) {
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d", appID, sslCertificateID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "AppSslCertificatesDelete")
+}
+
+// PUT /apps/{appID}/sslcertificates/{sslCertificateID}
+func (c *Client) AppSslCertificatesUpdate(appID int, sslCertificateID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d", appID, sslCertificateID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "AppSslCertificatesUpdate")
+}
+
+// Try to find an SSL certificate on an app by name.
+func (c *Client) AppSslCertificatesLookup(appID int, name string) *types.AppSslCertificate {
+	apps := c.AppSslCertificatesGetList(appID, "", "", types.CommonGetParams{Filter: name})
+	for _, app := range apps {
+		if app.Name == name {
+			return &app
+		}
+	}
+
+	return nil
+}
+
+// POST /apps/{appID}/sslcertificates/{sslCertificateID}/actions
+func (c *Client) AppSslCertificatesActions(appID int, sslCertificateID int, actionType string) {
+	var request struct {
+		Type string `json:"type"`
+	}
+
+	request.Type = actionType
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d/actions", appID, sslCertificateID)
+	err := c.invokeAPI("POST", endpoint, request, nil)
+	AssertApiError(err, "AppSslCertificatesActions")
+}
+
+// POST /apps/{appID}/sslcertificates/{sslCertificateID}/fix
+func (c *Client) AppSslCertificatesFix(appID int, sslCertificateID int) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d/fix", appID, sslCertificateID)
+	err := c.invokeAPI("POST", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesFix")
+
+	return response.SslCertificate
+}
+

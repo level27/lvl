@@ -236,7 +236,7 @@ func outputFormatTableJson(objects interface{}) {
 }
 
 func outputFormatTableYaml(objects interface{}) {
-	b, _ := yaml.Marshal(roundTripJson(objects))
+	b, _ := yaml.Marshal(utils.RoundTripJson(objects))
 	fmt.Println(string(b))
 }
 
@@ -264,20 +264,11 @@ func outputFormatTemplateJson(object interface{}) {
 }
 
 func outputFormatTemplateYaml(object interface{}) {
-	b, err := yaml.Marshal(roundTripJson(object))
+	b, err := yaml.Marshal(utils.RoundTripJson(object))
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(string(b))
-}
-
-// Convert a JSON-serializable value to a model of interface{} maps and slices. Effectively serializing the object to maps/slices with the JSON model.
-func roundTripJson(obj interface{}) interface{} {
-	// Round-trip through JSON so we use the JSON (camelcased) key names in the YAML without having to re-define them
-	bJson, _ := json.Marshal(obj)
-	var interf interface{}
-	json.Unmarshal(bJson, &interf)
-	return interf
 }
 
 // Tries to convert a string command line argument to an integer ID
