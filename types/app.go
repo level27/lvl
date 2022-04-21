@@ -88,14 +88,22 @@ type AppSslCertificateCreate struct {
 	Name string `json:"name"`
 	SslType string `json:"sslType"`
 	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
+	AutoUrlLink bool `json:"autoUrlLink"`
+	SslForce bool `json:"sslForce"`
+}
+
+type AppSslCertificateCreateOwn struct {
+	AppSslCertificateCreate
 	SslKey string `json:"sslKey"`
 	SslCrt string `json:"sslCrt"`
 	SslCabundle string `json:"sslCabundle"`
-	AutoUrlLink bool `json:"autoUrlLink"`
-	SslForce bool `json:"sslForce"`
 }
 
 type AppSslCertificatePut struct {
 	Name string `json:"name"`
 	SslType string `json:"sslType"`
+}
+
+type AppSslcertificateKey struct {
+	SslKey string `json:"sslKey"`
 }

@@ -62,46 +62,52 @@ func init() {
 	// APP ACCESS
 	addAccessCmds(appCmd, "apps", resolveApp)
 
+	// ----------- APP SSL CERTIFICATE COMMANDS
 
-	// APP SSLCERT
-	appCmd.AddCommand(appSslcertCmd)
+	// APP SSL
+	appCmd.AddCommand(appSslCmd)
 
-	// APP SSLCERT GET
-	appSslcertCmd.AddCommand(appSslcertGetCmd)
-	addCommonGetFlags(appSslcertCmd)
+	// APP SSL GET
+	appSslCmd.AddCommand(appSslGetCmd)
+	addCommonGetFlags(appSslCmd)
 
-	// APP SSLCERT DESCRIBE
-	appSslcertCmd.AddCommand(appSslcertDescribeCmd)
+	// APP SSL DESCRIBE
+	appSslCmd.AddCommand(appSslDescribeCmd)
 
-	// APP SSLCERT ADD
-	appSslcertCmd.AddCommand(appSslcertCreateCmd)
-	appSslcertCreateCmd.Flags().StringVar(&appSslcertCreateName, "name", "", "Name of this SSL certificate")
-	appSslcertCreateCmd.Flags().StringVar(&appSslcertCreateSslType, "type", "", "Type of SSL certificate to use. Options are: letsencrypt, xolphin, own")
-	appSslcertCreateCmd.Flags().StringVar(&appSslcertCreateAutoSslCertificateUrls, "auto-urls", "", "URL or CSV list of URLs (required for Let's Encrypt)")
-	appSslcertCreateCmd.Flags().StringVar(&appSslcertCreateSslKey, "ssl-key", "", "SSL key for own certificate")
-	appSslcertCreateCmd.Flags().StringVar(&appSslcertCreateSslCabundle, "ssl-cabundle", "", "SSL CA bundle for own certificate")
-	appSslcertCreateCmd.Flags().StringVar(&appSslcertCreateSslCrt, "ssl-crt", "", "SSL CRT for own certificate. Can be read from a file by specifying @filename.")
-	appSslcertCreateCmd.Flags().BoolVar(&appSslcertCreateAutoUrlLink, "auto-link", false, "After creation, automatically link to any URLs without existing certificate")
-	appSslcertCreateCmd.Flags().BoolVar(&appSslcertCreateSslForce, "ssl-force", false, "Force SSL")
+	// APP SSL CREATE
+	appSslCmd.AddCommand(appSslCreateCmd)
+	appSslCreateCmd.Flags().StringVarP(&appSslCreateName, "name", "n", "", "Name of this SSL certificate")
+	appSslCreateCmd.Flags().StringVarP(&appSslCreateSslType, "type", "t", "", "Type of SSL certificate to use. Options are: letsencrypt, xolphin, own")
+	appSslCreateCmd.Flags().StringVar(&appSslCreateAutoSslCertificateUrls, "auto-urls", "", "URL or CSV list of URLs (required for Let's Encrypt)")
+	appSslCreateCmd.Flags().StringVar(&appSslCreateSslKey, "ssl-key", "", "SSL key for own certificate. Can be read from a file by specifying @filename.")
+	appSslCreateCmd.Flags().StringVar(&appSslCreateSslCabundle, "ssl-cabundle", "", "SSL CA bundle for own certificate. Can be read from a file by specifying @filename.")
+	appSslCreateCmd.Flags().StringVar(&appSslCreateSslCrt, "ssl-crt", "", "SSL CRT for own certificate. Can be read from a file by specifying @filename.")
+	appSslCreateCmd.Flags().BoolVar(&appSslCreateAutoUrlLink, "auto-link", false, "After creation, automatically link to any URLs without existing certificate")
+	appSslCreateCmd.Flags().BoolVar(&appSslCreateSslForce, "ssl-force", false, "Force SSL")
+	appSslCreateCmd.MarkFlagRequired("name")
+	appSslCreateCmd.MarkFlagRequired("type")
 
-	// APP SSLCERT DELETE
+	// APP SSL DELETE
+	appSslCmd.AddCommand(appSslDeleteCmd)
+	appSslDeleteCmd.Flags().BoolVar(&appSslDeleteForce, "force", false, "Do not ask for confirmation to delete the SSL certificate")
 
-	appSslcertCmd.AddCommand(appSslcertDeleteCmd)
-	appSslcertDeleteCmd.Flags().BoolVar(&appSslCertDeleteForce, "force", false, "Do not ask for confirmation to delete the SSL certificate")
+	// APP SSL UPDATE
+	appSslCmd.AddCommand(appSslUpdateCmd)
+	settingsFileFlag(appSslUpdateCmd)
+	settingString(appSslUpdateCmd, updateSettings, "name", "New name for the SSL certificate")
 
-	// APP SSLCERT UPDATE
-	appSslcertCmd.AddCommand(appSslCertUpdateCmd)
-	settingsFileFlag(appSslCertUpdateCmd)
-	settingString(appSslCertUpdateCmd, updateSettings, "name", "New name for the SSL certificate")
+	// APP SSL FIX
+	appSslCmd.AddCommand(appSslFixCmd)
 
-	appSslcertCmd.AddCommand(appSslCertFixCmd)
+	// APP SSL ACTION
+	appSslCmd.AddCommand(appSslActionCmd)
 
-	// APP SSLCERT ACTIONS
-	appSslcertCmd.AddCommand(appSslCertActionCmd)
+	// Actions (Retry and ValidateChallenge)
+	appSslActionCmd.AddCommand(appSslActionRetryCmd)
+	appSslActionCmd.AddCommand(appSslActionValidateChallengeCmd)
 
-	appSslCertActionCmd.AddCommand(appSslCertActionRetryCmd)
-	appSslCertActionCmd.AddCommand(appSslCertActionValidateChallengeCmd)
-
+	// APP SSL KEY
+	appSslCmd.AddCommand(appSslKeyCmd)
 }
 
 func resolveApp(arg string) int {
@@ -321,22 +327,22 @@ var AppActionDeactivateCmd = &cobra.Command{
 
 // APP SSL CERTIFICATES
 
-// APP SSLCERT
-var appSslcertCmd = &cobra.Command{
-	Use: "sslcert",
+// APP SSL
+var appSslCmd = &cobra.Command{
+	Use: "ssl",
 	Short: "Commands for managing SSL certificates on apps",
-	Example: "lvl app sslcert get forum\nlvl app sslcert describe forum forum.example.com",
+	Example: "lvl app ssl get forum\nlvl app ssl describe forum forum.example.com",
 
-	Aliases: []string{"ssl"},
+	Aliases: []string{"sslcert"},
 }
 
-// APP SSLCERT GET
-var appSslcertGetType string
-var appSslcertGetStatus string
-var appSslcertGetCmd = &cobra.Command{
+// APP SSL GET
+var appSslGetType string
+var appSslGetStatus string
+var appSslGetCmd = &cobra.Command{
 	Use: "get [app]",
 	Short: "Get a list of SSL certificates for an app",
-	Example: "lvl app sslcert get forum\nlvl app sslcert get forum -f admin",
+	Example: "lvl app ssl get forum\nlvl app ssl get forum -f admin",
 
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -347,19 +353,22 @@ var appSslcertGetCmd = &cobra.Command{
 			args[1:],
 			func(name string) *types.AppSslCertificate { return Level27Client.AppSslCertificatesLookup(appID, name) },
 			func(certID int) types.AppSslCertificate { return Level27Client.AppSslCertificatesGetSingle(appID, certID)},
-			func(get types.CommonGetParams) []types.AppSslCertificate { return Level27Client.AppSslCertificatesGetList(appID, appSslcertGetType, appSslcertGetStatus, get) },
+			func(get types.CommonGetParams) []types.AppSslCertificate { return Level27Client.AppSslCertificatesGetList(appID, appSslGetType, appSslGetStatus, get) },
 			)
 
-		outputFormatTable(certs, []string{"ID", "Name", "Status", "SSL Status"}, []string{"ID", "Name", "Status", "SslStatus"})
+		outputFormatTableFuncs(
+			certs,
+			[]string{"ID", "Name", "Type", "Status", "SSL Status", "Expiry Date"},
+			[]interface{}{"ID", "Name", "SslType", "Status", "SslStatus", "DtExpires", func(c types.AppSslCertificate) string { return utils.FormatUnixTime(c.DtExpires) }})
 	},
 }
 
-// APP SSLCERT DESCRIBE
+// APP SSL DESCRIBE
 
-var appSslcertDescribeCmd = &cobra.Command{
+var appSslDescribeCmd = &cobra.Command{
 	Use: "describe [app] [SSL cert]",
 	Short: "Get detailed information of an SSL certificate",
-	Example: "lvl app sslcert describe forum forum.example.com",
+	Example: "lvl app ssl describe forum forum.example.com",
 
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -372,54 +381,70 @@ var appSslcertDescribeCmd = &cobra.Command{
 	},
 }
 
-// APP SSLCERT CREATE
-var appSslcertCreateName string
-var appSslcertCreateSslType string
-var appSslcertCreateAutoSslCertificateUrls string
-var appSslcertCreateSslKey string
-var appSslcertCreateSslCrt string
-var appSslcertCreateSslCabundle string
-var appSslcertCreateAutoUrlLink bool
-var appSslcertCreateSslForce bool
+// APP SSL CREATE
+var appSslCreateName string
+var appSslCreateSslType string
+var appSslCreateAutoSslCertificateUrls string
+var appSslCreateSslKey string
+var appSslCreateSslCrt string
+var appSslCreateSslCabundle string
+var appSslCreateAutoUrlLink bool
+var appSslCreateSslForce bool
 
-var appSslcertCreateCmd = &cobra.Command {
+var appSslCreateCmd = &cobra.Command {
 	Use: "create [app]",
 	Short: "Create a new SSL certificate on an app",
-	Example: "lvl app sslcert create forum --name forum.example.com --auto-urls forum.example.com --auto-link --type letsencrypt\nlvl app sslcert create forum --name forum.example.com --type own --ssl-cabundle '@cert.ca-bundle' --ssl-key '@key.pem' --ssl-crt '@cert.crt'",
+	Example: "lvl app ssl create forum --name forum.example.com --auto-urls forum.example.com --auto-link --type letsencrypt\nlvl app ssl create forum --name forum.example.com --type own --ssl-cabundle '@cert.ca-bundle' --ssl-key '@key.pem' --ssl-crt '@cert.crt'",
 
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		appID := resolveApp(args[0])
 
 		create := types.AppSslCertificateCreate {
-			Name: appSslcertCreateName,
-			SslType: appSslcertCreateSslType,
-			AutoSslCertificateUrls: appSslcertCreateAutoSslCertificateUrls,
-			SslKey: readArgFileSupported(appSslcertCreateSslKey),
-			SslCrt: readArgFileSupported(appSslcertCreateSslCrt),
-			SslCabundle: readArgFileSupported(appSslcertCreateSslCabundle),
-			SslForce: appSslcertCreateSslForce,
-			AutoUrlLink: appSslcertCreateAutoUrlLink,
+			Name: appSslCreateName,
+			SslType: appSslCreateSslType,
+			AutoSslCertificateUrls: appSslCreateAutoSslCertificateUrls,
+			SslForce: appSslCreateSslForce,
+			AutoUrlLink: appSslCreateAutoUrlLink,
 		}
 
-		Level27Client.AppSslCertificatesCreate(appID, create)
+		var certificate types.AppSslCertificate
+
+		switch (appSslCreateSslType) {
+		case "own":
+			createOwn := types.AppSslCertificateCreateOwn {
+				AppSslCertificateCreate: create,
+				SslKey: readArgFileSupported(appSslCreateSslKey),
+				SslCrt: readArgFileSupported(appSslCreateSslCrt),
+				SslCabundle: readArgFileSupported(appSslCreateSslCabundle),
+			}
+			certificate = Level27Client.AppSslCertificatesCreateOwn(appID, createOwn)
+
+		case "letsencrypt", "xolphin":
+			certificate = Level27Client.AppSslCertificatesCreate(appID, create)
+
+		default:
+			cobra.CheckErr(fmt.Sprintf("Invalid SSL type: %s", appSslCreateSslType))
+		}
+
+		fmt.Printf("sslCertificate created: [name: '%s' - ID: '%d'].", certificate.Name, certificate.ID)
 	},
 }
 
-// APP SSLCERT DELETE
+// APP SSL DELETE
 
-var appSslCertDeleteForce bool
-var appSslcertDeleteCmd = &cobra.Command{
+var appSslDeleteForce bool
+var appSslDeleteCmd = &cobra.Command{
 	Use: "delete [app] [SSL cert]",
 	Short: "Delete an SSL certificate from an app",
-	Example: "lvl app sslcert delete forum forum.example.com",
+	Example: "lvl app ssl delete forum forum.example.com",
 
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		appID := resolveApp(args[0])
 		certID := resolveAppSslCertificate(appID, args[1])
 
-		if !appSslCertDeleteForce {
+		if !appSslDeleteForce {
 			app := Level27Client.App(appID)
 			cert := Level27Client.AppSslCertificatesGetSingle(appID, certID)
 			if !confirmPrompt(fmt.Sprintf("Delete SSL certificate %s (%d) on app %s (%d)?", cert.Name, certID, app.Name, appID)) {
@@ -431,7 +456,8 @@ var appSslcertDeleteCmd = &cobra.Command{
 	},
 }
 
-var appSslCertUpdateCmd = &cobra.Command{
+// APP SSL UPDATE
+var appSslUpdateCmd = &cobra.Command{
 	Use: "update [app] [SSL cert]",
 
 	Args: cobra.ExactArgs(2),
@@ -454,12 +480,11 @@ var appSslCertUpdateCmd = &cobra.Command{
 	},
 }
 
-
-
-var appSslCertFixCmd = &cobra.Command{
+// APP SSL FIX
+var appSslFixCmd = &cobra.Command{
 	Use: "fix [app] [SSL cert]",
 	Short: "Fix an invalid SSL certificate",
-	Example: "lvl app sslcert fix forum forum.example.com",
+	Example: "lvl app ssl fix forum forum.example.com",
 
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -470,13 +495,13 @@ var appSslCertFixCmd = &cobra.Command{
 	},
 }
 
-// APP SSLCERT ACTION
+// APP SSL ACTION
 
-var appSslCertActionCmd = &cobra.Command{
+var appSslActionCmd = &cobra.Command{
 	Use: "action",
 }
 
-var appSslCertActionRetryCmd = &cobra.Command{
+var appSslActionRetryCmd = &cobra.Command{
 	Use: "retry [app] [SSL cert]",
 
 	Args: cobra.ExactArgs(2),
@@ -488,7 +513,7 @@ var appSslCertActionRetryCmd = &cobra.Command{
 	},
 }
 
-var appSslCertActionValidateChallengeCmd = &cobra.Command{
+var appSslActionValidateChallengeCmd = &cobra.Command{
 	Use: "validateChallenge [app] [SSL cert]",
 
 	Args: cobra.ExactArgs(2),
@@ -497,5 +522,22 @@ var appSslCertActionValidateChallengeCmd = &cobra.Command{
 		certID := resolveAppSslCertificate(appID, args[1])
 
 		Level27Client.AppSslCertificatesActions(appID, certID, "validateChallenge")
+	},
+}
+
+// APP SSL KEY
+var appSslKeyCmd = &cobra.Command{
+	Use: "key",
+	Short: "Return a private key for type 'own' sslCertificate.",
+	Example: "lvl app ssl key MyAppName",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		appId := resolveApp(args[0])
+		certID := resolveAppSslCertificate(appId, args[1])
+
+		key := Level27Client.AppSslCertificatesKey(appId, certID)
+
+		fmt.Print(key.SslKey)
 	},
 }

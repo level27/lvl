@@ -155,16 +155,21 @@ func (c *Client) AppSslCertificatesCreate(appID int, create types.AppSslCertific
 		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
 	}
 
-	requestData := RoundTripJson(create).(map[string]interface{})
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates", appID)
+	err := c.invokeAPI("POST", endpoint, create, &response)
+	AssertApiError(err, "AppSslCertificatesCreate")
 
-	if create.SslType != "own" {
-		delete(requestData, "sslKey")
-		delete(requestData, "sslCabundle")
-		delete(requestData, "sslCrt")
+	return response.SslCertificate
+}
+
+// POST /apps/{appID}/sslcertificates (variant for sslType == "own")
+func (c *Client) AppSslCertificatesCreateOwn(appID int, create types.AppSslCertificateCreateOwn) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
 	}
 
 	endpoint := fmt.Sprintf("apps/%d/sslcertificates", appID)
-	err := c.invokeAPI("POST", endpoint, requestData, &response)
+	err := c.invokeAPI("POST", endpoint, create, &response)
 	AssertApiError(err, "AppSslCertificatesCreate")
 
 	return response.SslCertificate
@@ -222,3 +227,13 @@ func (c *Client) AppSslCertificatesFix(appID int, sslCertificateID int) types.Ap
 	return response.SslCertificate
 }
 
+// GET /apps/{appID}/sslcertificates/{sslCertificateID}/key
+func (c *Client) AppSslCertificatesKey(appID int, sslCertificateID int) types.AppSslcertificateKey {
+	var response types.AppSslcertificateKey
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d/key", appID, sslCertificateID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesKey")
+
+	return response
+}
