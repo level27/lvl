@@ -310,3 +310,16 @@ func (c *Client)AppRestoresGet(appId int) []types.AppRestore{
 	AssertApiError(err, "appRestore")
 	return restores.Data
 }
+
+
+// ---- CREATE NEW RESTORE
+func (c *Client)AppRestoreCreate(appId int, req interface{}) types.AppRestore{
+	var restore struct {
+		Data types.AppRestore `json:"restore"`
+	}
+	endpoint :=  fmt.Sprintf("apps/%v/restores", appId)
+	err := c.invokeAPI("POST", endpoint, req, &restore)
+	AssertApiError(err, "appRestores")
+
+	return restore.Data
+}

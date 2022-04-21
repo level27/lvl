@@ -144,7 +144,13 @@ func init() {
 
 	//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 
-	appCmd.AddCommand(appRestoreCmd)
+	// ---- RESTORE COMMAND
+	appComponentCmd.AddCommand(appRestoreCmd)
+
+	// ---- GET LIST OF RESTORES
+	appRestoreCmd.AddCommand(appRestoreGetCmd)
+
+	// ---- CREATE RESTORE FOR APPCOMPONENT
 }
 
 func resolveApp(arg string) int {
@@ -732,6 +738,34 @@ var appRestoreGetCmd = &cobra.Command{
 
 		Restores := Level27Client.AppRestoresGet(appId)
 		
-		fmt.Print(Restores)
+		outputFormatTable(Restores , []string{"ID", "FILENAME", "STATUS"}, []string{"ID", "Filename", "Status"})
+	},
+}
+
+// ---- DESCRIBE A RESTORE 
+var appRestoreDescribeCmd = &cobra.Command{
+	Use: "describe",
+	Short: "Get detailed info about a specific restore on an app.",
+	Example: "lvl app restore describe MyAppName 4532",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+// ---- CREATE A NEW RESTORE
+var appRestoreCreateCmd = &cobra.Command{
+	Use: "create",
+	Short: "Create a new restore for an app.",
+	Example: "lvl app restore create MyAppName --component MyComponentName --restore 453",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//search AppId based on appname
+		appId := resolveApp(args[0])
+
+
+		restore := Level27Client.AppRestoreCreate(appId, 4)
+
+		log.Printf("Restore created. [ID: %v].", restore.ID)
 	},
 }
