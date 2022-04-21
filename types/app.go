@@ -106,15 +106,15 @@ type AppcomponenttypeServicetype struct {
 		AllowedActions          []interface{} `json:"allowedActions"`
 		Category                string        `json:"category"`
 		Parameters              []struct {
-			Name         string `json:"name"`
-			DisplayName  string `json:"displayName"`
-			Description  string `json:"description"`
-			Type         string `json:"type"`
+			Name         string      `json:"name"`
+			DisplayName  string      `json:"displayName"`
+			Description  string      `json:"description"`
+			Type         string      `json:"type"`
 			DefaultValue interface{} `json:"defaultValue"`
-			Readonly     bool   `json:"readonly"`
-			DisableEdit  bool   `json:"disableEdit"`
-			Required     bool   `json:"required"`
-			Category     string `json:"category"`
+			Readonly     bool        `json:"readonly"`
+			DisableEdit  bool        `json:"disableEdit"`
+			Required     bool        `json:"required"`
+			Category     string      `json:"category"`
 		} `json:"parameters"`
 	} `json:"servicetype"`
 }
@@ -146,10 +146,8 @@ type AppSslCertificateActionRequest struct {
 	Type string `json:"type"`
 }
 
-
-
 // Restore type for an app
-type AppRestore struct {
+type AppComponentRestore struct {
 	ID           int    `json:"id"`
 	Filename     string `json:"filename"`
 	Size         int    `json:"size"`
@@ -188,4 +186,10 @@ type AppRestore struct {
 			Name         string      `json:"name"`
 		} `json:"restoreSystem"`
 	} `json:"availableBackup"`
+}
+
+// request type for new restore
+type AppComponentRestoreRequest struct {
+	Appcomponent    int `json:"appcomponent"`
+	AvailableBackup int `json:"availableBackup"`
 }

@@ -300,9 +300,9 @@ func (c *Client) AppCertificateAction(appId int, certificateId int, actionType s
 //-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 
 // ---- GET LIST OF APP RESTORES
-func (c *Client)AppRestoresGet(appId int) []types.AppRestore{
+func (c *Client)AppRestoresGet(appId int) []types.AppComponentRestore{
 	var restores struct {
-		Data []types.AppRestore `json:"restores"`
+		Data []types.AppComponentRestore `json:"restores"`
 	}
 
 	endpoint := fmt.Sprintf("apps/%v/restores", appId)
@@ -313,9 +313,9 @@ func (c *Client)AppRestoresGet(appId int) []types.AppRestore{
 
 
 // ---- CREATE NEW RESTORE
-func (c *Client)AppRestoreCreate(appId int, req interface{}) types.AppRestore{
+func (c *Client)AppRestoreCreate(appId int, req types.AppComponentRestoreRequest) types.AppComponentRestore{
 	var restore struct {
-		Data types.AppRestore `json:"restore"`
+		Data types.AppComponentRestore `json:"restore"`
 	}
 	endpoint :=  fmt.Sprintf("apps/%v/restores", appId)
 	err := c.invokeAPI("POST", endpoint, req, &restore)
