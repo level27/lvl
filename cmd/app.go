@@ -140,6 +140,11 @@ func init() {
 
 	//-------------------------------------------------  APP ACCESS -------------------------------------------------
 	addAccessCmds(appCmd, "apps", resolveApp)
+
+
+	//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+
+	appCmd.AddCommand(appRestoreCmd)
 }
 
 func resolveApp(arg string) int {
@@ -705,3 +710,26 @@ var appCertificateActionValidateCmd = &cobra.Command{
 
 // #endregion
 
+
+
+//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+// ---- RESTORE COMMAND
+var appRestoreCmd = &cobra.Command{
+	Use: "restore",
+	Short: "Command to manage restores on an app.",
+	Example: "lvl app restore [subcommand]",
+}
+
+// ---- GET LIST OF RESTORES 
+var appRestoreGetCmd = &cobra.Command{
+	Use: "get",
+	Short: "Show a list of al available restores on an app.",
+	Example: "lvl app restore get NameOfMyApp",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+
+		
+	},
+}
