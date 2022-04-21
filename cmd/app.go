@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
@@ -49,7 +50,9 @@ func init() {
 	appCmd.AddCommand(AppDescribeCmd)
 	// #endregion
 
-	//------------------------------------------------- APP (GET / CREATE / DELETE / UPDATE / DESCRIBE)-------------------------------------------------
+	//-------------------------------------------------  APP ACTIONS (ACTIVATE / DEACTIVATE) -------------------------------------------------
+	// #region  APP ACTIONS (ACTIVATE / DEACTIVATE)
+
 	// ACTION COMMAND
 	appCmd.AddCommand(AppActionCmd)
 
@@ -58,8 +61,39 @@ func init() {
 
 	// DEACTIVATE APP
 	AppActionCmd.AddCommand(AppActionDeactivateCmd)
+	// #endregion
 
-	// APP ACCESS
+	//------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+	// ----	COMPONENT COMMAND
+	appCmd.AddCommand(appComponentCmd)
+
+	// ---- GET COMPONENTS
+	appComponentCmd.AddCommand(appComponentGetCmd)
+	addCommonGetFlags(appComponentGetCmd)
+
+	// ---- CREATE COMPONENT
+	appComponentCmd.AddCommand(appComponentCreateCmd)
+
+	// ---- DELETE COMPONENTS
+	appComponentCmd.AddCommand(AppComponentDeleteCmd)
+	//flag to skip confirmation when deleting an appcomponent
+	AppComponentDeleteCmd.Flags().BoolVarP(&isComponentDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+
+
+	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ COMPONENTTYPES/ PARAMETERS )-------------------------------------------------
+	// ---- GET COMPONENT CATEGORIES
+	appComponentCmd.AddCommand(appComponentCategoryGetCmd)
+
+	// ---- GET COMPONENTTYPES
+	appComponentCmd.AddCommand(appComponentTypeCmd)
+
+	// ---- GET COMPONENTTYPE PARAMATERS
+	appComponentCmd.AddCommand(appComponentParametersCmd)
+	// flags needed to get parameters of a type
+	appComponentParametersCmd.Flags().StringVarP(&appComponentType, "type", "t", "", "The type name to show its parameters.")
+	appComponentParametersCmd.MarkFlagRequired("type")
+
+	//-------------------------------------------------  APP ACCESS -------------------------------------------------
 	addAccessCmds(appCmd, "apps", resolveApp)
 
 	// ----------- APP SSL CERTIFICATE COMMANDS
@@ -125,6 +159,7 @@ func resolveApp(arg string) int {
 }
 
 func resolveAppSslCertificate(appID int, arg string) int {
+	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
 	if err == nil {
 		return id
@@ -138,12 +173,26 @@ func resolveAppSslCertificate(appID int, arg string) int {
 	return cert.ID
 }
 
+func resolveAppComponent(appId int ,arg string) int {
+	// if arg already int, this is the ID
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	appcomponent := Level27Client.AppComponentLookup(appId, arg)
+	if appcomponent == nil {
+		cobra.CheckErr(fmt.Sprintf("Unable to find component: %s", arg))
+		return 0
+	}
+	return int(appcomponent.ID)
+}
 
 // MAIN COMMAND APPS
 var appCmd = &cobra.Command{
 	Use:     "app",
 	Short:   "Commands to manage apps",
-	Example: "lvl app [subcommmand]",
+	Example: "lvl app get -f searchThisApp\nlvl app action activate",
 }
 
 //------------------------------------------------- APP (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
@@ -215,11 +264,11 @@ var isAppDeleteConfirmed bool
 var appDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete an app",
-	Example: "lvl app delete 2593",
+	Example: "lvl app delete NameOfMyApp",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// check for valid appID type
-		appId := checkSingleIntID(args[0], "app")
+		// try to find appId based on name
+		appId := resolveApp(args[0])
 
 		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
 	},
@@ -287,7 +336,8 @@ var AppDescribeCmd = &cobra.Command{
 
 // #endregion
 
-//------------------------------------------------- APP ACTIONS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+//------------------------------------------------- APP ACTIONS (ACTIVATE / DEACTIVATE)-------------------------------------------------
+// #region APP ACTIONS (ACTIVATE / DEACTIVATE)
 
 // ---- ACTION COMMAND
 var AppActionCmd = &cobra.Command{
@@ -541,3 +591,162 @@ var appSslKeyCmd = &cobra.Command{
 		fmt.Print(key.SslKey)
 	},
 }
+// #endregion
+
+//------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+// ---- COMPONENT COMMAND
+var appComponentCmd = &cobra.Command{
+	Use:     "component",
+	Short:   "Commands for managing appcomponents.",
+	Example: "lvl app component get",
+}
+
+// ---- GET COMPONENTS
+var appComponentGetCmd = &cobra.Command{
+	Use:     "get [App]",
+	Short:   "Show list of all available components on an app.",
+	Example: "lvl app component get MyAppName",
+	Args:    cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+
+		//search for appId based on Appname
+		appId := resolveApp(args[0])
+		ids, err := convertStringsToIds(args[1:])
+		if err != nil {
+			log.Fatalln("Invalid component ID")
+		}
+
+		outputFormatTable(
+			getComponents(appId, ids),
+			[]string{"ID", "NAME", "STATUS"},
+			[]string{"ID", "Name", "Status"})
+	},
+}
+
+func getComponents(appId int, ids []int) []types.AppComponent {
+	c := Level27Client
+	if len(ids) == 0 {
+		return c.AppComponentsGet(appId, optGetParameters)
+	} else {
+		components := make([]types.AppComponent, len(ids))
+		for idx, id := range ids {
+			components[idx] = c.AppComponentGetSingle(appId, id)
+		}
+		return components
+	}
+}
+
+// ---- CREATE COMPONENT
+var appComponentCreateCmd = &cobra.Command{
+	Use:     "create",
+	Short:   "Create a new appcomponent.",
+	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+// ---- DELETE COMPONENT
+var isComponentDeleteConfirmed bool
+var AppComponentDeleteCmd = &cobra.Command{
+	Use: "delete",
+	Short: "Delete component from an app.",
+	Example: "lvl app component delete MyAppName MyComponentName",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on appName
+		// appId := resolveApp(args[0])
+
+	},
+}
+
+
+//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ TYPES/ PARAMETERS )-------------------------------------------------
+
+// current possible current categories for appcomponents
+var currentComponentCategories = []string{"web-apps", "databases", "extensions"}
+
+// #region APP COMPONENTS HELPERS (CATEGORY/ TYPES/ PARAMETERS )
+
+// ---- (CATEGORY) GET COMPONENT CATEGORIES
+var appComponentCategoryGetCmd = &cobra.Command{
+	Use:     "categories",
+	Short:   "shows a list of all current appcomponent categories.",
+	Example: "lvl app component categories",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// type to convert string into category type
+		var AppcomponentCategories struct {
+			Data []types.AppcomponentCategory
+		}
+
+		for _, category := range currentComponentCategories {
+			cat := types.AppcomponentCategory{Name: category}
+			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
+		}
+		// display output in readable table
+		outputFormatTable(AppcomponentCategories.Data, []string{"CATEGORY"}, []string{"Name"})
+	},
+}
+
+// ---- (TYPES) GET LIST OF APPCOMPONENT TYPES
+var appComponentTypeCmd = &cobra.Command{
+	Use:     "types",
+	Short:   "Shows a list of all current componenttypes.",
+	Example: "lvl app component types",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// get map of all types back from API (API doesnt give slice back in this case.)
+		types := Level27Client.AppComponenttypesGet()
+
+		//create a type that contains an appcomponenttype name and category
+		type typeInfo struct {
+			Name     string
+			Category string
+		}
+
+		//create slice of type typeInfo -> used to generate readable output for user
+		allTypes := []typeInfo{}
+
+		// loop over result and filter out the types Name and category into the right format.
+		for key, value := range types {
+			allTypes = append(allTypes, typeInfo{Name: key, Category: value.Servicetype.Category})
+		}
+
+		// sort slice based on category
+		sort.Slice(allTypes, func(i, j int) bool {
+			return allTypes[i].Category < allTypes[j].Category
+		})
+
+		// print result for user
+		outputFormatTable(allTypes, []string{"NAME", "CATEGORY"}, []string{"Name", "Category"})
+
+	},
+}
+
+// ---- (PARAMETERS) GET LIST OF PARAMETERS FOR A SPECIFIC APPCOMPONENT TYPE
+var appComponentType string
+var appComponentParametersCmd = &cobra.Command{
+	Use:     "parameters",
+	Short:   "Show list of all possible parameters with their default values of a specific componenttype.",
+	Example: "lvl app component parameters -t python",
+	Args:    cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		// get map of all types (and their parameters) back from API (API doesnt give slice back in this case.)
+		types := Level27Client.AppComponenttypesGet()
+
+		// check if chosen componenttype is found
+		componenttype, isTypeFound := types[appComponentType]
+
+		if isTypeFound {
+			outputFormatTable(componenttype.Servicetype.Parameters,
+				[]string{"NAME", "DESCRIPTION", "TYPE", "DEFAULT_VALUE", "REQUIRED"},
+				[]string{"Name", "Description", "Type", "DefaultValue", "Required"})
+		} else {
+			log.Fatalf("Given componenttype: '%v' NOT found!", appComponentType)
+		}
+
+	},
+}
+
+// #endregion

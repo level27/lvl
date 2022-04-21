@@ -9,6 +9,31 @@ import (
 	"bitbucket.org/level27/lvl/types"
 )
 
+//------------------------------------------------- Resolve functions -------------------------------------------------
+
+// GET appID based on name
+func (c *Client) AppLookup(name string) *types.App {
+	apps := c.Apps(types.CommonGetParams{Filter: name})
+	for _, app := range apps {
+		if app.Name == name {
+			return &app
+		}
+	}
+
+	return nil
+}
+
+// GET componentId based on name
+func (c *Client) AppComponentLookup(appId int, name string) *types.AppComponent{
+	components := c.AppComponentsGet(appId, types.CommonGetParams{Filter: name})
+	for _, component := range components {
+		if component.Name == name {
+			return &component
+		}
+	}
+	return nil
+}
+
 //------------------------------------------------- APP MAIN SUBCOMMANDS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
 // #region APP MAIN SUBCOMMANDS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)
 
@@ -38,16 +63,6 @@ func (c *Client) Apps(getParams types.CommonGetParams) []types.App {
 	return apps.Apps
 }
 
-func (c *Client) AppLookup(name string) *types.App {
-	apps := c.Apps(types.CommonGetParams{Filter: name})
-	for _, app := range apps {
-		if app.Name == name {
-			return &app
-		}
-	}
-
-	return nil
-}
 
 // ---- CREATE NEW APP
 func (c *Client) AppCreate(req types.AppPostRequest) types.App {
@@ -236,4 +251,43 @@ func (c *Client) AppSslCertificatesKey(appID int, sslCertificateID int) types.Ap
 	AssertApiError(err, "AppSslCertificatesKey")
 
 	return response
+}
+//------------------------------------------------- APP COMPONENTS (GET / DESCRIBE / CREATE)-------------------------------------------------
+
+// ---- GET LIST OF COMPONENTS
+func (c *Client) AppComponentsGet(appid int, getParams types.CommonGetParams) []types.AppComponent {
+	var components struct {
+		Data []types.AppComponent `json:"components"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/components?%v", appid, formatCommonGetParams(getParams))
+	err := c.invokeAPI("GET", endpoint, nil, &components)
+	AssertApiError(err, "app")
+
+	return components.Data
+}
+
+// ---- DESCRIBE COMPONENT (GET SINGLE COMPONENT)
+func (c *Client) AppComponentGetSingle(appId int, id int) types.AppComponent {
+	var component struct {
+		Data types.AppComponent `json:"component"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/components/%v", appId, id)
+	err := c.invokeAPI("GET", endpoint, nil, &component)
+	AssertApiError(err, "app")
+	return component.Data
+}
+
+//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
+// ---- GET LIST OFF APPCOMPONENTTYPES
+func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
+	var componenttypes struct {
+		Data types.Appcomponenttype `json:"appcomponenttypes"`
+	}
+
+	endpoint := "appcomponenttypes"
+	err := c.invokeAPI("GET", endpoint, nil, &componenttypes)
+	AssertApiError(err, "appcomponent")
+	return componenttypes.Data
 }
