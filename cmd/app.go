@@ -145,12 +145,20 @@ func init() {
 	//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 
 	// ---- RESTORE COMMAND
-	appComponentCmd.AddCommand(appRestoreCmd)
+	appComponentCmd.AddCommand(appComponentRestoreCmd)
 
 	// ---- GET LIST OF RESTORES
-	appRestoreCmd.AddCommand(appRestoreGetCmd)
+	appComponentRestoreCmd.AddCommand(appComponentRestoreGetCmd)
 
 	// ---- CREATE RESTORE FOR APPCOMPONENT
+	appComponentRestoreCmd.AddCommand(appComponentRestoreCreateCmd)
+	// flags needed to create restore
+	flags = appComponentCreateCmd.Flags()
+	flags.StringVar(&appRestoreCreateComponent, "component", "", "The name or ID of the appcomponent.")
+	flags.StringVar(&appRestoreCreateBackup, "backup", "", "The ID of an availableBackup.")
+	appComponentRestoreCreateCmd.MarkFlagRequired("component")
+	appComponentRestoreCreateCmd.MarkFlagRequired("backup")
+	
 }
 
 func resolveApp(arg string) int {
@@ -718,16 +726,16 @@ var appCertificateActionValidateCmd = &cobra.Command{
 
 
 
-//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+//-------------------------------------------------  APP COMPONENT RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 // ---- RESTORE COMMAND
-var appRestoreCmd = &cobra.Command{
+var appComponentRestoreCmd = &cobra.Command{
 	Use: "restore",
 	Short: "Command to manage restores on an app.",
 	Example: "lvl app restore [subcommand]",
 }
 
 // ---- GET LIST OF RESTORES 
-var appRestoreGetCmd = &cobra.Command{
+var appComponentRestoreGetCmd = &cobra.Command{
 	Use: "get",
 	Short: "Show a list of al available restores on an app.",
 	Example: "lvl app restore get NameOfMyApp",
@@ -754,10 +762,11 @@ var appRestoreDescribeCmd = &cobra.Command{
 }
 
 // ---- CREATE A NEW RESTORE
-var appRestoreCreateCmd = &cobra.Command{
+var appRestoreCreateComponent, appRestoreCreateBackup string
+var appComponentRestoreCreateCmd = &cobra.Command{
 	Use: "create",
 	Short: "Create a new restore for an app.",
-	Example: "lvl app restore create MyAppName --component MyComponentName --restore 453",
+	Example: "lvl app restore create MyAppName --component MyComponentName --backup 453",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//search AppId based on appname
