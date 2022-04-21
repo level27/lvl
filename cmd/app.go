@@ -140,7 +140,7 @@ func init() {
 	//-------------------------------------------------  APP ACCESS -------------------------------------------------
 	addAccessCmds(appCmd, "apps", resolveApp)
 
-	//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+	//-------------------------------------------------  APP COMPONENT RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 
 	// ---- RESTORE COMMAND
 	appComponentCmd.AddCommand(appComponentRestoreCmd)
@@ -150,12 +150,11 @@ func init() {
 
 	// ---- CREATE RESTORE FOR APPCOMPONENT
 	appComponentRestoreCmd.AddCommand(appComponentRestoreCreateCmd)
-	// flags needed to create restore
-	flags = appComponentRestoreCreateCmd.Flags()
-	flags.StringVar(&appRestoreCreateComponent, "component", "", "The name or ID of the appcomponent.")
-	flags.IntVar(&appRestoreCreateBackup, "backup", 0, "The ID of an availableBackup.")
-	appComponentRestoreCreateCmd.MarkFlagRequired("component")
-	appComponentRestoreCreateCmd.MarkFlagRequired("backup")
+
+	//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
+
+	// ---- GET LIST OF BACKUPS
+	appComponentCmd.AddCommand(appComponentBackupsCmd)
 
 }
 
@@ -762,15 +761,22 @@ var appRestoreCreateBackup int
 var appComponentRestoreCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new restore for an app.",
-	Example: "lvl app restore create MyAppName --component MyComponentName --backup 453",
-	Args:    cobra.ExactArgs(1),
+	Example: "lvl app restore create MyAppName MyComponentName 453",
+	Args:    cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		//search AppId based on appname
 		appId := resolveApp(args[0])
+		// search componentId based on name
+		componentId := resolveAppComponent(appId, args[1])
+		backupId, err := strconv.Atoi(args[2])
+
+		if err != nil {
+			log.Fatalf("BackupID is NOT valid! '%v'.", args[2])
+		}
 
 		request := types.AppComponentRestoreRequest{
-			Appcomponent:    resolveAppComponent(appId, appRestoreCreateComponent),
-			AvailableBackup: appRestoreCreateBackup,
+			Appcomponent:    componentId,
+			AvailableBackup: backupId,
 		}
 		restore := Level27Client.AppRestoreCreate(appId, request)
 
@@ -779,14 +785,16 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 }
 
 //-------------------------------------------------  APP COMPONENT BACKUPS (GET) -------------------------------------------------
+var appComponentNameBackup string
 var appComponentBackupsCmd = &cobra.Command{
-	Use: "backup",
-	Short: "Commands for managing availableBackups.",
+	Use:     "backup",
+	Short:   "Commands for managing availableBackups.",
 	Example: "lvl app component backup get MyAppName --component MyComponentName",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// search appId based on appname
 		appId := resolveApp(args[0])
+
+		log.Print(appId)
 	},
-	
 }
