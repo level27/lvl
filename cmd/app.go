@@ -156,6 +156,9 @@ func resolveApp(arg string) int {
 	return app.ID
 }
 
+//------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
+
+// GET AN APPCOMPONENT ID BASED ON THE NAME
 func resolveAppComponent(appId int ,arg string) int {
 	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
@@ -701,3 +704,4 @@ var appCertificateActionValidateCmd = &cobra.Command{
 }
 
 // #endregion
+
