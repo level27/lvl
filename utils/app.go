@@ -295,3 +295,18 @@ func (c *Client) AppCertificateAction(appId int, certificateId int, actionType s
 
 	log.Println("Action retry sent to certificate.")
 }
+
+
+//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+
+// ---- GET LIST OF APP RESTORES
+func (c *Client)AppRestoresGet(appId int) []types.AppRestore{
+	var restores struct {
+		Data []types.AppRestore `json:"restores"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/restores", appId)
+	err := c.invokeAPI("GET", endpoint, nil, &restores)
+	AssertApiError(err, "appRestore")
+	return restores.Data
+}

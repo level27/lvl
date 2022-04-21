@@ -145,3 +145,47 @@ type AppSslCertificateRequest struct {
 type AppSslCertificateActionRequest struct {
 	Type string `json:"type"`
 }
+
+
+
+// Restore type for an app
+type AppRestore struct {
+	ID           int    `json:"id"`
+	Filename     string `json:"filename"`
+	Size         int    `json:"size"`
+	DtExpires    int    `json:"dtExpires"`
+	Status       string `json:"status"`
+	Appcomponent struct {
+		ID                     int    `json:"id"`
+		Name                   string `json:"name"`
+		Appcomponenttype       string `json:"appcomponenttype"`
+		Appcomponentparameters struct {
+			Username string `json:"username"`
+			Pass     string `json:"pass"`
+		} `json:"appcomponentparameters"`
+		Status string `json:"status"`
+		App    struct {
+			ID int `json:"id"`
+		} `json:"app"`
+	} `json:"appcomponent"`
+	AvailableBackup struct {
+		ID           int    `json:"id"`
+		Date         string `json:"date"`
+		VolumeUID    string `json:"volumeUid"`
+		StorageUID   string `json:"storageUid"`
+		Status       int    `json:"status"`
+		SnapshotName string `json:"snapshotName"`
+		System       struct {
+			ID           int         `json:"id"`
+			Fqdn         string      `json:"fqdn"`
+			CustomerFqdn interface{} `json:"customerFqdn"`
+			Name         string      `json:"name"`
+		} `json:"system"`
+		RestoreSystem struct {
+			ID           int         `json:"id"`
+			Fqdn         string      `json:"fqdn"`
+			CustomerFqdn interface{} `json:"customerFqdn"`
+			Name         string      `json:"name"`
+		} `json:"restoreSystem"`
+	} `json:"availableBackup"`
+}

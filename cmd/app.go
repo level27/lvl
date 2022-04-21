@@ -730,6 +730,8 @@ var appRestoreGetCmd = &cobra.Command{
 		// search for appId based on name
 		appId := resolveApp(args[0])
 
+		Restores := Level27Client.AppRestoresGet(appId)
 		
+		fmt.Print(Restores)
 	},
 }
