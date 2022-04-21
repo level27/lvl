@@ -244,40 +244,10 @@ func (c *Client) invokeAPI(method string, endpoint string, data interface{}, res
 
 // Assert that an API call completed successfully, aborting the program if it did not
 func AssertApiError(e error, directory string) {
-	TranslateStatusCode(e, directory)
 	if e != nil {
 
 		log.Fatalf("client.go: API error in %s - %s\n", directory, e.Error())
 	}
-}
-
-// Nicely present a HTTP status code.
-func TranslateStatusCode(e error, directory string) {
-	if e != nil {
-		splittedError := strings.Split(e.Error(), " ")
-		var result string
-		status := splittedError[len(splittedError)-1]
-		switch status {
-		case "204":
-			result = fmt.Sprintf("Status: %v. Request succesfully executed", status)
-		case "400":
-			result = fmt.Sprintf("Status: %v. Bad request", status)
-		case "403":
-			result = fmt.Sprintf("Status: %v. You do not have acces to this %v", status, directory)
-		case "404":
-			result = fmt.Sprintf("Status: %v. %v not found", status, directory)
-		case "500":
-			result = fmt.Sprintf("Status: %v. You have no proper rights to acces the controller", status)
-		default:
-			result = "No Status code received"
-		}
-
-		log.Println(result)
-	} else {
-		log.Println("Request succesfully executed")
-	}
-
-
 }
 
 // Helper function to make query parameters from common get parameters.

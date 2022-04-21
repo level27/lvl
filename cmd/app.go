@@ -422,7 +422,10 @@ var AppComponentDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// search for appId based on appName
 		appId := resolveApp(args[0])
-		
+		// search for component based on name
+		appComponentId := resolveAppComponent(appId, args[1])
+
+		Level27Client.AppComponentsDelete(appId, appComponentId, isComponentDeleteConfirmed)
 	},
 }
 
