@@ -164,12 +164,11 @@ func resolveAppSslCertificate(appID int, arg string) int {
 		return id
 	}
 
-	cert := Level27Client.AppSslCertificatesLookup(appID, arg)
-	if cert == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find app SSL certificate: %s", arg))
-		return 0
-	}
-	return cert.ID
+	return resolveShared(
+		Level27Client.AppSslCertificatesLookup(appID, arg),
+		arg,
+		"app SSL certificate",
+		func (app types.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
 func resolveAppComponent(appId int ,arg string) int {
@@ -399,7 +398,7 @@ var appSslGetCmd = &cobra.Command{
 		certs := resolveGets(
 			// First arg is app ID.
 			args[1:],
-			func(name string) *types.AppSslCertificate { return Level27Client.AppSslCertificatesLookup(appID, name) },
+			func(name string) []types.AppSslCertificate { return Level27Client.AppSslCertificatesLookup(appID, name) },
 			func(certID int) types.AppSslCertificate { return Level27Client.AppSslCertificatesGetSingle(appID, certID)},
 			func(get types.CommonGetParams) []types.AppSslCertificate { return Level27Client.AppSslCertificatesGetList(appID, appSslGetType, appSslGetStatus, get) },
 			)
