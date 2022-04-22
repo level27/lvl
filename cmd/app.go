@@ -156,6 +156,10 @@ func init() {
 	//flag to skip confirmation when deleting a restore
 	appRestoreDeleteCmd.Flags().BoolVarP(&isAppRestoreDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
 
+	// ---- DOWNLOAD RESTORE FILE
+	appComponentRestoreCmd.AddCommand(appComponentRestoreDownloadCmd)
+	// flags needed for downloading the restore 
+	appComponentRestoreDownloadCmd.Flags().StringVarP(&appComponentRestoreDownloadName, "filename", "f", "", "The name of the downloaded file.")
 	//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
 	// ---- BACKUP COMMAND
 	appComponentCmd.AddCommand(appComponentBackupsCmd)
@@ -797,6 +801,18 @@ var appRestoreDeleteCmd = &cobra.Command{
 
 		Level27Client.AppComponentRestoresDelete(appId, restoreId, isAppRestoreDeleteConfirmed)
 
+	},
+}
+
+// ---- DOWNLOAD RESTORE FILE
+var appComponentRestoreDownloadName string
+var appComponentRestoreDownloadCmd = &cobra.Command{
+	Use: "download [appname] [restoreID]",
+	Short: "Download the restore file.",
+	Example: "lvl app component restore download MyAppName 4123",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		
 	},
 }
 

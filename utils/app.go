@@ -354,6 +354,13 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 	}
 }
 
+
+// ---- DOWNLOAD RESTORE FILE
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
+	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
+	err := c.invokeAPI("GET", endpoint , nil , nil)
+	AssertApiError(err, "appRestore")
+}
 //-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
 func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
 	var backups struct {
