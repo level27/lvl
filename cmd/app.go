@@ -806,6 +806,7 @@ var appComponentBackupsGetCmd = &cobra.Command{
 
 		availableBackups := Level27Client.AppComponentbackupsGet(appId, componentId)
 
-		outputFormatTable(availableBackups , []string{"ID", "SNAPSHOTNAME"}, []string{"ID", "SnapshotName"})
+		outputFormatTableFuncs(availableBackups , []string{"ID", "SNAPSHOTNAME", "DATE"}, []interface{}{"ID", "SnapshotName", func (a types.AppComponentAvailableBackup) string {return utils.FormatUnixTime(a.Date)}})
 	},
 }
+
