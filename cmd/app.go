@@ -812,7 +812,12 @@ var appComponentRestoreDownloadCmd = &cobra.Command{
 	Example: "lvl app component restore download MyAppName 4123",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		
+		// search appId based on name
+		appId := resolveApp(args[0])
+		// check if restoreId is valid type
+		restoreId := checkSingleIntID(args[1], "Restore")
+
+		Level27Client.AppComponentRestoreDownload(appId, restoreId)
 	},
 }
 

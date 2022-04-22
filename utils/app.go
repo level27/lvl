@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -358,8 +360,31 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 // ---- DOWNLOAD RESTORE FILE
 func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
-	err := c.invokeAPI("GET", endpoint , nil , nil)
+	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/tar.gz"})
+
+	if err == nil {
+		defer res.Body.Close()
+
+		if isErrorCode(res.StatusCode) {
+			var body []byte
+			body, err = io.ReadAll(res.Body)
+			if err == nil {
+				err = formatRequestError(res.StatusCode, body)
+			}
+		}
+	}
 	AssertApiError(err, "appRestore")
+
+	file, err := os.Create("test")
+	if err != nil {
+		log.Fatalf("Failed to create file! %s", err.Error())
+	}
+
+	fmt.Printf("Saving report to %s\n", "test")
+
+	defer file.Close()
+
+	io.Copy(file, res.Body)
 }
 //-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
 func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
