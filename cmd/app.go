@@ -748,7 +748,7 @@ var appComponentRestoreGetCmd = &cobra.Command{
 var appRestoreDescribeCmd = &cobra.Command{
 	Use:     "describe",
 	Short:   "Get detailed info about a specific restore on an app.",
-	Example: "lvl app restore describe MyAppName 4532",
+	Example: "lvl app component restore describe MyAppName 4532",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
