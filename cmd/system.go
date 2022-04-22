@@ -566,7 +566,7 @@ var systemUpdateCmd = &cobra.Command{
 			LimitWiops:                  system.LimitWiops,
 		}
 
-		data := roundTripJson(systemPut).(map[string]interface{})
+		data := utils.RoundTripJson(systemPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
@@ -1681,7 +1681,7 @@ var systemVolumeUpdateCmd = &cobra.Command{
 			Volumegroup:  volume.Volumegroup.ID,
 		}
 
-		data := roundTripJson(volumePut).(map[string]interface{})
+		data := utils.RoundTripJson(volumePut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))

@@ -1,0 +1,18 @@
+{{- /* BASIC INFO */ -}}
+
+{{vt "yellow"}}ID:               {{vt "brightwhite"}}{{ .ID }}
+{{vt "yellow"}}Name:             {{vt "brightwhite"}}{{ .Name }}
+{{vt "yellow"}}Status:           {{template "statusVt" .StatusCategory}}{{ .Status }}
+{{vt "yellow"}}SSL Status:       {{vt "brightwhite"}}{{ .SslStatus }}
+{{vt "yellow"}}SSL Force:        {{vt "brightwhite"}}{{ .SslForce }}
+{{vt "yellow"}}Reminder Status:  {{vt "brightwhite"}}{{ .ReminderStatus }}
+{{vt "yellow"}}Expires:          {{vt "brightwhite"}}{{formatUnixTime .DtExpires }}
+
+{{vt "yellow"}}URLs: {{ range .SslCertificateUrls }}
+{{ vt "brightblue"}}- {{vt "yellow"}}URL:              {{vt "brightwhite"}}{{ .Content }}
+  {{vt "yellow"}}Status:           {{template "statusVt" .SslStatusCategory}}{{ .SslStatus }}
+  {{- if .ErrorMsg }}
+  {{vt "yellow"}}Error Messag:     {{ .ErrorMsg }}
+  {{- end }}
+  {{vt "yellow"}}Validation Type:  {{ .ValidationType }}
+{{ end }} 
