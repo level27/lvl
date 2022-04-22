@@ -107,7 +107,7 @@ func init() {
 	// ---- APP SSL DESCRIBE
 	appSslCmd.AddCommand(appSslDescribeCmd)
 
-	// ----vAPP SSL CREATE
+	// ---- APP SSL CREATE
 	appSslCmd.AddCommand(appSslCreateCmd)
 	appSslCreateCmd.Flags().StringVarP(&appSslCreateName, "name", "n", "", "Name of this SSL certificate")
 	appSslCreateCmd.Flags().StringVarP(&appSslCreateSslType, "type", "t", "", "Type of SSL certificate to use. Options are: letsencrypt, xolphin, own")
