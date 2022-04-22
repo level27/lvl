@@ -95,6 +95,9 @@ func init() {
 	//-------------------------------------------------  APP ACCESS -------------------------------------------------
 	addAccessCmds(appCmd, "apps", resolveApp)
 
+	// APP INTEGRITY
+	addIntegrityCheckCmds(appCmd, "apps", resolveApp)
+
 	// ----------- APP SSL CERTIFICATE COMMANDS
 
 	// ---- APP SSL
