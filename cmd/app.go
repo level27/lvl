@@ -281,7 +281,7 @@ var appUpdateCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check if appId is valid
-		appId := checkSingleIntID(args[0], "app")
+		appId := resolveApp(args[0])
 
 		//get the current data from the app. if not changed its needed for put request
 		currentData := Level27Client.App(appId)
@@ -324,7 +324,7 @@ var AppDescribeCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		appId := resolveApp(args[0])
 		// get all data from app by appId
 		app := Level27Client.App(appId)
 		outputFormatTemplate(app, "templates/app.tmpl")
@@ -351,7 +351,7 @@ var AppActionActivateCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		appId := resolveApp(args[0])
 
 		Level27Client.AppAction(appId, "activate")
 	},
@@ -365,7 +365,7 @@ var AppActionDeactivateCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for valid appId
-		appId := checkSingleIntID(args[0], "app")
+		appId := resolveApp(args[0])
 
 		Level27Client.AppAction(appId, "deactivate")
 	},
