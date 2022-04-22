@@ -35,7 +35,7 @@ type Domain struct {
 	Organisation    struct {
 		ID       int    `json:"id"`
 		Name     string `json:"name"`
-		Reseller int    `json:"reseller"`
+		Reseller string `json:"reseller"`
 	} `json:"organisation"`
 	Domaintype struct {
 		ID                                  int    `json:"id"`
