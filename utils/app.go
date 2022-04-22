@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"os"
 	"strings"
 
@@ -362,9 +363,20 @@ func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
 	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/tar.gz"})
 
-	if err == nil {
-		defer res.Body.Close()
+	filename := "restore.tar.gz"
+	contentDisp := res.Header.Get("Content-Disposition")
+	if contentDisp != "" {
+		_, params, err := mime.ParseMediaType(contentDisp)
+		if err != nil {
+			log.Fatalf("Failed to parse Content-Disposition!")
+		}
 
+		filename = params["filename"]
+	}
+
+	defer res.Body.Close()
+
+	if err == nil {
 		if isErrorCode(res.StatusCode) {
 			var body []byte
 			body, err = io.ReadAll(res.Body)
@@ -375,12 +387,12 @@ func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
 	}
 	AssertApiError(err, "appRestore")
 
-	file, err := os.Create("test")
+	file, err := os.Create(filename)
 	if err != nil {
 		log.Fatalf("Failed to create file! %s", err.Error())
 	}
 
-	fmt.Printf("Saving report to %s\n", "test")
+	fmt.Printf("Saving report to %s\n", filename)
 
 	defer file.Close()
 
