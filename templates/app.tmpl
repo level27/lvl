@@ -1,36 +1,34 @@
-APP/PROJECT:
-    ID: {{.ID}}
-    NAME:  {{.Name}}
-    STATUS: {{.Status}}
-    BILLINGSTATUS: {{.BillingStatus}}
+{{vt "yellow"}}ID:              {{vt "brightwhite"}}{{.ID}}
+{{vt "yellow"}}Name:            {{vt "brightwhite"}}{{.Name}}
+{{vt "yellow"}}Status:          {{template "statusVt" .StatusCategory}}{{.Status}}
+{{vt "yellow"}}Billing Status:  {{vt "brightwhite"}}{{.BillingStatus}}
 
-    {{- /*ORGANISATION*/}}
-    
-    ORGANISATION:
-        ID: {{.Organisation.ID}}
-        NAME: {{.Organisation.Name}}
-        RESELLER: {{.Organisation.Reseller}}
+{{- /*ORGANISATION*/}}
 
-    {{- /* COMPONENTS */}}
+{{vt "yellow"}}Organisation:
+  {{vt "yellow"}}ID:        {{vt "brightwhite"}}{{.Organisation.ID}}
+  {{vt "yellow"}}Name:      {{vt "brightwhite"}}{{.Organisation.Name}}
+  {{vt "yellow"}}Reseller:  {{vt "brightwhite"}}{{.Organisation.Reseller}}
 
-    {{- $anyComponents := false }}
+{{- /* COMPONENTS */}}
+{{ if gt (len .Components) 0 }}
+{{vt "yellow"}}Components:  {{ range .Components }}
+{{ vt "brightblue"}}- {{vt "yellow"}}ID:        {{vt "brightwhite"}}{{.ID}}
+  {{vt "yellow"}}Name:      {{vt "brightwhite"}}{{.Name}} 
+  {{vt "yellow"}}Category:  {{vt "brightwhite"}}{{.Category}}
+  {{vt "yellow"}}Type:      {{vt "brightwhite"}}{{.AppComponentType}}
+{{- end }}
+{{ else }}
+{{vt "yellow"}}Components: {{vt "brightblack"}}(none)
+{{ end }}
 
-    COMPONENTS:  {{ range .Components }}
-        {{- $anyComponents = true }}
-        ID: {{.ID}}     
-        NAME: {{.Name}} 
-        CATEGORY: {{.Category}}
-        APPCOMPONENT_TYPE: {{.AppComponentType}}
-    {{ end }}{{if not $anyComponents}}(none){{ end -}}   
-
-
-    {{- /* TEAMS */}}
-
-    {{- $anyTeams := false }}
-
-    TEAMS:  {{ range .Teams }}
-        {{- $anyTeams = true }}
-        ID: {{.ID}}     
-        NAME: {{.Name}} 
-        ORGANISATION ID: {{.OrganisationID}}
-    {{ end }}{{if not $anyTeams}}(none){{ end -}}
+{{- /* TEAMS */}}
+{{- if gt (len .Teams) 0 }}
+{{vt "yellow"}}Teams: {{ range .Teams }}
+{{ vt "brightblue"}}- {{vt "yellow"}}ID:               {{vt "brightwhite"}}{{.ID}}
+  {{vt "yellow"}}Name:             {{vt "brightwhite"}}{{.Name}}
+  {{vt "yellow"}}Organisation ID:  {{vt "brightwhite"}}{{.OrganisationID}}
+{{ end }}
+{{ else }}
+{{vt "yellow"}}Teams: {{vt "brightblack"}}(none)
+{{ end }}

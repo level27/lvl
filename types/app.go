@@ -2,10 +2,11 @@ package types
 
 // main structure of an app
 type App struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name"`
-	Status       string `json:"status"`
-	Organisation struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	Status         string `json:"status"`
+	StatusCategory string `json:"statusCategory"`
+	Organisation   struct {
 		ID       int    `json:"id"`
 		Name     string `json:"name"`
 		Reseller string `json:"reseller"`
