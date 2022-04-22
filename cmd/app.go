@@ -1061,7 +1061,7 @@ var appComponentRestoreDownloadCmd = &cobra.Command{
 		// check if restoreId is valid type
 		restoreId := checkSingleIntID(args[1], "Restore")
 
-		Level27Client.AppComponentRestoreDownload(appId, restoreId)
+		Level27Client.AppComponentRestoreDownload(appId, restoreId, appComponentRestoreDownloadName)
 	},
 }
 

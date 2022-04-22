@@ -68,6 +68,10 @@ func (c *Client) EntityIntegrityCheckDownload(entityType string, entityID int, c
 
 	AssertApiError(err, "EntityIntegrityCheckDownload")
 
+	if fileName == "" {
+		fileName = parseContentDispositionFilename(res, fmt.Sprintf("integritycheck_%d_%s_%d.pdf", checkId, entityType, entityID))
+	}
+
 	file, err := os.Create(fileName)
 	if err != nil {
 		log.Fatalf("Failed to create file! %s", err.Error())

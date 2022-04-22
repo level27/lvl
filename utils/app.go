@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mime"
-	"os"
 	"net/url"
+	"os"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -487,19 +486,12 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 
 
 // ---- DOWNLOAD RESTORE FILE
-func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename string){
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
-	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/tar.gz"})
+	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/gzip"})
 
-	filename := "restore.tar.gz"
-	contentDisp := res.Header.Get("Content-Disposition")
-	if contentDisp != "" {
-		_, params, err := mime.ParseMediaType(contentDisp)
-		if err != nil {
-			log.Fatalf("Failed to parse Content-Disposition!")
-		}
-
-		filename = params["filename"]
+	if filename == "" {
+		filename = parseContentDispositionFilename(res, "restore.tar.gz")
 	}
 
 	defer res.Body.Close()
