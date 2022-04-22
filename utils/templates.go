@@ -95,6 +95,9 @@ func jobChildCountTotalRecurse(job types.Job) int {
 }
 
 func FormatUnixTimeF(seconds interface{}, fmt string) string {
+	if seconds == nil{
+		return "null"
+	}
 	var secs int64
 	secString, success := seconds.(string)
 	if success {

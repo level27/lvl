@@ -724,7 +724,7 @@ var appCertificateActionValidateCmd = &cobra.Command{
 //-------------------------------------------------  APP COMPONENT RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 // ---- RESTORE COMMAND
 var appComponentRestoreCmd = &cobra.Command{
-	Use:     "restore",
+	Use:     "restores",
 	Short:   "Command to manage restores on an app.",
 	Example: "lvl app restore [subcommand]",
 }
@@ -741,7 +741,9 @@ var appComponentRestoreGetCmd = &cobra.Command{
 
 		Restores := Level27Client.AppComponentRestoresGet(appId)
 
-		outputFormatTable(Restores, []string{"ID", "FILENAME", "STATUS"}, []string{"ID", "Filename", "Status"})
+		outputFormatTableFuncs(Restores, 
+			[]string{"ID", "FILENAME", "STATUS","EXPIRY_DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"}, 
+			[]interface{}{"ID", "Filename", "Status",func (r types.AppComponentRestore) string {return utils.FormatUnixTime(r.DtExpires)} ,"Appcomponent.ID", "Appcomponent.Name"})
 	},
 }
 
