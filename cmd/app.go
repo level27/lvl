@@ -158,7 +158,7 @@ func init() {
 
 	// ---- DOWNLOAD RESTORE FILE
 	appComponentRestoreCmd.AddCommand(appComponentRestoreDownloadCmd)
-	// flags needed for downloading the restore 
+	// flags needed for downloading the restore
 	appComponentRestoreDownloadCmd.Flags().StringVarP(&appComponentRestoreDownloadName, "filename", "f", "", "The name of the downloaded file.")
 	//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
 	// ---- BACKUP COMMAND
@@ -751,8 +751,8 @@ var appComponentRestoreGetCmd = &cobra.Command{
 		Restores := Level27Client.AppComponentRestoresGet(appId)
 
 		outputFormatTableFuncs(Restores,
-			[]string{"ID", "FILENAME", "STATUS", "EXPIRY_DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"},
-			[]interface{}{"ID", "Filename", "Status", func(r types.AppComponentRestore) string { return utils.FormatUnixTime(r.DtExpires) }, "Appcomponent.ID", "Appcomponent.Name"})
+			[]string{"ID", "FILENAME", "STATUS", "DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"},
+			[]interface{}{"ID", "Filename", "Status", func(r types.AppComponentRestore) string { return utils.FormatUnixTime(r.AvailableBackup.Date) }, "Appcomponent.ID", "Appcomponent.Name"})
 	},
 }
 
