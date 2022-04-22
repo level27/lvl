@@ -309,12 +309,11 @@ func resolveSystem(arg string) int {
 		return id
 	}
 
-	system := Level27Client.LookupSystem(arg)
-	if system == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find system: %s", arg))
-		return 0
-	}
-	return system.Id
+	return resolveShared(
+		Level27Client.LookupSystem(arg),
+		arg,
+		"system",
+		func (app types.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) }).Id
 }
 func resolveSystemProviderConfiguration(region int, arg string) int {
 	id, err := strconv.Atoi(arg)
@@ -339,13 +338,12 @@ func resolveSystemHasNetwork(systemID int, arg string) int {
 		return id
 	}
 
-	network := Level27Client.LookupSystemHasNetworks(systemID, arg)
-	if network == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find network: %s", arg))
-		return 0
-	}
 
-	return network.ID
+	return resolveShared(
+		Level27Client.LookupSystemHasNetworks(systemID, arg),
+		arg,
+		"system network",
+		func (app types.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) }).ID
 }
 
 func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
@@ -354,12 +352,11 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
 		return id
 	}
 
-	ip := Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg)
-	if ip == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find IP: %s", arg))
-	}
-
-	return ip.ID
+	return resolveShared(
+		Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg),
+		arg,
+		"system network IP",
+		func (app types.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) }).ID
 }
 
 func resolveSystemVolume(systemID int, arg string) int {
@@ -566,7 +563,7 @@ var systemUpdateCmd = &cobra.Command{
 			LimitWiops:                  system.LimitWiops,
 		}
 
-		data := roundTripJson(systemPut).(map[string]interface{})
+		data := utils.RoundTripJson(systemPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
@@ -1681,7 +1678,7 @@ var systemVolumeUpdateCmd = &cobra.Command{
 			Volumegroup:  volume.Volumegroup.ID,
 		}
 
-		data := roundTripJson(volumePut).(map[string]interface{})
+		data := utils.RoundTripJson(volumePut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
 		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))

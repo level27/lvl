@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime"
 	"os"
+	"net/url"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -14,26 +15,29 @@ import (
 //------------------------------------------------- Resolve functions -------------------------------------------------
 
 // GET appID based on name
-func (c *Client) AppLookup(name string) *types.App {
+func (c *Client) AppLookup(name string) []types.App {
+	results := []types.App{}
 	apps := c.Apps(types.CommonGetParams{Filter: name})
 	for _, app := range apps {
 		if app.Name == name {
-			return &app
+			results = append(results, app)
 		}
 	}
 
-	return nil
+	return results
 }
 
 // GET componentId based on name
-func (c *Client) AppComponentLookup(appId int, name string) *types.AppComponent {
+func (c *Client) AppComponentLookup(appId int, name string) []types.AppComponent{
+	results := []types.AppComponent{}
 	components := c.AppComponentsGet(appId, types.CommonGetParams{Filter: name})
 	for _, component := range components {
 		if component.Name == name {
-			return &component
+			results = append(results, component)
 		}
 	}
-	return nil
+
+	return results
 }
 
 //------------------------------------------------- APP MAIN SUBCOMMANDS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
@@ -130,6 +134,130 @@ func (c *Client) AppAction(appId int, action string) {
 	AssertApiError(err, "app")
 }
 
+
+// APP SSL CERTIFICATES
+
+// GET /apps/{appID}/sslcertificates
+func (c *Client) AppSslCertificatesGetList(appID int, sslType string, status string, get types.CommonGetParams) []types.AppSslCertificate {
+	var response struct {
+		SslCertificates []types.AppSslCertificate `json:"sslCertificates"`
+	}
+
+	endpoint := fmt.Sprintf(
+		"apps/%d/sslcertificates?sslType=%s&status=%s&%s",
+		appID,
+		url.QueryEscape(sslType),
+		url.QueryEscape(status),
+		formatCommonGetParams(get))
+
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesGetList")
+
+	return response.SslCertificates
+}
+
+// GET /apps/{appID}/sslcertificates/{sslCertificateID}
+func (c *Client) AppSslCertificatesGetSingle(appID int, sslCertificateID int) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d", appID, sslCertificateID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesGetSingle")
+
+	return response.SslCertificate
+}
+
+// POST /apps/{appID}/sslcertificates
+func (c *Client) AppSslCertificatesCreate(appID int, create types.AppSslCertificateCreate) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates", appID)
+	err := c.invokeAPI("POST", endpoint, create, &response)
+	AssertApiError(err, "AppSslCertificatesCreate")
+
+	return response.SslCertificate
+}
+
+// POST /apps/{appID}/sslcertificates (variant for sslType == "own")
+func (c *Client) AppSslCertificatesCreateOwn(appID int, create types.AppSslCertificateCreateOwn) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates", appID)
+	err := c.invokeAPI("POST", endpoint, create, &response)
+	AssertApiError(err, "AppSslCertificatesCreate")
+
+	return response.SslCertificate
+}
+
+// DELETE /apps/{appID}/sslcertificates/{sslCertificateID}
+func (c *Client) AppSslCertificatesDelete(appID int, sslCertificateID int) {
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d", appID, sslCertificateID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "AppSslCertificatesDelete")
+}
+
+// PUT /apps/{appID}/sslcertificates/{sslCertificateID}
+func (c *Client) AppSslCertificatesUpdate(appID int, sslCertificateID int, data map[string]interface{}) {
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d", appID, sslCertificateID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "AppSslCertificatesUpdate")
+}
+
+// Try to find an SSL certificate on an app by name.
+func (c *Client) AppSslCertificatesLookup(appID int, name string) []types.AppSslCertificate {
+	results := []types.AppSslCertificate{}
+	apps := c.AppSslCertificatesGetList(appID, "", "", types.CommonGetParams{Filter: name})
+	for _, cert := range apps {
+		if cert.Name == name {
+			results = append(results, cert)
+		}
+	}
+
+	return results
+}
+
+// POST /apps/{appID}/sslcertificates/{sslCertificateID}/actions
+func (c *Client) AppSslCertificatesActions(appID int, sslCertificateID int, actionType string) {
+	var request struct {
+		Type string `json:"type"`
+	}
+
+	request.Type = actionType
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d/actions", appID, sslCertificateID)
+	err := c.invokeAPI("POST", endpoint, request, nil)
+	AssertApiError(err, "AppSslCertificatesActions")
+}
+
+// POST /apps/{appID}/sslcertificates/{sslCertificateID}/fix
+func (c *Client) AppSslCertificatesFix(appID int, sslCertificateID int) types.AppSslCertificate {
+	var response struct {
+		SslCertificate types.AppSslCertificate `json:"sslCertificate"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d/fix", appID, sslCertificateID)
+	err := c.invokeAPI("POST", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesFix")
+
+	return response.SslCertificate
+}
+
+// GET /apps/{appID}/sslcertificates/{sslCertificateID}/key
+func (c *Client) AppSslCertificatesKey(appID int, sslCertificateID int) types.AppSslcertificateKey {
+	var response types.AppSslcertificateKey
+
+	endpoint := fmt.Sprintf("apps/%d/sslcertificates/%d/key", appID, sslCertificateID)
+	err := c.invokeAPI("GET", endpoint, nil, &response)
+	AssertApiError(err, "AppSslCertificatesKey")
+
+	return response
+}
 //------------------------------------------------- APP COMPONENTS (GET / DESCRIBE / CREATE)-------------------------------------------------
 
 // ---- GET LIST OF COMPONENTS

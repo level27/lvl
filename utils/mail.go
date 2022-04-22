@@ -32,23 +32,27 @@ func (c *Client) MailgroupsGetSingle(mailgroupID int) types.Mailgroup {
 	return response.Mailgroup
 }
 
-func (c *Client) MailgroupsLookup(name string) *types.Mailgroup {
+func (c *Client) MailgroupsLookup(name string) []types.Mailgroup {
+	results := []types.Mailgroup{}
 	mailgroups := c.MailgroupsGetList(types.CommonGetParams{Filter: name})
+
 	for _, val := range mailgroups {
 		if val.Name == name {
-			return &val
+			results = append(results, val)
+			continue
 		}
 
 		// Check domain names
 		for _, domain := range val.Domains {
 			fullName := fmt.Sprintf("%s.%s", domain.Name, domain.Domaintype.Extension)
 			if fullName == name {
-				return &val
+				results = append(results, val)
+				continue
 			}
 		}
 	}
 
-	return nil;
+	return results;
 }
 
 // POST /mailgroups
@@ -185,15 +189,16 @@ func (c *Client) MailgroupsMailboxesUpdate(mailgroupID int, mailboxID int, data 
 }
 
 
-func (c *Client) MailgroupsMailboxesLookup(mailgroupID int, name string) *types.MailboxShort {
+func (c *Client) MailgroupsMailboxesLookup(mailgroupID int, name string) []types.MailboxShort {
+	results := make([]types.MailboxShort, 0)
 	mailgroups := c.MailgroupsMailboxesGetList(mailgroupID, types.CommonGetParams{Filter: name})
 	for _, val := range mailgroups {
 		if val.Name == name || val.Username == name {
-			return &val
+			results = append(results, val)
 		}
 	}
 
-	return nil;
+	return results;
 }
 
 // GET /mailgroups/{mailgroupId}/mailboxes/{mailboxId}/addresses
@@ -249,15 +254,16 @@ func (c *Client) MailgroupsMailboxesAddressesUpdate(mailgroupID int, mailboxID i
 	AssertApiError(err, "MailgroupsMailboxesAddressesUpdate")
 }
 
-func (c *Client) MailgroupsMailboxesAddressesLookup(mailgroupID int, mailboxID int, address string) *types.MailboxAddress {
+func (c *Client) MailgroupsMailboxesAddressesLookup(mailgroupID int, mailboxID int, address string) []types.MailboxAddress {
+	results := []types.MailboxAddress{}
 	addresses := c.MailgroupsMailboxesAddressesGetList(mailgroupID, mailboxID, types.CommonGetParams{Filter: address})
 	for _, val := range addresses {
 		if val.Address == address {
-			return &val
+			results = append(results, val)
 		}
 	}
 
-	return nil;
+	return results;
 }
 
 
@@ -315,14 +321,15 @@ func (c *Client) MailgroupsMailforwardersUpdate(mailgroupID int, mailforwarderID
 }
 
 
-func (c *Client) MailgroupsMailforwardersLookup(mailgroupID int, name string) *types.Mailforwarder {
+func (c *Client) MailgroupsMailforwardersLookup(mailgroupID int, name string) []types.Mailforwarder {
+	results := []types.Mailforwarder{}
 	mailgroups := c.MailgroupsMailforwardersGetList(mailgroupID, types.CommonGetParams{Filter: name})
 	for _, val := range mailgroups {
 		if val.Address == name {
-			return &val
+			results = append(results, val)
 		}
 	}
 
-	return nil;
+	return results;
 }
 

@@ -51,15 +51,16 @@ func (c *Client) SystemCreate(req types.SystemPost) {
 
 // --------------------------- @PJ please fill in comments about code ------------------------------------
 // #region  @PJ please fill in comments about code
-func (c *Client) LookupSystem(name string) *types.System {
+func (c *Client) LookupSystem(name string) []types.System {
+	results := []types.System{}
 	systems := c.SystemGetList(types.CommonGetParams{Filter: name})
 	for _, system := range systems {
 		if system.Name == name {
-			return &system
+			results = append(results, system)
 		}
 	}
 
-	return nil
+	return results
 }
 
 // Returning a single system by its ID
@@ -633,15 +634,16 @@ func (c *Client) GetSystemProviderConfigurations() []types.SystemProviderConfigu
 
 // NETWORKS
 
-func (c *Client) LookupSystemHasNetworks(systemID int, name string) *types.SystemHasNetwork {
+func (c *Client) LookupSystemHasNetworks(systemID int, name string) []types.SystemHasNetwork {
+	results := []types.SystemHasNetwork{}
 	networks := c.SystemGetHasNetworks(systemID)
 	for _, network := range networks {
 		if network.Network.Name == name {
-			return &network
+			results = append(results, network)
 		}
 	}
 
-	return nil
+	return results
 }
 
 func (c *Client) GetSystemHasNetwork(systemID int, systemHasNetworkID int) types.SystemHasNetwork {
@@ -723,15 +725,16 @@ func (c *Client) SystemRemoveHasNetworkIps(systemID int, hasNetworkID int, ipID 
 	AssertApiError(err, "SystemRemoveHasNetworkIps")
 }
 
-func (c *Client) LookupSystemHasNetworkIp(systemID int, hasNetworkID int, address string) *types.SystemHasNetworkIp {
+func (c *Client) LookupSystemHasNetworkIp(systemID int, hasNetworkID int, address string) []types.SystemHasNetworkIp {
+	results := []types.SystemHasNetworkIp{}
 	ips := c.SystemGetHasNetworkIps(systemID, hasNetworkID)
 	for _, ip := range ips {
 		if IpsEqual(Ipv4StringIntToString(ip.Ipv4), address) || IpsEqual(ip.Ipv6, address) || IpsEqual(Ipv4StringIntToString(ip.PublicIpv4), address) || IpsEqual(ip.PublicIpv6, address) {
-			return &ip
+			results = append(results, ip)
 		}
 	}
 
-	return nil
+	return results
 }
 
 func (c *Client) SystemHasNetworkIpUpdate(systemID int, hasNetworkID int, hasNetworkIpID int, data map[string]interface{}) {

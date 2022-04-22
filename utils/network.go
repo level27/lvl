@@ -32,15 +32,16 @@ func (c *Client) GetNetwork(id int) types.Network {
 	return network.Network
 }
 
-func (c *Client) LookupNetwork(name string) *types.Network {
+func (c *Client) LookupNetwork(name string) []types.Network {
+	results := []types.Network{}
 	networks := c.GetNetworks(types.CommonGetParams{Filter: name})
 	for _, net := range networks {
 		if net.Name == name {
-			return &net
+			results = append(results, net)
 		}
 	}
 
-	return nil
+	return results
 }
 
 func (c *Client) NetworkLocate(networkID int) types.NetworkLocate {

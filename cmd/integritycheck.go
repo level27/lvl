@@ -37,7 +37,7 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 				// First arg is entity ID.
 				args[1:],
 				// Can't do lookups for integrity checks.
-				func(name string) *types.IntegrityCheck { return nil },
+				func(name string) []types.IntegrityCheck { return nil },
 				// Large funcs to pass entity type and ID along.
 				func(checkID int) types.IntegrityCheck { return Level27Client.EntityIntegrityCheck(entityType, entityID, checkID)},
 				func(get types.CommonGetParams) []types.IntegrityCheck { return Level27Client.EntityIntegrityChecks(entityType, entityID, get)})
