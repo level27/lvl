@@ -208,15 +208,16 @@ func (c *Client) AppSslCertificatesUpdate(appID int, sslCertificateID int, data 
 }
 
 // Try to find an SSL certificate on an app by name.
-func (c *Client) AppSslCertificatesLookup(appID int, name string) *types.AppSslCertificate {
+func (c *Client) AppSslCertificatesLookup(appID int, name string) []types.AppSslCertificate {
+	results := []types.AppSslCertificate{}
 	apps := c.AppSslCertificatesGetList(appID, "", "", types.CommonGetParams{Filter: name})
-	for _, app := range apps {
-		if app.Name == name {
-			return &app
+	for _, cert := range apps {
+		if cert.Name == name {
+			results = append(results, cert)
 		}
 	}
 
-	return nil
+	return results
 }
 
 // POST /apps/{appID}/sslcertificates/{sslCertificateID}/actions
