@@ -148,11 +148,11 @@ type AppSslCertificateActionRequest struct {
 
 // Restore type for an app
 type AppComponentRestore struct {
-	ID           int    `json:"id"`
-	Filename     string `json:"filename"`
-	Size         int    `json:"size"`
-	DtExpires    int    `json:"dtExpires"`
-	Status       string `json:"status"`
+	ID           int         `json:"id"`
+	Filename     string      `json:"filename"`
+	Size         interface{} `json:"size"`
+	DtExpires    interface{} `json:"dtExpires"`
+	Status       string      `json:"status"`
 	Appcomponent struct {
 		ID                     int    `json:"id"`
 		Name                   string `json:"name"`
