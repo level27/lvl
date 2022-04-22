@@ -2,7 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"mime"
+	"os"
 	"net/url"
 	"strings"
 
@@ -65,7 +68,6 @@ func (c *Client) Apps(getParams types.CommonGetParams) []types.App {
 
 	return apps.Apps
 }
-
 
 // ---- CREATE NEW APP
 func (c *Client) AppCreate(req types.AppPostRequest) types.App {
@@ -283,6 +285,39 @@ func (c *Client) AppComponentGetSingle(appId int, id int) types.AppComponent {
 	return component.Data
 }
 
+// ---- DELETE COMPONENT
+func (c *Client) AppComponentsDelete(appId int, componentId int, isDeleteConfirmed bool) {
+	endpoint := fmt.Sprintf("apps/%v/components/%v", appId, componentId)
+
+	if isDeleteConfirmed {
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "appcomponent")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the appcomponent with ID: %v? Please type [y]es or [n]o: ", componentId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "appcomponent")
+		case "n", "no":
+			log.Printf("Delete canceled for appcomponent: %v", componentId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.AppComponentsDelete(appId, componentId, false)
+		}
+	}
+
+}
+
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 // ---- GET LIST OFF APPCOMPONENTTYPES
 func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
@@ -294,4 +329,211 @@ func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
 	err := c.invokeAPI("GET", endpoint, nil, &componenttypes)
 	AssertApiError(err, "appcomponent")
 	return componenttypes.Data
+}
+
+//------------------------------------------------- APP SSL CERTIFICATES (GET/ ADD/ DELETE )-------------------------------------------------
+
+// ---- GET LIST OF SSL CERTIFICATES
+func (c *Client) AppCertificateGet(appId int) []types.SslCertificate {
+	var certificates struct {
+		Data []types.SslCertificate `json:"sslCertificates"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
+	err := c.invokeAPI("GET", endpoint, nil, &certificates)
+	AssertApiError(err, "appCertificate")
+	return certificates.Data
+}
+
+// ---- ADD SSL CERTIFICATE
+func (c *Client) AppCertificateAdd(appId int, req interface{}) types.SslCertificate {
+	var certificate struct {
+		Data types.SslCertificate `json:"sslCertificate"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
+	err := c.invokeAPI("POST", endpoint, req, &certificate)
+	AssertApiError(err, "appCertificate")
+	return certificate.Data
+}
+
+// ---- DELETE SSL CERTIFICATE
+func (c *Client) AppCertificateDelete(appId int, certificateId int, isDeleteConfirmed bool) {
+
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, certificateId)
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "appCertificate")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the ssl certificate with ID: %v? Please type [y]es or [n]o: ", certificateId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, certificateId)
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "appCertificate")
+		case "n", "no":
+			log.Printf("Delete canceled for ssl certificate: %v", certificateId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.AppCertificateDelete(appId, certificateId, false)
+		}
+	}
+}
+
+// ---- FIX SSL CERTIFICATE
+func (c *Client) AppCertificateFix(appID int, certificateId int) {
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/fix", appID, certificateId)
+	err := c.invokeAPI("POST", endpoint, nil, nil)
+	AssertApiError(err, "appCertificate")
+}
+
+// ---- GET PRIVATE KEY (TYPE 'OWN' CERTIFICATE)
+func (c *Client) AppCertificateKey(appId int, certificateId int) {
+	var key struct {
+		Data string `json:"sslKey"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/key", appId, certificateId)
+	err := c.invokeAPI("GET", endpoint, nil, &key)
+	AssertApiError(err, "appCertificate")
+
+	fmt.Print(key.Data)
+}
+
+//------------------------------------------------- APP SSL CERTIFICATES (ACTIONS)-------------------------------------------------
+// ACTION RETRY / VALIDATECHALLENGE (SSL)
+func (c *Client) AppCertificateAction(appId int, certificateId int, actionType string) {
+	// create request data
+	request := types.AppSslCertificateActionRequest{
+		Type: actionType,
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/actions", appId, certificateId)
+	err := c.invokeAPI("POST", endpoint, request, nil)
+	AssertApiError(err, "appCertificate")
+
+	log.Println("Action retry sent to certificate.")
+}
+
+//-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+
+// ---- GET LIST OF APP RESTORES
+func (c *Client) AppComponentRestoresGet(appId int) []types.AppComponentRestore {
+	var restores struct {
+		Data []types.AppComponentRestore `json:"restores"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/restores", appId)
+	err := c.invokeAPI("GET", endpoint, nil, &restores)
+	AssertApiError(err, "appRestore")
+	return restores.Data
+}
+
+// ---- CREATE NEW RESTORE
+func (c *Client) AppComponentRestoreCreate(appId int, req types.AppComponentRestoreRequest) types.AppComponentRestore {
+	var restore struct {
+		Data types.AppComponentRestore `json:"restore"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/restores", appId)
+	err := c.invokeAPI("POST", endpoint, req, &restore)
+	AssertApiError(err, "appRestores")
+
+	return restore.Data
+}
+
+// ---- DELETE RESTORE
+func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteConfirmed bool) {
+	endpoint := fmt.Sprintf("apps/%v/restores/%v", appId, restoreId)
+
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "appRestore")
+		log.Print("Restore succesfully deleted.")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the restore with ID: %v? Please type [y]es or [n]o: ", restoreId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "appRestore")
+			log.Print("Restore succesfully deleted.")
+		case "n", "no":
+			log.Printf("Delete canceled for app restore: %v", restoreId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.AppCertificateDelete(appId, restoreId, false)
+		}
+	}
+}
+
+
+// ---- DOWNLOAD RESTORE FILE
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
+	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
+	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/tar.gz"})
+
+	filename := "restore.tar.gz"
+	contentDisp := res.Header.Get("Content-Disposition")
+	if contentDisp != "" {
+		_, params, err := mime.ParseMediaType(contentDisp)
+		if err != nil {
+			log.Fatalf("Failed to parse Content-Disposition!")
+		}
+
+		filename = params["filename"]
+	}
+
+	defer res.Body.Close()
+
+	if err == nil {
+		if isErrorCode(res.StatusCode) {
+			var body []byte
+			body, err = io.ReadAll(res.Body)
+			if err == nil {
+				err = formatRequestError(res.StatusCode, body)
+			}
+		}
+	}
+	AssertApiError(err, "appRestore")
+
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("Failed to create file! %s", err.Error())
+	}
+
+	fmt.Printf("Saving report to %s\n", filename)
+
+	defer file.Close()
+
+	io.Copy(file, res.Body)
+}
+//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
+func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
+	var backups struct {
+		Data []types.AppComponentAvailableBackup `json:"availableBackups"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/components/%v/availablebackups", appId, componentId)
+	err := c.invokeAPI("GET", endpoint, nil, &backups)
+	AssertApiError(err, "availablebackup")
+
+	return backups.Data
 }

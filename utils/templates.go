@@ -95,6 +95,9 @@ func jobChildCountTotalRecurse(job types.Job) int {
 }
 
 func FormatUnixTimeF(seconds interface{}, fmt string) string {
+	if seconds == nil{
+		return "null"
+	}
 	var secs int64
 	secString, success := seconds.(string)
 	if success {
@@ -118,8 +121,8 @@ func FormatUnixTimeF(seconds interface{}, fmt string) string {
 
 // Format a unix time value returned by the API in a way that is human-readable.
 func FormatUnixTime(seconds interface{}) string {
-	result :=  FormatUnixTimeF(seconds, "2006 Jan _2 15:04:05")
-	if result == "1970 Jan  1 01:00:00" {
+	result :=  FormatUnixTimeF(seconds, time.RFC1123)
+	if result == "1970 Jan  1 01:00:00" || result == "Thu, 01 Jan 1970 01:00:00 CET" {
 		return "null"
 	}else{
 		return result
