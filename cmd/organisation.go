@@ -40,12 +40,12 @@ func resolveOrganisation(arg string) int {
 		return id
 	}
 
-	org := Level27Client.LookupOrganisation(arg)
-	if org == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find organisation: %s", arg))
-		return 0
-	}
-	return org.ID
+
+	return resolveShared(
+		Level27Client.LookupOrganisation(arg),
+		arg,
+		"organisation",
+		func (app types.Organisation) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
 func getOrganisations(ids []int) []types.Organisation {

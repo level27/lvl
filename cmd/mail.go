@@ -151,12 +151,11 @@ func resolveMailgroup(arg string) int {
 		return id
 	}
 
-	mailgroup := Level27Client.MailgroupsLookup(arg)
-	if mailgroup == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find mailgroup: %s", arg))
-		return 0
-	}
-	return mailgroup.ID
+	return resolveShared(
+		Level27Client.MailgroupsLookup(arg),
+		arg,
+		"mailgroup",
+		func (group types.Mailgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
 }
 
 func resolveMailbox(mailgroupID int, arg string) int {
@@ -165,12 +164,11 @@ func resolveMailbox(mailgroupID int, arg string) int {
 		return id
 	}
 
-	mailbox := Level27Client.MailgroupsMailboxesLookup(mailgroupID, arg)
-	if mailbox == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find mailbox: %s", arg))
-		return 0
-	}
-	return mailbox.ID
+	return resolveShared(
+		Level27Client.MailgroupsMailboxesLookup(mailgroupID, arg),
+		arg,
+		"mailbox",
+		func (box types.MailboxShort) string { return fmt.Sprintf("%s (%s, %d)", box.Name, box.Username, box.ID) }).ID
 }
 
 func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) int {
@@ -179,12 +177,12 @@ func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) int {
 		return id
 	}
 
-	address := Level27Client.MailgroupsMailboxesAddressesLookup(mailgroupID, mailboxID, arg)
-	if address == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find mailbox address: %s", arg))
-		return 0
-	}
-	return address.ID
+
+	return resolveShared(
+		Level27Client.MailgroupsMailboxesAddressesLookup(mailgroupID, mailboxID, arg),
+		arg,
+		"mailbox address",
+		func (address types.MailboxAddress) string { return fmt.Sprintf("%s (%d)", address.Address, address.ID) }).ID
 }
 
 func resolveMailforwarder(mailgroupID int, arg string) int {
@@ -193,12 +191,12 @@ func resolveMailforwarder(mailgroupID int, arg string) int {
 		return id
 	}
 
-	mailforwarder := Level27Client.MailgroupsMailforwardersLookup(mailgroupID, arg)
-	if mailforwarder == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find mailforwarder: %s", arg))
-		return 0
-	}
-	return mailforwarder.ID
+
+	return resolveShared(
+		Level27Client.MailgroupsMailforwardersLookup(mailgroupID, arg),
+		arg,
+		"mailforwarder",
+		func (app types.Mailforwarder) string { return fmt.Sprintf("%s (%d)", app.Address, app.ID) }).ID
 }
 
 

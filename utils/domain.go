@@ -36,15 +36,16 @@ func (c *Client) Domain(id int) types.Domain {
 	return domain.Data
 }
 
-func (c *Client) LookupDomain(name string) *types.Domain {
+func (c *Client) LookupDomain(name string) []types.Domain {
+	results := []types.Domain{}
 	domains := c.Domains(types.CommonGetParams{ Filter: name })
 	for _, domain := range domains {
 		if domain.Fullname == name {
-			return &domain
+			results = append(results, domain)
 		}
 	}
 
-	return nil
+	return results
 }
 
 //Domain gets a domain from the API
