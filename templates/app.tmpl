@@ -8,7 +8,9 @@
 {{vt "yellow"}}Organisation:
   {{vt "yellow"}}ID:        {{vt "brightwhite"}}{{.Organisation.ID}}
   {{vt "yellow"}}Name:      {{vt "brightwhite"}}{{.Organisation.Name}}
-  {{vt "yellow"}}Reseller:  {{vt "brightwhite"}}{{.Organisation.Reseller}}
+  {{vt "yellow"}}Reseller:  
+    ID: {{vt "brightwhite"}}{{.Organisation.Reseller.ID}}{{vt "yellow"}}
+    NAME: {{vt "brightwhite"}}{{.Organisation.Reseller.Name}}
 
 {{- /* COMPONENTS */}}
 {{ if gt (len .Components) 0 }}
@@ -16,8 +18,8 @@
 {{ vt "brightblue"}}- {{vt "yellow"}}ID:        {{vt "brightwhite"}}{{.ID}}
   {{vt "yellow"}}Name:      {{vt "brightwhite"}}{{.Name}} 
   {{vt "yellow"}}Category:  {{vt "brightwhite"}}{{.Category}}
-  {{vt "yellow"}}Type:      {{vt "brightwhite"}}{{.AppComponentType}}
-{{- end }}
+  {{vt "yellow"}}Type:      {{vt "brightwhite"}}{{.AppComponentType}} 
+{{ end }}
 {{ else }}
 {{vt "yellow"}}Components: {{vt "brightblack"}}(none)
 {{ end }}
