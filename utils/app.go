@@ -12,26 +12,29 @@ import (
 //------------------------------------------------- Resolve functions -------------------------------------------------
 
 // GET appID based on name
-func (c *Client) AppLookup(name string) *types.App {
+func (c *Client) AppLookup(name string) []types.App {
+	results := []types.App{}
 	apps := c.Apps(types.CommonGetParams{Filter: name})
 	for _, app := range apps {
 		if app.Name == name {
-			return &app
+			results = append(results, app)
 		}
 	}
 
-	return nil
+	return results
 }
 
 // GET componentId based on name
-func (c *Client) AppComponentLookup(appId int, name string) *types.AppComponent{
+func (c *Client) AppComponentLookup(appId int, name string) []types.AppComponent{
+	results := []types.AppComponent{}
 	components := c.AppComponentsGet(appId, types.CommonGetParams{Filter: name})
 	for _, component := range components {
 		if component.Name == name {
-			return &component
+			results = append(results, component)
 		}
 	}
-	return nil
+
+	return results
 }
 
 //------------------------------------------------- APP MAIN SUBCOMMANDS (GET / CREATE  / UPDATE / DELETE / DESCRIBE)-------------------------------------------------

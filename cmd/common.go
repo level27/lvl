@@ -355,30 +355,79 @@ func confirmPrompt(message string) bool {
 // Will output the list of entities.
 func resolveGets[T interface{}](
 	args []string,
-	lookup func(string) *T,
+	lookup func(string) []T,
 	getSingle func(int) T,
 	getList func(types.CommonGetParams) []T) []T {
 	if len(args) == 0 {
 		// No arguments, return full list from API.
 		return getList(optGetParameters)
 	} else {
-		results := make([]T, len(args))
-		for i, val := range args {
+		results := make([]T, 0, len(args))
+		for _, val := range args {
 			id, err := strconv.Atoi(val)
 			if err == nil {
 				// Integer ID
-				results[i] = getSingle(id)
+				results = append(results, getSingle(id))
 			} else {
 				// Look up by name
 				lookedUp := lookup(val)
 				if lookedUp == nil {
 					cobra.CheckErr(fmt.Sprintf("Unable to find '%s'", val))
 				}
-				results[i] = *lookedUp
+				results = append(results, lookedUp...)
 			}
 		}
 
 		return results
 
 	}
+}
+
+func resolveShared[T interface{}](
+	options []T,
+	arg string,
+	name string,
+	getDesc func(T) string,
+) T {
+	switch len(options) {
+	case 0:
+		cobra.CheckErr(fmt.Sprintf("Unable to find %s: %s", name, arg))
+		// Unreachable
+		return options[0];
+	case 1:
+		return options[0]
+	default:
+		// Multiple candidates, allow user to select which
+
+		fmt.Printf("Multiple options exist for %s '%s':\n", name, arg)
+
+		if !isStdinTerminal() {
+			// If stdin isn't a terminal (e.g. being piped into) then we can't just prompt for input.
+			// So abort in that case.
+			cobra.CheckErr("Aborting because command not interactive")
+		}
+
+		for i, option := range options {
+			fmt.Printf("[%d] %s\n", i, getDesc(option))
+		}
+
+		fmt.Printf("Choose one: ")
+		var resp int
+		_, err := fmt.Scan(&resp)
+		cobra.CheckErr(err)
+
+		if resp < 0 || resp >= len(options) {
+			cobra.CheckErr("Invalid index given")
+		}
+
+		return options[resp]
+	}
+
+}
+
+func isStdinTerminal() bool {
+	// See https://stackoverflow.com/a/43947435/4678631
+	fi, _ := os.Stdin.Stat()
+
+	return fi.Mode() & os.ModeCharDevice != 0
 }

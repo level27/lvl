@@ -14,13 +14,12 @@ func resolveNetwork(arg string) int {
 		return id
 	}
 
-	network := Level27Client.LookupNetwork(arg)
-	if network == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find network: %s", arg))
-		return 0
-	}
 
-	return network.ID
+	return resolveShared(
+		Level27Client.LookupNetwork(arg),
+		arg,
+		"network",
+		func (app types.Network) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
 func init() {

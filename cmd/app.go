@@ -150,12 +150,11 @@ func resolveApp(arg string) int {
 		return id
 	}
 
-	app := Level27Client.AppLookup(arg)
-	if app == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find app: %s", arg))
-		return 0
-	}
-	return app.ID
+	return resolveShared(
+		Level27Client.AppLookup(arg),
+		arg,
+		"app",
+		func (app types.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
 func resolveAppSslCertificate(appID int, arg string) int {
@@ -180,12 +179,11 @@ func resolveAppComponent(appId int ,arg string) int {
 		return id
 	}
 
-	appcomponent := Level27Client.AppComponentLookup(appId, arg)
-	if appcomponent == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find component: %s", arg))
-		return 0
-	}
-	return int(appcomponent.ID)
+	return int(resolveShared(
+		Level27Client.AppComponentLookup(appId, arg),
+		arg,
+		"component",
+		func (comp types.AppComponent) string { return fmt.Sprintf("%s (%d)", comp.Name, comp.ID) }).ID)
 }
 
 // MAIN COMMAND APPS

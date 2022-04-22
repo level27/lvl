@@ -116,13 +116,14 @@ func (c *Client) VolumegroupVolumeGetList(volumegroupID int, get types.CommonGet
 	return response.Volumes
 }
 
-func (c *Client) LookupVolumegroupVolumes(volumeGroupID int, name string) *types.Volume {
+func (c *Client) LookupVolumegroupVolumes(volumeGroupID int, name string) []types.Volume {
+	results := []types.Volume{}
 	volumes := c.VolumegroupVolumeGetList(volumeGroupID, types.CommonGetParams{Filter: name})
 	for _, volume := range volumes {
 		if volume.Name == name {
-			return &volume
+			results = append(results, volume)
 		}
 	}
 
-	return nil
+	return results
 }

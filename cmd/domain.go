@@ -207,12 +207,12 @@ func resolveDomain(arg string) int {
 		return id
 	}
 
-	domain := Level27Client.LookupDomain(arg)
-	if domain == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find domain: %s", arg))
-		return 0
-	}
-	return domain.ID
+
+	return resolveShared(
+		Level27Client.LookupDomain(arg),
+		arg,
+		"domain",
+		func (domain types.Domain) string { return fmt.Sprintf("%s (%d)", domain.Name, domain.ID) }).ID
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------

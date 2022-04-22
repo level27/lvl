@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/spf13/cobra"
+	"bitbucket.org/level27/lvl/types"
 )
 
 func resolveVolumegroupVolume(volumeGroupID int, arg string) int {
@@ -13,11 +13,9 @@ func resolveVolumegroupVolume(volumeGroupID int, arg string) int {
 		return id
 	}
 
-	volume := Level27Client.LookupVolumegroupVolumes(volumeGroupID, arg)
-	if volume == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find volume: %s", arg))
-		return 0
-	}
-
-	return volume.ID
+	return resolveShared(
+		Level27Client.LookupVolumegroupVolumes(volumeGroupID, arg),
+		arg,
+		"volume",
+		func (app types.Volume) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
