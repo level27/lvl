@@ -9,7 +9,10 @@ type App struct {
 	Organisation   struct {
 		ID       int    `json:"id"`
 		Name     string `json:"name"`
-		Reseller string `json:"reseller"`
+		Reseller struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"reseller"`
 	} `json:"organisation"`
 	DtExpires     int    `json:"dtExpires"`
 	BillingStatus string `json:"billingStatus"`
@@ -86,28 +89,29 @@ type AppSslCertificate struct {
 }
 
 type AppSslCertificateCreate struct {
-	Name string `json:"name"`
-	SslType string `json:"sslType"`
+	Name                   string `json:"name"`
+	SslType                string `json:"sslType"`
 	AutoSslCertificateUrls string `json:"autoSslCertificateUrls"`
-	AutoUrlLink bool `json:"autoUrlLink"`
-	SslForce bool `json:"sslForce"`
+	AutoUrlLink            bool   `json:"autoUrlLink"`
+	SslForce               bool   `json:"sslForce"`
 }
 
 type AppSslCertificateCreateOwn struct {
 	AppSslCertificateCreate
-	SslKey string `json:"sslKey"`
-	SslCrt string `json:"sslCrt"`
+	SslKey      string `json:"sslKey"`
+	SslCrt      string `json:"sslCrt"`
 	SslCabundle string `json:"sslCabundle"`
 }
 
 type AppSslCertificatePut struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
 	SslType string `json:"sslType"`
 }
 
 type AppSslcertificateKey struct {
 	SslKey string `json:"sslKey"`
 }
+
 //type appcomponent
 type AppComponent struct {
 	App struct {
