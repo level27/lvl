@@ -23,7 +23,7 @@ func (c *Client) AppLookup(name string) *types.App {
 }
 
 // GET componentId based on name
-func (c *Client) AppComponentLookup(appId int, name string) *types.AppComponent{
+func (c *Client) AppComponentLookup(appId int, name string) *types.AppComponent {
 	components := c.AppComponentsGet(appId, types.CommonGetParams{Filter: name})
 	for _, component := range components {
 		if component.Name == name {
@@ -61,7 +61,6 @@ func (c *Client) Apps(getParams types.CommonGetParams) []types.App {
 
 	return apps.Apps
 }
-
 
 // ---- CREATE NEW APP
 func (c *Client) AppCreate(req types.AppPostRequest) types.App {
@@ -156,9 +155,8 @@ func (c *Client) AppComponentGetSingle(appId int, id int) types.AppComponent {
 }
 
 // ---- DELETE COMPONENT
-func (c *Client) AppComponentsDelete(appId int, componentId int, isDeleteConfirmed bool){
+func (c *Client) AppComponentsDelete(appId int, componentId int, isDeleteConfirmed bool) {
 	endpoint := fmt.Sprintf("apps/%v/components/%v", appId, componentId)
-
 
 	if isDeleteConfirmed {
 		err := c.invokeAPI("DELETE", endpoint, nil, nil)
@@ -177,7 +175,7 @@ func (c *Client) AppComponentsDelete(appId int, componentId int, isDeleteConfirm
 		switch strings.ToLower(userResponse) {
 		case "y", "yes":
 			err := c.invokeAPI("DELETE", endpoint, nil, nil)
-		AssertApiError(err, "appcomponent")
+			AssertApiError(err, "appcomponent")
 		case "n", "no":
 			log.Printf("Delete canceled for appcomponent: %v", componentId)
 		default:
@@ -187,7 +185,6 @@ func (c *Client) AppComponentsDelete(appId int, componentId int, isDeleteConfirm
 		}
 	}
 
-	
 }
 
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
@@ -296,11 +293,10 @@ func (c *Client) AppCertificateAction(appId int, certificateId int, actionType s
 	log.Println("Action retry sent to certificate.")
 }
 
-
 //-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 
 // ---- GET LIST OF APP RESTORES
-func (c *Client)AppRestoresGet(appId int) []types.AppComponentRestore{
+func (c *Client) AppComponentRestoresGet(appId int) []types.AppComponentRestore {
 	var restores struct {
 		Data []types.AppComponentRestore `json:"restores"`
 	}
@@ -311,15 +307,26 @@ func (c *Client)AppRestoresGet(appId int) []types.AppComponentRestore{
 	return restores.Data
 }
 
-
 // ---- CREATE NEW RESTORE
-func (c *Client)AppRestoreCreate(appId int, req types.AppComponentRestoreRequest) types.AppComponentRestore{
+func (c *Client) AppComponentRestoreCreate(appId int, req types.AppComponentRestoreRequest) types.AppComponentRestore {
 	var restore struct {
 		Data types.AppComponentRestore `json:"restore"`
 	}
-	endpoint :=  fmt.Sprintf("apps/%v/restores", appId)
+	endpoint := fmt.Sprintf("apps/%v/restores", appId)
 	err := c.invokeAPI("POST", endpoint, req, &restore)
 	AssertApiError(err, "appRestores")
 
 	return restore.Data
+}
+
+//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
+func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
+	var backups struct {
+		Data []types.AppComponentAvailableBackup `json:"availableBackups"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/components/%v/availablebackups", appId, componentId)
+	err := c.invokeAPI("GET", endpoint, nil, &backups)
+	AssertApiError(err, "availablebackup")
+
+	return backups.Data
 }

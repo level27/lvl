@@ -152,9 +152,10 @@ func init() {
 	appComponentRestoreCmd.AddCommand(appComponentRestoreCreateCmd)
 
 	//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
-
-	// ---- GET LIST OF BACKUPS
+	// ---- BACKUP COMMAND
 	appComponentCmd.AddCommand(appComponentBackupsCmd)
+	// ---- GET LIST OF BACKUPS
+	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
 
 }
 
@@ -738,7 +739,7 @@ var appComponentRestoreGetCmd = &cobra.Command{
 		// search for appId based on name
 		appId := resolveApp(args[0])
 
-		Restores := Level27Client.AppRestoresGet(appId)
+		Restores := Level27Client.AppComponentRestoresGet(appId)
 
 		outputFormatTable(Restores, []string{"ID", "FILENAME", "STATUS"}, []string{"ID", "Filename", "Status"})
 	},
@@ -778,7 +779,7 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 			Appcomponent:    componentId,
 			AvailableBackup: backupId,
 		}
-		restore := Level27Client.AppRestoreCreate(appId, request)
+		restore := Level27Client.AppComponentRestoreCreate(appId, request)
 
 		log.Printf("Restore created. [ID: %v].", restore.ID)
 	},
@@ -789,12 +790,22 @@ var appComponentNameBackup string
 var appComponentBackupsCmd = &cobra.Command{
 	Use:     "backup",
 	Short:   "Commands for managing availableBackups.",
-	Example: "lvl app component backup get MyAppName --component MyComponentName",
-	Args:    cobra.ExactArgs(1),
+	Example: "lvl app component backup get MyAppName MyComponentName",
+}
+
+var appComponentBackupsGetCmd = &cobra.Command{
+	Use:     "get",
+	Short:   "Show list of available backups.",
+	Example: "lvl app component backup get MyAppName MyComponentName",
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// search appId based on appname
 		appId := resolveApp(args[0])
+		// search componentId based on name
+		componentId := resolveAppComponent(appId, args[1])
 
-		log.Print(appId)
+		availableBackups := Level27Client.AppComponentbackupsGet(appId, componentId)
+
+		outputFormatTable(availableBackups , []string{"ID", "SNAPSHOTNAME"}, []string{"ID", "SnapshotName"})
 	},
 }

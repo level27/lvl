@@ -193,3 +193,24 @@ type AppComponentRestoreRequest struct {
 	Appcomponent    int `json:"appcomponent"`
 	AvailableBackup int `json:"availableBackup"`
 }
+
+// type availablebackup for an appcomponent
+type AppComponentAvailableBackup struct {
+	Date          string `json:"date"`
+	ID            int    `json:"id"`
+	RestoreSystem struct {
+		Fqdn string `json:"fqdn"`
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"restoreSystem"`
+	SnapshotName   string `json:"snapshotName"`
+	Status         string `json:"status"`
+	StatusCategory string `json:"statusCategory"`
+	StorageUID     string `json:"storageUid"`
+	System         struct {
+		Fqdn string `json:"fqdn"`
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"system"`
+	VolumeUID string `json:"volumeUid"`
+}
