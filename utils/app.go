@@ -319,6 +319,41 @@ func (c *Client) AppComponentRestoreCreate(appId int, req types.AppComponentRest
 	return restore.Data
 }
 
+// ---- DELETE RESTORE
+func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteConfirmed bool) {
+	endpoint := fmt.Sprintf("apps/%v/restores/%v", appId, restoreId)
+
+	// when confirmation flag is set, delete check without confirmation question
+	if isDeleteConfirmed {
+		err := c.invokeAPI("DELETE", endpoint, nil, nil)
+		AssertApiError(err, "appRestore")
+		log.Print("Restore succesfully deleted.")
+	} else {
+		var userResponse string
+		// ask user for confirmation on deleting the check
+		question := fmt.Sprintf("Are you sure you want to delete the restore with ID: %v? Please type [y]es or [n]o: ", restoreId)
+		fmt.Print(question)
+		//reading user response
+		_, err := fmt.Scan(&userResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// check if user confirmed the deletion of the check or not
+		switch strings.ToLower(userResponse) {
+		case "y", "yes":
+			err := c.invokeAPI("DELETE", endpoint, nil, nil)
+			AssertApiError(err, "appRestore")
+			log.Print("Restore succesfully deleted.")
+		case "n", "no":
+			log.Printf("Delete canceled for app restore: %v", restoreId)
+		default:
+			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
+
+			c.AppCertificateDelete(appId, restoreId, false)
+		}
+	}
+}
+
 //-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
 func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
 	var backups struct {

@@ -151,6 +151,11 @@ func init() {
 	// ---- CREATE RESTORE FOR APPCOMPONENT
 	appComponentRestoreCmd.AddCommand(appComponentRestoreCreateCmd)
 
+	// ---- DELETE RESTORE
+	appComponentRestoreCmd.AddCommand(appRestoreDeleteCmd)
+	//flag to skip confirmation when deleting a restore
+	appRestoreDeleteCmd.Flags().BoolVarP(&isAppRestoreDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
+
 	//-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
 	// ---- BACKUP COMMAND
 	appComponentCmd.AddCommand(appComponentBackupsCmd)
@@ -721,7 +726,7 @@ var appCertificateActionValidateCmd = &cobra.Command{
 
 // #endregion
 
-//-------------------------------------------------  APP COMPONENT RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+//-------------------------------------------------  APP COMPONENT RESTORE (GET / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 // ---- RESTORE COMMAND
 var appComponentRestoreCmd = &cobra.Command{
 	Use:     "restores",
@@ -741,20 +746,9 @@ var appComponentRestoreGetCmd = &cobra.Command{
 
 		Restores := Level27Client.AppComponentRestoresGet(appId)
 
-		outputFormatTableFuncs(Restores, 
-			[]string{"ID", "FILENAME", "STATUS","EXPIRY_DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"}, 
-			[]interface{}{"ID", "Filename", "Status",func (r types.AppComponentRestore) string {return utils.FormatUnixTime(r.DtExpires)} ,"Appcomponent.ID", "Appcomponent.Name"})
-	},
-}
-
-// ---- DESCRIBE A RESTORE
-var appRestoreDescribeCmd = &cobra.Command{
-	Use:     "describe",
-	Short:   "Get detailed info about a specific restore on an app.",
-	Example: "lvl app component restore describe MyAppName 4532",
-	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-
+		outputFormatTableFuncs(Restores,
+			[]string{"ID", "FILENAME", "STATUS", "EXPIRY_DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"},
+			[]interface{}{"ID", "Filename", "Status", func(r types.AppComponentRestore) string { return utils.FormatUnixTime(r.DtExpires) }, "Appcomponent.ID", "Appcomponent.Name"})
 	},
 }
 
@@ -787,6 +781,25 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 	},
 }
 
+// ---- DELETE A RESTORE
+var isAppRestoreDeleteConfirmed bool
+var appRestoreDeleteCmd = &cobra.Command{
+	Use:     "delete",
+	Short:   "Delete a specific restore from an app.",
+	Example: "lvl app component restore delete MyAppName 4532",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+
+		// check if restoreId is valid type
+		restoreId := checkSingleIntID(args[1], "restore")
+
+		Level27Client.AppComponentRestoresDelete(appId, restoreId, isAppRestoreDeleteConfirmed)
+
+	},
+}
+
 //-------------------------------------------------  APP COMPONENT BACKUPS (GET) -------------------------------------------------
 var appComponentNameBackup string
 var appComponentBackupsCmd = &cobra.Command{
@@ -808,7 +821,6 @@ var appComponentBackupsGetCmd = &cobra.Command{
 
 		availableBackups := Level27Client.AppComponentbackupsGet(appId, componentId)
 
-		outputFormatTableFuncs(availableBackups , []string{"ID", "SNAPSHOTNAME", "DATE"}, []interface{}{"ID", "SnapshotName", func (a types.AppComponentAvailableBackup) string {return utils.FormatUnixTime(a.Date)}})
+		outputFormatTableFuncs(availableBackups, []string{"ID", "SNAPSHOTNAME", "DATE"}, []interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string { return utils.FormatUnixTime(a.Date) }})
 	},
 }
-
