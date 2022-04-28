@@ -186,6 +186,11 @@ func init() {
 	flags = appMigrationsCreateCmd.Flags()
 	flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
 	flags.StringArrayVarP(&appMigrationCreateItems, "migration-items", "", []string{}, "Migration items. each item should contain: type, source, sourceInfo, destination, destinationId, ord, sshkey")
+
+	// ---- UPDATE MIGRATION
+	appMigrationsCmd.AddCommand(appMigrationsUpdateCmd)
+	flags = appMigrationsUpdateCmd.Flags()
+	flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
 	
 }
 
@@ -1156,60 +1161,60 @@ var appMigrationsCreateCmd = &cobra.Command{
 		//Level27Client.AppMigrationsCreate(appId, request)
 
 		// loop over each given Item by the user
-		for _, item := range appMigrationCreateItems{
-			fmt.Println(item)
-			//check for each item if its defined correctly and return a valig MigrationArrayItem
-			checkedItem := ValidateMigrationItem(item)
+		// for _, item := range appMigrationCreateItems{
+		// 	fmt.Println(item)
+		// 	//check for each item if its defined correctly and return a valig MigrationArrayItem
+		// 	checkedItem := ValidateMigrationItem(item)
 			
 			
-		}
+		// }
 		
 	},
 }
 
-func ValidateMigrationItem(values string){
-	// split value on comma and put values in array
-	valueSplitted := strings.Split(values, ",")
+// func ValidateMigrationItem(values string){
+// 	// split value on comma and put values in array
+// 	valueSplitted := strings.Split(values, ",")
 
 
-	// for each splitted value check if its defined correctly -> =
-	for _ , keyValuePair := range valueSplitted{
-		key, value := ValidateMigrationItemKeyValuePair(keyValuePair)
-		req := types.AppMigrationItem{}
-		req["sd"] = sdf
-	}
+// 	// for each splitted value check if its defined correctly -> =
+// 	for _ , keyValuePair := range valueSplitted{
+// 		key, value := ValidateMigrationItemKeyValuePair(keyValuePair)
+// 		req := types.AppMigrationItem{}
+// 		req["sd"] = sdf
+// 	}
 
-}
+// }
 
-func ValidateMigrationItemKeyValuePair(keyValuePair string) (string ,string){
-	possibleMigrationItemProps := []string{"type", "source", "sourceinfo", "destinationentity", "destinationentityid", "ord", "sshkey"}
+// func ValidateMigrationItemKeyValuePair(keyValuePair string) (string ,string){
+// 	possibleMigrationItemProps := []string{"type", "source", "sourceinfo", "destinationentity", "destinationentityid", "ord", "sshkey"}
 
-	// when pair doesnt contain '=' -> error.
-	if !strings.Contains(keyValuePair, "=") {
-		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
-	}
+// 	// when pair doesnt contain '=' -> error.
+// 	if !strings.Contains(keyValuePair, "=") {
+// 		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
+// 	}
 
-	splittedKeyValue := strings.Split(keyValuePair, "=")
+// 	splittedKeyValue := strings.Split(keyValuePair, "=")
 
-	// when more than one '=' are used -> error
-	if len(splittedKeyValue) != 2{
-		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
-	}else{
-		var isKeyValid bool = false
-		for _, prop := range possibleMigrationItemProps{
+// 	// when more than one '=' are used -> error
+// 	if len(splittedKeyValue) != 2{
+// 		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
+// 	}else{
+// 		var isKeyValid bool = false
+// 		for _, prop := range possibleMigrationItemProps{
 			
-			if strings.ToLower(splittedKeyValue[0]) == prop {
-				isKeyValid = true
-				return splittedKeyValue[0], splittedKeyValue[1]
-			}
-		}
-		if !isKeyValid {
-			log.Fatalf("Given key is NOT a valid property: '%v'.", splittedKeyValue[0])
-		}
-		return "", ""
-	}
-	return "", ""
-}
+// 			if strings.ToLower(splittedKeyValue[0]) == prop {
+// 				isKeyValid = true
+// 				return splittedKeyValue[0], splittedKeyValue[1]
+// 			}
+// 		}
+// 		if !isKeyValid {
+// 			log.Fatalf("Given key is NOT a valid property: '%v'.", splittedKeyValue[0])
+// 		}
+// 		return "", ""
+// 	}
+// 	return "", ""
+// }
 
 
 // ---- UPDATE MIGRATION 
@@ -1219,6 +1224,12 @@ var appMigrationsUpdateCmd = &cobra.Command{
 	Example: "lvl app migrations update MyAppName 3414",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		
+		//search for appID based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+
+
 	},
 }
