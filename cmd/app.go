@@ -5,7 +5,6 @@ import (
 	"log"
 	"sort"
 	"strconv"
-	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
@@ -190,8 +189,11 @@ func init() {
 	// ---- UPDATE MIGRATION
 	appMigrationsCmd.AddCommand(appMigrationsUpdateCmd)
 	flags = appMigrationsUpdateCmd.Flags()
-	flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
-	
+	flags.StringVarP(&appMigrationsUpdateDtPlanned, "planned", "", "", "DateTime - timestamp.")
+	flags.StringVarP(&appMigrationsUpdateType, "type", "t", "", "Migration type. (one of automatic (all migration steps are done automatically), confirmed (a user has to confirm each migration step)).")
+	appMigrationsUpdateCmd.MarkFlagRequired("type")
+	appMigrationsUpdateCmd.MarkFlagRequired("planned")
+
 }
 
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
@@ -1165,17 +1167,15 @@ var appMigrationsCreateCmd = &cobra.Command{
 		// 	fmt.Println(item)
 		// 	//check for each item if its defined correctly and return a valig MigrationArrayItem
 		// 	checkedItem := ValidateMigrationItem(item)
-			
-			
+
 		// }
-		
+
 	},
 }
 
 // func ValidateMigrationItem(values string){
 // 	// split value on comma and put values in array
 // 	valueSplitted := strings.Split(values, ",")
-
 
 // 	// for each splitted value check if its defined correctly -> =
 // 	for _ , keyValuePair := range valueSplitted{
@@ -1202,7 +1202,7 @@ var appMigrationsCreateCmd = &cobra.Command{
 // 	}else{
 // 		var isKeyValid bool = false
 // 		for _, prop := range possibleMigrationItemProps{
-			
+
 // 			if strings.ToLower(splittedKeyValue[0]) == prop {
 // 				isKeyValid = true
 // 				return splittedKeyValue[0], splittedKeyValue[1]
@@ -1216,20 +1216,24 @@ var appMigrationsCreateCmd = &cobra.Command{
 // 	return "", ""
 // }
 
-
-// ---- UPDATE MIGRATION 
+// ---- UPDATE MIGRATION
+var appMigrationsUpdateType, appMigrationsUpdateDtPlanned string
 var appMigrationsUpdateCmd = &cobra.Command{
-	Use: "update [appID] [migrationID]",
-	Short: "Update an app migration.",
+	Use:     "update [appID] [migrationID]",
+	Short:   "Update an app migration.",
 	Example: "lvl app migrations update MyAppName 3414",
-	Args: cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		//search for appID based on name
 		appId := resolveApp(args[0])
 		// check for valid migrationId type
 		migrationId := checkSingleIntID(args[1], "appMigration")
 
-
-
+		request := types.AppMigrationUpdate{
+			MigrationType: appMigrationsUpdateType,
+			DtPlanned:     appMigrationsUpdateDtPlanned,
+		}
+		
+		Level27Client.AppMigrationsUpdate(appId, migrationId, request)
 	},
 }

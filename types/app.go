@@ -304,3 +304,9 @@ type AppMigrationItem struct {
 	Ord                 string      `json:"ord"`
 	SshKey              interface{} `json:"sshKey"`
 }
+
+// type appMigration for update
+type AppMigrationUpdate struct {
+	MigrationType string `json:"migrationType"`
+	DtPlanned     string `json:"dtPlanned"`
+}

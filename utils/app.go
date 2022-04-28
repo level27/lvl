@@ -564,3 +564,12 @@ func (c *Client)AppMigrationsCreate(appId int , req types.AppMigrationRequest){
 
 	log.Printf("migration created! [ID: '%v']", migration.Data.ID)
 }
+
+// ---- UPDATE APP MIGRATION
+func (c *Client)AppMigrationsUpdate(appId int, migrationId int, req interface{}){
+	endpoint := fmt.Sprintf("apps/%v/migrations/%v", appId, migrationId)
+	err := c.invokeAPI("PUT",endpoint, req, nil)
+	AssertApiError(err, "appMigration")
+
+	log.Print("migration succesfully updated!")
+}
