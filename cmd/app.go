@@ -196,6 +196,12 @@ func init() {
 
 	// ---- DESCRIBE MIGRATION
 	appMigrationsCmd.AddCommand(appMigrationDescribeCmd)
+	//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+	// ---- MIGRATION ACTION COMMAND
+	appMigrationsCmd.AddCommand(appMigrationsActionCmd)
+
+	// ---- MIGRATION ACTION CONFIRM
+	appMigrationsActionCmd.AddCommand(appMigrationsActionConfirmCmd)
 }
 
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
@@ -1240,13 +1246,12 @@ var appMigrationsUpdateCmd = &cobra.Command{
 	},
 }
 
-
 // ---- DESCRIBE MIGRATION
 var appMigrationDescribeCmd = &cobra.Command{
-	Use: "describe [appID] [migrationID]",
-	Short: "Get detailed info about a specific migration.",
+	Use:     "describe [appID] [migrationID]",
+	Short:   "Get detailed info about a specific migration.",
 	Example: "lvl app migrations describe MyAppName 1243",
-	Args: cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// search for appId based on name
 		appId := resolveApp(args[0])
@@ -1256,5 +1261,24 @@ var appMigrationDescribeCmd = &cobra.Command{
 		migration := Level27Client.AppMigrationDescribe(appId, migrationId)
 
 		outputFormatTemplate(migration, "templates/appMigration.tmpl")
+	},
+}
+
+//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+// ---- MIGRATIONS ACTION COMMAND
+var appMigrationsActionCmd = &cobra.Command{
+	Use:     "action",
+	Short:   "Execute an action for a migration",
+	Example: "lvl app migrations action deny MyAppName 241\nlvl app migrations action restart MyAppName 234",
+}
+
+// ---- CONFIRM MIGRATION
+var appMigrationsActionConfirmCmd = &cobra.Command{
+	Use:     "confirm",
+	Short:   "Execute confirm action on a migration",
+	Example: "lvl app migrations action confirm MyAppName 332",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+
 	},
 }

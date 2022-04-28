@@ -554,7 +554,7 @@ func (c *Client) AppMigrationsGet(appId int) []types.AppMigration {
 }
 
 // ---- CREATE APP MIGRATION
-func (c *Client)AppMigrationsCreate(appId int , req types.AppMigrationRequest){
+func (c *Client) AppMigrationsCreate(appId int, req types.AppMigrationRequest) {
 	var migration struct {
 		Data types.AppMigration `json:"migration"`
 	}
@@ -566,16 +566,16 @@ func (c *Client)AppMigrationsCreate(appId int , req types.AppMigrationRequest){
 }
 
 // ---- UPDATE APP MIGRATION
-func (c *Client)AppMigrationsUpdate(appId int, migrationId int, req interface{}){
+func (c *Client) AppMigrationsUpdate(appId int, migrationId int, req interface{}) {
 	endpoint := fmt.Sprintf("apps/%v/migrations/%v", appId, migrationId)
-	err := c.invokeAPI("PUT",endpoint, req, nil)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "appMigration")
 
 	log.Print("migration succesfully updated!")
 }
 
 // ---- DESCRIBE APP MIGRATION
-func (c *Client)AppMigrationDescribe(appId int, migrationId int) types.AppMigration{
+func (c *Client) AppMigrationDescribe(appId int, migrationId int) types.AppMigration {
 	var migration struct {
 		Data types.AppMigration `json:"migration"`
 	}
@@ -586,3 +586,6 @@ func (c *Client)AppMigrationDescribe(appId int, migrationId int) types.AppMigrat
 
 	return migration.Data
 }
+
+//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+// ---- MIGRATIONS ACTION COMMAND
