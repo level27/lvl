@@ -202,6 +202,10 @@ func init() {
 
 	// ---- MIGRATION ACTION CONFIRM
 	appMigrationsActionCmd.AddCommand(appMigrationsActionConfirmCmd)
+	// ---- MIGRATION ACTION DENY
+	appMigrationsActionCmd.AddCommand(appMigrationsActionDenyCmd)
+	// ---- MIGRATION ACTION RETRY
+	appMigrationsActionCmd.AddCommand(appMigrationsActionRetryCmd)
 }
 
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
@@ -1285,5 +1289,37 @@ var appMigrationsActionConfirmCmd = &cobra.Command{
 		migrationId := checkSingleIntID(args[1], "appMigration")
 
 		Level27Client.AppMigrationsAction(appId, migrationId, "confirm")
+	},
+}
+
+// ---- DENY MIGRATION
+var appMigrationsActionDenyCmd = &cobra.Command{
+	Use:     "deny",
+	Short:   "Execute confirm action on a migration",
+	Example: "lvl app migrations action deny MyAppName 332",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		Level27Client.AppMigrationsAction(appId, migrationId, "deny")
+	},
+}
+
+// ---- RETRY MIGRATION
+var appMigrationsActionRetryCmd = &cobra.Command{
+	Use:     "retry",
+	Short:   "Execute confirm action on a migration",
+	Example: "lvl app migrations action retry MyAppName 332",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		Level27Client.AppMigrationsAction(appId, migrationId, "retry")
 	},
 }
