@@ -1087,3 +1087,12 @@ var appComponentBackupsGetCmd = &cobra.Command{
 		outputFormatTableFuncs(availableBackups, []string{"ID", "SNAPSHOTNAME", "DATE"}, []interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string { return utils.FormatUnixTime(a.Date) }})
 	},
 }
+
+
+//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+// MIGRATION COMMAND
+var appMigrationsCommand = &cobra.Command{
+	Use: "migrations",
+	Short: "Commands to manage app migrations.",
+	Example: "lvl app migrations get MyAppName\nlvl app migrations describe MyAppName 1513",
+}
