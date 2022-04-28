@@ -1279,6 +1279,11 @@ var appMigrationsActionConfirmCmd = &cobra.Command{
 	Example: "lvl app migrations action confirm MyAppName 332",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
 
+		Level27Client.AppMigrationsAction(appId, migrationId, "confirm")
 	},
 }
