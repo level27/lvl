@@ -173,7 +173,8 @@ func init() {
 	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
 
 }
-
+//------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
+// GET AN APPID BASED ON THE NAME
 func resolveApp(arg string) int {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
@@ -187,6 +188,7 @@ func resolveApp(arg string) int {
 		func(app types.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
+// GET SSL CERTIFICATE ID BASED ON ID
 func resolveAppSslCertificate(appID int, arg string) int {
 	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
@@ -201,7 +203,6 @@ func resolveAppSslCertificate(appID int, arg string) int {
 		func(app types.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
-//------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
 
 // GET AN APPCOMPONENT ID BASED ON THE NAME
 func resolveAppComponent(appId int, arg string) int {
