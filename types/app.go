@@ -283,7 +283,24 @@ type AppComponentAvailableBackup struct {
 type AppMigration struct {
 	ID                 int    `json:"id"`
 	MigrationType      string `json:"migrationType"`
-	DtPlanned          int64    `json:"dtPlanned"`
+	DtPlanned          int64  `json:"dtPlanned"`
 	Status             string `json:"status"`
 	ConfirmationStatus int    `json:"confirmationStatus"`
+}
+
+// request type for new migration
+type AppMigrationRequest struct {
+	MigrationType      string             `json:"migrationType"`
+	DtPlanned          string             `json:"dtPlanned"`
+	MigrationItemArray []AppMigrationItem `json:"migrationItemArray"`
+}
+
+type AppMigrationItem struct {
+	Type                string      `json:"type"`
+	Source              string      `json:"source"`
+	SourceInfo          int         `json:"sourceInformation"`
+	DestinationEntity   string      `json:"destinationEntity"`
+	DestinationEntityId int         `json:"destinationEntityId"`
+	Ord                 string      `json:"ord"`
+	SshKey              interface{} `json:"sshKey"`
 }

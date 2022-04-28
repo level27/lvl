@@ -552,3 +552,15 @@ func (c *Client) AppMigrationsGet(appId int) []types.AppMigration {
 
 	return migrations.Data
 }
+
+// ---- CREATE APP MIGRATION
+func (c *Client)AppMigrationsCreate(appId int , req types.AppMigrationRequest){
+	var migration struct {
+		Data types.AppMigration `json:"migration"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/migrations", appId)
+	err := c.invokeAPI("POST", endpoint, req, &migration)
+	AssertApiError(err, "appMigration")
+
+	log.Printf("migration created! [ID: '%v']", migration.Data.ID)
+}
