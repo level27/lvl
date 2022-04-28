@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
+	"k8s.io/kubernetes/pkg/registry/core/endpoint"
 )
 
 //------------------------------------------------- Resolve functions -------------------------------------------------
@@ -589,3 +590,13 @@ func (c *Client) AppMigrationDescribe(appId int, migrationId int) types.AppMigra
 
 //-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
 // ---- MIGRATIONS ACTION COMMAND
+func (c *Client)AppMigrationsAction(appId int, migrationId int, ChosenAction string){
+	var action struct {
+	 Type string `json:"type"`
+	}
+
+	action.Type = ChosenAction
+	endpoint := fmt.Sprintf("apps/%v/migrations/%v/actions", appId, migrationId)
+	err := c.invokeAPI("POST", endpoint, action, nil)
+
+}
