@@ -172,6 +172,12 @@ func init() {
 	// ---- GET LIST OF BACKUPS
 	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
 
+	//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+	// ---- MIGRATIONS COMMAND
+	appCmd.AddCommand(appMigrationsCmd)
+
+	// ---- GET LIST OF MIGRATIONS
+	appMigrationsCmd.AddCommand(appMigrationsGetCmd)
 }
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
 // GET AN APPID BASED ON THE NAME
@@ -1090,9 +1096,26 @@ var appComponentBackupsGetCmd = &cobra.Command{
 
 
 //-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
-// MIGRATION COMMAND
-var appMigrationsCommand = &cobra.Command{
+// ---- MIGRATION COMMAND
+var appMigrationsCmd = &cobra.Command{
 	Use: "migrations",
 	Short: "Commands to manage app migrations.",
 	Example: "lvl app migrations get MyAppName\nlvl app migrations describe MyAppName 1513",
+}
+
+// ---- GET LIST OF MIGRATIONS 
+var appMigrationsGetCmd = &cobra.Command{
+	Use: "get [appName]",
+	Short: "Show a list of all available migrations.",
+	Example: "lvl app migrations get MyAppName",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//search for AppId based on name
+		appId := resolveApp(args[0])
+
+		migrations := Level27Client.AppMigrationsGet(appId)
+
+		outputFormatTableFuncs(migrations, []string{"ID","MIGRATION_TYPE", "STATUS", "DATE_PLANNED"}, []interface{}{"ID", "MigrationType", "Status", func(m types.AppMigration) string {return utils.FormatUnixTime(m.DtPlanned)}})
+	},
+
 }

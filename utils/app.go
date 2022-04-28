@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 	"mime"
-	"os"
 	"net/url"
+	"os"
 	"strings"
 
 	"bitbucket.org/level27/lvl/types"
@@ -28,7 +28,7 @@ func (c *Client) AppLookup(name string) []types.App {
 }
 
 // GET componentId based on name
-func (c *Client) AppComponentLookup(appId int, name string) []types.AppComponent{
+func (c *Client) AppComponentLookup(appId int, name string) []types.AppComponent {
 	results := []types.AppComponent{}
 	components := c.AppComponentsGet(appId, types.CommonGetParams{Filter: name})
 	for _, component := range components {
@@ -133,7 +133,6 @@ func (c *Client) AppAction(appId int, action string) {
 	err := c.invokeAPI("POST", endpoint, request, nil)
 	AssertApiError(err, "app")
 }
-
 
 // APP SSL CERTIFICATES
 
@@ -258,6 +257,7 @@ func (c *Client) AppSslCertificatesKey(appID int, sslCertificateID int) types.Ap
 
 	return response
 }
+
 //------------------------------------------------- APP COMPONENTS (GET / DESCRIBE / CREATE)-------------------------------------------------
 
 // ---- GET LIST OF COMPONENTS
@@ -485,11 +485,10 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 	}
 }
 
-
 // ---- DOWNLOAD RESTORE FILE
-func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int) {
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
-	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/tar.gz"})
+	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/tar.gz"})
 
 	filename := "restore.tar.gz"
 	contentDisp := res.Header.Get("Content-Disposition")
@@ -526,7 +525,9 @@ func (c *Client) AppComponentRestoreDownload(appId int, restoreId int){
 
 	io.Copy(file, res.Body)
 }
+
 //-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
+// ---- GET LIST OF COMPONENT AVAILABLEBACKUPS
 func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
 	var backups struct {
 		Data []types.AppComponentAvailableBackup `json:"availableBackups"`
@@ -536,4 +537,18 @@ func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppC
 	AssertApiError(err, "availablebackup")
 
 	return backups.Data
+}
+
+//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+// ---- GET LIST OF MIGRATIONS
+func (c *Client) AppMigrationsGet(appId int) []types.AppMigration {
+	var migrations struct {
+		Data []types.AppMigration `json:"migrations"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/migrations", appId)
+	err := c.invokeAPI("GET", endpoint, nil, &migrations)
+	AssertApiError(err, "appMigration")
+
+	return migrations.Data
 }

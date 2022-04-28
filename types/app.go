@@ -278,3 +278,12 @@ type AppComponentAvailableBackup struct {
 	} `json:"system"`
 	VolumeUID string `json:"volumeUid"`
 }
+
+// type app migration
+type AppMigration struct {
+	ID                 int    `json:"id"`
+	MigrationType      string `json:"migrationType"`
+	DtPlanned          int64    `json:"dtPlanned"`
+	Status             string `json:"status"`
+	ConfirmationStatus int    `json:"confirmationStatus"`
+}
