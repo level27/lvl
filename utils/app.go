@@ -573,3 +573,16 @@ func (c *Client)AppMigrationsUpdate(appId int, migrationId int, req interface{})
 
 	log.Print("migration succesfully updated!")
 }
+
+// ---- DESCRIBE APP MIGRATION
+func (c *Client)AppMigrationDescribe(appId int, migrationId int) types.AppMigration{
+	var migration struct {
+		Data types.AppMigration `json:"migration"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/migrations/%v", appId, migrationId)
+	err := c.invokeAPI("GET", endpoint, nil, &migration)
+	AssertApiError(err, "appMigration")
+
+	return migration.Data
+}
