@@ -1233,7 +1233,19 @@ var appMigrationsUpdateCmd = &cobra.Command{
 			MigrationType: appMigrationsUpdateType,
 			DtPlanned:     appMigrationsUpdateDtPlanned,
 		}
-		
+
 		Level27Client.AppMigrationsUpdate(appId, migrationId, request)
+	},
+}
+
+
+// ---- DESCRIBE MIGRATION
+var appMigrationDescribeCmd = &cobra.Command{
+	Use: "describe [appID] [migrationID]",
+	Short: "Get detailed info about a specific migration.",
+	Example: "lvl app migrations describe MyAppName 1243",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		
 	},
 }
