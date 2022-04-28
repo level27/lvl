@@ -1090,7 +1090,10 @@ var appComponentBackupsGetCmd = &cobra.Command{
 
 		availableBackups := Level27Client.AppComponentbackupsGet(appId, componentId)
 
-		outputFormatTableFuncs(availableBackups, []string{"ID", "SNAPSHOTNAME", "DATE"}, []interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string { return utils.FormatUnixTime(a.Date) }})
+		outputFormatTableFuncs(availableBackups, 
+			[]string{"ID", "SNAPSHOTNAME", "DATE"}, 
+			[]interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string { return utils.FormatUnixTime(a.Date) 
+			}})
 	},
 }
 
@@ -1115,7 +1118,10 @@ var appMigrationsGetCmd = &cobra.Command{
 
 		migrations := Level27Client.AppMigrationsGet(appId)
 
-		outputFormatTableFuncs(migrations, []string{"ID","MIGRATION_TYPE", "STATUS", "DATE_PLANNED"}, []interface{}{"ID", "MigrationType", "Status", func(m types.AppMigration) string {return utils.FormatUnixTime(m.DtPlanned)}})
+		outputFormatTableFuncs(migrations, 
+			[]string{"ID","MIGRATION_TYPE", "STATUS", "DATE_PLANNED"}, 
+			[]interface{}{"ID", "MigrationType", "Status", func(m types.AppMigration) string {return utils.FormatUnixTime(m.DtPlanned)
+			}})
 	},
 
 }
