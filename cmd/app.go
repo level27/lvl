@@ -1210,3 +1210,15 @@ func ValidateMigrationItemKeyValuePair(keyValuePair string) (string ,string){
 	}
 	return "", ""
 }
+
+
+// ---- UPDATE MIGRATION 
+var appMigrationsUpdateCmd = &cobra.Command{
+	Use: "update [appID] [migrationID]",
+	Short: "Update an app migration.",
+	Example: "lvl app migrations update MyAppName 3414",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		
+	},
+}
