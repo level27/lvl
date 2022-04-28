@@ -1,0 +1,14 @@
+ID: {{.ID}}
+MIGRATION TYPE: {{.MigrationType}}
+STATUS: {{.Status}}
+
+APP NAME: {{.App.Name}} | APP ID: {{.App.ID}}
+
+MIGRATION ITEMS:
+{{- range .MigrationItems }}
+    ID: {{ .ID }} | SOURCE: {{.Source}}
+    DESTINATION: {{.DestinationEntity}} | DESTINATION ID: {{.DestinationEntityID}}
+    STATUS: {{.Status}}
+    
+{{- end}}
+

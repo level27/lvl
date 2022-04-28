@@ -194,6 +194,8 @@ func init() {
 	appMigrationsUpdateCmd.MarkFlagRequired("type")
 	appMigrationsUpdateCmd.MarkFlagRequired("planned")
 
+	// ---- DESCRIBE MIGRATION
+	appMigrationsCmd.AddCommand(appMigrationDescribeCmd)
 }
 
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
@@ -1246,6 +1248,13 @@ var appMigrationDescribeCmd = &cobra.Command{
 	Example: "lvl app migrations describe MyAppName 1243",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		migration := Level27Client.AppMigrationDescribe(appId, migrationId)
+
+		outputFormatTemplate(migration, "templates/appMigration.tmpl")
 	},
 }
