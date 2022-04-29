@@ -74,7 +74,7 @@ type System struct {
 	} `json:"bootVolume"`
 	Cookbooks             []Cookbook `json:"cookbooks"`
 	Preferredparentsystem struct {
-		ID   int    `json:"id"`
+		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"preferredparentsystem"`
 }
@@ -417,11 +417,11 @@ type SystemPut struct {
 	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
 	Zone                        int    `json:"zone"`
 	PublicNetworking            bool   `json:"publicNetworking"`
-	Preferredparentsystem       int `json:"preferredparentsystem"`
-	Remarks                string `json:"remarks"`
-	InstallSecurityUpdates int    `json:"installSecurityUpdates"`
-	LimitRiops             int    `json:"limitRiops"`
-	LimitWiops             int    `json:"limitWiops"`
+	Preferredparentsystem       string `json:"preferredparentsystem"`
+	Remarks                     string `json:"remarks"`
+	InstallSecurityUpdates      int    `json:"installSecurityUpdates"`
+	LimitRiops                  int    `json:"limitRiops"`
+	LimitWiops                  int    `json:"limitWiops"`
 }
 
 type SystemHasNetworkIpPut struct {
