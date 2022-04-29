@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
 	"github.com/spf13/cobra"
@@ -69,11 +67,6 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 			entityID := resolve(args[0])
 			checkId, err := convertStringToId(args[1])
 			cobra.CheckErr(err)
-
-			if integrityDownload == "" {
-				// Auto-generate file name.
-				integrityDownload = fmt.Sprintf("integritycheck_%d_%s_%d.pdf", checkId, entityType, entityID)
-			}
 
 			Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkId, integrityDownload)
 		},

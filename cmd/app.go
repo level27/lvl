@@ -95,6 +95,9 @@ func init() {
 	//-------------------------------------------------  APP ACCESS -------------------------------------------------
 	addAccessCmds(appCmd, "apps", resolveApp)
 
+	// APP INTEGRITY
+	addIntegrityCheckCmds(appCmd, "apps", resolveApp)
+
 	// ----------- APP SSL CERTIFICATE COMMANDS
 
 	// ---- APP SSL
@@ -1094,7 +1097,7 @@ var appComponentRestoreDownloadCmd = &cobra.Command{
 		// check if restoreId is valid type
 		restoreId := checkSingleIntID(args[1], "Restore")
 
-		Level27Client.AppComponentRestoreDownload(appId, restoreId)
+		Level27Client.AppComponentRestoreDownload(appId, restoreId, appComponentRestoreDownloadName)
 	},
 }
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mime"
 	"net/url"
 	"os"
 	"strings"
@@ -488,19 +487,12 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 }
 
 // ---- DOWNLOAD RESTORE FILE
-func (c *Client) AppComponentRestoreDownload(appId int, restoreId int) {
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename string) {
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
-	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/tar.gz"})
+	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/gzip"})
 
-	filename := "restore.tar.gz"
-	contentDisp := res.Header.Get("Content-Disposition")
-	if contentDisp != "" {
-		_, params, err := mime.ParseMediaType(contentDisp)
-		if err != nil {
-			log.Fatalf("Failed to parse Content-Disposition!")
-		}
-
-		filename = params["filename"]
+	if filename == "" {
+		filename = parseContentDispositionFilename(res, "restore.tar.gz")
 	}
 
 	defer res.Body.Close()
@@ -601,4 +593,4 @@ func (c *Client) AppMigrationsAction(appId int, migrationId int, ChosenAction st
 	err := c.invokeAPI("POST", endpoint, action, nil)
 
 	AssertApiError(err, "appMigrationAction")
-}	
+}
