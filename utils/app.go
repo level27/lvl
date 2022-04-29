@@ -599,4 +599,4 @@ func (c *Client) AppMigrationsAction(appId int, migrationId int, ChosenAction st
 	err := c.invokeAPI("POST", endpoint, action, nil)
 
 	AssertApiError(err, "appMigrationAction")
-}
+}	
