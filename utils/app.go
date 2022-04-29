@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-<<<<<<< HEAD
-	"mime"
-=======
->>>>>>> origin/development
 	"net/url"
 	"os"
 	"strings"
@@ -489,9 +485,9 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 }
 
 // ---- DOWNLOAD RESTORE FILE
-func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename string){
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename string) {
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
-	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/gzip"})
+	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/gzip"})
 
 	if filename == "" {
 		filename = parseContentDispositionFilename(res, "restore.tar.gz")
