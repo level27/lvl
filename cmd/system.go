@@ -556,7 +556,7 @@ var systemUpdateCmd = &cobra.Command{
 			SystemProviderConfiguration: system.SystemProviderConfiguration.ID,
 			Zone:                        system.Zone.Id,
 			PublicNetworking:            system.PublicNetworking,
-			Preferredparentsystem:       system.Preferredparentsystem,
+			Preferredparentsystem:       system.Preferredparentsystem.ID,
 			Remarks:                     system.Remarks,
 			InstallSecurityUpdates:      system.InstallSecurityUpdates,
 			LimitRiops:                  system.LimitRiops,
