@@ -67,6 +67,14 @@ func init() {
 	}
 	// #endregion
 
+	// ------------------------------------ MONITORING ON SPECIFIC SYSTEM ----------------------------------------------
+	// ---- MONITORING COMMAND
+	systemCmd.AddCommand(systemMonitoringCmd)
+
+	// ---- MONITORING ON
+	systemMonitoringCmd.AddCommand(systemMonitoringOnCmd)
+	// ---- MONITORING OFF
+	systemMonitoringCmd.AddCommand(systemMonitoringOffCmd)
 	// ------------------------------------ ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
 	// #region ACTIONS ON SPECIFIC SYSTEM
 	systemCmd.AddCommand(systemActionsCmd)
@@ -313,7 +321,7 @@ func resolveSystem(arg string) int {
 		Level27Client.LookupSystem(arg),
 		arg,
 		"system",
-		func (app types.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) }).Id
+		func(app types.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) }).Id
 }
 func resolveSystemProviderConfiguration(region int, arg string) int {
 	id, err := strconv.Atoi(arg)
@@ -338,12 +346,11 @@ func resolveSystemHasNetwork(systemID int, arg string) int {
 		return id
 	}
 
-
 	return resolveShared(
 		Level27Client.LookupSystemHasNetworks(systemID, arg),
 		arg,
 		"system network",
-		func (app types.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) }).ID
+		func(app types.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) }).ID
 }
 
 func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
@@ -356,7 +363,7 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
 		Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg),
 		arg,
 		"system network IP",
-		func (app types.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) }).ID
+		func(app types.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) }).ID
 }
 
 func resolveSystemVolume(systemID int, arg string) int {
@@ -792,6 +799,46 @@ var systemCheckUpdateCmd = &cobra.Command{
 }
 
 // #endregion
+
+//------------------------------------------------- MONITORING ON SPECIFIC SYSTEM ----------------------------------------------
+// ---- MONITORING COMMAND
+var systemMonitoringCmd = &cobra.Command{
+	Use: "monitoring",
+	Short: "Turn the monitoring for a system on or off.",
+	Example: "lvl system monitoring on MySystemName",
+}
+
+// ---- MONITORING ON
+var systemMonitoringOnCmd = &cobra.Command{
+	Use: "on",
+	Short: "Turn on the monitoring for a system.",
+	Example: "lvl system monitoring on MySystemName",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//search for sytsemID based on name
+		systemId := resolveSystem(args[0])
+
+		Level27Client.SystemAction(systemId, "enable_monitoring")
+
+		log.Printf("Monitoring is turned on for system: '%v'", systemId)
+	},
+}
+
+// ---- MONITORING OFF
+var systemMonitoringOffCmd = &cobra.Command{
+	Use: "off",
+	Short: "Turn off the monitoring for a system.",
+	Example: "lvl system monitoring off MySystemName",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//search for sytsemID based on name
+		systemId := resolveSystem(args[0])
+
+		Level27Client.SystemAction(systemId, "disable_monitoring")
+
+		log.Printf("Monitoring is turned off for system: '%v'", systemId)
+	},
+}
 
 //------------------------------------------------- ACTIONS ON SPECIFIC SYSTEM ----------------------------------------------
 // #region SYSTEM ACTIONS
