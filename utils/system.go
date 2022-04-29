@@ -200,6 +200,7 @@ func (c *Client) SystemUpdate(id int, data map[string]interface{}) {
 	endpoint := fmt.Sprintf("systems/%d", id)
 	err := c.invokeAPI("PUT", endpoint, data, nil)
 	AssertApiError(err, "SystemUpdate")
+	log.Print("System succesfully updated!")
 }
 
 // --------------------------- SYSTEM ACTION ---------------------------
@@ -380,6 +381,7 @@ func (c *Client) SystemCookbookChangesApply(systemId int) {
 	err := c.invokeAPI("POST", endpoint, requestData, nil)
 	AssertApiError(err, "systems/cookbook")
 
+	
 }
 
 // #region SYSTEM/COOKBOOKS TOPLEVEL (GET / ADD)
