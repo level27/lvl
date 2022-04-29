@@ -820,7 +820,7 @@ var systemMonitoringOnCmd = &cobra.Command{
 
 		Level27Client.SystemAction(systemId, "enable_monitoring")
 
-		log.Printf("Monitoring is turned on for system: '%v'", systemId)
+		log.Printf("Monitoring is turned on for system: '%v'", args[0])
 	},
 }
 
@@ -836,7 +836,7 @@ var systemMonitoringOffCmd = &cobra.Command{
 
 		Level27Client.SystemAction(systemId, "disable_monitoring")
 
-		log.Printf("Monitoring is turned off for system: '%v'", systemId)
+		log.Printf("Monitoring is turned off for system: '%v'", args[0])
 	},
 }
 

@@ -88,7 +88,7 @@
 
 {{- /* CHECKS */}}
 {{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
-{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .Cookbooktype }}
+{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CookbookType }}
   {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
   {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
   {{- $anyParams := false }}
