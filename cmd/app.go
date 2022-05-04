@@ -175,8 +175,44 @@ func init() {
 	// ---- GET LIST OF BACKUPS
 	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
 
+	//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+	// ---- MIGRATIONS COMMAND
+	appCmd.AddCommand(appMigrationsCmd)
+
+	// ---- GET LIST OF MIGRATIONS
+	appMigrationsCmd.AddCommand(appMigrationsGetCmd)
+
+	// // ---- CREATE NEW APP MIGRATION
+	// appMigrationsCmd.AddCommand(appMigrationsCreateCmd)
+	// // flags needed to create new migration
+	// flags = appMigrationsCreateCmd.Flags()
+	// flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
+	// flags.StringArrayVarP(&appMigrationCreateItems, "migration-item", "", []string{}, "Migration items. each item should contain: type, source, sourceInfo, destination, destinationId, ord, sshkey")
+
+	// ---- UPDATE MIGRATION
+	appMigrationsCmd.AddCommand(appMigrationsUpdateCmd)
+	flags = appMigrationsUpdateCmd.Flags()
+	flags.StringVarP(&appMigrationsUpdateDtPlanned, "planned", "", "", "DateTime - timestamp.")
+	flags.StringVarP(&appMigrationsUpdateType, "type", "t", "", "Migration type. (one of automatic (all migration steps are done automatically), confirmed (a user has to confirm each migration step)).")
+	appMigrationsUpdateCmd.MarkFlagRequired("type")
+	appMigrationsUpdateCmd.MarkFlagRequired("planned")
+
+	// ---- DESCRIBE MIGRATION
+	appMigrationsCmd.AddCommand(appMigrationDescribeCmd)
+	//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+	// ---- MIGRATION ACTION COMMAND
+	appMigrationsCmd.AddCommand(appMigrationsActionCmd)
+
+	// ---- MIGRATION ACTION CONFIRM
+	appMigrationsActionCmd.AddCommand(appMigrationsActionConfirmCmd)
+	// ---- MIGRATION ACTION DENY
+	appMigrationsActionCmd.AddCommand(appMigrationsActionDenyCmd)
+	// ---- MIGRATION ACTION RETRY
+	appMigrationsActionCmd.AddCommand(appMigrationsActionRetryCmd)
 }
 
+//------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
+// GET AN APPID BASED ON THE NAME
 func resolveApp(arg string) int {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
@@ -190,6 +226,7 @@ func resolveApp(arg string) int {
 		func(app types.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
+// GET SSL CERTIFICATE ID BASED ON ID
 func resolveAppSslCertificate(appID int, arg string) int {
 	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
@@ -203,8 +240,6 @@ func resolveAppSslCertificate(appID int, arg string) int {
 		"app SSL certificate",
 		func(app types.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
-
-//------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
 
 // GET AN APPCOMPONENT ID BASED ON THE NAME
 func resolveAppComponent(appId int, arg string) int {
@@ -1086,6 +1121,232 @@ var appComponentBackupsGetCmd = &cobra.Command{
 
 		availableBackups := Level27Client.AppComponentbackupsGet(appId, componentId)
 
-		outputFormatTableFuncs(availableBackups, []string{"ID", "SNAPSHOTNAME", "DATE"}, []interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string { return utils.FormatUnixTime(a.Date) }})
+		outputFormatTableFuncs(availableBackups,
+			[]string{"ID", "SNAPSHOTNAME", "DATE"},
+			[]interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string {
+				return utils.FormatUnixTime(a.Date)
+			}})
+	},
+}
+
+//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+// ---- MIGRATION COMMAND
+var appMigrationsCmd = &cobra.Command{
+	Use:     "migrations",
+	Short:   "Commands to manage app migrations.",
+	Example: "lvl app migrations get MyAppName\nlvl app migrations describe MyAppName 1513",
+}
+
+// ---- GET LIST OF MIGRATIONS
+var appMigrationsGetCmd = &cobra.Command{
+	Use:     "get [appName]",
+	Short:   "Show a list of all available migrations.",
+	Example: "lvl app migrations get MyAppName",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		//search for AppId based on name
+		appId := resolveApp(args[0])
+
+		migrations := Level27Client.AppMigrationsGet(appId)
+
+		outputFormatTableFuncs(migrations,
+			[]string{"ID", "MIGRATION_TYPE", "STATUS", "DATE_PLANNED"},
+			[]interface{}{"ID", "MigrationType", "Status", func(m types.AppMigration) string {
+				return utils.FormatUnixTime(m.DtPlanned)
+			}})
+	},
+}
+
+// TODO -- EXAMPLE TEXT COMPLETING
+// --- CREATE MIGRATION
+// var appMigrationCreatePlanned string
+// var appMigrationCreateItems []string
+// var appMigrationsCreateCmd = &cobra.Command{
+// 	Use:     "create [appName] [flags]",
+// 	Short:   "Create a new app migration.",
+// 	Example: "lvl app migrations create MyAppName -t confirmed --migration-item 'type=php, source=cp4, sourceInfo=122, destination=systemgroup, destinationId=453, ord=1, sshkey=null'",
+// 	Args:    cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		//search for appid based on appName
+// 		appId := resolveApp(args[0])
+
+// 		request := types.AppMigrationRequest{
+// 			MigrationType:      "automatic",
+// 			DtPlanned:          appMigrationCreatePlanned,
+// 		}
+
+// 		Level27Client.AppMigrationsCreate(appId, request)
+
+// 		// loop over each given Item by the user
+// 		for _, migrationItem := range appMigrationCreateItems {
+// 			fmt.Println(migrationItem)
+// 			//check for each item if its defined correctly and return a valig MigrationArrayItem
+// 			ValidateMigrationItem(migrationItem)
+
+// 		}
+
+// 	},
+// }
+
+// func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
+// 	// hardcoded because there is no api call yet to get to get a valid migrationItem parameters
+// 	// these are all the props a valid migration iten MUST have.
+// 	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
+
+// 	// split value on comma and put values in array
+// 	valueSplitted := strings.Split(values, ",")
+
+// 	// keep track of the whole validate migrationItem
+// 	var singleMigrationItem = []types.AppMigrationItemValue{}
+// 	// for each splitted value check if its defined correctly -> =
+// 	for _, keyValuePair := range valueSplitted {
+// 		key, value := ValidateMigrationItemKeyValuePair(keyValuePair, possibleMigrationItemProps)
+
+// 		// put each validated pair in the array
+// 		singleMigrationItem = append(singleMigrationItem, types.AppMigrationItemValue{key: value})
+
+// 	}
+
+// 	ValidateMigrationItemProperties(singleMigrationItem, possibleMigrationItemProps)
+// 	return singleMigrationItem
+
+// }
+
+// func ValidateMigrationItemProperties(itemValues []types.AppMigrationItemValue, possibleProps []string){
+// 	// each migration item need to have all the properties
+// 	if len(itemValues) != len(possibleProps){
+// 		log.Fatalf("Given migration item does not contain right amount of properties. Have %v, Need %v.", len(itemValues), len(possibleProps))
+// 	}
+// 	for _, prop := range possibleProps{
+// 		for _ ,pair := range itemValues{
+// 			if pair[prop] == nil {
+// 				log.Fatalf("%v not defined for current migration item.", prop)
+// 			}
+// 		}
+// 	}
+// }
+
+// // validate each key value pair given by the user
+// func ValidateMigrationItemKeyValuePair(keyValuePair string, possibleProps []string) (string, string) {
+
+// 	// when pair doesnt contain '=' -> error.
+// 	if !strings.Contains(keyValuePair, "=") {
+// 		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
+// 	}
+
+// 	splittedKeyValue := strings.Split(keyValuePair, "=")
+
+// 	// when more than one '=' are used -> error
+// 	if len(splittedKeyValue) != 2 {
+// 		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
+// 	} else {
+
+// 		for _, prop := range possibleProps {
+
+// 			if strings.Trim(splittedKeyValue[0], " ") == prop {
+
+// 				return strings.Trim(splittedKeyValue[0], " "), strings.Trim(splittedKeyValue[1], " ")
+// 			}
+// 		}
+
+// 		log.Fatalf("Given key is NOT a valid property: '%v'.", splittedKeyValue[0])
+
+// 	}
+// 	return "", ""
+// }
+
+// ---- UPDATE MIGRATION
+var appMigrationsUpdateType, appMigrationsUpdateDtPlanned string
+var appMigrationsUpdateCmd = &cobra.Command{
+	Use:     "update [appID] [migrationID]",
+	Short:   "Update an app migration.",
+	Example: "lvl app migrations update MyAppName 3414",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		//search for appID based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		request := types.AppMigrationUpdate{
+			MigrationType: appMigrationsUpdateType,
+			DtPlanned:     appMigrationsUpdateDtPlanned,
+		}
+
+		Level27Client.AppMigrationsUpdate(appId, migrationId, request)
+	},
+}
+
+// ---- DESCRIBE MIGRATION
+var appMigrationDescribeCmd = &cobra.Command{
+	Use:     "describe [appID] [migrationID]",
+	Short:   "Get detailed info about a specific migration.",
+	Example: "lvl app migrations describe MyAppName 1243",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		migration := Level27Client.AppMigrationDescribe(appId, migrationId)
+
+		outputFormatTemplate(migration, "templates/appMigration.tmpl")
+	},
+}
+
+//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+// ---- MIGRATIONS ACTION COMMAND
+var appMigrationsActionCmd = &cobra.Command{
+	Use:     "action",
+	Short:   "Execute an action for a migration",
+	Example: "lvl app migrations action deny MyAppName 241\nlvl app migrations action restart MyAppName 234",
+}
+
+// ---- CONFIRM MIGRATION
+var appMigrationsActionConfirmCmd = &cobra.Command{
+	Use:     "confirm",
+	Short:   "Execute confirm action on a migration",
+	Example: "lvl app migrations action confirm MyAppName 332",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		Level27Client.AppMigrationsAction(appId, migrationId, "confirm")
+	},
+}
+
+// ---- DENY MIGRATION
+var appMigrationsActionDenyCmd = &cobra.Command{
+	Use:     "deny",
+	Short:   "Execute confirm action on a migration",
+	Example: "lvl app migrations action deny MyAppName 332",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		Level27Client.AppMigrationsAction(appId, migrationId, "deny")
+	},
+}
+
+// ---- RETRY MIGRATION
+var appMigrationsActionRetryCmd = &cobra.Command{
+	Use:     "retry",
+	Short:   "Execute confirm action on a migration",
+	Example: "lvl app migrations action retry MyAppName 332",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// search for appId based on name
+		appId := resolveApp(args[0])
+		// check for valid migrationId type
+		migrationId := checkSingleIntID(args[1], "appMigration")
+
+		Level27Client.AppMigrationsAction(appId, migrationId, "retry")
 	},
 }
