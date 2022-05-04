@@ -1194,8 +1194,6 @@ func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
 	// these are all the props a valid migration iten MUST have.
 	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
 
-	
-	
 	// split value on comma and put values in array
 	valueSplitted := strings.Split(values, ",")
 
@@ -1210,10 +1208,26 @@ func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
 
 	}
 
+	ValidateMigrationItemProperties(singleMigrationItem, possibleMigrationItemProps)
 	return singleMigrationItem
 	
 }
 
+func ValidateMigrationItemProperties(itemValues []types.AppMigrationItemValue, possibleProps []string){
+	// each migration item need to have all the properties
+	if len(itemValues) != len(possibleProps){
+		log.Fatalf("Given migration item does not contain right amount of properties. Have %v, Need %v.", len(itemValues), len(possibleProps))
+	}
+	for _, prop := range possibleProps{
+		for _ ,pair := range itemValues{
+			if pair[prop] == nil {
+				log.Fatalf("%v not defined for current migration item.", prop)
+			}
+		}
+	}
+}
+
+// validate each key value pair given by the user
 func ValidateMigrationItemKeyValuePair(keyValuePair string, possibleProps []string) (string, string) {
 
 	// when pair doesnt contain '=' -> error.
