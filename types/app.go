@@ -169,18 +169,21 @@ type AppcomponenttypeServicetype struct {
 		Runlist                 string        `json:"runlist"`
 		AllowedActions          []interface{} `json:"allowedActions"`
 		Category                string        `json:"category"`
-		Parameters              []struct {
-			Name         string      `json:"name"`
-			DisplayName  string      `json:"displayName"`
-			Description  string      `json:"description"`
-			Type         string      `json:"type"`
-			DefaultValue interface{} `json:"defaultValue"`
-			Readonly     bool        `json:"readonly"`
-			DisableEdit  bool        `json:"disableEdit"`
-			Required     bool        `json:"required"`
-			Category     string      `json:"category"`
-		} `json:"parameters"`
+		Parameters              []AppComponentTypeParameter `json:"parameters"`
 	} `json:"servicetype"`
+}
+
+type AppComponentTypeParameter struct {
+	Name           string      `json:"name"`
+	DisplayName    string      `json:"displayName"`
+	Description    string      `json:"description"`
+	Type           string      `json:"type"`
+	DefaultValue   interface{} `json:"defaultValue"`
+	Readonly       bool        `json:"readonly"`
+	DisableEdit    bool        `json:"disableEdit"`
+	Required       bool        `json:"required"`
+	Category       string      `json:"category"`
+	PossibleValues []string    `json:"possibleValues"`
 }
 
 // type request to add a sslCertificate to an app.

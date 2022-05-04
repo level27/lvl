@@ -5,6 +5,7 @@ import (
 	"log"
 	"sort"
 	"strconv"
+	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
@@ -73,6 +74,15 @@ func init() {
 
 	// ---- CREATE COMPONENT
 	appComponentCmd.AddCommand(appComponentCreateCmd)
+	appComponentCreateCmd.Flags().StringVarP(&appComponentCreateParamsFile, "params-file", "f", "", "JSON file to read params from. Pass '-' to read from stdin.")
+	appComponentCreateCmd.Flags().StringVar(&appComponentCreateName, "name", "", "")
+	appComponentCreateCmd.Flags().StringVar(&appComponentCreateType, "type", "", "")
+	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystem, "system", "", "")
+	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystemgroup, "systemgroup", "", "")
+	appComponentCreateCmd.Flags().IntVar(&appComponentCreateSystemprovider, "systemprovider", 0, "")
+	appComponentCreateParams = appComponentCreateCmd.Flags().StringArray("param", nil, "")
+	appComponentCreateCmd.MarkFlagRequired("name")
+	appComponentCreateCmd.MarkFlagRequired("type")
 
 	// ---- DELETE COMPONENTS
 	appComponentCmd.AddCommand(AppComponentDeleteCmd)
@@ -676,13 +686,140 @@ func getComponents(appId int, ids []int) []types.AppComponent {
 }
 
 // ---- CREATE COMPONENT
+var appComponentCreateParamsFile string
+var appComponentCreateName string
+var appComponentCreateType string
+var appComponentCreateSystem string
+var appComponentCreateSystemgroup string
+var appComponentCreateSystemprovider int
+var appComponentCreateParams *[]string
 var appComponentCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new appcomponent.",
 	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
-	Run: func(cmd *cobra.Command, args []string) {
 
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		if appComponentCreateSystem == "" && appComponentCreateSystemgroup == "" {
+			cobra.CheckErr("Must specify either a system or a system group")
+		}
+
+		if appComponentCreateSystem != "" && appComponentCreateSystemgroup != "" {
+			cobra.CheckErr("Cannot specify both a system and a system group")
+		}
+
+		appID := resolveApp(args[0])
+		componentTypes := Level27Client.AppComponenttypesGet();
+
+		val, ok := componentTypes[appComponentCreateType]
+		if !ok {
+			cobra.CheckErr(fmt.Sprintf("Unknown component type: %s", appComponentCreateType))
+		}
+
+		paramsPassed := loadSettings(appComponentCreateParamsFile)
+
+		// Parse params from command line
+		for _, param := range *appComponentCreateParams {
+			split := strings.SplitN(param, "=", 2)
+			if len(split) != 2 {
+				cobra.CheckErr(fmt.Sprintf("Expected key=value pair to --param: %s", param))
+			}
+
+			paramsPassed[split[0]] = readArgFileSupported(split[1])
+		}
+
+		create := map[string]interface{}{}
+		create["name"] = appComponentCreateName
+		create["category"] = "config"
+		create["appcomponenttype"] = appComponentCreateType
+
+		if appComponentCreateSystem != "" {
+			create["system"] = resolveSystem(appComponentCreateSystem)
+		}
+
+		if appComponentCreateSystemgroup != "" {
+			create["systemgroup"] = checkSingleIntID(appComponentCreateSystemgroup, "systemgroup")
+		}
+
+		if appComponentCreateSystemprovider != 0 {
+			create["systemprovider"] = appComponentCreateSystemprovider
+		}
+
+		// Go over specified commands in app component types to validate and map data.
+
+		paramNames := map[string]bool{}
+		for _, param := range val.Servicetype.Parameters {
+			paramName := param.Name
+			paramNames[paramName] = true
+			paramValue, hasValue := paramsPassed[paramName]
+			if hasValue {
+				if param.Readonly || param.DisableEdit {
+					cobra.CheckErr(fmt.Sprintf("Param cannot be changed: %s", paramName))
+				}
+				create[paramName] = parseComponentParameter(param, paramValue)
+			} else if param.Required && param.DefaultValue == nil {
+				cobra.CheckErr(fmt.Sprintf("Required parameter not given: %s", paramName))
+			}
+		}
+
+		// Check that there aren't any params given that don't exist.
+		for k := range paramsPassed {
+			if !paramNames[k] {
+				cobra.CheckErr(fmt.Sprintf("Unknown parameter given: %s", k))
+			}
+		}
+
+		Level27Client.AppComponentCreate(appID, create)
 	},
+}
+
+func parseComponentParameter(param types.AppComponentTypeParameter, paramValue interface{}) interface{} {
+	// Convert parameters to the correct types in-JSON.
+	var str string
+	var ok bool
+	if str, ok = paramValue.(string); !ok {
+		// Value isn't a string. This means it must have come from a JSON input file or something (i.e. not command line arg)
+		// So assume it's the correct type and let the API complain if it isn't.
+		return paramValue
+	}
+
+	switch param.Type {
+	case "sshkey[]":
+		keys := []int{}
+		for _, key := range strings.Split(str, ",") {
+			// TODO: Resolve SSH key
+			keys = append(keys, checkSingleIntID(key, "SSH key"))
+		}
+		return keys
+	case "integer":
+		intVal, err := strconv.Atoi(str)
+		cobra.CheckErr(err)
+		return intVal
+	case "boolean":
+		return strings.EqualFold(str, "true")
+	case "array":
+		found := false
+		for _, possibleValue := range param.PossibleValues {
+			if str == possibleValue {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			cobra.CheckErr(
+				fmt.Sprintf(
+					"Parameter %s: value '%s' not in range of possible values: %s",
+					param.Name,
+					str,
+					strings.Join(param.PossibleValues, ", ")))
+		}
+
+		return str
+	default:
+		// Pass as string
+		return str
+	}
 }
 
 // ---- DELETE COMPONENT
