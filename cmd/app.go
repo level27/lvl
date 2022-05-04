@@ -1189,24 +1189,32 @@ var appMigrationsCreateCmd = &cobra.Command{
 	},
 }
 
-func ValidateMigrationItem(values string) {
-	
+func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
+	// hardcoded because there is no api call yet to get to get a valid migrationItem parameters
+	// these are all the props a valid migration iten MUST have.
+	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
 
+	
+	
 	// split value on comma and put values in array
 	valueSplitted := strings.Split(values, ",")
 
+	// keep track of the whole validate migrationItem
+	var singleMigrationItem = []types.AppMigrationItemValue{}
 	// for each splitted value check if its defined correctly -> =
 	for _, keyValuePair := range valueSplitted {
-		key, value := ValidateMigrationItemKeyValuePair(keyValuePair)
-
-		log.Println(key, value)
+		key, value := ValidateMigrationItemKeyValuePair(keyValuePair, possibleMigrationItemProps)
+		
+		// put each validated pair in the array
+		singleMigrationItem = append(singleMigrationItem, types.AppMigrationItemValue{key: value})
 
 	}
 
+	return singleMigrationItem
+	
 }
 
-func ValidateMigrationItemKeyValuePair(keyValuePair string) (string, string) {
-	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
+func ValidateMigrationItemKeyValuePair(keyValuePair string, possibleProps []string) (string, string) {
 
 	// when pair doesnt contain '=' -> error.
 	if !strings.Contains(keyValuePair, "=") {
@@ -1220,7 +1228,7 @@ func ValidateMigrationItemKeyValuePair(keyValuePair string) (string, string) {
 		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
 	} else {
 
-		for _, prop := range possibleMigrationItemProps {
+		for _, prop := range possibleProps {
 
 			if strings.Trim(splittedKeyValue[0], " ") == prop {
 

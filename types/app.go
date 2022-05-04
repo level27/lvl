@@ -375,3 +375,6 @@ type AppMigrationUpdate struct {
 	MigrationType string `json:"migrationType"`
 	DtPlanned     string `json:"dtPlanned"`
 }
+
+// used to create migration key value pairs
+type AppMigrationItemValue map[string]interface{}
