@@ -5,7 +5,6 @@ import (
 	"log"
 	"sort"
 	"strconv"
-	"strings"
 
 	"bitbucket.org/level27/lvl/types"
 	"bitbucket.org/level27/lvl/utils"
@@ -183,12 +182,12 @@ func init() {
 	// ---- GET LIST OF MIGRATIONS
 	appMigrationsCmd.AddCommand(appMigrationsGetCmd)
 
-	// ---- CREATE NEW APP MIGRATION
-	appMigrationsCmd.AddCommand(appMigrationsCreateCmd)
-	// flags needed to create new migration
-	flags = appMigrationsCreateCmd.Flags()
-	flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
-	flags.StringArrayVarP(&appMigrationCreateItems, "migration-item", "", []string{}, "Migration items. each item should contain: type, source, sourceInfo, destination, destinationId, ord, sshkey")
+	// // ---- CREATE NEW APP MIGRATION
+	// appMigrationsCmd.AddCommand(appMigrationsCreateCmd)
+	// // flags needed to create new migration
+	// flags = appMigrationsCreateCmd.Flags()
+	// flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
+	// flags.StringArrayVarP(&appMigrationCreateItems, "migration-item", "", []string{}, "Migration items. each item should contain: type, source, sourceInfo, destination, destinationId, ord, sshkey")
 
 	// ---- UPDATE MIGRATION
 	appMigrationsCmd.AddCommand(appMigrationsUpdateCmd)
@@ -1160,101 +1159,101 @@ var appMigrationsGetCmd = &cobra.Command{
 
 // TODO -- EXAMPLE TEXT COMPLETING
 // --- CREATE MIGRATION
-var appMigrationCreatePlanned string
-var appMigrationCreateItems []string
-var appMigrationsCreateCmd = &cobra.Command{
-	Use:     "create [appName] [flags]",
-	Short:   "Create a new app migration.",
-	Example: "lvl app migrations create MyAppName -t confirmed --migration-item 'type=php, source=cp4, sourceInfo=122, destination=systemgroup, destinationId=453, ord=1, sshkey=null'",
-	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		// search for appid based on appName
-		//appId := resolveApp(args[0])
+// var appMigrationCreatePlanned string
+// var appMigrationCreateItems []string
+// var appMigrationsCreateCmd = &cobra.Command{
+// 	Use:     "create [appName] [flags]",
+// 	Short:   "Create a new app migration.",
+// 	Example: "lvl app migrations create MyAppName -t confirmed --migration-item 'type=php, source=cp4, sourceInfo=122, destination=systemgroup, destinationId=453, ord=1, sshkey=null'",
+// 	Args:    cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		//search for appid based on appName
+// 		appId := resolveApp(args[0])
 
-		// request := types.AppMigrationRequest{
-		// 	MigrationType:      "automatic",
-		// 	DtPlanned:          appMigrationCreatePlanned,
-		// }
+// 		request := types.AppMigrationRequest{
+// 			MigrationType:      "automatic",
+// 			DtPlanned:          appMigrationCreatePlanned,
+// 		}
 
-		// Level27Client.AppMigrationsCreate(appId, request)
+// 		Level27Client.AppMigrationsCreate(appId, request)
 
-		// loop over each given Item by the user
-		for _, migrationItem := range appMigrationCreateItems {
-			fmt.Println(migrationItem)
-			//check for each item if its defined correctly and return a valig MigrationArrayItem
-			ValidateMigrationItem(migrationItem)
+// 		// loop over each given Item by the user
+// 		for _, migrationItem := range appMigrationCreateItems {
+// 			fmt.Println(migrationItem)
+// 			//check for each item if its defined correctly and return a valig MigrationArrayItem
+// 			ValidateMigrationItem(migrationItem)
 
-		}
+// 		}
 
-	},
-}
+// 	},
+// }
 
-func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
-	// hardcoded because there is no api call yet to get to get a valid migrationItem parameters
-	// these are all the props a valid migration iten MUST have.
-	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
+// func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
+// 	// hardcoded because there is no api call yet to get to get a valid migrationItem parameters
+// 	// these are all the props a valid migration iten MUST have.
+// 	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
 
-	// split value on comma and put values in array
-	valueSplitted := strings.Split(values, ",")
+// 	// split value on comma and put values in array
+// 	valueSplitted := strings.Split(values, ",")
 
-	// keep track of the whole validate migrationItem
-	var singleMigrationItem = []types.AppMigrationItemValue{}
-	// for each splitted value check if its defined correctly -> =
-	for _, keyValuePair := range valueSplitted {
-		key, value := ValidateMigrationItemKeyValuePair(keyValuePair, possibleMigrationItemProps)
-		
-		// put each validated pair in the array
-		singleMigrationItem = append(singleMigrationItem, types.AppMigrationItemValue{key: value})
+// 	// keep track of the whole validate migrationItem
+// 	var singleMigrationItem = []types.AppMigrationItemValue{}
+// 	// for each splitted value check if its defined correctly -> =
+// 	for _, keyValuePair := range valueSplitted {
+// 		key, value := ValidateMigrationItemKeyValuePair(keyValuePair, possibleMigrationItemProps)
 
-	}
+// 		// put each validated pair in the array
+// 		singleMigrationItem = append(singleMigrationItem, types.AppMigrationItemValue{key: value})
 
-	ValidateMigrationItemProperties(singleMigrationItem, possibleMigrationItemProps)
-	return singleMigrationItem
-	
-}
+// 	}
 
-func ValidateMigrationItemProperties(itemValues []types.AppMigrationItemValue, possibleProps []string){
-	// each migration item need to have all the properties
-	if len(itemValues) != len(possibleProps){
-		log.Fatalf("Given migration item does not contain right amount of properties. Have %v, Need %v.", len(itemValues), len(possibleProps))
-	}
-	for _, prop := range possibleProps{
-		for _ ,pair := range itemValues{
-			if pair[prop] == nil {
-				log.Fatalf("%v not defined for current migration item.", prop)
-			}
-		}
-	}
-}
+// 	ValidateMigrationItemProperties(singleMigrationItem, possibleMigrationItemProps)
+// 	return singleMigrationItem
 
-// validate each key value pair given by the user
-func ValidateMigrationItemKeyValuePair(keyValuePair string, possibleProps []string) (string, string) {
+// }
 
-	// when pair doesnt contain '=' -> error.
-	if !strings.Contains(keyValuePair, "=") {
-		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
-	}
+// func ValidateMigrationItemProperties(itemValues []types.AppMigrationItemValue, possibleProps []string){
+// 	// each migration item need to have all the properties
+// 	if len(itemValues) != len(possibleProps){
+// 		log.Fatalf("Given migration item does not contain right amount of properties. Have %v, Need %v.", len(itemValues), len(possibleProps))
+// 	}
+// 	for _, prop := range possibleProps{
+// 		for _ ,pair := range itemValues{
+// 			if pair[prop] == nil {
+// 				log.Fatalf("%v not defined for current migration item.", prop)
+// 			}
+// 		}
+// 	}
+// }
 
-	splittedKeyValue := strings.Split(keyValuePair, "=")
+// // validate each key value pair given by the user
+// func ValidateMigrationItemKeyValuePair(keyValuePair string, possibleProps []string) (string, string) {
 
-	// when more than one '=' are used -> error
-	if len(splittedKeyValue) != 2 {
-		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
-	} else {
+// 	// when pair doesnt contain '=' -> error.
+// 	if !strings.Contains(keyValuePair, "=") {
+// 		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
+// 	}
 
-		for _, prop := range possibleProps {
+// 	splittedKeyValue := strings.Split(keyValuePair, "=")
 
-			if strings.Trim(splittedKeyValue[0], " ") == prop {
+// 	// when more than one '=' are used -> error
+// 	if len(splittedKeyValue) != 2 {
+// 		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
+// 	} else {
 
-				return strings.Trim(splittedKeyValue[0], " "), strings.Trim(splittedKeyValue[1], " ")
-			}
-		}
+// 		for _, prop := range possibleProps {
 
-		log.Fatalf("Given key is NOT a valid property: '%v'.", splittedKeyValue[0])
+// 			if strings.Trim(splittedKeyValue[0], " ") == prop {
 
-	}
-	return "", ""
-}
+// 				return strings.Trim(splittedKeyValue[0], " "), strings.Trim(splittedKeyValue[1], " ")
+// 			}
+// 		}
+
+// 		log.Fatalf("Given key is NOT a valid property: '%v'.", splittedKeyValue[0])
+
+// 	}
+// 	return "", ""
+// }
 
 // ---- UPDATE MIGRATION
 var appMigrationsUpdateType, appMigrationsUpdateDtPlanned string
