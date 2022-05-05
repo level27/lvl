@@ -281,3 +281,103 @@ type AppComponentAvailableBackup struct {
 	} `json:"system"`
 	VolumeUID string `json:"volumeUid"`
 }
+
+// type app migration
+type AppMigration struct {
+	ID                 int         `json:"id"`
+	MigrationType      string      `json:"migrationType"`
+	DtPlanned          interface{} `json:"dtPlanned"`
+	Status             string      `json:"status"`
+	ConfirmationStatus int         `json:"confirmationStatus"`
+	App                struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"app"`
+
+	MigrationItems []struct {
+		ID                   int           `json:"id"`
+		Type                 string        `json:"type"`
+		Source               string        `json:"source"`
+		SourceInformation    string        `json:"sourceInformation"`
+		DestinationEntity    string        `json:"destinationEntity"`
+		DestinationEntityID  int           `json:"destinationEntityId"`
+		Status               string        `json:"status"`
+		StatusCategory       string        `json:"statusCategory"`
+		Ord                  int           `json:"ord"`
+		Sshkey               interface{}   `json:"sshkey"`
+		InvestigationResults interface{} `json:"investigationResults"`
+		PreparationResults   []interface{} `json:"preparationResults"`
+		PresyncResults       []interface{} `json:"presyncResults"`
+		MigrationResults     []interface{} `json:"migrationResults"`
+		Logs                 interface{} `json:"logs"`
+		Appcomponent         struct {
+			ID                     int    `json:"id"`
+			Name                   string `json:"name"`
+			Appcomponenttype       string `json:"appcomponenttype"`
+			Appcomponentparameters struct {
+				User string `json:"user"`
+				Pass string `json:"pass"`
+				Host string `json:"host"`
+			} `json:"appcomponentparameters"`
+			Status         string `json:"status"`
+			StatusCategory string `json:"statusCategory"`
+		} `json:"appcomponent"`
+		SourceExtraData struct {
+			Appcomponentparameters struct {
+				Pass string `json:"pass"`
+				Host string `json:"host"`
+				User string `json:"user"`
+			} `json:"appcomponentparameters"`
+			Status         string `json:"status"`
+			StatusCategory string `json:"statusCategory"`
+			System         struct {
+				ID                    int    `json:"id"`
+				Fqdn                  string `json:"fqdn"`
+				CustomerFqdn          string `json:"customerFqdn"`
+				Name                  string `json:"name"`
+				Status                string `json:"status"`
+				RunningStatus         string `json:"runningStatus"`
+				Osv                   string `json:"osv"`
+				StatusCategory        string `json:"statusCategory"`
+				RunningStatusCategory string `json:"runningStatusCategory"`
+			} `json:"system"`
+		} `json:"sourceExtraData"`
+		DestinationExtraData struct {
+			ID                    int    `json:"id"`
+			Name                  string `json:"name"`
+			Fqdn                  string `json:"fqdn"`
+			CustomerFqdn          string `json:"customerFqdn"`
+			Status                string `json:"status"`
+			StatusCategory        string `json:"statusCategory"`
+			RunningStatus         string `json:"runningStatus"`
+			RunningStatusCategory string `json:"runningStatusCategory"`
+			Osv                   string `json:"osv"`
+		} `json:"destinationExtraData"`
+	} `json:"migrationItems"`
+}
+
+// request type for new migration
+type AppMigrationRequest struct {
+	MigrationType      string             `json:"migrationType"`
+	DtPlanned          string             `json:"dtPlanned"`
+	MigrationItemArray []AppMigrationItem `json:"migrationItemArray"`
+}
+
+type AppMigrationItem struct {
+	Type                string      `json:"type"`
+	Source              string      `json:"source"`
+	SourceInfo          int         `json:"sourceInformation"`
+	DestinationEntity   string      `json:"destinationEntity"`
+	DestinationEntityId int         `json:"destinationEntityId"`
+	Ord                 string      `json:"ord"`
+	SshKey              interface{} `json:"sshKey"`
+}
+
+// type appMigration for update
+type AppMigrationUpdate struct {
+	MigrationType string `json:"migrationType"`
+	DtPlanned     string `json:"dtPlanned"`
+}
+
+// used to create migration key value pairs
+type AppMigrationItemValue map[string]interface{}

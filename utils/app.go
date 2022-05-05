@@ -27,7 +27,7 @@ func (c *Client) AppLookup(name string) []types.App {
 }
 
 // GET componentId based on name
-func (c *Client) AppComponentLookup(appId int, name string) []types.AppComponent{
+func (c *Client) AppComponentLookup(appId int, name string) []types.AppComponent {
 	results := []types.AppComponent{}
 	components := c.AppComponentsGet(appId, types.CommonGetParams{Filter: name})
 	for _, component := range components {
@@ -118,6 +118,8 @@ func (c *Client) AppUpdate(appId int, req types.AppPutRequest) {
 	endpoint := fmt.Sprintf("apps/%v", appId)
 	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "Apps")
+
+	log.Print("App succesfully updated!")
 }
 
 // #endregion
@@ -132,7 +134,6 @@ func (c *Client) AppAction(appId int, action string) {
 	err := c.invokeAPI("POST", endpoint, request, nil)
 	AssertApiError(err, "app")
 }
-
 
 // APP SSL CERTIFICATES
 
@@ -257,6 +258,7 @@ func (c *Client) AppSslCertificatesKey(appID int, sslCertificateID int) types.Ap
 
 	return response
 }
+
 //------------------------------------------------- APP COMPONENTS (GET / DESCRIBE / CREATE)-------------------------------------------------
 
 // ---- GET LIST OF COMPONENTS
@@ -504,11 +506,10 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 	}
 }
 
-
 // ---- DOWNLOAD RESTORE FILE
-func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename string){
+func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename string) {
 	endpoint := fmt.Sprintf("apps/%v/restores/%v/download", appId, restoreId)
-	res, err := c.sendRequestRaw("GET", endpoint , nil , map[string]string{"Accept": "application/gzip"})
+	res, err := c.sendRequestRaw("GET", endpoint, nil, map[string]string{"Accept": "application/gzip"})
 
 	if filename == "" {
 		filename = parseContentDispositionFilename(res, "restore.tar.gz")
@@ -538,7 +539,9 @@ func (c *Client) AppComponentRestoreDownload(appId int, restoreId int, filename 
 
 	io.Copy(file, res.Body)
 }
+
 //-------------------------------------------------  APP COMPONENT BACKUP (GET) -------------------------------------------------
+// ---- GET LIST OF COMPONENT AVAILABLEBACKUPS
 func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppComponentAvailableBackup {
 	var backups struct {
 		Data []types.AppComponentAvailableBackup `json:"availableBackups"`
@@ -548,4 +551,66 @@ func (c *Client) AppComponentbackupsGet(appId int, componentId int) []types.AppC
 	AssertApiError(err, "availablebackup")
 
 	return backups.Data
+}
+
+//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+// ---- GET LIST OF MIGRATIONS
+func (c *Client) AppMigrationsGet(appId int) []types.AppMigration {
+	var migrations struct {
+		Data []types.AppMigration `json:"migrations"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/migrations", appId)
+	err := c.invokeAPI("GET", endpoint, nil, &migrations)
+	AssertApiError(err, "appMigration")
+
+	return migrations.Data
+}
+
+// ---- CREATE APP MIGRATION
+func (c *Client) AppMigrationsCreate(appId int, req types.AppMigrationRequest) {
+	var migration struct {
+		Data types.AppMigration `json:"migration"`
+	}
+	endpoint := fmt.Sprintf("apps/%v/migrations", appId)
+	err := c.invokeAPI("POST", endpoint, req, &migration)
+	AssertApiError(err, "appMigration")
+
+	log.Printf("migration created! [ID: '%v']", migration.Data.ID)
+}
+
+// ---- UPDATE APP MIGRATION
+func (c *Client) AppMigrationsUpdate(appId int, migrationId int, req interface{}) {
+	endpoint := fmt.Sprintf("apps/%v/migrations/%v", appId, migrationId)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
+	AssertApiError(err, "appMigration")
+
+	log.Print("migration succesfully updated!")
+}
+
+// ---- DESCRIBE APP MIGRATION
+func (c *Client) AppMigrationDescribe(appId int, migrationId int) types.AppMigration {
+	var migration struct {
+		Data types.AppMigration `json:"migration"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%v/migrations/%v", appId, migrationId)
+	err := c.invokeAPI("GET", endpoint, nil, &migration)
+	AssertApiError(err, "appMigration")
+
+	return migration.Data
+}
+
+//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+// ---- MIGRATIONS ACTION COMMAND
+func (c *Client) AppMigrationsAction(appId int, migrationId int, ChosenAction string) {
+	var action struct {
+		Type string `json:"type"`
+	}
+
+	action.Type = ChosenAction
+	endpoint := fmt.Sprintf("apps/%v/migrations/%v/actions", appId, migrationId)
+	err := c.invokeAPI("POST", endpoint, action, nil)
+
+	AssertApiError(err, "appMigrationAction")
 }
