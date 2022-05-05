@@ -121,7 +121,7 @@ type AppComponent struct {
 		StatusCategory string `json:"statusCategory"`
 	} `json:"app"`
 	AppcomponentparameterDescriptions interface{} `json:"appcomponentparameterDescriptions"`
-	Appcomponentparameters            interface{} `json:"appcomponentparameters"`
+	Appcomponentparameters            map[string]interface{} `json:"appcomponentparameters"`
 	Appcomponenttype                  string      `json:"appcomponenttype"`
 	BillableitemDetailID              int64       `json:"billableitemDetailId"`
 	Category                          string      `json:"category"`

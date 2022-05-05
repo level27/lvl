@@ -330,6 +330,13 @@ func (c *Client) AppComponentCreate(appId int, req interface{}) types.AppCompone
 	return app.Data
 }
 
+func (c *Client) AppComponentUpdate(appId int, appComponentID int, req interface{}) {
+	endpoint := fmt.Sprintf("apps/%d/components/%d", appId, appComponentID)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
+
+	AssertApiError(err, "apps")
+}
+
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 // ---- GET LIST OFF APPCOMPONENTTYPES
 func (c *Client) AppComponenttypesGet() types.Appcomponenttype {

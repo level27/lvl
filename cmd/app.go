@@ -84,6 +84,13 @@ func init() {
 	appComponentCreateCmd.MarkFlagRequired("name")
 	appComponentCreateCmd.MarkFlagRequired("type")
 
+	// ---- UPDATE COMPONENT
+	appComponentCmd.AddCommand(appComponentUpdateCmd)
+	settingsFileFlag(appComponentUpdateCmd)
+	settingString(appComponentUpdateCmd, updateSettings, "name", "New name for this app component")
+	appComponentUpdateParams = appComponentUpdateCmd.Flags().StringArray("param", nil, "")
+
+
 	// ---- DELETE COMPONENTS
 	appComponentCmd.AddCommand(AppComponentDeleteCmd)
 	//flag to skip confirmation when deleting an appcomponent
@@ -772,6 +779,77 @@ var appComponentCreateCmd = &cobra.Command{
 		Level27Client.AppComponentCreate(appID, create)
 	},
 }
+
+var appComponentUpdateParams *[]string
+var appComponentUpdateCmd = &cobra.Command{
+	Use:     "update",
+	Short:   "Update a new appcomponent.",
+	Example: "",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+
+		appID := resolveApp(args[0])
+		appComponentID := resolveAppComponent(appID, args[1])
+		componentTypes := Level27Client.AppComponenttypesGet();
+
+		appComponent := Level27Client.AppComponentGetSingle(appID, appComponentID)
+
+		parameterTypes := make(map[string]types.AppComponentTypeParameter)
+		for _, param := range componentTypes[appComponent.Appcomponenttype].Servicetype.Parameters {
+			parameterTypes[param.Name] = param
+		}
+
+		data := make(map[string]interface{})
+		data["appcomponenttype"] = appComponent.Appcomponenttype
+		data["name"] = appComponent.Name
+		data["category"] = appComponent.Category
+		data["systemgroup"] = appComponent.Systemgroup
+		data["system"] = nil
+		if appComponent.Systemgroup == nil {
+			data["system"] = appComponent.Systems[0].ID
+		}
+
+		for k, v := range appComponent.Appcomponentparameters {
+			param := parameterTypes[k]
+			paramType := parameterTypes[k].Type
+
+			if param.Readonly {
+				continue
+			}
+
+			// Passwords are sent as "******". Skip them to avoid getting API errors.
+			if paramType == "password-sha512" || paramType == "password-plain" || paramType == "password-sha1" || paramType == "password-sha256-scram" {
+				continue
+			}
+
+			data[k] = v
+		}
+
+		data = mergeMaps(data, settings)
+
+		// Parse params from command line
+		for _, param := range *appComponentUpdateParams {
+			split := strings.SplitN(param, "=", 2)
+			if len(split) != 2 {
+				cobra.CheckErr(fmt.Sprintf("Expected key=value pair to --param: %s", param))
+			}
+
+			paramName := split[0]
+			paramValue := readArgFileSupported(split[1])
+			paramType, ok := parameterTypes[paramName]
+			if !ok {
+				cobra.CheckErr(fmt.Sprintf("Unknown parameter: %s", paramName))
+			}
+
+			data[paramName] = parseComponentParameter(paramType, paramValue)
+		}
+
+		Level27Client.AppComponentUpdate(appID, appComponentID, data)
+	},
+}
+
 
 func parseComponentParameter(param types.AppComponentTypeParameter, paramValue interface{}) interface{} {
 	// Convert parameters to the correct types in-JSON.
