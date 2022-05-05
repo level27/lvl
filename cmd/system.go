@@ -616,10 +616,17 @@ var systemCheckGetCmd = &cobra.Command{
 		// check for valid system ID
 		id := resolveSystem(args[0])
 
-		checks := Level27Client.SystemCheckGetList(id, optGetParameters)
-		// Creating readable output
-		outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-			[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+		system := Level27Client.SystemGetSingle(id)
+
+		// when monitoring is disabled on system -> checks dont need to be visible
+		if system.MonitoringEnabled {
+			checks := Level27Client.SystemCheckGetList(id, optGetParameters)
+			// Creating readable output
+			outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
+				[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+		}else{
+			log.Fatalf("Monitoring is currently disabled for system: [NAME:%v - ID: %v]. Use the 'monitoring' command to change monitoring status", system.Name, system.Id)
+		}
 
 	},
 }
@@ -803,17 +810,17 @@ var systemCheckUpdateCmd = &cobra.Command{
 //------------------------------------------------- MONITORING ON SPECIFIC SYSTEM ----------------------------------------------
 // ---- MONITORING COMMAND
 var systemMonitoringCmd = &cobra.Command{
-	Use: "monitoring",
-	Short: "Turn the monitoring for a system on or off.",
+	Use:     "monitoring",
+	Short:   "Turn the monitoring for a system on or off.",
 	Example: "lvl system monitoring on MySystemName",
 }
 
 // ---- MONITORING ON
 var systemMonitoringOnCmd = &cobra.Command{
-	Use: "on",
-	Short: "Turn on the monitoring for a system.",
+	Use:     "on",
+	Short:   "Turn on the monitoring for a system.",
 	Example: "lvl system monitoring on MySystemName",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//search for sytsemID based on name
 		systemId := resolveSystem(args[0])
@@ -826,10 +833,10 @@ var systemMonitoringOnCmd = &cobra.Command{
 
 // ---- MONITORING OFF
 var systemMonitoringOffCmd = &cobra.Command{
-	Use: "off",
-	Short: "Turn off the monitoring for a system.",
+	Use:     "off",
+	Short:   "Turn off the monitoring for a system.",
 	Example: "lvl system monitoring off MySystemName",
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//search for sytsemID based on name
 		systemId := resolveSystem(args[0])
