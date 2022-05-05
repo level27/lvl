@@ -75,20 +75,15 @@
 
 {{- /* COOKBOOKS */}}
 {{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
-{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .Cookbooktype }}
-  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
-  {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
-  {{- $anyParams := false }}
-  {{vt "yellow"}}Parameters: {{ range $key, $dat := .Cookbookparameters }}{{ if not $dat.Default }}
-    {{- $anyParams = true }}
-    {{vt "yellow"}}{{ $key }}: {{vt "brightwhite"}}{{ $dat.Value -}}
-  {{ end }}{{ end }}{{if not $anyParams}}{{vt "brightblack"}}(none){{ end -}}
+{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CookbookType }}
+  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .Id }}
+  {{vt "yellow"}}Status:     {{template "statusVt" .Status}}{{ .Status }}
 {{ end }}
 
 
 {{- /* CHECKS */}}
-{{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
-{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CookbookType }}
+{{vt "yellow"}}Checks: {{ range .Checks }}
+{{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CheckType }}
   {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
   {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
   {{- $anyParams := false }}
