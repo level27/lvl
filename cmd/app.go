@@ -273,6 +273,7 @@ var appGetCmd = &cobra.Command{
 	Example: "lvl app get",
 	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		
 		ids, err := convertStringsToIds(args)
 		if err != nil {
 			log.Fatalln("Invalid app ID")

@@ -118,6 +118,8 @@ func (c *Client) AppUpdate(appId int, req types.AppPutRequest) {
 	endpoint := fmt.Sprintf("apps/%v", appId)
 	err := c.invokeAPI("PUT", endpoint, req, nil)
 	AssertApiError(err, "Apps")
+
+	log.Print("App succesfully updated!")
 }
 
 // #endregion
