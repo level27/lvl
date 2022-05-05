@@ -75,7 +75,7 @@ type System struct {
 	Cookbooks             []Cookbook `json:"cookbooks"`
 	Preferredparentsystem struct {
 		ID   interface{} `json:"id"`
-		Name string `json:"name"`
+		Name string      `json:"name"`
 	} `json:"preferredparentsystem"`
 }
 
@@ -122,6 +122,7 @@ type DescribeSystem struct {
 	InstallSecurityUpdatesString string             `json:"installSecurityUpdatesString"`
 	HasNetworks                  []SystemHasNetwork `json:"hasNetworks"`
 	Volumes                      []SystemVolume     `json:"volumes"`
+	Checks                       []SystemCheckGet   `json:"checks"`
 }
 
 type DescribeSystemNetworks struct {
@@ -307,6 +308,7 @@ type SystemCheckGet struct {
 	ChecktypeLocation           string      `json:"checktypeLocation"`
 	Status                      string      `json:"status"`
 	StatusInformation           string      `json:"statusInformation"`
+	StatusCategory              string      `json:"statusCategory"`
 	DtLastMonitorEnabled        int         `json:"dtLastMonitoringEnabled"`
 	DtLastStatusChanged         int64       `json:"dtLastStatusChange"`
 	DtNextCheck                 int         `json:"dtNextCheck"`
@@ -330,6 +332,7 @@ type Cookbook struct {
 	CookbookParametersDescriptions CookbookParameterDescription `json:"cookbookparameterDescriptions"`
 	PreviousCookbookParameters     interface{}                  `json:"previousCookbookparameters"`
 	Status                         string                       `json:"status"`
+	StatusCategory                 string                       `json:"statusCategory"`
 	System                         SystemRef                    `json:"system"`
 }
 
@@ -404,24 +407,24 @@ type SystemProviderConfiguration struct {
 }
 
 type SystemPut struct {
-	Id                          int    `json:"id"`
-	Name                        string `json:"name"`
-	Type                        string `json:"type"`
-	Cpu                         int    `json:"cpu"`
-	Memory                      int    `json:"memory"`
-	Disk                        string `json:"disk"`
-	ManagementType              string `json:"managementType"`
-	Organisation                int    `json:"organisation"`
-	SystemImage                 int    `json:"systemimage"`
-	OperatingsystemVersion      int    `json:"operatingsystemVersion"`
-	SystemProviderConfiguration int    `json:"systemproviderConfiguration"`
-	Zone                        int    `json:"zone"`
-	PublicNetworking            bool   `json:"publicNetworking"`
+	Id                          int         `json:"id"`
+	Name                        string      `json:"name"`
+	Type                        string      `json:"type"`
+	Cpu                         int         `json:"cpu"`
+	Memory                      int         `json:"memory"`
+	Disk                        string      `json:"disk"`
+	ManagementType              string      `json:"managementType"`
+	Organisation                int         `json:"organisation"`
+	SystemImage                 int         `json:"systemimage"`
+	OperatingsystemVersion      int         `json:"operatingsystemVersion"`
+	SystemProviderConfiguration int         `json:"systemproviderConfiguration"`
+	Zone                        int         `json:"zone"`
+	PublicNetworking            bool        `json:"publicNetworking"`
 	Preferredparentsystem       interface{} `json:"preferredparentsystem"`
-	Remarks                     string `json:"remarks"`
-	InstallSecurityUpdates      int    `json:"installSecurityUpdates"`
-	LimitRiops                  int    `json:"limitRiops"`
-	LimitWiops                  int    `json:"limitWiops"`
+	Remarks                     string      `json:"remarks"`
+	InstallSecurityUpdates      int         `json:"installSecurityUpdates"`
+	LimitRiops                  int         `json:"limitRiops"`
+	LimitWiops                  int         `json:"limitWiops"`
 }
 
 type SystemHasNetworkIpPut struct {

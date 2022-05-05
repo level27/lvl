@@ -74,23 +74,26 @@
 
 
 {{- /* COOKBOOKS */}}
+{{ if gt (len .Cookbooks) 0 }}
 {{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
 {{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CookbookType }}
   {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .Id }}
-  {{vt "yellow"}}Status:     {{template "statusVt" .Status}}{{ .Status }}
-{{ end }}
+  {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
+{{ end -}}
+{{ else }}
+{{vt "yellow"}}Cookbooks: {{vt "brightblack"}}(none)
+{{- end -}}
 
 
 {{- /* CHECKS */}}
+{{ if gt (len .Checks) 0 }}
 {{vt "yellow"}}Checks: {{ range .Checks }}
 {{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CheckType }}
-  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
+  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .Id }}
   {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
-  {{- $anyParams := false }}
-  {{vt "yellow"}}Parameters: {{ range $key, $dat := .Cookbookparameters }}{{ if not $dat.Default }}
-    {{- $anyParams = true }}
-    {{vt "yellow"}}{{ $key }}: {{vt "brightwhite"}}{{ $dat.Value -}}
-  {{ end }}{{ end }}{{if not $anyParams}}{{vt "brightblack"}}(none){{ end -}}
+{{end}}
+{{ else }}
+{{vt "yellow"}}Checks: {{vt "brightblack"}}(none)
 {{ end }}
 
 
@@ -99,3 +102,5 @@
 {{vt "yellow"}}Latest jobs:{{vt "reset"}}
 {{- template "describeJobs" . }}
 {{- end}}
+
+
