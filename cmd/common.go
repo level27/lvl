@@ -63,7 +63,10 @@ func CheckForMultipleIDs(ids []string) []string {
 	return currIds
 }
 // --------------------------- DYNAMICALY SETTING PARAMETERS
-
+// this can be used when you need flags to set different paramaters but you don't 
+// know the amount of parameters beforehand. 
+// we can use something like a parameter flag where the user has to set the keys and values himself.
+// example lvl system cookbooks create -p key=value -p key2=value2
 // function used for commands with dynamic parameters. (different parameters defined by 1 flag)
 func SplitCustomParameters(customP []string) (map[string]interface{}) {
 	checkedParameters := make(map[string]interface{})
