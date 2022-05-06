@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
 )
@@ -48,6 +50,8 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 			Level27Client.EntityAddAcl(entityType,entityID, types.AclAdd{
 				Organisation: organisationID,
 			})
+
+			log.Printf("Succesfully added access!")
 		},
 	}
 
@@ -62,6 +66,8 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 			organisationID := resolveOrganisation(args[1])
 
 			Level27Client.EntityRemoveAcl(entityType, entityID, organisationID)
+		
+			log.Printf("%v's access removed!", args[1])
 		},
 	}
 

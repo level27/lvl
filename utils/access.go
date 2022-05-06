@@ -28,7 +28,6 @@ func (c *Client) EntityAddAcl(entityType string, entityID int, add types.AclAdd)
 	endpoint := fmt.Sprintf("%s/%d/acls", entityType, entityID)
 	err := c.invokeAPI("POST", endpoint, add, &response)
 	AssertApiError(err, "EntityAddAcl")
-
 	return response.Acl
 }
 
