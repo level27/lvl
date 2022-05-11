@@ -435,6 +435,10 @@ var systemDescribeCmd = &cobra.Command{
 		system.HasNetworks = Level27Client.SystemGetHasNetworks(systemID)
 		system.Volumes = Level27Client.SystemGetVolumes(systemID, types.CommonGetParams{})
 
+		if system.System.MonitoringEnabled {
+			system.Checks = Level27Client.SystemCheckGetList(systemID,  types.CommonGetParams{})
+		}
+
 		outputFormatTemplate(system, "templates/system.tmpl")
 	},
 }
