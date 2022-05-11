@@ -192,6 +192,27 @@ func init() {
 	// ---- GET LIST OF BACKUPS
 	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
 
+
+	// APP COMPONENT URL
+	appComponentCmd.AddCommand(appComponentUrlCmd)
+
+	// APP COMPONENT URL GET
+	appComponentUrlCmd.AddCommand(appComponentUrlGetCmd)
+	addCommonGetFlags(appComponentUrlGetCmd)
+
+	// APP COMPONENT URL CREATE
+	appComponentUrlCmd.AddCommand(appComponentUrlCreateCmd)
+	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateAuthentication, "authentication", false, "Require HTTP Basic authentication on the URL")
+	appComponentUrlCreateCmd.Flags().StringVarP(&appComponentUrlCreateContent, "content", "c", "", "Content for the new URL")
+	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateSslForce, "force-ssl", false, "Force usage of SSL on the URL")
+	appComponentUrlCreateCmd.Flags().IntVar(&appComponentUrlCreateSslCertificate, "ssl-certificate", 0, "SSL certificate to use.")
+	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateHandleDns, "handle-dns", false, "Automatically create DNS records")
+	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateAutoSslCertificate, "auto-ssl-certificate", false, "Automatically create SSL certificate with Let's Encrypt")
+
+	// APP COMPONENT URL DELETE
+	appComponentUrlCmd.AddCommand(appComponentUrlDeleteCmd)
+	appComponentUrlDeleteCmd.Flags().BoolVar(&appComponentUrlDeleteForce, "force", false, "Do not ask for confirmation to delete the URL")
+
 	//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
 	// ---- MIGRATIONS COMMAND
 	appCmd.AddCommand(appMigrationsCmd)
@@ -273,6 +294,21 @@ func resolveAppComponent(appId int, arg string) int {
 		func(comp types.AppComponent) string { return fmt.Sprintf("%s (%d)", comp.Name, comp.ID) }).ID)
 }
 
+// GET AN APP URL ID BASED ON THE NAME
+func resolveAppComponentUrl(appId int, appComponentId int, arg string) int {
+	// if arg already int, this is the ID
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	return resolveShared(
+		Level27Client.AppComponentUrlLookup(appId, appComponentId, arg),
+		arg,
+		"url",
+		func(url types.AppComponentUrlShort) string { return fmt.Sprintf("%s (%d)", url.Content, url.ID) }).ID
+}
+
 // MAIN COMMAND APPS
 var appCmd = &cobra.Command{
 	Use:     "app",
@@ -290,7 +326,7 @@ var appGetCmd = &cobra.Command{
 	Example: "lvl app get",
 	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 		ids, err := convertStringsToIds(args)
 		if err != nil {
 			log.Fatalln("Invalid app ID")
@@ -1564,5 +1600,105 @@ var appMigrationsActionRetryCmd = &cobra.Command{
 		migrationId := checkSingleIntID(args[1], "appMigration")
 
 		Level27Client.AppMigrationsAction(appId, migrationId, "retry")
+	},
+}
+
+// ------- APP COMPONENT URLs
+
+// APP COMPONENT URL
+var appComponentUrlCmd = &cobra.Command{
+	Use: "url",
+	Aliases: []string{"urls"},
+}
+
+// APP COMPONENT URL GET
+var appComponentUrlGetCmd = &cobra.Command{
+	Use: "get",
+
+	Args: cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		appID := resolveApp(args[0])
+		componentID := resolveAppComponent(appID, args[1])
+
+		results := resolveGets(
+			args[2:],
+			func (name string) []types.AppComponentUrlShort {
+				return Level27Client.AppComponentUrlLookup(appID, componentID, name)
+			},
+			func (i int) types.AppComponentUrlShort {
+				return Level27Client.AppComponentUrlGetSingle(appID, componentID, i).ToShort()
+			},
+			func(cgp types.CommonGetParams) []types.AppComponentUrlShort {
+				return Level27Client.AppComponentUrlGetList(appID, componentID, cgp)
+			},
+		)
+
+		outputFormatTable(
+			results,
+			[]string{"ID", "CONTENT", "STATUS", "TYPE", "SSL CERT", "FORCE SSL", "HANDLE DNS", "AUTHENTICATE"},
+			[]string{"ID", "Content", "Status", "Type", "SslCertificate.Name", "SslForce", "HandleDNS", "Authentication"})
+	},
+}
+
+// APP COMPONENT URL CREATE
+var appComponentUrlCreateAuthentication bool
+var appComponentUrlCreateContent string
+var appComponentUrlCreateSslForce bool
+var appComponentUrlCreateSslCertificate int
+var appComponentUrlCreateHandleDns bool
+var appComponentUrlCreateAutoSslCertificate bool
+var appComponentUrlCreateCmd = &cobra.Command{
+	Use: "create",
+
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		appID := resolveApp(args[0])
+		componentID := resolveAppComponent(appID, args[1])
+
+		var cert *int
+		if appComponentUrlCreateSslCertificate == 0 {
+			cert = nil
+		} else {
+			cert = &appComponentUrlCreateSslCertificate
+		}
+
+		create := types.AppComponentUrlCreate {
+			Authentication: appComponentUrlCreateAuthentication,
+			Content: appComponentUrlCreateContent,
+			SslForce: appComponentUrlCreateSslForce,
+			SslCertificate: cert,
+			HandleDns: appComponentUrlCreateHandleDns,
+			AutoSslCertificate: appComponentUrlCreateAutoSslCertificate,
+		}
+
+		Level27Client.AppComponentUrlCreate(appID, componentID, create)
+	},
+}
+
+// APP COMPONENT URL DELETE
+var appComponentUrlDeleteForce bool
+var appComponentUrlDeleteCmd = &cobra.Command{
+	Use: "delete",
+
+	Args: cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		appID := resolveApp(args[0])
+		componentID := resolveAppComponent(appID, args[1])
+		urlID := resolveAppComponentUrl(appID, componentID, args[2])
+
+		if !appComponentUrlDeleteForce {
+			url := Level27Client.AppComponentUrlGetSingle(appID, componentID, urlID)
+
+			msg := fmt.Sprintf(
+				"Delete URL %s (%d) on app comp %s (%d)?",
+				url.Content, url.ID,
+				url.Appcomponent.Name, url.Appcomponent.ID)
+
+			if !confirmPrompt(msg) {
+				return
+			}
+		}
+
+		Level27Client.AppComponentUrlDelete(appID, componentID, urlID)
 	},
 }
