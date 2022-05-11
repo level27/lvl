@@ -352,99 +352,6 @@ func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
 	return componenttypes.Data
 }
 
-//------------------------------------------------- APP SSL CERTIFICATES (GET/ ADD/ DELETE )-------------------------------------------------
-
-// ---- GET LIST OF SSL CERTIFICATES
-func (c *Client) AppCertificateGet(appId int) []types.SslCertificate {
-	var certificates struct {
-		Data []types.SslCertificate `json:"sslCertificates"`
-	}
-
-	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
-	err := c.invokeAPI("GET", endpoint, nil, &certificates)
-	AssertApiError(err, "appCertificate")
-	return certificates.Data
-}
-
-// ---- ADD SSL CERTIFICATE
-func (c *Client) AppCertificateAdd(appId int, req interface{}) types.SslCertificate {
-	var certificate struct {
-		Data types.SslCertificate `json:"sslCertificate"`
-	}
-	endpoint := fmt.Sprintf("apps/%v/sslcertificates", appId)
-	err := c.invokeAPI("POST", endpoint, req, &certificate)
-	AssertApiError(err, "appCertificate")
-	return certificate.Data
-}
-
-// ---- DELETE SSL CERTIFICATE
-func (c *Client) AppCertificateDelete(appId int, certificateId int, isDeleteConfirmed bool) {
-
-	// when confirmation flag is set, delete check without confirmation question
-	if isDeleteConfirmed {
-		endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, certificateId)
-		err := c.invokeAPI("DELETE", endpoint, nil, nil)
-		AssertApiError(err, "appCertificate")
-	} else {
-		var userResponse string
-		// ask user for confirmation on deleting the check
-		question := fmt.Sprintf("Are you sure you want to delete the ssl certificate with ID: %v? Please type [y]es or [n]o: ", certificateId)
-		fmt.Print(question)
-		//reading user response
-		_, err := fmt.Scan(&userResponse)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// check if user confirmed the deletion of the check or not
-		switch strings.ToLower(userResponse) {
-		case "y", "yes":
-			endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v", appId, certificateId)
-			err := c.invokeAPI("DELETE", endpoint, nil, nil)
-			AssertApiError(err, "appCertificate")
-		case "n", "no":
-			log.Printf("Delete canceled for ssl certificate: %v", certificateId)
-		default:
-			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
-
-			c.AppCertificateDelete(appId, certificateId, false)
-		}
-	}
-}
-
-// ---- FIX SSL CERTIFICATE
-func (c *Client) AppCertificateFix(appID int, certificateId int) {
-	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/fix", appID, certificateId)
-	err := c.invokeAPI("POST", endpoint, nil, nil)
-	AssertApiError(err, "appCertificate")
-}
-
-// ---- GET PRIVATE KEY (TYPE 'OWN' CERTIFICATE)
-func (c *Client) AppCertificateKey(appId int, certificateId int) {
-	var key struct {
-		Data string `json:"sslKey"`
-	}
-	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/key", appId, certificateId)
-	err := c.invokeAPI("GET", endpoint, nil, &key)
-	AssertApiError(err, "appCertificate")
-
-	fmt.Print(key.Data)
-}
-
-//------------------------------------------------- APP SSL CERTIFICATES (ACTIONS)-------------------------------------------------
-// ACTION RETRY / VALIDATECHALLENGE (SSL)
-func (c *Client) AppCertificateAction(appId int, certificateId int, actionType string) {
-	// create request data
-	request := types.AppSslCertificateActionRequest{
-		Type: actionType,
-	}
-
-	endpoint := fmt.Sprintf("apps/%v/sslcertificates/%v/actions", appId, certificateId)
-	err := c.invokeAPI("POST", endpoint, request, nil)
-	AssertApiError(err, "appCertificate")
-
-	log.Println("Action retry sent to certificate.")
-}
-
 //-------------------------------------------------  APP RESTORE (GET / DESCRIBE / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 
 // ---- GET LIST OF APP RESTORES
@@ -501,7 +408,7 @@ func (c *Client) AppComponentRestoresDelete(appId int, restoreId int, isDeleteCo
 		default:
 			log.Println("Please make sure you type (y)es or (n)o and press enter to confirm:")
 
-			c.AppCertificateDelete(appId, restoreId, false)
+			c.AppComponentRestoresDelete(appId, restoreId, false)
 		}
 	}
 }
