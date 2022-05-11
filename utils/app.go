@@ -594,3 +594,71 @@ func (c *Client) AppMigrationsAction(appId int, migrationId int, ChosenAction st
 
 	AssertApiError(err, "appMigrationAction")
 }
+
+
+// ------------ COMPONENT URL MANAGEMENT
+
+// GET /apps/{appId}/components/{componentId}/urls
+func (c *Client) AppComponentUrlGetList(appID int, componentID int, get types.CommonGetParams) []types.AppComponentUrlShort {
+	var resp struct {
+		Urls []types.AppComponentUrlShort `json:"urls"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/components/%d/urls?%s", appID, componentID, formatCommonGetParams(get))
+	err := c.invokeAPI("GET", endpoint, nil, &resp)
+	AssertApiError(err, "AppComponentUrlGetList")
+
+	return resp.Urls
+}
+
+// GET /apps/{appId}/components/{componentId}/urls/{urlId}
+func (c *Client) AppComponentUrlGetSingle(appID int, componentID int, urlID int) types.AppComponentUrl {
+	var resp struct {
+		Url types.AppComponentUrl `json:"url"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/components/%d/urls/%d", appID, componentID, urlID)
+	err := c.invokeAPI("GET", endpoint, nil, &resp)
+	AssertApiError(err, "AppComponentUrlGetSingle")
+
+	return resp.Url
+}
+
+// POST /apps/{appId}/components/{componentId}/urls
+func (c *Client) AppComponentUrlCreate(appID int, componentID int, create types.AppComponentUrlCreate) types.AppComponentUrl {
+	var resp struct {
+		Url types.AppComponentUrl `json:"url"`
+	}
+
+	endpoint := fmt.Sprintf("apps/%d/components/%d/urls", appID, componentID)
+	err := c.invokeAPI("POST", endpoint, create, &resp)
+	AssertApiError(err, "AppComponentUrlCreate")
+
+	return resp.Url
+}
+
+// PUT /apps/{appId}/components/{componentId}/urls/{urlId}
+func (c *Client) AppComponentUrlUpdate(appID int, componentID int, urlID int, data interface{}) {
+	endpoint := fmt.Sprintf("apps/%d/components/%d/urls/%d", appID, componentID, urlID)
+	err := c.invokeAPI("PUT", endpoint, data, nil)
+	AssertApiError(err, "AppComponentUrlUpdate")
+}
+
+// DELETE /apps/{appId}/components/{componentId}/urls/{urlId}
+func (c *Client) AppComponentUrlDelete(appID int, componentID int, urlID int) {
+	endpoint := fmt.Sprintf("apps/%d/components/%d/urls/%d", appID, componentID, urlID)
+	err := c.invokeAPI("DELETE", endpoint, nil, nil)
+	AssertApiError(err, "AppComponentUrlDelete")
+}
+
+func (c *Client) AppComponentUrlLookup(appID int, componentID int, name string) []types.AppComponentUrlShort {
+	results := []types.AppComponentUrlShort{}
+	urls := c.AppComponentUrlGetList(appID, componentID, types.CommonGetParams{Filter: name})
+	for _, url := range urls {
+		if url.Content == name {
+			results = append(results, url)
+		}
+	}
+
+	return results
+}

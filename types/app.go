@@ -2,8 +2,7 @@ package types
 
 // main structure of an app
 type App struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
+	AppRef
 	Status         string `json:"status"`
 	StatusCategory string `json:"statusCategory"`
 	Organisation   struct {
@@ -30,6 +29,11 @@ type App struct {
 		OrganisationID int    `json:"organisationId"`
 	} `json:"teams"`
 	ExternalInfo string `json:"externalInfo"`
+}
+
+type AppRef struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
 }
 
 //type to create an app (post request)
@@ -286,10 +290,7 @@ type AppMigration struct {
 	DtPlanned          interface{} `json:"dtPlanned"`
 	Status             string      `json:"status"`
 	ConfirmationStatus int         `json:"confirmationStatus"`
-	App                struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"app"`
+	App                AppRef `json:"app"`
 
 	MigrationItems []struct {
 		ID                   int           `json:"id"`
@@ -378,3 +379,115 @@ type AppMigrationUpdate struct {
 
 // used to create migration key value pairs
 type AppMigrationItemValue map[string]interface{}
+
+type AppComponentUrlShort struct {
+	ID             int    `json:"id"`
+	Content        string `json:"content"`
+	HTTPS          bool   `json:"https"`
+	Status         string `json:"status"`
+	SslForce       bool   `json:"sslForce"`
+	HandleDNS      bool   `json:"handleDns"`
+	Authentication bool   `json:"authentication"`
+	Appcomponent   AppComponentRefShort `json:"appcomponent"`
+	SslCertificate AppSslCertificateRefShort `json:"sslCertificate"`
+	StatusCategory string      `json:"statusCategory"`
+	SslStatus      interface{} `json:"sslStatus"`
+	Type           string      `json:"type"`
+}
+
+type AppComponentRefShort struct {
+	ID               int    `json:"id"`
+	Name             string `json:"name"`
+	Appcomponenttype string `json:"appcomponenttype"`
+	Status           string `json:"status"`
+	StatusCategory   string `json:"statusCategory"`
+}
+
+type AppSslCertificateRefShort struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	SslStatus string `json:"sslStatus"`
+	Status    string `json:"status"`
+	App       AppRef `json:"app"`
+	SslStatusCategory string `json:"sslStatusCategory"`
+	StatusCategory    string `json:"statusCategory"`
+}
+
+type AppComponentUrl struct {
+	ID             int    `json:"id"`
+	Content        string `json:"content"`
+	HTTPS          bool   `json:"https"`
+	Status         string `json:"status"`
+	SslForce       bool   `json:"sslForce"`
+	HandleDNS      bool   `json:"handleDns"`
+	Authentication bool   `json:"authentication"`
+	Appcomponent   struct {
+		ID               int    `json:"id"`
+		Name             string `json:"name"`
+		Appcomponenttype string `json:"appcomponenttype"`
+		Status           string `json:"status"`
+		App              struct {
+			ID int `json:"id"`
+		} `json:"app"`
+		StatusCategory string `json:"statusCategory"`
+	} `json:"appcomponent"`
+	SslCertificate struct {
+		ID        int    `json:"id"`
+		Name      string `json:"name"`
+		SslForce  bool   `json:"sslForce"`
+		SslStatus string `json:"sslStatus"`
+		Status    string `json:"status"`
+		App       AppRef `json:"app"`
+		SslStatusCategory string `json:"sslStatusCategory"`
+		StatusCategory    string `json:"statusCategory"`
+	} `json:"sslCertificate"`
+	StatusCategory       string `json:"statusCategory"`
+	Type                 string `json:"type"`
+	MatchingCertificates []struct {
+		ID        int    `json:"id"`
+		Name      string `json:"name"`
+		SslStatus string `json:"sslStatus"`
+		App       AppRef `json:"app"`
+		SslStatusCategory string `json:"sslStatusCategory"`
+	} `json:"matchingCertificates"`
+}
+
+func (url AppComponentUrl) ToShort() AppComponentUrlShort {
+	return AppComponentUrlShort{
+		ID: url.ID,
+		Content: url.Content,
+		HTTPS: url.HTTPS,
+		Status: url.Status,
+		SslForce: url.SslForce,
+		HandleDNS: url.HandleDNS,
+		Authentication: url.Authentication,
+		Appcomponent: AppComponentRefShort {
+			ID: url.Appcomponent.ID,
+			Name: url.Appcomponent.Name,
+			Appcomponenttype: url.Appcomponent.Appcomponenttype,
+			Status: url.Appcomponent.Status,
+			StatusCategory: url.Appcomponent.StatusCategory,
+		},
+		SslCertificate: AppSslCertificateRefShort{
+			ID: url.SslCertificate.ID,
+			Name: url.SslCertificate.Name,
+			App: url.SslCertificate.App,
+			SslStatus: url.SslCertificate.SslStatus,
+			Status: url.SslCertificate.Status,
+			SslStatusCategory: url.SslCertificate.SslStatusCategory,
+			StatusCategory: url.SslCertificate.StatusCategory,
+		},
+		StatusCategory: url.StatusCategory,
+		SslStatus: nil,
+		Type: url.Type,
+	}
+}
+
+type AppComponentUrlCreate struct {
+	Authentication     bool   `json:"authentication"`
+	Content            string `json:"content"`
+	SslForce           bool   `json:"sslForce"`
+	SslCertificate     *int   `json:"sslCertificate"`
+	HandleDns          bool   `json:"handleDns"`
+	AutoSslCertificate bool   `json:"autoSslCertificate"`
+}
