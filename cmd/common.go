@@ -164,8 +164,14 @@ func readArgFileSupported(arg string) string {
 
 // Load JSON settings from arg-specified file and merge it with override settings from other args.
 func loadMergeSettings(fileName string, override map[string]interface{}) map[string]interface{} {
+	jsonSettings := loadSettings(fileName)
+
+	return mergeMaps(jsonSettings, override)
+}
+
+func loadSettings(fileName string) map[string]interface{} {
 	if fileName == "" {
-		return override
+		return make(map[string]interface{})
 	}
 
 	file := openArgFile(fileName)
@@ -179,7 +185,7 @@ func loadMergeSettings(fileName string, override map[string]interface{}) map[str
 	err = json.Unmarshal(jsonBytes, &jsonSettings)
 	cobra.CheckErr(err)
 
-	return mergeMaps(jsonSettings, override)
+	return jsonSettings
 }
 
 func mergeMaps(base map[string]interface{}, override map[string]interface{}) map[string]interface{} {
