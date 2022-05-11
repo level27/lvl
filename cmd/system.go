@@ -127,12 +127,12 @@ func init() {
 	addCommonGetFlags(systemCheckGetCmd)
 
 	// ---- CREATE NEW CHECK
-	systemCheckCmd.AddCommand(systemCheckCreateCmd)
+	systemCheckCmd.AddCommand(systemCheckAddCmd)
 
 	// -- flags needed to create a check
-	flags = systemCheckCreateCmd.Flags()
+	flags = systemCheckAddCmd.Flags()
 	flags.StringVarP(&systemCheckCreateType, "type", "t", "", "Check type (non-editable)")
-	systemCheckCreateCmd.MarkFlagRequired("type")
+	systemCheckAddCmd.MarkFlagRequired("type")
 
 	// -- optional flag
 	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
@@ -637,7 +637,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 // ---------------- CREATE CHECK
 var systemCheckCreateType string
-var systemCheckCreateCmd = &cobra.Command{
+var systemCheckAddCmd = &cobra.Command{
 	Use:   "add [system ID] [parameters]",
 	Short: "add a new check to a specific system",
 	Args:  cobra.ExactArgs(1),
@@ -683,7 +683,7 @@ var systemCheckCreateCmd = &cobra.Command{
 
 		}
 		//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-		Level27Client.SystemCheckCreate(id, jsonObjCheckPost)
+		Level27Client.SystemCheckAdd(id, jsonObjCheckPost)
 	},
 }
 

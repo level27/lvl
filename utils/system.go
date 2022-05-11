@@ -116,6 +116,7 @@ func (c *Client) SystemAddSshKey(id int, keyID int) types.SshKey {
 	err := c.invokeAPI("POST", endpoint, &data, &key)
 
 	AssertApiError(err, "Add SSH key")
+	log.Printf("SSH key added succesfully!")
 	return key.Sshkey
 }
 
@@ -259,7 +260,7 @@ func (c *Client) SystemCheckGetList(systemId int, getParams types.CommonGetParam
 }
 
 // ------------- ADD A CHECK
-func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
+func (c *Client) SystemCheckAdd(systemId int, req interface{}) {
 	var SystemCheck struct {
 		Data types.SystemCheck `json:"check"`
 	}
@@ -267,7 +268,7 @@ func (c *Client) SystemCheckCreate(systemId int, req interface{}) {
 	err := c.invokeAPI("POST", endpoint, req, &SystemCheck)
 
 	AssertApiError(err, "System checks")
-	log.Printf("System check created! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
+	log.Printf("System check added! [Checktype: '%v' , ID: '%v']", SystemCheck.Data.CheckType, SystemCheck.Data.Id)
 }
 
 // #endregion
@@ -550,6 +551,9 @@ func (c *Client) SystemIntegritychecksCreate(systemID int, req types.IntegrityCr
 	endpoint := fmt.Sprintf("systems/%v/integritychecks", systemID)
 	err := c.invokeAPI("POST", endpoint, req, nil)
 	AssertApiError(err, "system/integritycheck")
+
+	// show succes message after completing call
+	log.Printf("Integritycheck succesfully created!")
 
 }
 
