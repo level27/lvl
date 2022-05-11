@@ -46,7 +46,7 @@ func init() {
 	flags.IntVarP(&systemCreateDisk, "disk", "", 0, "Disk (non-editable)")
 	flags.IntVarP(&systemCreateCpu, "cpu", "", 0, "Cpu (Required for Level27 systems)")
 	flags.IntVarP(&systemCreateMemory, "memory", "", 0, "Memory (Required for Level27 systems)")
-	flags.StringVarP(&systemCreateManageType, "management", "", "basic", "Managament type (default: basic)")
+	flags.StringVarP(&systemCreateManageType, "management", "", "basic", "Managament type (one of basic, professional, enterprise, professional_level27).")
 	flags.BoolVarP(&systemCreatePublicNetworking, "publicNetworking", "", true, "For digitalOcean servers always true. (non-editable)")
 	flags.StringVarP(&systemCreateImage, "image", "", "", "The ID of a systemimage. (must match selected configuration and zone. non-editable)")
 	flags.StringVarP(&systemCreateOrganisation, "organisation", "", "", "The unique ID of an organisation")
@@ -127,12 +127,12 @@ func init() {
 	addCommonGetFlags(systemCheckGetCmd)
 
 	// ---- CREATE NEW CHECK
-	systemCheckCmd.AddCommand(systemCheckCreateCmd)
+	systemCheckCmd.AddCommand(systemCheckAddCmd)
 
 	// -- flags needed to create a check
-	flags = systemCheckCreateCmd.Flags()
+	flags = systemCheckAddCmd.Flags()
 	flags.StringVarP(&systemCheckCreateType, "type", "t", "", "Check type (non-editable)")
-	systemCheckCreateCmd.MarkFlagRequired("type")
+	systemCheckAddCmd.MarkFlagRequired("type")
 
 	// -- optional flag
 	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
@@ -465,6 +465,7 @@ var managementTypeArray = []string{"basic", "professional", "enterprise", "profe
 var systemCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new system",
+	Example: "lvl system create -n mySystemName --zone hasselt --organisation Level27 --image 'Ubuntu 20.04 LTS' --provider 'Level27 Small' --management professional_level27",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		managementTypeValue := cmd.Flag("management").Value.String()
@@ -637,7 +638,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 // ---------------- CREATE CHECK
 var systemCheckCreateType string
-var systemCheckCreateCmd = &cobra.Command{
+var systemCheckAddCmd = &cobra.Command{
 	Use:   "add [system ID] [parameters]",
 	Short: "add a new check to a specific system",
 	Args:  cobra.ExactArgs(1),
@@ -683,7 +684,7 @@ var systemCheckCreateCmd = &cobra.Command{
 
 		}
 		//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-		Level27Client.SystemCheckCreate(id, jsonObjCheckPost)
+		Level27Client.SystemCheckAdd(id, jsonObjCheckPost)
 	},
 }
 

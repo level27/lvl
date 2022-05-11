@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -39,9 +40,16 @@ func resolveRegionImage(region int, imageName string) int {
 		return id
 	}
 
+
+	splittedImageData := strings.SplitN(imageName, " ", 2)
+	osName := splittedImageData[0]
+	osVersion := splittedImageData[1]
+
+
+
 	images := Level27Client.GetRegionImages(region)
 	for _, image := range images {
-		if image.Name == imageName {
+		if image.OperatingsystemVersion.Version == osVersion && image.OperatingsystemVersion.Operatingsystem.Name == osName {
 			return image.ID
 		}
 	}
