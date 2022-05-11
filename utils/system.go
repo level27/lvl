@@ -415,6 +415,8 @@ func (c *Client) SystemCookbookAdd(systemID int, req interface{}) {
 	err := c.invokeAPI("POST", endpoint, req, &cookbook)
 	AssertApiError(err, "cookbooktype")
 
+	log.Printf("Cookbook: '%v' succesfully added!", cookbook.Data.CookbookType)
+
 }
 
 // #endregion
@@ -612,6 +614,8 @@ func (c *Client) SystemSystemgroupsAdd(systemID int, req interface{}){
 	endpoint := fmt.Sprintf("systems/%v/groups", systemID)
 	err := c.invokeAPI("POST", endpoint, req, nil)
 	AssertApiError(err, "systemgroup")
+
+	log.Printf("System succesfully linked to systemgroup!")
 }
 
 
@@ -620,6 +624,8 @@ func (c *Client) SystemSystemgroupsRemove(systemId int, systemgroupId int){
 	endpoint := fmt.Sprintf("systems/%v/groups/%v", systemId, systemgroupId)
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
 	AssertApiError(err, "systemgroup")
+	
+	log.Printf("System succesfully removed from systemgroup!")
 
 }
 
@@ -679,6 +685,8 @@ func (c *Client) SystemAddHasNetwork(systemID int, networkID int) types.SystemHa
 	err := c.invokeAPI("POST", endpoint, &request, &response)
 	AssertApiError(err, "SystemAddHasNetwork")
 
+	log.Printf("Network succesfully added to system!")
+
 	return response.SystemHasNetwork
 }
 
@@ -686,6 +694,8 @@ func (c *Client) SystemRemoveHasNetwork(systemID int, hasNetworkID int) {
 	endpoint := fmt.Sprintf("systems/%d/networks/%d", systemID, hasNetworkID)
 	err := c.invokeAPI("DELETE", endpoint, nil, nil)
 	AssertApiError(err, "SystemRemoveHasNetwork")
+
+	log.Printf("Network succesfully removed from network!")
 }
 
 func (c *Client) SystemGetHasNetworkIp(systemID int, hasNetworkID int, systemHasNetworkIpID int) types.SystemHasNetworkIp {
@@ -721,6 +731,7 @@ func (c *Client) SystemAddHasNetworkIps(systemID int, hasNetworkID int, add type
 	err := c.invokeAPI("POST", endpoint, add, &response)
 
 	AssertApiError(err, "SystemAddHasNetworkIps")
+	
 	return response.HasNetwork
 }
 
