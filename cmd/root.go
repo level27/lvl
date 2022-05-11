@@ -206,12 +206,12 @@ func outputFormatTableText(objects interface{}, titles []string, fields []interf
 
 		first := true
 		for _, field := range fields {
-			fieldPath, isString := field.(string)
 			var fld reflect.Value
-			if isString {
+			if fieldPath, isString := field.(string); isString {
 				fld = val
 				for _, fieldName := range strings.Split(fieldPath, ".") {
 					fld = fld.FieldByName(fieldName)
+
 				}
 			} else {
 				// Assume function that returns actal field value.
