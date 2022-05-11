@@ -319,6 +319,26 @@ func (c *Client) AppComponentsDelete(appId int, componentId int, isDeleteConfirm
 
 }
 
+
+func (c *Client) AppComponentCreate(appId int, req interface{}) types.AppComponent {
+	var app struct {
+		Data types.AppComponent `json:"app"`
+	}
+	endpoint := fmt.Sprintf("apps/%d/components", appId)
+	err := c.invokeAPI("POST", endpoint, req, &app)
+
+	AssertApiError(err, "apps")
+
+	return app.Data
+}
+
+func (c *Client) AppComponentUpdate(appId int, appComponentID int, req interface{}) {
+	endpoint := fmt.Sprintf("apps/%d/components/%d", appId, appComponentID)
+	err := c.invokeAPI("PUT", endpoint, req, nil)
+
+	AssertApiError(err, "apps")
+}
+
 //------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY )-------------------------------------------------
 // ---- GET LIST OFF APPCOMPONENTTYPES
 func (c *Client) AppComponenttypesGet() types.Appcomponenttype {
