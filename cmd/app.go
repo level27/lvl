@@ -1476,6 +1476,7 @@ var appComponentUrlCreateHandleDns bool
 var appComponentUrlCreateAutoSslCertificate bool
 var appComponentUrlCreateCmd = &cobra.Command{
 	Use: "create",
+	Short: "Create an url for an appcomponent.",
 
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -1506,7 +1507,7 @@ var appComponentUrlCreateCmd = &cobra.Command{
 var appComponentUrlDeleteForce bool
 var appComponentUrlDeleteCmd = &cobra.Command{
 	Use: "delete",
-
+	Short: "Delete an url from an appcomponent.",
 	Args: cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		appID := resolveApp(args[0])
