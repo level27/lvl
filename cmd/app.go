@@ -323,7 +323,7 @@ var appCmd = &cobra.Command{
 var appGetCmd = &cobra.Command{
 	Use:     "get",
 	Short:   "Shows a list of all available apps.",
-	Example: "lvl app get",
+	Example: "lvl app get -f FilterByName",
 	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 
