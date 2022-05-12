@@ -772,7 +772,7 @@ var appComponentCreateParams *[]string
 var appComponentCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new appcomponent.",
-	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
+	Example: "lvl app component create --name myComponentName --type docker",
 
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
