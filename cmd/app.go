@@ -109,9 +109,6 @@ func init() {
 	appComponentParametersCmd.Flags().StringVarP(&appComponentType, "type", "t", "", "The type name to show its parameters.")
 	appComponentParametersCmd.MarkFlagRequired("type")
 
-	//-------------------------------------------------  APP ACCESS -------------------------------------------------
-	addAccessCmds(appCmd, "apps", resolveApp)
-
 	// APP INTEGRITY
 	addIntegrityCheckCmds(appCmd, "apps", resolveApp)
 
