@@ -50,7 +50,7 @@ func init() {
 	flags.BoolVarP(&systemCreatePublicNetworking, "publicNetworking", "", true, "For digitalOcean servers always true. (non-editable)")
 	flags.StringVarP(&systemCreateImage, "image", "", "", "The ID of a systemimage. (must match selected configuration and zone. non-editable)")
 	flags.StringVarP(&systemCreateOrganisation, "organisation", "", "", "The unique ID of an organisation")
-	flags.StringVarP(&systemCreateProviderConfig, "provider", "", "", "The unique ID of a SystemproviderConfiguration")
+	flags.StringVarP(&systemCreateProviderConfig, "config", "", "", "The unique ID of a SystemproviderConfiguration")
 	flags.StringVarP(&systemCreateZone, "zone", "", "", "The unique ID of a zone")
 	//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
 	flags.StringVarP(&systemCreateAutoTeams, "autoTeams", "", "", "A csv list of team ID's")
@@ -465,7 +465,7 @@ var managementTypeArray = []string{"basic", "professional", "enterprise", "profe
 var systemCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new system",
-	Example: "lvl system create -n mySystemName --zone hasselt --organisation Level27 --image 'Ubuntu 20.04 LTS' --provider 'Level27 Small' --management professional_level27",
+	Example: "lvl system create -n mySystemName --zone hasselt --organisation level27 --image 'Ubuntu 20.04 LTS' --config 'Level27 Small' --management professional_level27",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		managementTypeValue := cmd.Flag("management").Value.String()
