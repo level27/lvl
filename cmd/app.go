@@ -891,9 +891,21 @@ var appComponentUpdateCmd = &cobra.Command{
 				continue
 			}
 
+			switch (paramType) {
+			case "password-sha512", "password-plain", "password-sha1", "passowrd-sha256-scram":
 			// Passwords are sent as "******". Skip them to avoid getting API errors.
-			if paramType == "password-sha512" || paramType == "password-plain" || paramType == "password-sha1" || paramType == "password-sha256-scram" {
 				continue
+			case "sshkey[]":
+				// Need to map SSH keys -> IDs
+				sshKeys := v.([]interface{})
+				ids := make([]int, len(sshKeys))
+				for i, sshKey := range sshKeys {
+					keyCast := sshKey.(map[string]interface{})
+					ids[i] = int(keyCast["id"].(float64))
+				}
+				v = ids
+			default:
+				// Just use value as-is
 			}
 
 			data[k] = v
