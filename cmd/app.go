@@ -109,9 +109,6 @@ func init() {
 	appComponentParametersCmd.Flags().StringVarP(&appComponentType, "type", "t", "", "The type name to show its parameters.")
 	appComponentParametersCmd.MarkFlagRequired("type")
 
-	//-------------------------------------------------  APP ACCESS -------------------------------------------------
-	addAccessCmds(appCmd, "apps", resolveApp)
-
 	// APP INTEGRITY
 	addIntegrityCheckCmds(appCmd, "apps", resolveApp)
 
@@ -323,7 +320,7 @@ var appCmd = &cobra.Command{
 var appGetCmd = &cobra.Command{
 	Use:     "get",
 	Short:   "Shows a list of all available apps.",
-	Example: "lvl app get",
+	Example: "lvl app get -f FilterByName",
 	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -775,7 +772,7 @@ var appComponentCreateParams *[]string
 var appComponentCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new appcomponent.",
-	Example: "lvl app component create -n myComponentName -c docker -ctype mysql",
+	Example: "lvl app component create --name myComponentName --type docker",
 
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -1479,6 +1476,7 @@ var appComponentUrlCreateHandleDns bool
 var appComponentUrlCreateAutoSslCertificate bool
 var appComponentUrlCreateCmd = &cobra.Command{
 	Use: "create",
+	Short: "Create an url for an appcomponent.",
 
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -1509,7 +1507,7 @@ var appComponentUrlCreateCmd = &cobra.Command{
 var appComponentUrlDeleteForce bool
 var appComponentUrlDeleteCmd = &cobra.Command{
 	Use: "delete",
-
+	Short: "Delete an url from an appcomponent.",
 	Args: cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		appID := resolveApp(args[0])
