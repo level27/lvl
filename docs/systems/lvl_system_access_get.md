@@ -1,6 +1,6 @@
-## lvl system access get
+# lvl system access get
 
-List organisations with access to a system
+List organisations with access to an entity
 
 ```
 lvl system access get [flags]
@@ -23,5 +23,5 @@ lvl system access get [flags]
 
 ### SEE ALSO
 
-* [lvl system access](lvl_system_access.md)	 - Commands for managing access to a system
+* [lvl system access](lvl_system_access.md)	 - Commands for managing access to an entity
 

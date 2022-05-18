@@ -1,4 +1,4 @@
-## lvl system checks parameters
+# lvl system checks parameters
 
 Show all default parameters for a specific checktype.
 

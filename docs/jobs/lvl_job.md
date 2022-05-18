@@ -1,4 +1,4 @@
-## lvl job
+# lvl job
 
 Commands related to viewing and managing jobs
 
@@ -19,6 +19,6 @@ Commands related to viewing and managing jobs
 
 ### SEE ALSO
 
-* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl job describe](lvl_job_describe.md)	 - Get complete overview of a job
 

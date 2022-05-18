@@ -1,4 +1,4 @@
-## lvl domain record delete
+# lvl domain record delete
 
 Delete a record for a domain
 

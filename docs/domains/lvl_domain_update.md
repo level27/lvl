@@ -1,4 +1,4 @@
-## lvl domain update
+# lvl domain update
 
 Command for updating an existing domain
 

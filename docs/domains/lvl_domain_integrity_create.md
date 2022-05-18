@@ -1,9 +1,9 @@
-## lvl domain integrity create
+# lvl domain integrity create
 
 Create a new integrity report
 
 ```
-lvl domain integrity create [domain id] [flags]
+lvl domain integrity create [entity] [flags]
 ```
 
 ### Options
@@ -25,5 +25,5 @@ lvl domain integrity create [domain id] [flags]
 
 ### SEE ALSO
 
-* [lvl domain integrity](lvl_domain_integrity.md)	 - Commands for managing integrity checks on domains
+* [lvl domain integrity](lvl_domain_integrity.md)	 - Commands for managing integrity checks
 

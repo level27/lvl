@@ -1,15 +1,17 @@
-## lvl system integrity get
+# lvl system integrity get
 
-Show list of current integritychecks on a system.
+Get a list of all integrity checks for an entity
 
 ```
-lvl system integrity get [systemID] [flags]
+lvl system integrity get [entity] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -f, --filter string   How to filter API results?
+  -h, --help            help for get
+  -n, --number int      How many things should we retrieve from the API?
 ```
 
 ### Options inherited from parent commands
@@ -23,5 +25,5 @@ lvl system integrity get [systemID] [flags]
 
 ### SEE ALSO
 
-* [lvl system integrity](lvl_system_integrity.md)	 - Manage integritychecks for a system
+* [lvl system integrity](lvl_system_integrity.md)	 - Commands for managing integrity checks
 

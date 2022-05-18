@@ -1,6 +1,6 @@
-## lvl system billing on
+# lvl system billing on
 
-Turn on billing for a system (admin only)
+Turn on billing for an entity (admin only)
 
 ```
 lvl system billing on [domain] [flags]
@@ -24,5 +24,5 @@ lvl system billing on [domain] [flags]
 
 ### SEE ALSO
 
-* [lvl system billing](lvl_system_billing.md)	 - Manage system's invoicing (BillableItem)
+* [lvl system billing](lvl_system_billing.md)	 - Manage entity's invoicing (BillableItem)
 

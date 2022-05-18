@@ -1,4 +1,4 @@
-## lvl domain delete
+# lvl domain delete
 
 Delete a domain
 

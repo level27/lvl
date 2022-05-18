@@ -1,4 +1,4 @@
-## lvl system cookbooks delete
+# lvl system cookbooks delete
 
 delete a cookbook from a system.
 

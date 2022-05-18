@@ -1,4 +1,4 @@
-## lvl domain record create
+# lvl domain record create
 
 Create a new record for a domain
 

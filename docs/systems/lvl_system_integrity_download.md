@@ -1,16 +1,16 @@
-## lvl system integrity download
+# lvl system integrity download
 
-Download an integrityreport from a system to your current directory.
+Download an integrity check as PDF file
 
 ```
-lvl system integrity download [systemID] [integritycheckID] [flags]
+lvl system integrity download [entity] [check id] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --filename string   The wanted filename for the downloaded report.
-  -h, --help              help for download
+  -f, --file string   File to download the report to. This defaults to a generated file name in the current directory.
+  -h, --help          help for download
 ```
 
 ### Options inherited from parent commands
@@ -24,5 +24,5 @@ lvl system integrity download [systemID] [integritycheckID] [flags]
 
 ### SEE ALSO
 
-* [lvl system integrity](lvl_system_integrity.md)	 - Manage integritychecks for a system
+* [lvl system integrity](lvl_system_integrity.md)	 - Commands for managing integrity checks
 

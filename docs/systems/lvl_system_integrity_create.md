@@ -1,16 +1,16 @@
-## lvl system integrity create
+# lvl system integrity create
 
-Create a new integrity report for a system.
+Create a new integrity report
 
 ```
-lvl system integrity create [systemID] [flags]
+lvl system integrity create [entity] [flags]
 ```
 
 ### Options
 
 ```
-      --doJobs      Create jobs (default: true) (default true)
-      --forceJobs   Create jobs even if integrity check failed (default: false)
+      --doJobs      Create jobs (default true)
+      --forceJobs   Create jobs even if integrity check failed
   -h, --help        help for create
 ```
 
@@ -25,5 +25,5 @@ lvl system integrity create [systemID] [flags]
 
 ### SEE ALSO
 
-* [lvl system integrity](lvl_system_integrity.md)	 - Manage integritychecks for a system
+* [lvl system integrity](lvl_system_integrity.md)	 - Commands for managing integrity checks
 

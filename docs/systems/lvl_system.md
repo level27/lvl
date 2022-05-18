@@ -1,4 +1,4 @@
-## lvl system
+# lvl system
 
 Commands for managing systems
 
@@ -19,10 +19,10 @@ Commands for managing systems
 
 ### SEE ALSO
 
-* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
-* [lvl system access](lvl_system_access.md)	 - Commands for managing access to a system
+* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl system access](lvl_system_access.md)	 - Commands for managing access to an entity
 * [lvl system actions](lvl_system_actions.md)	 - Actions for systems such as rebooting
-* [lvl system billing](lvl_system_billing.md)	 - Manage system's invoicing (BillableItem)
+* [lvl system billing](lvl_system_billing.md)	 - Manage entity's invoicing (BillableItem)
 * [lvl system checks](lvl_system_checks.md)	 - Manage systems checks
 * [lvl system cookbooks](lvl_system_cookbooks.md)	 - Manage systems cookbooks
 * [lvl system create](lvl_system_create.md)	 - Create a new system
@@ -30,7 +30,9 @@ Commands for managing systems
 * [lvl system describe](lvl_system_describe.md)	 - Get detailed information about a system.
 * [lvl system get](lvl_system_get.md)	 - get a list of all curent systems
 * [lvl system groups](lvl_system_groups.md)	 - Manage a system's groups.
-* [lvl system integrity](lvl_system_integrity.md)	 - Manage integritychecks for a system
+* [lvl system integrity](lvl_system_integrity.md)	 - Commands for managing integrity checks
+* [lvl system jobs](lvl_system_jobs.md)	 - View job history for this entity
+* [lvl system monitoring](lvl_system_monitoring.md)	 - Turn the monitoring for a system on or off.
 * [lvl system network](lvl_system_network.md)	 - 
 * [lvl system sshkeys](lvl_system_sshkeys.md)	 - 
 * [lvl system update](lvl_system_update.md)	 - Update settings on a system

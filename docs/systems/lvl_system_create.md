@@ -1,9 +1,15 @@
-## lvl system create
+# lvl system create
 
 Create a new system
 
 ```
 lvl system create [flags]
+```
+
+### Examples
+
+```
+lvl system create -n mySystemName --zone hasselt --organisation level27 --image 'Ubuntu 20.04 LTS' --config 'Level27 Small' --management professional_level27
 ```
 
 ### Options
@@ -16,13 +22,12 @@ lvl system create [flags]
       --externalInfo string    ExternalInfo (required when billableItemInfo entities for an organisation exist in db)
   -h, --help                   help for create
       --image string           The ID of a systemimage. (must match selected configuration and zone. non-editable)
-      --management string      Managament type (default: basic) (default "basic")
+      --management string      Managament type (one of basic, professional, enterprise, professional_level27). (default "basic")
       --memory int             Memory (Required for Level27 systems)
   -n, --name string            The name you want to give the system
       --networks stringArray   Array of network IP's. (default: null)
       --organisation string    The unique ID of an organisation
       --parent int             The unique ID of a system (parent system)
-      --provider string        The unique ID of a SystemproviderConfiguration
       --publicNetworking       For digitalOcean servers always true. (non-editable) (default true)
       --remarks string         Remarks (Admin only)
       --type string            System type

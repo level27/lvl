@@ -16,16 +16,25 @@ limitations under the License.
 package main
 
 import (
+	"log"
+
 	"bitbucket.org/level27/lvl/cmd"
+	"bitbucket.org/level27/lvl/docs"
+	"github.com/spf13/cobra/doc"
 )
 
 func main() {
 	// ---- // UNCOMMENT BELOW AND RUN MAIN.GO TO GENERATE MARKDOWN DOCS FOR WHOLE COMMAND TREE // ---- //
-	// cmd.RootCmd.DisableAutoGenTag =true
-	// err := doc.GenMarkdownTree(cmd.RootCmd, "docs")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	cmd.RootCmd.DisableAutoGenTag =true
+	err := docs.GenerateDocumentation(cmd.RootCmd, "docs", func(s string) string { return "" }, func(s string) string { return s })
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	cmd.Execute()
+}
+
+func Test(){
+	ok := doc.GenMarkdownTree(cmd.RootCmd, "docs")
+log.Println(ok)
 }

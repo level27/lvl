@@ -1,4 +1,4 @@
-## lvl system network get
+# lvl system network get
 
 Get list of networks on a system
 

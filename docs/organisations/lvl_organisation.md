@@ -1,4 +1,4 @@
-## lvl organisation
+# lvl organisation
 
 Commands for managing organisations
 
@@ -19,6 +19,6 @@ Commands for managing organisations
 
 ### SEE ALSO
 
-* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl organisation get](lvl_organisation_get.md)	 - 
 

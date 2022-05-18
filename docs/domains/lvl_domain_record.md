@@ -1,4 +1,4 @@
-## lvl domain record
+# lvl domain record
 
 Manage domain records
 

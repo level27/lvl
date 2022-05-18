@@ -1,4 +1,4 @@
-## lvl system checks get
+# lvl system checks get
 
 Get a list of all checks from a system
 

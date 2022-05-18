@@ -1,15 +1,15 @@
-## lvl login
+# lvl system jobs
 
-Login to CP4
+View job history for this entity
 
 ```
-lvl login [flags]
+lvl system jobs [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for login
+  -h, --help   help for jobs
 ```
 
 ### Options inherited from parent commands
@@ -23,5 +23,5 @@ lvl login [flags]
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl system](lvl_system.md)	 - Commands for managing systems
 

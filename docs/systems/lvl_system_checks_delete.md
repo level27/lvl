@@ -1,4 +1,4 @@
-## lvl system checks delete
+# lvl system checks delete
 
 Delete a specific check from a system
 

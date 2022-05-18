@@ -1,6 +1,6 @@
-## lvl system access
+# lvl system access
 
-Commands for managing access to a system
+Commands for managing access to an entity
 
 ### Options
 
@@ -20,7 +20,7 @@ Commands for managing access to a system
 ### SEE ALSO
 
 * [lvl system](lvl_system.md)	 - Commands for managing systems
-* [lvl system access add](lvl_system_access_add.md)	 - Grant an organisation access to a system
-* [lvl system access get](lvl_system_access_get.md)	 - List organisations with access to a system
-* [lvl system access remove](lvl_system_access_remove.md)	 - Revoke an organisation's access to a system
+* [lvl system access add](lvl_system_access_add.md)	 - Grant an organisation access to an entity
+* [lvl system access get](lvl_system_access_get.md)	 - List organisations with access to an entity
+* [lvl system access remove](lvl_system_access_remove.md)	 - Revoke an organisation's access to an entity
 

@@ -1,4 +1,4 @@
-## lvl system cookbooks get
+# lvl system cookbooks get
 
 Gets a list of all cookbooks from a system.
 

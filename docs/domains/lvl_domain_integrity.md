@@ -1,6 +1,6 @@
-## lvl domain integrity
+# lvl domain integrity
 
-Commands for managing integrity checks on domains
+Commands for managing integrity checks
 
 ### Options
 
@@ -22,5 +22,5 @@ Commands for managing integrity checks on domains
 * [lvl domain](lvl_domain.md)	 - Commands for managing domains
 * [lvl domain integrity create](lvl_domain_integrity_create.md)	 - Create a new integrity report
 * [lvl domain integrity download](lvl_domain_integrity_download.md)	 - Download an integrity check as PDF file
-* [lvl domain integrity get](lvl_domain_integrity_get.md)	 - Get a list of all integrity checks for a domain
+* [lvl domain integrity get](lvl_domain_integrity_get.md)	 - Get a list of all integrity checks for an entity
 

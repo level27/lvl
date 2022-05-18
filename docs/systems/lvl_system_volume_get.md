@@ -1,4 +1,4 @@
-## lvl system volume get
+# lvl system volume get
 
 Get all volumes on a system
 

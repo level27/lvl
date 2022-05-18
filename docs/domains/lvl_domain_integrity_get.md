@@ -1,9 +1,9 @@
-## lvl domain integrity get
+# lvl domain integrity get
 
-Get a list of all integrity checks for a domain
+Get a list of all integrity checks for an entity
 
 ```
-lvl domain integrity get [domain id] [flags]
+lvl domain integrity get [entity] [flags]
 ```
 
 ### Options
@@ -25,5 +25,5 @@ lvl domain integrity get [domain id] [flags]
 
 ### SEE ALSO
 
-* [lvl domain integrity](lvl_domain_integrity.md)	 - Commands for managing integrity checks on domains
+* [lvl domain integrity](lvl_domain_integrity.md)	 - Commands for managing integrity checks
 

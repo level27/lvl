@@ -1,4 +1,4 @@
-## lvl job describe
+# lvl job describe
 
 Get complete overview of a job
 

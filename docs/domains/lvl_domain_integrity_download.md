@@ -1,9 +1,9 @@
-## lvl domain integrity download
+# lvl domain integrity download
 
 Download an integrity check as PDF file
 
 ```
-lvl domain integrity download [domain id] [check id] [flags]
+lvl domain integrity download [entity] [check id] [flags]
 ```
 
 ### Options
@@ -24,5 +24,5 @@ lvl domain integrity download [domain id] [check id] [flags]
 
 ### SEE ALSO
 
-* [lvl domain integrity](lvl_domain_integrity.md)	 - Commands for managing integrity checks on domains
+* [lvl domain integrity](lvl_domain_integrity.md)	 - Commands for managing integrity checks
 
