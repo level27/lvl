@@ -1,9 +1,9 @@
-## lvl systemgroups create
+# lvl systemgroup create
 
 Create a new systemgroup.
 
 ```
-lvl systemgroups create [flags]
+lvl systemgroup create [flags]
 ```
 
 ### Options
@@ -25,5 +25,5 @@ lvl systemgroups create [flags]
 
 ### SEE ALSO
 
-* [lvl systemgroups](lvl_systemgroups.md)	 - Commands for managing systemgroups
+* [lvl systemgroup](lvl_systemgroup.md)	 - Commands for managing systemgroups
 

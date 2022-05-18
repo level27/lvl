@@ -1,9 +1,9 @@
-## lvl systemgroups update
+# lvl systemgroup update
 
 update a systemgroups name or organisation.
 
 ```
-lvl systemgroups update [flags]
+lvl systemgroup update [flags]
 ```
 
 ### Options
@@ -25,5 +25,5 @@ lvl systemgroups update [flags]
 
 ### SEE ALSO
 
-* [lvl systemgroups](lvl_systemgroups.md)	 - Commands for managing systemgroups
+* [lvl systemgroup](lvl_systemgroup.md)	 - Commands for managing systemgroups
 

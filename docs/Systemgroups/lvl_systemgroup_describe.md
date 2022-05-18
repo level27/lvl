@@ -1,16 +1,15 @@
-## lvl systemgroups delete
+# lvl systemgroup describe
 
-Delete a systemgroup
+Get detailed info about a systemgroup
 
 ```
-lvl systemgroups delete [flags]
+lvl systemgroup describe [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for delete
-  -y, --yes    Set this flag to skip confirmation when deleting a systemgroup
+  -h, --help   help for describe
 ```
 
 ### Options inherited from parent commands
@@ -24,5 +23,5 @@ lvl systemgroups delete [flags]
 
 ### SEE ALSO
 
-* [lvl systemgroups](lvl_systemgroups.md)	 - Commands for managing systemgroups
+* [lvl systemgroup](lvl_systemgroup.md)	 - Commands for managing systemgroups
 

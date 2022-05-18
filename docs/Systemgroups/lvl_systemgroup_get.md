@@ -1,9 +1,9 @@
-## lvl systemgroups get
+# lvl systemgroup get
 
 Show list of all available systemgroups.
 
 ```
-lvl systemgroups get [flags]
+lvl systemgroup get [flags]
 ```
 
 ### Options
@@ -25,5 +25,5 @@ lvl systemgroups get [flags]
 
 ### SEE ALSO
 
-* [lvl systemgroups](lvl_systemgroups.md)	 - Commands for managing systemgroups
+* [lvl systemgroup](lvl_systemgroup.md)	 - Commands for managing systemgroups
 
