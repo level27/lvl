@@ -19,7 +19,7 @@ Commands to manage mailgroups and mailboxes
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl mail access](lvl_mail_access.md)	 - Commands for managing access to an entity
 * [lvl mail actions](lvl_mail_actions.md)	 - 
 * [lvl mail billing](lvl_mail_billing.md)	 - Manage entity's invoicing (BillableItem)

@@ -19,7 +19,7 @@ Commands for managing domains
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl domain access](lvl_domain_access.md)	 - Commands for managing access to an entity
 * [lvl domain billing](lvl_domain_billing.md)	 - Manage entity's invoicing (BillableItem)
 * [lvl domain check](lvl_domain_check.md)	 - Check availability of a domain

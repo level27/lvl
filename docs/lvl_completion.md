@@ -65,5 +65,5 @@ lvl completion
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 

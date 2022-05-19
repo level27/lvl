@@ -19,7 +19,7 @@ Commands for managing systemgroups
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl systemgroup create](lvl_systemgroup_create.md)	 - Create a new systemgroup.
 * [lvl systemgroup delete](lvl_systemgroup_delete.md)	 - Delete a systemgroup
 * [lvl systemgroup describe](lvl_systemgroup_describe.md)	 - Get detailed info about a systemgroup

@@ -19,7 +19,7 @@ Commands for managing systems
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl system access](lvl_system_access.md)	 - Commands for managing access to an entity
 * [lvl system actions](lvl_system_actions.md)	 - Actions for systems such as rebooting
 * [lvl system billing](lvl_system_billing.md)	 - Manage entity's invoicing (BillableItem)

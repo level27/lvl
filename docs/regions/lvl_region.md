@@ -19,7 +19,7 @@ Commands to view available regions for systems
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl region get](lvl_region_get.md)	 - Get all available regions
 * [lvl region images](lvl_region_images.md)	 - Get all system images in a region
 * [lvl region zones](lvl_region_zones.md)	 - Get all zones in a region

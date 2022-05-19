@@ -26,7 +26,7 @@ lvl app action activate
 
 ### SEE ALSO
 
-* [lvl](lvl.md)	 - CLI tool to manage Level27 entities
+* [lvl](../lvl.md)	 - CLI tool to manage Level27 entities
 * [lvl app access](lvl_app_access.md)	 - Commands for managing access to an entity
 * [lvl app action](lvl_app_action.md)	 - commands to run specific actions on an app
 * [lvl app component](lvl_app_component.md)	 - Commands for managing appcomponents.
