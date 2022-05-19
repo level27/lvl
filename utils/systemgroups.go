@@ -93,3 +93,14 @@ func (c *Client) SystemgroupDelete(systemgroupId int, isDeleteConfirmed bool) {
 }
 
 
+func (c *Client) SystemgroupLookup(name string) []types.Systemgroup {
+	results := []types.Systemgroup{}
+	groups := c.SystemgroupsGet(types.CommonGetParams{Filter: name})
+	for _, group := range groups {
+		if group.Name == name {
+			results = append(results, group)
+		}
+	}
+
+	return results
+}

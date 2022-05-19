@@ -217,12 +217,12 @@ func init() {
 	// ---- GET LIST OF MIGRATIONS
 	appMigrationsCmd.AddCommand(appMigrationsGetCmd)
 
-	// // ---- CREATE NEW APP MIGRATION
-	// appMigrationsCmd.AddCommand(appMigrationsCreateCmd)
-	// // flags needed to create new migration
-	// flags = appMigrationsCreateCmd.Flags()
-	// flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
-	// flags.StringArrayVarP(&appMigrationCreateItems, "migration-item", "", []string{}, "Migration items. each item should contain: type, source, sourceInfo, destination, destinationId, ord, sshkey")
+	// ---- CREATE NEW APP MIGRATION
+	appMigrationsCmd.AddCommand(appMigrationsCreateCmd)
+	// flags needed to create new migration
+	flags = appMigrationsCreateCmd.Flags()
+	flags.StringVarP(&appMigrationCreatePlanned, "planned", "", "", "DateTime - timestamp.")
+	flags.StringArrayVarP(&appMigrationCreateItems, "migration-item", "", []string{}, "Migration items. each item should contain at least a 'source' (the component to migrate) and a 'destSystem' or 'destGroup' to migrate to.")
 
 	// ---- UPDATE MIGRATION
 	appMigrationsCmd.AddCommand(appMigrationsUpdateCmd)
@@ -1236,103 +1236,103 @@ var appMigrationsGetCmd = &cobra.Command{
 	},
 }
 
-// TODO -- EXAMPLE TEXT COMPLETING
 // --- CREATE MIGRATION
-// var appMigrationCreatePlanned string
-// var appMigrationCreateItems []string
-// var appMigrationsCreateCmd = &cobra.Command{
-// 	Use:     "create [appName] [flags]",
-// 	Short:   "Create a new app migration.",
-// 	Example: "lvl app migrations create MyAppName -t confirmed --migration-item 'type=php, source=cp4, sourceInfo=122, destination=systemgroup, destinationId=453, ord=1, sshkey=null'",
-// 	Args:    cobra.ExactArgs(1),
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		//search for appid based on appName
-// 		appId := resolveApp(args[0])
+var appMigrationCreatePlanned string
+var appMigrationCreateItems []string
+var appMigrationsCreateCmd = &cobra.Command{
+	Use:     "create [appName] [flags]",
+	Short:   "Create a new app migration.",
+	Long:    `Items to migrate are specified with --migration-item, taking a parameter in a comma-separated key=value format. Multiple items can be migrated at once by specifying --migration-item multiple times.`,
+	Example: "lvl app migrations create MyAppName --migration-item 'source=forum, destSystem=newForumSystem' --migration-item 'source=database, destGroup=newDbGroup, ord=2'",
+	Args:    cobra.ExactArgs(1),
 
-// 		request := types.AppMigrationRequest{
-// 			MigrationType:      "automatic",
-// 			DtPlanned:          appMigrationCreatePlanned,
-// 		}
+	Run: func(cmd *cobra.Command, args []string) {
+		//search for appid based on appName
+		appId := resolveApp(args[0])
 
-// 		Level27Client.AppMigrationsCreate(appId, request)
+		items := []types.AppMigrationItem{}
 
-// 		// loop over each given Item by the user
-// 		for _, migrationItem := range appMigrationCreateItems {
-// 			fmt.Println(migrationItem)
-// 			//check for each item if its defined correctly and return a valig MigrationArrayItem
-// 			ValidateMigrationItem(migrationItem)
+		for _, migrationItem := range appMigrationCreateItems {
+			items = append(items, ParseMigrationItem(appId, migrationItem))
+		}
 
-// 		}
+		request := types.AppMigrationRequest{
+			MigrationType:      "automatic",
+			DtPlanned:          appMigrationCreatePlanned,
+			MigrationItemArray: items,
+		}
 
-// 	},
-// }
+		Level27Client.AppMigrationsCreate(appId, request)
+	},
+}
 
-// func ValidateMigrationItem(values string) []types.AppMigrationItemValue{
-// 	// hardcoded because there is no api call yet to get to get a valid migrationItem parameters
-// 	// these are all the props a valid migration iten MUST have.
-// 	possibleMigrationItemProps := []string{"type", "source", "sourceInfo", "destinationEntity", "destinationEntityId", "ord", "sshkey"}
+func ParseMigrationItem(appID int, values string) types.AppMigrationItem{
+	valueSplitted := strings.Split(values, ",")
 
-// 	// split value on comma and put values in array
-// 	valueSplitted := strings.Split(values, ",")
+	item := types.AppMigrationItem{
+		Ord: 1,
+		Source: "cp4",
+	}
 
-// 	// keep track of the whole validate migrationItem
-// 	var singleMigrationItem = []types.AppMigrationItemValue{}
-// 	// for each splitted value check if its defined correctly -> =
-// 	for _, keyValuePair := range valueSplitted {
-// 		key, value := ValidateMigrationItemKeyValuePair(keyValuePair, possibleMigrationItemProps)
+	haveAnyDst := false
+	haveAnySrc := false
+	for _, keyValuePair := range valueSplitted {
+		// Go over key value pairs and fill out the migration item as we go.
 
-// 		// put each validated pair in the array
-// 		singleMigrationItem = append(singleMigrationItem, types.AppMigrationItemValue{key: value})
+		key, value := ParseMigrationItemKeyValuePair(keyValuePair)
 
-// 	}
+		switch key {
+		case "ord":
+			val, err := strconv.Atoi(value)
+			cobra.CheckErr(err)
+			item.Ord = val
 
-// 	ValidateMigrationItemProperties(singleMigrationItem, possibleMigrationItemProps)
-// 	return singleMigrationItem
+		case "destSystem":
+			item.DestinationEntityId = resolveSystem(value)
+			item.DestinationEntity = "system"
+			haveAnyDst = true
 
-// }
+		case "destGroup":
+			item.DestinationEntityId = resolveSystemgroup(value)
+			item.DestinationEntity = "systemgroup"
+			haveAnyDst = true
 
-// func ValidateMigrationItemProperties(itemValues []types.AppMigrationItemValue, possibleProps []string){
-// 	// each migration item need to have all the properties
-// 	if len(itemValues) != len(possibleProps){
-// 		log.Fatalf("Given migration item does not contain right amount of properties. Have %v, Need %v.", len(itemValues), len(possibleProps))
-// 	}
-// 	for _, prop := range possibleProps{
-// 		for _ ,pair := range itemValues{
-// 			if pair[prop] == nil {
-// 				log.Fatalf("%v not defined for current migration item.", prop)
-// 			}
-// 		}
-// 	}
-// }
+		case "source":
+			appComponent := resolveAppComponent(appID, value)
+			appComponentType := Level27Client.AppComponentGetSingle(appID, appComponent).Appcomponenttype
+			haveAnySrc = true
 
-// // validate each key value pair given by the user
-// func ValidateMigrationItemKeyValuePair(keyValuePair string, possibleProps []string) (string, string) {
+			item.SourceInfo = appComponent
+			item.Type = appComponentType
 
-// 	// when pair doesnt contain '=' -> error.
-// 	if !strings.Contains(keyValuePair, "=") {
-// 		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
-// 	}
+		default:
+			log.Fatalf("Unknown property in migration item: %s", key)
+		}
+	}
 
-// 	splittedKeyValue := strings.Split(keyValuePair, "=")
+	if !haveAnyDst {
+		cobra.CheckErr(fmt.Sprintf("No destination specified for migration item!"))
+	}
 
-// 	// when more than one '=' are used -> error
-// 	if len(splittedKeyValue) != 2 {
-// 		log.Fatalf("MigrationItem property not defined correctly: '%v'.", keyValuePair)
-// 	} else {
+	if !haveAnySrc {
+		cobra.CheckErr(fmt.Sprintf("No source specified for migration item!"))
+	}
 
-// 		for _, prop := range possibleProps {
+	return item
+}
 
-// 			if strings.Trim(splittedKeyValue[0], " ") == prop {
 
-// 				return strings.Trim(splittedKeyValue[0], " "), strings.Trim(splittedKeyValue[1], " ")
-// 			}
-// 		}
+func ParseMigrationItemKeyValuePair(keyValuePair string) (string, string) {
+	split := strings.SplitN(keyValuePair, "=", 2)
+	if len(split) == 1 {
+		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
+	}
 
-// 		log.Fatalf("Given key is NOT a valid property: '%v'.", splittedKeyValue[0])
+	key := strings.TrimSpace(split[0])
+	value := strings.TrimSpace(split[1])
 
-// 	}
-// 	return "", ""
-// }
+	return key, value
+}
 
 // ---- UPDATE MIGRATION
 var appMigrationsUpdateType, appMigrationsUpdateDtPlanned string
