@@ -22,7 +22,7 @@ lvl is a CLI tool that empowers users.
 ### SEE ALSO
 
 * [lvl app](Apps/lvl_app.md)	 - Commands to manage apps
-* [lvl completion](lvl_completion.md)	 - A brief description of your command
+* [lvl completion](Use/lvl_completion.md)	 - A brief description of your command
 * [lvl domain](Domains/lvl_domain.md)	 - Commands for managing domains
 * [lvl job](Jobs/lvl_job.md)	 - Commands related to viewing and managing jobs
 * [lvl login](Login/lvl_login.md)	 - Login to CP4

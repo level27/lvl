@@ -79,6 +79,8 @@ func ResolveDirectory(command string) string{
 		dir = "docs/Login"
 	case "region":
 		dir = "docs/Regions"
+	case "completion":
+		dir = "docs/Use"
 	default:
 		dir = "docs/"
 	}
@@ -117,6 +119,8 @@ func ResolveDirectoryLink(childName string)string{
 			dir = "Login/"
 		case "region":
 			dir = "Regions/"
+		case "completion":
+			dir = "Use/"
 		default:
 			dir = ""
 		}
@@ -209,6 +213,7 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 			if name == "lvl" {
 				link = ResolveDirectoryLink(cname)+ cname + ".md"
 			}
+			
 			
 			link = strings.Replace(link, " ", "_", -1)
 			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Short))
