@@ -1,4 +1,4 @@
-package docs
+package docsGenerate
 
 import (
 	"bytes"
