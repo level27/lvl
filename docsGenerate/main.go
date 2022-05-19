@@ -14,8 +14,8 @@ import (
 	// this updated Docs folder is the folder that needs to replace the docs folder at cli.docs.level27.eu
 	
 		cmd.RootCmd.DisableAutoGenTag =true
-	err := GenerateDocumentation(cmd.RootCmd, "docs", func(s string) string { return "" }, func(s string) string { return s })
-	if err != nil {
+		err := GenerateDocumentation(cmd.RootCmd, "docs", func(s string) string { return "" }, func(s string) string { return s })
+		if err != nil {
 		log.Fatal(err)
 	}
 	}
