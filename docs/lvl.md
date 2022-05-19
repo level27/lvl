@@ -27,7 +27,7 @@ lvl is a CLI tool that empowers users.
 * [lvl job](Jobs/lvl_job.md)	 - Commands related to viewing and managing jobs
 * [lvl login](Login/lvl_login.md)	 - Login to CP4
 * [lvl mail](Mails/lvl_mail.md)	 - Commands to manage mailgroups and mailboxes
-* [lvl network](Networks/lvl_network.md)	 - 
+* [lvl network](Networks/lvl_network.md)	 - Commands for managing networks
 * [lvl organisation](Organisations/lvl_organisation.md)	 - Commands for managing organisations
 * [lvl region](Regions/lvl_region.md)	 - Commands to view available regions for systems
 * [lvl system](Systems/lvl_system.md)	 - Commands for managing systems

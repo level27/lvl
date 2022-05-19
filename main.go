@@ -20,7 +20,6 @@ import (
 
 	"bitbucket.org/level27/lvl/cmd"
 	"bitbucket.org/level27/lvl/docs"
-	"github.com/spf13/cobra/doc"
 )
 
 func main() {
@@ -34,7 +33,3 @@ func main() {
 	cmd.Execute()
 }
 
-func Test(){
-	ok := doc.GenMarkdownTree(cmd.RootCmd, "docs")
-log.Println(ok)
-}
