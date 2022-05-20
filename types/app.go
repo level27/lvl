@@ -343,8 +343,8 @@ type AppMigrationItem struct {
 	SourceInfo          int         `json:"sourceInformation"`
 	DestinationEntity   string      `json:"destinationEntity"`
 	DestinationEntityId int         `json:"destinationEntityId"`
-	Ord                 string      `json:"ord"`
-	SshKey              interface{} `json:"sshKey"`
+	Ord                 int         `json:"ord"`
+	SshKey              interface{} `json:"sshkey"`
 }
 
 // type appMigration for update

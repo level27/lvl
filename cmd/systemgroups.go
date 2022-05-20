@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"strconv"
 
 	"bitbucket.org/level27/lvl/types"
 	"github.com/spf13/cobra"
@@ -49,6 +51,20 @@ func init() {
 	systemgroupsDeleteCmd.Flags().BoolVarP(&systemgroupDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a systemgroup")
 
 }
+
+func resolveSystemgroup(arg string) int {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id
+	}
+
+	return resolveShared(
+		Level27Client.SystemgroupLookup(arg),
+		arg,
+		"systemgroup",
+		func(group types.Systemgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
+}
+
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 // ---------------- DESCRIBE
