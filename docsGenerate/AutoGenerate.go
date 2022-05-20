@@ -24,7 +24,7 @@ func GenerateDocumentation(cmd *cobra.Command, dir string, filePrepender, linkHa
 		}
 	}
 
-	
+
 
 	category := strings.Split(cmd.CommandPath(), " ")
 	if len(category) > 1{
@@ -36,13 +36,14 @@ func GenerateDocumentation(cmd *cobra.Command, dir string, filePrepender, linkHa
 	// split the above filename and check the second word
 	// the second word is the name of the command, this way we can automate the files
 	// to go in right folder for each sort of command.
-	
-	
+
+	os.MkdirAll(dir, 0755)
 	filename := filepath.Join(dir, basename)
 	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
+
 	defer f.Close()
 
 	if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
@@ -90,7 +91,7 @@ func ResolveDirectory(command string) string{
 func ResolveDirectoryLink(childName string)string{
 	childNameSplitted := strings.Split(childName, " ")
 
-	
+
 	if len(childNameSplitted) < 2 {
 		return childName
 	}else{
@@ -190,7 +191,7 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 
 			link := pname + ".md"
 			if pname == "lvl" {
-				link = "../lvl.md"	
+				link = "../lvl.md"
 			}
 			link = strings.Replace(link, " ", "_", -1)
 			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", pname, linkHandler(link), parent.Short))
@@ -213,8 +214,8 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 			if name == "lvl" {
 				link = ResolveDirectoryLink(cname)+ cname + ".md"
 			}
-			
-			
+
+
 			link = strings.Replace(link, " ", "_", -1)
 			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Short))
 		}
@@ -269,7 +270,7 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 }
 
 
-// utils 
+// utils
 
 // Test to see if we have a reason to print See Also information in docs
 // Basically this is a test for a parent command or a subcommand which is
