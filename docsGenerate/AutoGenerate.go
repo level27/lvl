@@ -28,7 +28,7 @@ func GenerateDocumentation(cmd *cobra.Command, dir string, filePrepender, linkHa
 
 	category := strings.Split(cmd.CommandPath(), " ")
 	if len(category) > 1{
-		dir = ResolveDirectory(category[1])
+		dir = filepath.Join(dir, ResolveDirectory(category[1]))
 	}
 
 	basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
@@ -56,36 +56,7 @@ func GenerateDocumentation(cmd *cobra.Command, dir string, filePrepender, linkHa
 }
 
 func ResolveDirectory(command string) string{
-	var dir string
-	switch command {
-	case "app":
-		dir = "docs/Apps"
-	case "domain":
-		dir = "docs/Domains"
-	case "component":
-		dir = "docs/Components"
-	case "job":
-		dir = "docs/Jobs"
-	case "mail":
-		dir = "docs/Mails"
-	case "network":
-		dir = "docs/Networks"
-	case "system":
-		dir = "docs/Systems"
-	case "systemgroup":
-		dir = "docs/Systemgroups"
-	case "organisation":
-		dir = "docs/Organisations"
-	case "login":
-		dir = "docs/Login"
-	case "region":
-		dir = "docs/Regions"
-	case "completion":
-		dir = "docs/Use"
-	default:
-		dir = "docs/"
-	}
-	return dir
+	return command
 }
 
 func ResolveDirectoryLink(childName string)string{
@@ -97,35 +68,7 @@ func ResolveDirectoryLink(childName string)string{
 	}else{
 		dir := childNameSplitted[1]
 
-		switch dir {
-		case "app":
-			dir = "Apps/"
-		case "domain":
-			dir = "Domains/"
-		case "component":
-			dir = "Components/"
-		case "job":
-			dir = "Jobs/"
-		case "mail":
-			dir = "Mails/"
-		case "network":
-			dir = "Networks/"
-		case "system":
-			dir = "Systems/"
-		case "systemgroup":
-			dir = "Systemgroups/"
-		case "organisation":
-			dir = "Organisations/"
-		case "login":
-			dir = "Login/"
-		case "region":
-			dir = "Regions/"
-		case "completion":
-			dir = "Use/"
-		default:
-			dir = ""
-		}
-		return dir
+		return fmt.Sprintf("%s/", dir)
 	}
 }
 
@@ -226,47 +169,6 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 	}
 	_, err := buf.WriteTo(w)
 	return err
-}
-
-// GenMarkdownTree will generate a markdown page for this command and all
-// descendants in the directory given. The header may be nil.
-// This function may not work correctly if your command names have `-` in them.
-// If you have `cmd` with two subcmds, `sub` and `sub-third`,
-// and `sub` has a subcommand called `third`, it is undefined which
-// help output will be in the file `cmd-sub-third.1`.
-func GenMarkdownTree(cmd *cobra.Command, dir string) error {
-	identity := func(s string) string { return s }
-	emptyStr := func(s string) string { return "" }
-	return GenMarkdownTreeCustom(cmd, dir, emptyStr, identity)
-}
-
-// GenMarkdownTreeCustom is the the same as GenMarkdownTree, but
-// with custom filePrepender and linkHandler.
-func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHandler func(string) string) error {
-	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
-			continue
-		}
-		if err := GenMarkdownTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
-			return err
-		}
-	}
-
-	basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
-	filename := filepath.Join(dir, basename)
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
-		return err
-	}
-	if err := GenMarkdownCustom(cmd, f, linkHandler); err != nil {
-		return err
-	}
-	return nil
 }
 
 
