@@ -1,4 +1,4 @@
-## lvl system groups
+# lvl system groups
 
 Manage a system's groups.
 

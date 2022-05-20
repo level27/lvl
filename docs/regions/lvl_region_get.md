@@ -1,4 +1,4 @@
-## lvl region get
+# lvl region get
 
 Get all available regions
 

@@ -1,6 +1,6 @@
-## lvl system billing
+# lvl system billing
 
-Manage system's invoicing (BillableItem)
+Manage entity's invoicing (BillableItem)
 
 ### Options
 
@@ -20,6 +20,6 @@ Manage system's invoicing (BillableItem)
 ### SEE ALSO
 
 * [lvl system](lvl_system.md)	 - Commands for managing systems
-* [lvl system billing off](lvl_system_billing_off.md)	 - Turn off the billing for system (admin only)
-* [lvl system billing on](lvl_system_billing_on.md)	 - Turn on billing for a system (admin only)
+* [lvl system billing off](lvl_system_billing_off.md)	 - Turn off the billing for an entity (admin only)
+* [lvl system billing on](lvl_system_billing_on.md)	 - Turn on billing for an entity (admin only)
 

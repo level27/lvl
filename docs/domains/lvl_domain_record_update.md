@@ -1,4 +1,4 @@
-## lvl domain record update
+# lvl domain record update
 
 Update a record for a domain
 

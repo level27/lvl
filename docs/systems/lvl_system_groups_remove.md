@@ -1,4 +1,4 @@
-## lvl system groups remove
+# lvl system groups remove
 
 Unlink a system from a systemgroup.
 

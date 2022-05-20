@@ -1,6 +1,6 @@
-## lvl domain billing on
+# lvl domain billing on
 
-Turn on billing for a domain (admin only)
+Turn on billing for an entity (admin only)
 
 ```
 lvl domain billing on [domain] [flags]
@@ -24,5 +24,5 @@ lvl domain billing on [domain] [flags]
 
 ### SEE ALSO
 
-* [lvl domain billing](lvl_domain_billing.md)	 - Manage domain's invoicing (BillableItem)
+* [lvl domain billing](lvl_domain_billing.md)	 - Manage entity's invoicing (BillableItem)
 

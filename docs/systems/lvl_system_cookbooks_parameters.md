@@ -1,4 +1,4 @@
-## lvl system cookbooks parameters
+# lvl system cookbooks parameters
 
 Show all default parameters for a specific cookbooktype.
 

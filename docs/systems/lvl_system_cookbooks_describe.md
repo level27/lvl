@@ -1,4 +1,4 @@
-## lvl system cookbooks describe
+# lvl system cookbooks describe
 
 show detailed info about a cookbook on a system
 

@@ -1,4 +1,4 @@
-## lvl system groups get
+# lvl system groups get
 
 Show list of all groups from a system.
 

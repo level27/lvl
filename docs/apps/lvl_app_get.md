@@ -1,9 +1,15 @@
-## lvl app get
+# lvl app get
 
-
+Shows a list of all available apps.
 
 ```
 lvl app get [flags]
+```
+
+### Examples
+
+```
+lvl app get -f FilterByName
 ```
 
 ### Options

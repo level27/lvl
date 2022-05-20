@@ -11,7 +11,7 @@ import (
 
 // MAIN COMMAND
 var systemgroupCmd = &cobra.Command{
-	Use:   "systemgroups",
+	Use:   "systemgroup",
 	Short: "Commands for managing systemgroups",
 }
 

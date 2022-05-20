@@ -1,6 +1,6 @@
-## lvl system access remove
+# lvl system access remove
 
-Revoke an organisation's access to a system
+Revoke an organisation's access to an entity
 
 ```
 lvl system access remove [flags]
@@ -23,5 +23,5 @@ lvl system access remove [flags]
 
 ### SEE ALSO
 
-* [lvl system access](lvl_system_access.md)	 - Commands for managing access to a system
+* [lvl system access](lvl_system_access.md)	 - Commands for managing access to an entity
 

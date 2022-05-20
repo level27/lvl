@@ -1,9 +1,9 @@
-## lvl domain jobs
+# lvl domain jobs
 
-Manage the job history for a domain
+View job history for this entity
 
 ```
-lvl domain jobs [domainId] [flags]
+lvl domain jobs [flags]
 ```
 
 ### Options

@@ -1,4 +1,4 @@
-## lvl system actions
+# lvl system actions
 
 Actions for systems such as rebooting
 

@@ -1,4 +1,4 @@
-## lvl domain get
+# lvl domain get
 
 Get a list of all current domains
 

@@ -1,4 +1,4 @@
-## lvl domain create
+# lvl domain create
 
 Create a new domain
 

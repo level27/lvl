@@ -1,4 +1,4 @@
-## lvl system describe
+# lvl system describe
 
 Get detailed information about a system.
 

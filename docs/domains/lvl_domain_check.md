@@ -1,4 +1,4 @@
-## lvl domain check
+# lvl domain check
 
 Check availability of a domain
 

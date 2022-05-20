@@ -1,4 +1,4 @@
-## lvl domain describe
+# lvl domain describe
 
 Get detailed info about a domain
 

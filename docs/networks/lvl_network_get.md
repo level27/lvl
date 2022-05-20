@@ -1,4 +1,4 @@
-## lvl network get
+# lvl network get
 
 
 
@@ -23,5 +23,5 @@ lvl network get [flags]
 
 ### SEE ALSO
 
-* [lvl network](lvl_network.md)	 - 
+* [lvl network](lvl_network.md)	 - Commands for managing networks
 

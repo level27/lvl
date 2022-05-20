@@ -1,4 +1,4 @@
-## lvl region
+# lvl region
 
 Commands to view available regions for systems
 

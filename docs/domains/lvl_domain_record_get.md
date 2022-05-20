@@ -1,4 +1,4 @@
-## lvl domain record get
+# lvl domain record get
 
 Get a list of all records configured for a domain
 

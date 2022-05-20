@@ -1,4 +1,7 @@
-## lvl
+---
+sidebar_position: 2
+---
+# lvl
 
 CLI tool to manage Level27 entities
 
@@ -18,15 +21,15 @@ lvl is a CLI tool that empowers users.
 
 ### SEE ALSO
 
-* [lvl app](apps/lvl_app.md)	 - Commands to manage apps
-* [lvl component](components/lvl_component.md)	 - Commands related to managing app components
-* [lvl domain](domains/lvl_domain.md)	 - Commands for managing domains
-* [lvl job](jobs/lvl_job.md)	 - Commands related to viewing and managing jobs
-* [lvl login](lvl_login.md)	 - Login to CP4
-* [lvl mail](mail/lvl_mail.md)	 - Commands to manage mailgroups and mailboxes
-* [lvl network](networks/lvl_network.md)	 - 
-* [lvl organisation](organisations/lvl_organisation.md)	 - Commands for managing organisations
-* [lvl region](regions/lvl_region.md)	 - Commands to view available regions for systems
-* [lvl system](systems/lvl_system.md)	 - Commands for managing systems
-* [lvl systemgroups](systemgroups/lvl_systemgroups.md)	 - Commands for managing systemgroups
+* [lvl app](Apps/lvl_app.md)	 - Commands to manage apps
+* [lvl completion](Use/lvl_completion.md)	 - A brief description of your command
+* [lvl domain](Domains/lvl_domain.md)	 - Commands for managing domains
+* [lvl job](Jobs/lvl_job.md)	 - Commands related to viewing and managing jobs
+* [lvl login](Login/lvl_login.md)	 - Login to CP4
+* [lvl mail](Mails/lvl_mail.md)	 - Commands to manage mailgroups and mailboxes
+* [lvl network](Networks/lvl_network.md)	 - Commands for managing networks
+* [lvl organisation](Organisations/lvl_organisation.md)	 - Commands for managing organisations
+* [lvl region](Regions/lvl_region.md)	 - Commands to view available regions for systems
+* [lvl system](Systems/lvl_system.md)	 - Commands for managing systems
+* [lvl systemgroup](Systemgroups/lvl_systemgroup.md)	 - Commands for managing systemgroups
 

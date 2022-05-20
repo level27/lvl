@@ -1,4 +1,4 @@
-## lvl organisation
+# lvl organisation
 
 Commands for managing organisations
 

@@ -1,6 +1,6 @@
-## lvl system integrity
+# lvl system integrity
 
-Manage integritychecks for a system
+Commands for managing integrity checks
 
 ### Options
 
@@ -20,7 +20,7 @@ Manage integritychecks for a system
 ### SEE ALSO
 
 * [lvl system](lvl_system.md)	 - Commands for managing systems
-* [lvl system integrity create](lvl_system_integrity_create.md)	 - Create a new integrity report for a system.
-* [lvl system integrity download](lvl_system_integrity_download.md)	 - Download an integrityreport from a system to your current directory.
-* [lvl system integrity get](lvl_system_integrity_get.md)	 - Show list of current integritychecks on a system.
+* [lvl system integrity create](lvl_system_integrity_create.md)	 - Create a new integrity report
+* [lvl system integrity download](lvl_system_integrity_download.md)	 - Download an integrity check as PDF file
+* [lvl system integrity get](lvl_system_integrity_get.md)	 - Get a list of all integrity checks for an entity
 

@@ -1,16 +1,15 @@
-## lvl domain access add
+# lvl domain access add
 
-Add organisation access to a domain
+Grant an organisation access to an entity
 
 ```
-lvl domain access add [domain] [flags]
+lvl domain access add [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help               help for add
-      --organisation int   The unique identifier of an organisation
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
@@ -24,5 +23,5 @@ lvl domain access add [domain] [flags]
 
 ### SEE ALSO
 
-* [lvl domain access](lvl_domain_access.md)	 - Manage the access of a domain
+* [lvl domain access](lvl_domain_access.md)	 - Commands for managing access to an entity
 

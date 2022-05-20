@@ -1,4 +1,4 @@
-## lvl system checks describe
+# lvl system checks describe
 
 Get detailed info about a specific check.
 

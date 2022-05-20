@@ -1,6 +1,6 @@
-## lvl system access add
+# lvl system access add
 
-Grant an organisation access to a system
+Grant an organisation access to an entity
 
 ```
 lvl system access add [flags]
@@ -23,5 +23,5 @@ lvl system access add [flags]
 
 ### SEE ALSO
 
-* [lvl system access](lvl_system_access.md)	 - Commands for managing access to a system
+* [lvl system access](lvl_system_access.md)	 - Commands for managing access to an entity
 

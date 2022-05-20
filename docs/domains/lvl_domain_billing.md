@@ -1,6 +1,6 @@
-## lvl domain billing
+# lvl domain billing
 
-Manage domain's invoicing (BillableItem)
+Manage entity's invoicing (BillableItem)
 
 ### Options
 
@@ -20,6 +20,6 @@ Manage domain's invoicing (BillableItem)
 ### SEE ALSO
 
 * [lvl domain](lvl_domain.md)	 - Commands for managing domains
-* [lvl domain billing off](lvl_domain_billing_off.md)	 - Turn off the billing for domain (admin only)
-* [lvl domain billing on](lvl_domain_billing_on.md)	 - Turn on billing for a domain (admin only)
+* [lvl domain billing off](lvl_domain_billing_off.md)	 - Turn off the billing for an entity (admin only)
+* [lvl domain billing on](lvl_domain_billing_on.md)	 - Turn on billing for an entity (admin only)
 

@@ -1,6 +1,6 @@
-## lvl domain access
+# lvl domain access
 
-Manage the access of a domain
+Commands for managing access to an entity
 
 ### Options
 
@@ -20,6 +20,7 @@ Manage the access of a domain
 ### SEE ALSO
 
 * [lvl domain](lvl_domain.md)	 - Commands for managing domains
-* [lvl domain access add](lvl_domain_access_add.md)	 - Add organisation access to a domain
-* [lvl domain access delete](lvl_domain_access_delete.md)	 - Remove organisation access from a domain
+* [lvl domain access add](lvl_domain_access_add.md)	 - Grant an organisation access to an entity
+* [lvl domain access get](lvl_domain_access_get.md)	 - List organisations with access to an entity
+* [lvl domain access remove](lvl_domain_access_remove.md)	 - Revoke an organisation's access to an entity
 
