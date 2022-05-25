@@ -15,6 +15,7 @@ import (
 var domainCmd = &cobra.Command{
 	Use:   "domain",
 	Short: "Commands for managing domains",
+	Example: "lvl domain get -f example.be",
 }
 
 func init() {

@@ -1,0 +1,46 @@
+name: Publish Documentation
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+#  workflow_run:
+#    types: completed
+#    workflows: [Publish Release]
+  workflow_dispatch:
+
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Generate Markdown docs
+      run: go run ./docsGenerate
+
+    - name: npm install
+      run: |
+        cd docs
+        npm install
+
+    - name: Generate docs HTML
+      run: |
+        cd docs
+        npm run build
+
+    - name: rsync files over
+      uses: burnett01/rsync-deployments@5.2
+      with:
+        switches: -avzr --delete
+        path: docs/build
+        remote_path: ~/public_html/
+        remote_host: 185.3.216.95
+        remote_user: vd21460
+        remote_key: ${{ secrets.SSH_DOCS }}

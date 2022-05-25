@@ -1,0 +1,48 @@
+name: Publish Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Create build directory
+      run: mkdir build
+
+    - name: Build windows/amd64
+      run: GOARCH=amd64 GOOS=windows go build -o build/lvl-windows-amd64.exe .
+
+    - name: Build windows/arm64
+      run: GOARCH=arm64 GOOS=windows go build -o build/lvl-windows-arm64.exe .
+
+    - name: Build linux/amd64
+      run: GOARCH=amd64 GOOS=linux go build -o build/lvl-linux-amd64 .
+
+    - name: Build linux/arm64
+      run: GOARCH=arm64 GOOS=linux go build -o build/lvl-linux-arm64 .
+
+    - name: Build darwin/amd64
+      run: GOARCH=amd64 GOOS=darwin go build -o build/lvl-darwin-amd64 .
+
+    - name: Build darwin/arm64
+      run: GOARCH=arm64 GOOS=darwin go build -o build/lvl-darwin-arm64 .
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: build/lvl*
+
+
+    # Disabled until we have proper tokens for testing against staging.
+    #- name: Test
+    #  run: go test -v ./...
