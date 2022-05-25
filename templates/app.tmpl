@@ -1,0 +1,36 @@
+{{vt "yellow"}}ID:              {{vt "brightwhite"}}{{.ID}}
+{{vt "yellow"}}Name:            {{vt "brightwhite"}}{{.Name}}
+{{vt "yellow"}}Status:          {{template "statusVt" .StatusCategory}}{{.Status}}
+{{vt "yellow"}}Billing Status:  {{vt "brightwhite"}}{{.BillingStatus}}
+
+{{- /*ORGANISATION*/}}
+
+{{vt "yellow"}}Organisation:
+  {{vt "yellow"}}ID:        {{vt "brightwhite"}}{{.Organisation.ID}}
+  {{vt "yellow"}}Name:      {{vt "brightwhite"}}{{.Organisation.Name}}
+  {{vt "yellow"}}Reseller:  
+    ID: {{vt "brightwhite"}}{{.Organisation.Reseller.ID}}{{vt "yellow"}}
+    NAME: {{vt "brightwhite"}}{{.Organisation.Reseller.Name}}
+
+{{- /* COMPONENTS */}}
+{{ if gt (len .Components) 0 }}
+{{vt "yellow"}}Components:  {{ range .Components }}
+{{ vt "brightblue"}}- {{vt "yellow"}}ID:        {{vt "brightwhite"}}{{.ID}}
+  {{vt "yellow"}}Name:      {{vt "brightwhite"}}{{.Name}} 
+  {{vt "yellow"}}Category:  {{vt "brightwhite"}}{{.Category}}
+  {{vt "yellow"}}Type:      {{vt "brightwhite"}}{{.AppComponentType}} 
+{{ end }}
+{{ else }}
+{{vt "yellow"}}Components: {{vt "brightblack"}}(none)
+{{ end }}
+
+{{- /* TEAMS */}}
+{{- if gt (len .Teams) 0 }}
+{{vt "yellow"}}Teams: {{ range .Teams }}
+{{ vt "brightblue"}}- {{vt "yellow"}}ID:               {{vt "brightwhite"}}{{.ID}}
+  {{vt "yellow"}}Name:             {{vt "brightwhite"}}{{.Name}}
+  {{vt "yellow"}}Organisation ID:  {{vt "brightwhite"}}{{.OrganisationID}}
+{{ end }}
+{{ else }}
+{{vt "yellow"}}Teams: {{vt "brightblack"}}(none)
+{{ end }}

@@ -4,7 +4,7 @@ Fullname:              {{.Fullname}}
 TTL:                   {{.TTL}}
 EPPCode                {{.EppCode}}
 Status:                {{.Status}}
-DSNSEC Status:         {{.DnssecStatus}}
+DNSSEC Status:         {{.DnssecStatus}}
 RegistrationIsHandled: {{.RegistrationIsHandled}}
 Provider:              {{.Provider.Name}}
 DNS Servers:
@@ -52,4 +52,8 @@ Teams ({{.CountTeams}}):
     ID: {{.ID}}
     OrganisationID: {{.OrganisationId}}
 {{- end}}
+{{- end}}
+{{- if .Jobs}}
+Latest jobs:
+{{ template "describeJobs" . }}
 {{- end}}

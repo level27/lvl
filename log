@@ -1,0 +1,12 @@
+ID: 6114
+Checktype:  host
+Status: ok
+StatusInformation:  PING OK - Packet loss = 0%, RTA = 0.30 ms
+
+  CHECKPARAMETERS: (none)
+
+  OPEN ALERTS: 
+    ID: 431
+    STATUS: opened
+    STATUSINFO: PING OK - Packet loss = 0%, RTA = 0.30 ms
+    

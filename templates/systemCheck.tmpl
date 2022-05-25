@@ -1,0 +1,28 @@
+ID: {{.Id}}
+Checktype:  {{.CheckType}}
+Status: {{.Status}}
+StatusInformation:  {{.StatusInformation}}
+System: {{.System.Name}}  ID: {{.System.Id}}
+
+
+
+{{- /* PARAMETERS */}}
+
+  {{- $anyParams := false }}
+
+  CHECKPARAMETERS: {{ range $key, $dat := .CheckParameters }}{{ if not $dat.Default }}
+    {{- $anyParams = true }}
+    {{ get $.CheckParametersDescriptions $key }}
+    {{ $key }}: {{vt "brightwhite"}}{{ $dat.value}}    
+  {{ end }}{{ end }}{{if not $anyParams}}(none){{ end -}}
+
+{{- /* ALERTS */}}
+  {{- $anyAlerts := false }}
+
+  ALERTS: {{ range $key, $dat := .Alerts -}}
+   {{- $anyAlerts = true }}
+    ID: {{ $dat.id}}
+    STATUS: {{ $dat.status }}
+    STATUSINFO: {{$dat.statusInformation}}
+   {{ end }}{{if not $anyAlerts}}(none){{ end -}}
+    

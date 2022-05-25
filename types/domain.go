@@ -2,10 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
-type structDomain struct {
+type Domain struct {
 	ID                    int    `json:"id"`
 	Name                  string `json:"name"`
 	Fullname              string `json:"fullname"`
@@ -36,7 +35,7 @@ type structDomain struct {
 	Organisation    struct {
 		ID       int    `json:"id"`
 		Name     string `json:"name"`
-		Reseller int    `json:"reseller"`
+		Reseller string `json:"reseller"`
 	} `json:"organisation"`
 	Domaintype struct {
 		ID                                  int    `json:"id"`
@@ -80,31 +79,22 @@ type structDomain struct {
 	} `json:"domaincontactLicensee"`
 	DomaincontactOnsite interface{} `json:"domaincontactOnsite"`
 	Mailgroup           struct {
-		ID   string `json:"id"`
+		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"mailgroup"`
-	ExtraFields   []interface{} `json:"extraFields"`
-	HandleMailDNS bool          `json:"handleMailDns"`
-	DtExpires     int           `json:"dtExpires"`
-	BillingStatus string        `json:"billingStatus"`
-	ExternalInfo  string        `json:"externalInfo"`
+	ExtraFields   interface{} `json:"extraFields"`
+	HandleMailDNS bool        `json:"handleMailDns"`
+	DtExpires     int         `json:"dtExpires"`
+	BillingStatus string      `json:"billingStatus"`
+	ExternalInfo  string      `json:"externalInfo"`
 	Teams         []struct {
 		ID             int    `json:"id"`
 		Name           string `json:"name"`
 		AdminOnly      bool   `json:"adminOnly"`
 		OrganisationId int    `json:"organisationId"`
 	} `json:"teams"`
-	CountTeams int `json:"countTeams"`
-}
-
-// Domain represents a single domain
-type Domain struct {
-	Data structDomain `json:"domain"`
-}
-
-// Domains represents an array of domains
-type Domains struct {
-	Data []structDomain `json:"domains"`
+	CountTeams int   `json:"countTeams"`
+	Jobs       []Job `json:"jobs"`
 }
 
 func (d Domain) String() string {
@@ -113,16 +103,14 @@ func (d Domain) String() string {
 
 // DomainProvider represents a single DomainProvider
 type DomainProvider struct {
-	Providers []struct {
-		ID              int    `json:"id"`
-		Name            string `json:"name"`
-		API             string `json:"api"`
-		DNSSecSupported bool   `json:"dnsSecSupported"`
-		Domaintypes     []struct {
-			ID        int    `json:"id"`
-			Extension string `json:"extension"`
-		} `json:"domaintypes"`
-	} `json:"providers"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	API             string `json:"api"`
+	DNSSecSupported bool   `json:"dnsSecSupported"`
+	Domaintypes     []struct {
+		ID        int    `json:"id"`
+		Extension string `json:"extension"`
+	} `json:"domaintypes"`
 }
 
 // DomainExtension represents a single DomainExtension
@@ -133,69 +121,96 @@ type DomainExtension struct {
 
 // DomainRequest represents a single DomainRequest
 type DomainRequest struct {
-	Name                  string
-	Action                string
-	Domaintype            int
-	Domaincontactlicensee string
-	Organisation          string
-	Handledns             bool
+	Name                      string  `json:"name"`
+	NameServer1               *string `json:"nameserver1"`
+	NameServer2               string  `json:"nameserver2"`
+	NameServer3               string  `json:"nameserver3"`
+	NameServer4               string  `json:"nameserver4"`
+	NameServer1Ip             string  `json:"nameserverIp1"`
+	NameServer2Ip             string  `json:"nameserverIp2"`
+	NameServer3Ip             string  `json:"nameserverIp3"`
+	NameServer4Ip             string  `json:"nameserverIp4"`
+	NameServer1Ipv6           string  `json:"nameserverIpv61"`
+	NameServer2Ipv6           string  `json:"nameserverIpv62"`
+	NameServer3Ipv6           string  `json:"nameserverIpv63"`
+	NameServer4Ipv6           string  `json:"nameserverIpv64"`
+	TTL                       int     `json:"ttl"`
+	Action                    string  `json:"action"`
+	EppCode                   string  `json:"eppCode"`
+	Handledns                 bool    `json:"handleDns"`
+	ExtraFields               string  `json:"extraFields"`
+	Domaintype                int     `json:"domaintype"`
+	Domaincontactlicensee     int     `json:"domaincontactLicensee"`
+	DomainContactOnSite       *int    `json:"domaincontactOnsite"`
+	Organisation              int     `json:"organisation"`
+	AutoRecordTemplate        string  `json:"autorecordTemplate"`
+	AutoRecordTemplateReplace bool    `json:"autorecordTemplateReplace"`
+	//DomainProvider            *int    `json:"domainProvider"`
+	// DtExternalCreated         string `json:"dtExternalCreated"`
+	// DtExternalExpires         string `json:"dtExternalExpires"`
+	// ConvertDomainRecords      string `json:"convertDomainrecords"`
+	AutoTeams    string `json:"autoTeams"`
+	ExternalInfo string `json:"externalInfo"`
+}
+
+// request for updating a single domain
+type DomainUpdateRequest struct {
+	Name                      string  `json:"name"`
+	NameServer1               *string `json:"nameserver1"`
+	NameServer2               string  `json:"nameserver2"`
+	NameServer3               string  `json:"nameserver3"`
+	NameServer4               string  `json:"nameserver4"`
+	NameServer1Ip             string  `json:"nameserverIp1"`
+	NameServer2Ip             string  `json:"nameserverIp2"`
+	NameServer3Ip             string  `json:"nameserverIp3"`
+	NameServer4Ip             string  `json:"nameserverIp4"`
+	NameServer1Ipv6           string  `json:"nameserverIpv61"`
+	NameServer2Ipv6           string  `json:"nameserverIpv62"`
+	NameServer3Ipv6           string  `json:"nameserverIpv63"`
+	NameServer4Ipv6           string  `json:"nameserverIpv64"`
+	TTL                       int     `json:"ttl"`
+	Action                    string  `json:"action"`
+	EppCode                   string  `json:"eppCode"`
+	Handledns                 bool    `json:"handleDns"`
+	ExtraFields               string  `json:"extraFields"`
+	Domaintype                int     `json:"domaintype"`
+	Domaincontactlicensee     int     `json:"domaincontactLicensee"`
+	DomainContactOnSite       *int    `json:"domaincontactOnsite"`
+	Organisation              int     `json:"organisation"`
+	AutoRecordTemplate        string  `json:"autorecordTemplate"`
+	AutoRecordTemplateReplace bool    `json:"autorecordTemplateReplace"`
+	AutoTeams                 string  `json:"autoTeams"`
 }
 
 func (d DomainRequest) String() string {
-	licensee := fmt.Sprintf("%s", d.Domaincontactlicensee)
-	if d.Domaincontactlicensee == "" {
-		licensee = "0"
-	}
 
-	s := "{"
-	s += fmt.Sprintf("\"name\": \"%s\",", d.Name)
-	s += fmt.Sprintf("\"action\": \"%s\",", d.Action)
-	s += fmt.Sprintf("\"domaintype\": %d,", d.Domaintype)
-	s += fmt.Sprintf("\"domaincontactLicensee\": %s,", licensee)
-	s += fmt.Sprintf("\"organisation\": \"%s\",", d.Organisation)
-	s += fmt.Sprintf("\"handleDns\": %t", d.Handledns)
-	s += "}"
-	return s
+	s, _ := json.Marshal(d)
+	return string(s)
 }
+
+// ------------------------------------------ RECORDS ---------------------------------------
 
 // DomainRecord represents a single Domainrecord
 type DomainRecord struct {
-	Record struct {
-		ID                 int    `json:"id"`
-		Name               string `json:"name"`
-		Content            string `json:"content"`
-		Priority           int    `json:"priority"`
-		Type               string `json:"type"`
-		SystemHasNetworkIP struct {
-			ID int `json:"id"`
-		} `json:"systemHasNetworkIp"`
-		URL            int `json:"url"`
-		SslCertificate int `json:"sslCertificate"`
-		Mailgroup      int `json:"mailgroup"`
-	} `json:"record"`
+	ID                 int    `json:"id"`
+	Name               string `json:"name"`
+	Content            string `json:"content"`
+	Priority           int    `json:"priority"`
+	Type               string `json:"type"`
+	SystemHasNetworkIP struct {
+		ID int `json:"id"`
+	} `json:"systemHasNetworkIp"`
+	// URL            int `json:"url"`
+	// SslCertificate int `json:"sslCertificate"`
+	// Mailgroup      int `json:"mailgroup"`
 }
 
 // DomainRecordRequest represents a API reqest to Level27
 type DomainRecordRequest struct {
-	Name     string
-	Type     string
-	Content  string
-	Priority int
-}
-
-func (d DomainRecordRequest) String() string {
-	name := fmt.Sprintf("\"%s\"", d.Name)
-	if d.Name == "" {
-		name = "null"
-	}
-
-	s := "{"
-	s += fmt.Sprintf("\"name\": %s,", name)
-	s += fmt.Sprintf("\"type\": \"%s\",", d.Type)
-	s += fmt.Sprintf("\"content\": \"%s\",", d.Content)
-	s += fmt.Sprintf("\"priority\": %d", d.Priority)
-	s += "}"
-	return s
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Content  string `json:"content"`
+	Priority int    `json:"priority"`
 }
 
 // DomainContact is an object to define domain contacts at Level27
@@ -263,4 +278,198 @@ type DomainContactRequest struct {
 func (d DomainContactRequest) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
+}
+
+// ------------------------------------------ ACCESS ---------------------------------------------
+
+// type to add acces to a domain
+type DomainAccessRequest struct {
+	Organisation int `json:"organisation"`
+}
+
+// ------------------------------------------ NOTIFICATIONS ---------------------------------------------
+type DomainNotificationPostRequest struct {
+	Type   string `json:"type"`
+	Group  string `json:"group"`
+	Params string `json:"params"`
+}
+
+// ------------------------------------------ CHECK/AVAILABILITY ---------------------------------------------
+
+// Domain check
+type DomainCheckResult struct {
+	Success                             bool   `json:"success"`
+	Status                              string `json:"status"`
+	Action                              string `json:"action"`
+	DomaintypeId                        int    `json:"domaintypeId"`
+	DomainNameWithExtension             string `json:"domainNameWithExtension"`
+	RequestIncomingTransferCodePossible bool   `json:"requestIncomingTransferCodePossible"`
+	TransferAutoLicensee                bool   `json:"transferAutoLicensee"`
+	TransferEppCodeRequired             bool   `json:"transferEppCodeRequired"`
+	Products                            []struct {
+		Id          string `json:"id"`
+		Description string `json:"description"`
+		Prices      []struct {
+			Id       int    `json:"id"`
+			Period   int    `json:"period"`
+			Currency string `json:"currency"`
+			Price    string `json:"price"`
+			Timing   string `json:"timing"`
+			Default  bool   `json:"default"`
+			Status   int    `json:"sttaus"`
+		} `json:"prices"`
+	} `json:"products"`
+}
+
+// ------------------------------------------ JOB HISTORY ---------------------------------------------
+type DomainJobHistory struct {
+	Id      int           `json:"id"`
+	Status  int           `json:"status"`
+	Conc    int           `json:"conc"`
+	Hoe     int           `json:"hoe"`
+	Message string        `json:"msg"`
+	Dt      string        `json:"dt"`
+	Logs    []interface{} `json:"logs"`
+}
+
+type DomainJobHistoryRoot struct {
+	DomainJobHistory
+}
+// INTEGRITY CHECKS
+type DomainIntegrityCheck struct {
+	IntegrityCheck
+	Object   string `json:"object"`
+	ObjectID int    `json:"objectId"`
+	Results  struct {
+		Domain struct {
+			ID   int `json:"id"`
+			Data struct {
+				FullName          string      `json:"fullName"`
+				Status            string      `json:"status"`
+				StatusColor       string      `json:"statusColor"`
+				Provider          string      `json:"provider"`
+				HandleDNS         bool        `json:"handleDns"`
+				Nameserver1       interface{} `json:"nameserver1"`
+				Nameserver2       interface{} `json:"nameserver2"`
+				Nameserver3       interface{} `json:"nameserver3"`
+				Nameserver4       interface{} `json:"nameserver4"`
+				NameserverIP1     interface{} `json:"nameserverIp1"`
+				NameserverIP2     interface{} `json:"nameserverIp2"`
+				NameserverIP3     interface{} `json:"nameserverIp3"`
+				NameserverIP4     interface{} `json:"nameserverIp4"`
+				NameserverIpv61   interface{} `json:"nameserverIpv61"`
+				NameserverIpv62   interface{} `json:"nameserverIpv62"`
+				NameserverIpv63   interface{} `json:"nameserverIpv63"`
+				NameserverIpv64   interface{} `json:"nameserverIpv64"`
+				IsRegistered      string      `json:"isRegistered"`
+				IsRegisteredColor string      `json:"isRegisteredColor"`
+				DcLicensee        struct {
+					FullName string `json:"fullName"`
+					Address  string `json:"address"`
+					Country  string `json:"country"`
+					Phone    string `json:"phone"`
+					Email    string `json:"email"`
+				} `json:"dcLicensee"`
+				DcOnsite          interface{} `json:"dcOnsite"`
+				DnssecStatus      string      `json:"dnssecStatus"`
+				DnssecStatusColor string      `json:"dnssecStatusColor"`
+				Retry             int         `json:"retry"`
+				Refresh           int         `json:"refresh"`
+				Expire            int         `json:"expire"`
+				Minimum           int         `json:"minimum"`
+				TTL               int         `json:"ttl"`
+				Mailgroup         string      `json:"mailgroup"`
+			} `json:"data"`
+			Results struct {
+				Name              string `json:"name"`
+				FullName          string `json:"fullName"`
+				Subdomain         string `json:"subdomain"`
+				NameseversGeneral string `json:"namesevers_general"`
+				Nameserver1       string `json:"nameserver1"`
+				Nameserver2       string `json:"nameserver2"`
+				Nameserver3       string `json:"nameserver3"`
+				Nameserver4       string `json:"nameserver4"`
+				NameserverIP1     string `json:"nameserverIp1"`
+				NameserverIP2     string `json:"nameserverIp2"`
+				NameserverIP3     string `json:"nameserverIp3"`
+				NameserverIP4     string `json:"nameserverIp4"`
+				NameserverIpv61   string `json:"nameserverIpv61"`
+				NameserverIpv62   string `json:"nameserverIpv62"`
+				NameserverIpv63   string `json:"nameserverIpv63"`
+				NameserverIpv64   string `json:"nameserverIpv64"`
+				Action            string `json:"action"`
+				EppCode           string `json:"eppCode"`
+				ExtraFields       string `json:"extraFields"`
+				Domaintype        string `json:"domaintype"`
+				Status            string `json:"status"`
+				DnssecStatus      string `json:"dnssecStatus"`
+				Retry             string `json:"retry"`
+				Refresh           string `json:"refresh"`
+				Expire            string `json:"expire"`
+				Minimum           string `json:"minimum"`
+				TTL               string `json:"ttl"`
+				Organisation      string `json:"organisation"`
+				Provider          string `json:"provider"`
+				NsDig             string `json:"nsDig"`
+			} `json:"results"`
+			Records struct {
+				Message string `json:"message"`
+				Dig     []struct {
+					ID   int `json:"id"`
+					Data struct {
+						Type       string      `json:"type"`
+						Name       interface{} `json:"name"`
+						Content    string      `json:"content"`
+						Priority   interface{} `json:"priority"`
+						DigContent string      `json:"digContent"`
+					} `json:"data"`
+					Results struct {
+						Status    string `json:"status"`
+						IsExpired string `json:"isExpired"`
+					} `json:"results"`
+					SslCertificate interface{} `json:"sslCertificate"`
+				} `json:"dig"`
+			} `json:"records"`
+		} `json:"domain"`
+		Organisations struct {
+			Manual []string `json:"manual"`
+			Owner  string   `json:"owner"`
+		} `json:"organisations"`
+		Teams []struct {
+			ID             int         `json:"id"`
+			Name           string      `json:"name"`
+			AdminOnly      interface{} `json:"adminOnly"`
+			OrganisationID int         `json:"organisationId"`
+		} `json:"teams"`
+		FinanceData struct {
+			Billing         string `json:"billing"`
+			BillingStatus   string `json:"billingStatus"`
+			AutoRenew       string `json:"autoRenew"`
+			AutoRenewStatus string `json:"autoRenewStatus"`
+			DtExpires       string `json:"dtExpires"`
+			BillingItems    []struct {
+				ID          int     `json:"id"`
+				Description string  `json:"description"`
+				Type        string  `json:"type"`
+				Period      string  `json:"period"`
+				DtExpires   string  `json:"dtExpires"`
+				Price       float32 `json:"price"`
+			} `json:"billingItems"`
+			TotalPrice float32 `json:"totalPrice"`
+		} `json:"financeData"`
+		Jobs []struct {
+			ID           int         `json:"id"`
+			Action       string      `json:"action"`
+			Status       int         `json:"status"`
+			Message      string      `json:"message"`
+			DtEnd        interface{} `json:"dtEnd"`
+			DtStamp      string      `json:"dtStamp"`
+			ExceptionMsq interface{} `json:"exceptionMsq"`
+		} `json:"jobs"`
+		IsHealthy    bool   `json:"isHealthy"`
+		ExtraMessage string `json:"extraMessage"`
+	} `json:"results"`
+	Dojobs               bool          `json:"dojobs"`
+	Forcejobs            bool          `json:"forcejobs"`
+	LocalIntegritychecks []interface{} `json:"localIntegritychecks"`
 }

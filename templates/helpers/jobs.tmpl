@@ -1,0 +1,68 @@
+{{/* JOB STATUS */}}
+{{ define "jobStatus" }}
+{{- $stat := jobStatusSafe .Status }}
+{{- if eq $stat 50 -}}
+{{ vt "green"}}Succeeded{{vt "reset"}}
+{{- else if eq $stat 999 -}}
+{{ vt "yellow" }}Busy
+{{- else if eq $stat 20 -}}
+{{ vt "brightblack"}}Not Queued
+{{- else if eq $stat 21 -}}
+{{ vt "cyan"}}Queued
+{{- else if eq $stat 40 -}}
+{{ vt "red"}}Failed
+{{- else if eq $stat 90 -}}
+{{ vt "brightblack" }}Removed
+{{- end }}
+{{- vt "reset"}}
+{{- end }}
+
+
+{{/* JOB ENTITY  */}}
+{{ define "jobEntity" -}}
+  {{ if eq .Eclass "Level27\\DomainBundle\\Entity\\Domain" -}}
+    domain {{ .Estring }} ({{ .Eid }})
+  {{ else if eq .Eclass "Level27\\BaseBundle\\Entity\\Integritycheck" -}}
+    Integritycheck #{{ .Eid }}
+  {{ else -}}
+    {{ .Estring }} ({{ .Eid }})
+  {{- end -}}
+{{ end -}}
+
+{{/* JOB TITLE */}}
+{{ define "jobTitle" }}
+[{{vt "brightwhite"}}{{.Id}}{{vt "reset"}}] [{{vt "brightblue"}}{{formatUnixTimeF .Dt "2006-01-02 15:04:05" }}{{vt "reset"}}] {{template "jobStatus" .}}
+{{- if ne .Message "" -}}
+: {{vt "brightwhite"}}{{.Message}}{{vt "reset" -}}
+{{end -}}
+{{- end }}
+
+{{/* JOB STATUS */}}
+{{ define "jobDesc" }}
+{{- if ne .Action "" }}
+  {{if ne .System 0}}{{vt "yellow"}}System: {{vt "brightyellow"}}{{.System}} {{vt "reset"}}{{end -}}
+  {{if ne .Estring ""}}{{vt "yellow"}}Entity: {{vt "brightyellow"}}{{ template "jobEntity" . }} {{vt "reset"}}{{end -}}
+  {{vt "yellow"}}Action: {{vt "brightyellow"}}{{.Action}}{{vt "reset"}}
+{{- end}}
+{{- if ne .ExcCode 0 }}
+  {{vt "red"}}Error:{{vt "reset"}} [{{vt "brightred"}}{{.ExcCode}}{{vt "reset"}}] {{.ExcMsg}}
+{{- end}}
+{{- end }}
+
+{{/* DESCRIBE JOBS */}}
+{{ define "describeJobs" }}
+{{- range .Jobs -}}
+  {{ block "job" . }}
+    {{- $stat := jobStatusSafe .Status}}
+    {{- $hasChildren := gt (len .Jobs) 0 }}
+    {{- $showChildren := and (or (ne $stat 50) (eq .Message "")) $hasChildren }}
+    {{- template "jobTitle" . }}
+    {{- template "jobDesc" . }}
+    {{- if $showChildren }}
+      {{- range .Jobs }}
+        {{- include "job" . | indent 4 }}
+      {{- end}}
+    {{- else if $hasChildren }} ({{ jobChildCountTotal . }} hidden){{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

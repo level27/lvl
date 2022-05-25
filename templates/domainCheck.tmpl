@@ -1,0 +1,11 @@
+Status: {{ .Status }}
+{{- if .Products }}
+Available Products:
+{{- range .Products }}
+  {{ .Description }}:
+  {{- range .Prices }}
+  - Period: {{ .Period }} months
+    Price:  {{ formatCurrency .Currency .Price }}
+  {{- end}}
+{{- end }}
+{{- end }}

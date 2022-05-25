@@ -1,0 +1,8 @@
+root = true
+
+[*.go]
+trim_trailing_whitespace = true
+
+[*.tmpl]
+indent_style = space
+indent_size = 2
