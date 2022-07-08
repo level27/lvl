@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +43,6 @@ func init() {
 	// MAIL ACTIONS DEACTIVATE
 	mailActionsCmd.AddCommand(mailActionsDeactivateCmd)
 
-
 	// MAIL DOMAIN
 	mailCmd.AddCommand(mailDomainCmd)
 
@@ -61,7 +60,6 @@ func init() {
 	mailDomainCmd.AddCommand(mailDomainUpdateCmd)
 	settingsFileFlag(mailDomainUpdateCmd)
 	settingString(mailDomainUpdateCmd, updateSettings, "handleMailDns", "")
-
 
 	// MAIL BOX
 	mailCmd.AddCommand(mailBoxCmd)
@@ -102,7 +100,6 @@ func init() {
 
 	// MAIL BOX ADDRESS REMOVE
 	mailBoxAddressCmd.AddCommand(mailBoxAddressRemoveCmd)
-
 
 	// MAIL FORWARDER
 	mailCmd.AddCommand(mailForwarderCmd)
@@ -156,7 +153,7 @@ func resolveMailgroup(arg string) int {
 		Level27Client.MailgroupsLookup(arg),
 		arg,
 		"mailgroup",
-		func (group types.Mailgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
+		func(group l27.Mailgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
 }
 
 func resolveMailbox(mailgroupID int, arg string) int {
@@ -169,7 +166,7 @@ func resolveMailbox(mailgroupID int, arg string) int {
 		Level27Client.MailgroupsMailboxesLookup(mailgroupID, arg),
 		arg,
 		"mailbox",
-		func (box types.MailboxShort) string { return fmt.Sprintf("%s (%s, %d)", box.Name, box.Username, box.ID) }).ID
+		func(box l27.MailboxShort) string { return fmt.Sprintf("%s (%s, %d)", box.Name, box.Username, box.ID) }).ID
 }
 
 func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) int {
@@ -178,12 +175,11 @@ func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) int {
 		return id
 	}
 
-
 	return resolveShared(
 		Level27Client.MailgroupsMailboxesAddressesLookup(mailgroupID, mailboxID, arg),
 		arg,
 		"mailbox address",
-		func (address types.MailboxAddress) string { return fmt.Sprintf("%s (%d)", address.Address, address.ID) }).ID
+		func(address l27.MailboxAddress) string { return fmt.Sprintf("%s (%d)", address.Address, address.ID) }).ID
 }
 
 func resolveMailforwarder(mailgroupID int, arg string) int {
@@ -192,24 +188,22 @@ func resolveMailforwarder(mailgroupID int, arg string) int {
 		return id
 	}
 
-
 	return resolveShared(
 		Level27Client.MailgroupsMailforwardersLookup(mailgroupID, arg),
 		arg,
 		"mailforwarder",
-		func (app types.Mailforwarder) string { return fmt.Sprintf("%s (%d)", app.Address, app.ID) }).ID
+		func(app l27.Mailforwarder) string { return fmt.Sprintf("%s (%d)", app.Address, app.ID) }).ID
 }
-
 
 // MAIL
 var mailCmd = &cobra.Command{
-	Use: "mail",
+	Use:   "mail",
 	Short: "Commands to manage mailgroups and mailboxes",
 }
 
 // MAIL GET
 var mailGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "Get mailgroups",
 
 	Run: func(cmd *cobra.Command, args []string) {
@@ -226,7 +220,7 @@ var mailGetCmd = &cobra.Command{
 				"ID",
 				mailgroupDisplayName,
 				"Status",
-				func(m types.Mailgroup) int { return len(m.Domains) },
+				func(m l27.Mailgroup) int { return len(m.Domains) },
 				"MailboxCount",
 				"MailforwarderCount",
 			})
@@ -240,18 +234,18 @@ var mailCreateAutoTeams string
 var mailCreateExternalInfo string
 
 var mailCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create a new mail group",
-	Long: "Does not automatically link any domains to the mail group. Use separate commands after the mail group has been created.",
+	Long:  "Does not automatically link any domains to the mail group. Use separate commands after the mail group has been created.",
 
 	Args: cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		create := types.MailgroupCreate{
-			Name: mailCreateName,
+		create := l27.MailgroupCreate{
+			Name:         mailCreateName,
 			Organisation: resolveOrganisation(mailCreateOrganisation),
-			AutoTeams: mailCreateAutoTeams,
+			AutoTeams:    mailCreateAutoTeams,
 			ExternalInfo: mailCreateExternalInfo,
-			Type: "level27",
+			Type:         "level27",
 		}
 
 		Level27Client.MailgroupsCreate(create)
@@ -261,7 +255,7 @@ var mailCreateCmd = &cobra.Command{
 // MAIL DELETE
 var mailDeleteForce bool
 var mailDeleteCmd = &cobra.Command{
-	Use: "delete",
+	Use:   "delete",
 	Short: "Delete a mail group",
 
 	Args: cobra.ExactArgs(1),
@@ -282,7 +276,7 @@ var mailDeleteCmd = &cobra.Command{
 
 // MAIL UPDATE
 var mailUpdateCmd = &cobra.Command{
-	Use: "update",
+	Use:   "update",
 	Short: "Update settings on a mail group",
 
 	Args: cobra.ExactArgs(1),
@@ -292,11 +286,11 @@ var mailUpdateCmd = &cobra.Command{
 		mailgroupID := resolveMailgroup(args[0])
 		mailgroup := Level27Client.MailgroupsGetSingle(mailgroupID)
 
-		mailgroupPut := types.MailgroupPut {
-			Name: mailgroup.Name,
-			Type: mailgroup.Type,
+		mailgroupPut := l27.MailgroupPut{
+			Name:         mailgroup.Name,
+			Type:         mailgroup.Type,
 			Organisation: mailgroup.Organisation.ID,
-			Systemgroup: mailgroup.Systemgroup.ID,
+			Systemgroup:  mailgroup.Systemgroup.ID,
 		}
 
 		data := utils.RoundTripJson(mailgroupPut).(map[string]interface{})
@@ -310,7 +304,7 @@ var mailUpdateCmd = &cobra.Command{
 
 // Get the display name for a mailgroup
 // Usually just the primary domain name, falling back to .Name if necessary.
-func mailgroupDisplayName(m types.Mailgroup) string {
+func mailgroupDisplayName(m l27.Mailgroup) string {
 	if len(m.Domains) == 0 {
 		return m.Name
 	}
@@ -326,7 +320,6 @@ func mailgroupDisplayName(m types.Mailgroup) string {
 
 	return fmt.Sprintf("%s.%s", domain.Name, domain.Domaintype.Extension)
 }
-
 
 // MAIL ACTIONS
 var mailActionsCmd = &cobra.Command{
@@ -357,16 +350,15 @@ var mailActionsDeactivateCmd = &cobra.Command{
 	},
 }
 
-
 // MAIL DOMAIN
 var mailDomainCmd = &cobra.Command{
 	Use: "domain",
 }
 
 // MAIL DOMAIN LINK
-var mailDomainLinkNoHandleDns bool;
+var mailDomainLinkNoHandleDns bool
 var mailDomainLinkCmd = &cobra.Command{
-	Use: "link [mailgroup] [domain]",
+	Use:   "link [mailgroup] [domain]",
 	Short: "Add a domain to a mail group",
 
 	Args: cobra.ExactArgs(2),
@@ -374,8 +366,8 @@ var mailDomainLinkCmd = &cobra.Command{
 		mailgroupID := resolveMailgroup(args[0])
 		domainID := resolveDomain(args[1])
 
-		Level27Client.MailgroupsDomainsLink(mailgroupID, types.MailgroupDomainAdd{
-			Domain: domainID,
+		Level27Client.MailgroupsDomainsLink(mailgroupID, l27.MailgroupDomainAdd{
+			Domain:        domainID,
 			HandleMailDns: !mailDomainLinkNoHandleDns,
 		})
 	},
@@ -383,7 +375,7 @@ var mailDomainLinkCmd = &cobra.Command{
 
 // MAIL DOMAIN UNLINK
 var mailDomainUnlinkCmd = &cobra.Command{
-	Use: "unlink [mailgroup] [domain]",
+	Use:   "unlink [mailgroup] [domain]",
 	Short: "Remove a domain from a mail group",
 
 	Args: cobra.ExactArgs(2),
@@ -397,7 +389,7 @@ var mailDomainUnlinkCmd = &cobra.Command{
 
 // MAIL DOMAIN SETPRIMARY
 var mailDomainSetPrimaryCmd = &cobra.Command{
-	Use: "setprimary [mailgroup] [domain]",
+	Use:   "setprimary [mailgroup] [domain]",
 	Short: "Set a domain on a mail group as primary",
 
 	Args: cobra.ExactArgs(2),
@@ -409,10 +401,9 @@ var mailDomainSetPrimaryCmd = &cobra.Command{
 	},
 }
 
-
 // MAIL DOMAIN UPDATE
 var mailDomainUpdateCmd = &cobra.Command{
-	Use: "update [mailgroup] [domain]",
+	Use:   "update [mailgroup] [domain]",
 	Short: "Update settings on a domain",
 
 	Args: cobra.ExactArgs(2),
@@ -425,7 +416,6 @@ var mailDomainUpdateCmd = &cobra.Command{
 		Level27Client.MailgroupsDomainsPatch(mailgroupID, domainID, settings)
 	},
 }
-
 
 // MAIL BOX
 var mailBoxCmd = &cobra.Command{
@@ -459,9 +449,9 @@ var mailBoxDescribeCmd = &cobra.Command{
 		mailboxID := resolveMailbox(mailgroupID, args[1])
 
 		mailbox := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
-		addresses := Level27Client.MailgroupsMailboxesAddressesGetList(mailgroupID, mailboxID, types.CommonGetParams{})
-		describe := types.MailboxDescribe{
-			Mailbox: mailbox,
+		addresses := Level27Client.MailgroupsMailboxesAddressesGetList(mailgroupID, mailboxID, l27.CommonGetParams{})
+		describe := l27.MailboxDescribe{
+			Mailbox:   mailbox,
 			Addresses: addresses,
 		}
 
@@ -482,12 +472,12 @@ var mailBoxCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		mailgroupID := resolveMailgroup(args[0])
 
-		Level27Client.MailgroupsMailboxesCreate(mailgroupID, types.MailboxCreate{
-			Name: mailBoxCreateName,
-			Password: mailBoxCreatePassword,
+		Level27Client.MailgroupsMailboxesCreate(mailgroupID, l27.MailboxCreate{
+			Name:       mailBoxCreateName,
+			Password:   mailBoxCreatePassword,
 			OooEnabled: mailBoxCreateOooEnabled,
 			OooSubject: mailBoxCreateOooSubject,
-			OooText: mailBoxCreateOooText,
+			OooText:    mailBoxCreateOooText,
 		})
 	},
 }
@@ -525,11 +515,11 @@ var mailBoxUpdateCmd = &cobra.Command{
 		mailboxID := resolveMailbox(mailgroupID, args[1])
 		mailbox := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
 
-		mailboxPut := types.MailboxPut {
-			Name: mailbox.Name,
-			Password: "",
+		mailboxPut := l27.MailboxPut{
+			Name:       mailbox.Name,
+			Password:   "",
 			OooEnabled: mailbox.OooEnabled,
-			OooText: mailbox.OooText,
+			OooText:    mailbox.OooText,
 			OooSubject: mailbox.OooSubject,
 		}
 
@@ -557,7 +547,7 @@ var mailBoxAddressAddCmd = &cobra.Command{
 		Level27Client.MailgroupsMailboxesAddressesCreate(
 			mailgroupID,
 			mailboxID,
-			types.MailboxAddressCreate{
+			l27.MailboxAddressCreate{
 				Address: args[2],
 			},
 		)
@@ -582,10 +572,9 @@ var mailBoxAddressRemoveCmd = &cobra.Command{
 	},
 }
 
-
 // MAIL FORWARDER
 var mailForwarderCmd = &cobra.Command{
-	Use: "forwarder",
+	Use:   "forwarder",
 	Short: "Commands for managing mail forwarders",
 
 	Aliases: []string{"fwd"},
@@ -593,7 +582,7 @@ var mailForwarderCmd = &cobra.Command{
 
 // MAIL FORWARDER GET
 var mailForwarderGetCmd = &cobra.Command{
-	Use: "get [mailgroup]",
+	Use:   "get [mailgroup]",
 	Short: "Get a list of mail forwarders in a mail group",
 
 	Args: cobra.ExactArgs(1),
@@ -605,7 +594,7 @@ var mailForwarderGetCmd = &cobra.Command{
 		outputFormatTableFuncs(
 			mailboxes,
 			[]string{"ID", "Status", "Address", "Destimations"},
-			[]interface{}{"ID", "Status", "Address", func(f types.Mailforwarder) string {
+			[]interface{}{"ID", "Status", "Address", func(f l27.Mailforwarder) string {
 				first := true
 				result := ""
 				for _, dest := range f.Destination {
@@ -628,15 +617,15 @@ var mailForwarderGetCmd = &cobra.Command{
 var mailForwarderCreateAddress string
 var mailForwarderCreateDestination string
 var mailForwarderCreateCmd = &cobra.Command{
-	Use: "create [mailgroup]",
+	Use:   "create [mailgroup]",
 	Short: "Create a new mail forwarder",
 
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		mailgroupID := resolveMailgroup(args[0])
 
-		Level27Client.MailgroupsMailforwardersCreate(mailgroupID, types.MailforwarderCreate{
-			Address: mailForwarderCreateAddress,
+		Level27Client.MailgroupsMailforwardersCreate(mailgroupID, l27.MailforwarderCreate{
+			Address:     mailForwarderCreateAddress,
 			Destination: mailForwarderCreateDestination,
 		})
 	},
@@ -645,7 +634,7 @@ var mailForwarderCreateCmd = &cobra.Command{
 // MAIL FORWARDER DELETE
 var mailForwarderDeleteForce bool
 var mailForwarderDeleteCmd = &cobra.Command{
-	Use: "delete [mailgroup] [mail forwarder]",
+	Use:   "delete [mailgroup] [mail forwarder]",
 	Short: "Delete a mail forwarder",
 
 	Args: cobra.ExactArgs(2),
@@ -666,7 +655,7 @@ var mailForwarderDeleteCmd = &cobra.Command{
 
 // MAIL FORWARDER UPDATE
 var mailForwarderUpdateCmd = &cobra.Command{
-	Use: "update [mailgroup] [mail forwarder]",
+	Use:   "update [mailgroup] [mail forwarder]",
 	Short: "Update settings on a mail forwarder",
 
 	Args: cobra.ExactArgs(2),
@@ -677,8 +666,8 @@ var mailForwarderUpdateCmd = &cobra.Command{
 		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
 		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
 
-		mailforwarderPut := types.MailforwarderPut {
-			Address: mailforwarder.Address,
+		mailforwarderPut := l27.MailforwarderPut{
+			Address:     mailforwarder.Address,
 			Destination: strings.Join(mailforwarder.Destination, ","),
 		}
 
@@ -691,7 +680,7 @@ var mailForwarderUpdateCmd = &cobra.Command{
 
 // MAIL FORWARDER DESTINATION
 var mailForwarderDestinationCmd = &cobra.Command{
-	Use: "destination",
+	Use:   "destination",
 	Short: "Commands for managing destination addresses on a mail forwarder easily",
 
 	Aliases: []string{"dest"},
@@ -699,7 +688,7 @@ var mailForwarderDestinationCmd = &cobra.Command{
 
 // MAIL FORWARDER DESTINATION ADD
 var mailForwarderDestinationAddCmd = &cobra.Command{
-	Use: "add [mail group] [mail forwarder] [new destination]",
+	Use:   "add [mail group] [mail forwarder] [new destination]",
 	Short: "Add a single destination address to a mail forwarder",
 
 	Args: cobra.ExactArgs(3),
@@ -710,8 +699,8 @@ var mailForwarderDestinationAddCmd = &cobra.Command{
 		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
 		destination := append(mailforwarder.Destination, args[2])
 
-		mailforwarderPut := types.MailforwarderPut {
-			Address: mailforwarder.Address,
+		mailforwarderPut := l27.MailforwarderPut{
+			Address:     mailforwarder.Address,
 			Destination: strings.Join(destination, ","),
 		}
 
@@ -722,7 +711,7 @@ var mailForwarderDestinationAddCmd = &cobra.Command{
 
 // MAIL FORWARDER DESTINATION REMOVE
 var mailForwarderDestinationRemoveCmd = &cobra.Command{
-	Use: "remove [mail group] [mail forwarder] [old destination]",
+	Use:   "remove [mail group] [mail forwarder] [old destination]",
 	Short: "Remove a single destination address from a mail forwarder",
 
 	Args: cobra.ExactArgs(3),
@@ -741,8 +730,8 @@ var mailForwarderDestinationRemoveCmd = &cobra.Command{
 
 		destination = append(destination[:idx], destination[idx+1:]...)
 
-		mailforwarderPut := types.MailforwarderPut {
-			Address: mailforwarder.Address,
+		mailforwarderPut := l27.MailforwarderPut{
+			Address:     mailforwarder.Address,
 			Destination: strings.Join(destination, ","),
 		}
 

@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
-func outputFormatIntegrityCheckTable(checks []types.IntegrityCheck) {
+func outputFormatIntegrityCheckTable(checks []l27.IntegrityCheck) {
 	outputFormatTableFuncs(
 		checks,
 		[]string{"ID", "STATUS", "DATE"},
-		[]interface{}{"Id", "Status", func(s types.IntegrityCheck) string {
+		[]interface{}{"Id", "Status", func(s l27.IntegrityCheck) string {
 			return utils.FormatUnixTime(s.DtRequested)
 		}})
 }
@@ -35,10 +35,14 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 				// First arg is entity ID.
 				args[1:],
 				// Can't do lookups for integrity checks.
-				func(name string) []types.IntegrityCheck { return nil },
+				func(name string) []l27.IntegrityCheck { return nil },
 				// Large funcs to pass entity type and ID along.
-				func(checkID int) types.IntegrityCheck { return Level27Client.EntityIntegrityCheck(entityType, entityID, checkID)},
-				func(get types.CommonGetParams) []types.IntegrityCheck { return Level27Client.EntityIntegrityChecks(entityType, entityID, get)})
+				func(checkID int) l27.IntegrityCheck {
+					return Level27Client.EntityIntegrityCheck(entityType, entityID, checkID)
+				},
+				func(get l27.CommonGetParams) []l27.IntegrityCheck {
+					return Level27Client.EntityIntegrityChecks(entityType, entityID, get)
+				})
 
 			outputFormatIntegrityCheckTable(checks)
 		},
@@ -71,7 +75,6 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 			Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkId, integrityDownload)
 		},
 	}
-
 
 	parent.AddCommand(integrityCmd)
 

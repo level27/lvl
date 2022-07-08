@@ -6,14 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"bitbucket.org/level27/lvl/cmd"
+	"github.com/level27/lvl/cmd"
 )
 
 func main() {
 	// this will generate de documentation and put everything the correct folder.
 	// this updated Docs folder is the folder that needs to replace the docs folder at cli.docs.level27.eu
 
-	cmd.RootCmd.DisableAutoGenTag =true
+	cmd.RootCmd.DisableAutoGenTag = true
 	os.RemoveAll("docs/docsAuto")
 	err := GenerateDocumentation(cmd.RootCmd, "docs/docsAuto", func(s string) string { return "" }, func(s string) string { return s })
 

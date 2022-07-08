@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"reflect"
@@ -27,8 +28,9 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/Masterminds/sprig/v3"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
@@ -40,7 +42,7 @@ var cfgFile string
 var apiKey string
 var apiUrl string
 var output string
-var Level27Client *utils.Client
+var Level27Client *l27.Client
 
 // NOTE: subcommands like get add themselves to root in their init().
 // This requires importing them manually in main.go
@@ -71,6 +73,8 @@ func Execute() {
 	cobra.CheckErr(RootCmd.Execute())
 }
 
+var traceRequests bool
+
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -79,7 +83,7 @@ func init() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
 	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
-	RootCmd.PersistentFlags().BoolVar(&utils.TraceRequests, "trace", false, "Do detailed network request logging")
+	RootCmd.PersistentFlags().BoolVar(&traceRequests, "trace", false, "Do detailed network request logging")
 	RootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "Specifies output mode for commands. Accepted values are text or json.")
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
@@ -111,7 +115,8 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		apiKey = viper.GetString("apiKey")
 		apiUrl = viper.GetString("apiUrl")
-		Level27Client = utils.NewAPIClient(apiUrl, apiKey)
+		Level27Client = l27.NewAPIClient(apiUrl, apiKey)
+		Level27Client.TraceRequests(&colorRequestTracer{})
 	} else {
 		// config file is not found we create it
 		fmt.Println(cfgFile)
@@ -293,4 +298,33 @@ func convertStringsToIds(ids []string) ([]int, error) {
 	}
 
 	return ints, nil
+}
+
+type colorRequestTracer struct{}
+
+func (c *colorRequestTracer) TraceRequest(method string, url string, reqData []byte) {
+	fmt.Fprintf(os.Stderr, "Request: %s %s\n", method, url)
+	if len(reqData) != 0 {
+		colored, err := utils.ColorJson(reqData)
+		var str string
+		if err == nil {
+			str = string(colored)
+		} else {
+			str = string(reqData)
+		}
+
+		fmt.Fprintf(os.Stderr, "Request Body: %s\n", str)
+	}
+}
+
+func (c *colorRequestTracer) TraceResponse(response *http.Response) {
+	fmt.Fprintf(os.Stderr, "Response: %d %s\n", response.StatusCode, http.StatusText(response.StatusCode))
+}
+
+func (c *colorRequestTracer) TraceResponseBody(response *http.Response, data []byte) {
+	bodyPrint := data
+	if json.Valid(bodyPrint) {
+		bodyPrint, _ = utils.ColorJson(bodyPrint)
+	}
+	fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(bodyPrint))
 }

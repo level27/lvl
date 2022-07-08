@@ -1,4 +1,4 @@
-module bitbucket.org/level27/lvl
+module github.com/level27/lvl
 
 go 1.18
 
@@ -10,12 +10,12 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.9.0
+	github.com/level27/l27-go v0.1.0
 )
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
@@ -24,7 +24,6 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 )

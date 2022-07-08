@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -13,13 +13,13 @@ import (
 func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string) int) {
 	// <ENTITY> ACCESS
 	var accessCmd = &cobra.Command{
-		Use: "access",
+		Use:   "access",
 		Short: "Commands for managing access to an entity",
 	}
 
 	// <ENTITY> ACCESS GET
 	var accessGetCmd = &cobra.Command{
-		Use: "get",
+		Use:   "get",
 		Short: "List organisations with access to an entity",
 
 		Args: cobra.ExactArgs(1),
@@ -31,7 +31,7 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 			outputFormatTableFuncs(
 				organisations,
 				[]string{"ID", "Name", "Type", "Members"},
-				[]interface{}{"ID", "Name", "Type", func(org types.OrganisationAccess) int {
+				[]interface{}{"ID", "Name", "Type", func(org l27.OrganisationAccess) int {
 					return len(org.Users)
 				}})
 		},
@@ -39,7 +39,7 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 
 	// <ENTITY> ACCESS ADD
 	var accessAddCmd = &cobra.Command{
-		Use: "add",
+		Use:   "add",
 		Short: "Grant an organisation access to an entity",
 
 		Args: cobra.ExactArgs(2),
@@ -47,7 +47,7 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 			entityID := resolve(args[0])
 			organisationID := resolveOrganisation(args[1])
 
-			Level27Client.EntityAddAcl(entityType,entityID, types.AclAdd{
+			Level27Client.EntityAddAcl(entityType, entityID, l27.AclAdd{
 				Organisation: organisationID,
 			})
 
@@ -57,7 +57,7 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 
 	// <ENTITY> ACCESS REMOVE
 	var accessRemoveCmd = &cobra.Command{
-		Use: "remove",
+		Use:   "remove",
 		Short: "Revoke an organisation's access to an entity",
 
 		Args: cobra.ExactArgs(2),
@@ -66,7 +66,7 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 			organisationID := resolveOrganisation(args[1])
 
 			Level27Client.EntityRemoveAcl(entityType, entityID, organisationID)
-		
+
 			log.Printf("%v's access removed!", args[1])
 		},
 	}
@@ -81,7 +81,5 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 
 	// <ENTITY> ACCESS REMOVE
 	accessCmd.AddCommand(accessRemoveCmd)
-
-
 
 }

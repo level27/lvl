@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -89,7 +89,6 @@ func init() {
 	settingsFileFlag(appComponentUpdateCmd)
 	settingString(appComponentUpdateCmd, updateSettings, "name", "New name for this app component")
 	appComponentUpdateParams = appComponentUpdateCmd.Flags().StringArray("param", nil, "")
-
 
 	// ---- DELETE COMPONENTS
 	appComponentCmd.AddCommand(AppComponentDeleteCmd)
@@ -189,7 +188,6 @@ func init() {
 	// ---- GET LIST OF BACKUPS
 	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
 
-
 	// APP COMPONENT URL
 	appComponentCmd.AddCommand(appComponentUrlCmd)
 
@@ -258,7 +256,7 @@ func resolveApp(arg string) int {
 		Level27Client.AppLookup(arg),
 		arg,
 		"app",
-		func(app types.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
 // GET SSL CERTIFICATE ID BASED ON ID
@@ -273,7 +271,7 @@ func resolveAppSslCertificate(appID int, arg string) int {
 		Level27Client.AppSslCertificatesLookup(appID, arg),
 		arg,
 		"app SSL certificate",
-		func(app types.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
 // GET AN APPCOMPONENT ID BASED ON THE NAME
@@ -288,7 +286,7 @@ func resolveAppComponent(appId int, arg string) int {
 		Level27Client.AppComponentLookup(appId, arg),
 		arg,
 		"component",
-		func(comp types.AppComponent) string { return fmt.Sprintf("%s (%d)", comp.Name, comp.ID) }).ID)
+		func(comp l27.AppComponent) string { return fmt.Sprintf("%s (%d)", comp.Name, comp.ID) }).ID)
 }
 
 // GET AN APP URL ID BASED ON THE NAME
@@ -303,7 +301,7 @@ func resolveAppComponentUrl(appId int, appComponentId int, arg string) int {
 		Level27Client.AppComponentUrlLookup(appId, appComponentId, arg),
 		arg,
 		"url",
-		func(url types.AppComponentUrlShort) string { return fmt.Sprintf("%s (%d)", url.Content, url.ID) }).ID
+		func(url l27.AppComponentUrlShort) string { return fmt.Sprintf("%s (%d)", url.Content, url.ID) }).ID
 }
 
 // MAIN COMMAND APPS
@@ -336,12 +334,12 @@ var appGetCmd = &cobra.Command{
 	},
 }
 
-func getApps(ids []int) []types.App {
+func getApps(ids []int) []l27.App {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Apps(optGetParameters)
 	} else {
-		apps := make([]types.App, len(ids))
+		apps := make([]l27.App, len(ids))
 		for idx, id := range ids {
 			apps[idx] = c.App(id)
 		}
@@ -364,7 +362,7 @@ var appCreateCmd = &cobra.Command{
 
 		// fill in all the props needed for the post request
 		organisation := resolveOrganisation(appCreateOrg)
-		request := types.AppPostRequest{
+		request := l27.AppPostRequest{
 			Name:         appCreateName,
 			Organisation: organisation,
 			AutoTeams:    appCreateTeams,
@@ -413,7 +411,7 @@ var appUpdateCmd = &cobra.Command{
 			currentTeamIds = append(currentTeamIds, strconv.Itoa(team.ID))
 		}
 		// fill in request with the current data.
-		request := types.AppPutRequest{
+		request := l27.AppPutRequest{
 			Name:         currentData.Name,
 			Organisation: currentData.Organisation.ID,
 			AutoTeams:    currentTeamIds,
@@ -519,13 +517,13 @@ var appSslGetCmd = &cobra.Command{
 		certs := resolveGets(
 			// First arg is app ID.
 			args[1:],
-			func(name string) []types.AppSslCertificate {
+			func(name string) []l27.AppSslCertificate {
 				return Level27Client.AppSslCertificatesLookup(appID, name)
 			},
-			func(certID int) types.AppSslCertificate {
+			func(certID int) l27.AppSslCertificate {
 				return Level27Client.AppSslCertificatesGetSingle(appID, certID)
 			},
-			func(get types.CommonGetParams) []types.AppSslCertificate {
+			func(get l27.CommonGetParams) []l27.AppSslCertificate {
 				return Level27Client.AppSslCertificatesGetList(appID, appSslGetType, appSslGetStatus, get)
 			},
 		)
@@ -533,7 +531,7 @@ var appSslGetCmd = &cobra.Command{
 		outputFormatTableFuncs(
 			certs,
 			[]string{"ID", "Name", "Type", "Status", "SSL Status", "Expiry Date"},
-			[]interface{}{"ID", "Name", "SslType", "Status", "SslStatus", "DtExpires", func(c types.AppSslCertificate) string { return utils.FormatUnixTime(c.DtExpires) }})
+			[]interface{}{"ID", "Name", "SslType", "Status", "SslStatus", "DtExpires", func(c l27.AppSslCertificate) string { return utils.FormatUnixTime(c.DtExpires) }})
 	},
 }
 
@@ -574,7 +572,7 @@ var appSslCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		appID := resolveApp(args[0])
 
-		create := types.AppSslCertificateCreate{
+		create := l27.AppSslCertificateCreate{
 			Name:                   appSslCreateName,
 			SslType:                appSslCreateSslType,
 			AutoSslCertificateUrls: appSslCreateAutoSslCertificateUrls,
@@ -582,11 +580,11 @@ var appSslCreateCmd = &cobra.Command{
 			AutoUrlLink:            appSslCreateAutoUrlLink,
 		}
 
-		var certificate types.AppSslCertificate
+		var certificate l27.AppSslCertificate
 
 		switch appSslCreateSslType {
 		case "own":
-			createOwn := types.AppSslCertificateCreateOwn{
+			createOwn := l27.AppSslCertificateCreateOwn{
 				AppSslCertificateCreate: create,
 				SslKey:                  readArgFileSupported(appSslCreateSslKey),
 				SslCrt:                  readArgFileSupported(appSslCreateSslCrt),
@@ -642,7 +640,7 @@ var appSslUpdateCmd = &cobra.Command{
 		certID := resolveAppSslCertificate(appID, args[1])
 
 		cert := Level27Client.AppSslCertificatesGetSingle(appID, certID)
-		put := types.AppSslCertificatePut{
+		put := l27.AppSslCertificatePut{
 			Name:    cert.Name,
 			SslType: cert.SslType,
 		}
@@ -748,12 +746,12 @@ var appComponentGetCmd = &cobra.Command{
 	},
 }
 
-func getComponents(appId int, ids []int) []types.AppComponent {
+func getComponents(appId int, ids []int) []l27.AppComponent {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.AppComponentsGet(appId, optGetParameters)
 	} else {
-		components := make([]types.AppComponent, len(ids))
+		components := make([]l27.AppComponent, len(ids))
 		for idx, id := range ids {
 			components[idx] = c.AppComponentGetSingle(appId, id)
 		}
@@ -785,7 +783,7 @@ var appComponentCreateCmd = &cobra.Command{
 		}
 
 		appID := resolveApp(args[0])
-		componentTypes := Level27Client.AppComponenttypesGet();
+		componentTypes := Level27Client.AppComponenttypesGet()
 
 		val, ok := componentTypes[appComponentCreateType]
 		if !ok {
@@ -861,11 +859,11 @@ var appComponentUpdateCmd = &cobra.Command{
 
 		appID := resolveApp(args[0])
 		appComponentID := resolveAppComponent(appID, args[1])
-		componentTypes := Level27Client.AppComponenttypesGet();
+		componentTypes := Level27Client.AppComponenttypesGet()
 
 		appComponent := Level27Client.AppComponentGetSingle(appID, appComponentID)
 
-		parameterTypes := make(map[string]types.AppComponentTypeParameter)
+		parameterTypes := make(map[string]l27.AppComponentTypeParameter)
 		for _, param := range componentTypes[appComponent.Appcomponenttype].Servicetype.Parameters {
 			parameterTypes[param.Name] = param
 		}
@@ -888,9 +886,9 @@ var appComponentUpdateCmd = &cobra.Command{
 				continue
 			}
 
-			switch (paramType) {
+			switch paramType {
 			case "password-sha512", "password-plain", "password-sha1", "passowrd-sha256-scram":
-			// Passwords are sent as "******". Skip them to avoid getting API errors.
+				// Passwords are sent as "******". Skip them to avoid getting API errors.
 				continue
 			case "sshkey[]":
 				// Need to map SSH keys -> IDs
@@ -931,8 +929,7 @@ var appComponentUpdateCmd = &cobra.Command{
 	},
 }
 
-
-func parseComponentParameter(param types.AppComponentTypeParameter, paramValue interface{}) interface{} {
+func parseComponentParameter(param l27.AppComponentTypeParameter, paramValue interface{}) interface{} {
 	// Convert parameters to the correct types in-JSON.
 	var str string
 	var ok bool
@@ -1014,11 +1011,11 @@ var appComponentCategoryGetCmd = &cobra.Command{
 
 		// type to convert string into category type
 		var AppcomponentCategories struct {
-			Data []types.AppcomponentCategory
+			Data []l27.AppcomponentCategory
 		}
 
 		for _, category := range currentComponentCategories {
-			cat := types.AppcomponentCategory{Name: category}
+			cat := l27.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
 		// display output in readable table
@@ -1110,7 +1107,7 @@ var appComponentRestoreGetCmd = &cobra.Command{
 
 		outputFormatTableFuncs(Restores,
 			[]string{"ID", "FILENAME", "STATUS", "DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"},
-			[]interface{}{"ID", "Filename", "Status", func(r types.AppComponentRestore) string { return utils.FormatUnixTime(r.AvailableBackup.Date) }, "Appcomponent.ID", "Appcomponent.Name"})
+			[]interface{}{"ID", "Filename", "Status", func(r l27.AppComponentRestore) string { return utils.FormatUnixTime(r.AvailableBackup.Date) }, "Appcomponent.ID", "Appcomponent.Name"})
 	},
 }
 
@@ -1133,7 +1130,7 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 			log.Fatalf("BackupID is NOT valid! '%v'.", args[2])
 		}
 
-		request := types.AppComponentRestoreRequest{
+		request := l27.AppComponentRestoreRequest{
 			Appcomponent:    componentId,
 			AvailableBackup: backupId,
 		}
@@ -1202,7 +1199,7 @@ var appComponentBackupsGetCmd = &cobra.Command{
 
 		outputFormatTableFuncs(availableBackups,
 			[]string{"ID", "SNAPSHOTNAME", "DATE"},
-			[]interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string {
+			[]interface{}{"ID", "SnapshotName", func(a l27.AppComponentAvailableBackup) string {
 				return utils.FormatUnixTime(a.Date)
 			}})
 	},
@@ -1230,7 +1227,7 @@ var appMigrationsGetCmd = &cobra.Command{
 
 		outputFormatTableFuncs(migrations,
 			[]string{"ID", "MIGRATION_TYPE", "STATUS", "DATE_PLANNED"},
-			[]interface{}{"ID", "MigrationType", "Status", func(m types.AppMigration) string {
+			[]interface{}{"ID", "MigrationType", "Status", func(m l27.AppMigration) string {
 				return utils.FormatUnixTime(m.DtPlanned)
 			}})
 	},
@@ -1250,13 +1247,13 @@ var appMigrationsCreateCmd = &cobra.Command{
 		//search for appid based on appName
 		appId := resolveApp(args[0])
 
-		items := []types.AppMigrationItem{}
+		items := []l27.AppMigrationItem{}
 
 		for _, migrationItem := range appMigrationCreateItems {
 			items = append(items, ParseMigrationItem(appId, migrationItem))
 		}
 
-		request := types.AppMigrationRequest{
+		request := l27.AppMigrationRequest{
 			MigrationType:      "automatic",
 			DtPlanned:          appMigrationCreatePlanned,
 			MigrationItemArray: items,
@@ -1266,11 +1263,11 @@ var appMigrationsCreateCmd = &cobra.Command{
 	},
 }
 
-func ParseMigrationItem(appID int, values string) types.AppMigrationItem{
+func ParseMigrationItem(appID int, values string) l27.AppMigrationItem {
 	valueSplitted := strings.Split(values, ",")
 
-	item := types.AppMigrationItem{
-		Ord: 1,
+	item := l27.AppMigrationItem{
+		Ord:    1,
 		Source: "cp4",
 	}
 
@@ -1321,7 +1318,6 @@ func ParseMigrationItem(appID int, values string) types.AppMigrationItem{
 	return item
 }
 
-
 func ParseMigrationItemKeyValuePair(keyValuePair string) (string, string) {
 	split := strings.SplitN(keyValuePair, "=", 2)
 	if len(split) == 1 {
@@ -1347,7 +1343,7 @@ var appMigrationsUpdateCmd = &cobra.Command{
 		// check for valid migrationId type
 		migrationId := checkSingleIntID(args[1], "appMigration")
 
-		request := types.AppMigrationUpdate{
+		request := l27.AppMigrationUpdate{
 			MigrationType: appMigrationsUpdateType,
 			DtPlanned:     appMigrationsUpdateDtPlanned,
 		}
@@ -1434,7 +1430,7 @@ var appMigrationsActionRetryCmd = &cobra.Command{
 
 // APP COMPONENT URL
 var appComponentUrlCmd = &cobra.Command{
-	Use: "url",
+	Use:     "url",
 	Aliases: []string{"urls"},
 }
 
@@ -1449,13 +1445,13 @@ var appComponentUrlGetCmd = &cobra.Command{
 
 		results := resolveGets(
 			args[2:],
-			func (name string) []types.AppComponentUrlShort {
+			func(name string) []l27.AppComponentUrlShort {
 				return Level27Client.AppComponentUrlLookup(appID, componentID, name)
 			},
-			func (i int) types.AppComponentUrlShort {
+			func(i int) l27.AppComponentUrlShort {
 				return Level27Client.AppComponentUrlGetSingle(appID, componentID, i).ToShort()
 			},
-			func(cgp types.CommonGetParams) []types.AppComponentUrlShort {
+			func(cgp l27.CommonGetParams) []l27.AppComponentUrlShort {
 				return Level27Client.AppComponentUrlGetList(appID, componentID, cgp)
 			},
 		)
@@ -1475,7 +1471,7 @@ var appComponentUrlCreateSslCertificate int
 var appComponentUrlCreateHandleDns bool
 var appComponentUrlCreateAutoSslCertificate bool
 var appComponentUrlCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create an url for an appcomponent.",
 
 	Args: cobra.ExactArgs(2),
@@ -1490,12 +1486,12 @@ var appComponentUrlCreateCmd = &cobra.Command{
 			cert = &appComponentUrlCreateSslCertificate
 		}
 
-		create := types.AppComponentUrlCreate {
-			Authentication: appComponentUrlCreateAuthentication,
-			Content: appComponentUrlCreateContent,
-			SslForce: appComponentUrlCreateSslForce,
-			SslCertificate: cert,
-			HandleDns: appComponentUrlCreateHandleDns,
+		create := l27.AppComponentUrlCreate{
+			Authentication:     appComponentUrlCreateAuthentication,
+			Content:            appComponentUrlCreateContent,
+			SslForce:           appComponentUrlCreateSslForce,
+			SslCertificate:     cert,
+			HandleDns:          appComponentUrlCreateHandleDns,
 			AutoSslCertificate: appComponentUrlCreateAutoSslCertificate,
 		}
 
@@ -1506,9 +1502,9 @@ var appComponentUrlCreateCmd = &cobra.Command{
 // APP COMPONENT URL DELETE
 var appComponentUrlDeleteForce bool
 var appComponentUrlDeleteCmd = &cobra.Command{
-	Use: "delete",
+	Use:   "delete",
 	Short: "Delete an url from an appcomponent.",
-	Args: cobra.ExactArgs(3),
+	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		appID := resolveApp(args[0])
 		componentID := resolveAppComponent(appID, args[1])

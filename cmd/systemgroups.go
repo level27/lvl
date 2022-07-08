@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -62,9 +62,8 @@ func resolveSystemgroup(arg string) int {
 		Level27Client.SystemgroupLookup(arg),
 		arg,
 		"systemgroup",
-		func(group types.Systemgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
+		func(group l27.Systemgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
 }
-
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 // ---------------- DESCRIBE
@@ -113,7 +112,7 @@ var systemgroupsCreateCmd = &cobra.Command{
 		}
 
 		// fill in given data in request type
-		request := types.SystemgroupRequest{
+		request := l27.SystemgroupRequest{
 			Name:         systemgroupCreateName,
 			Organisation: organisationId,
 		}
@@ -145,7 +144,7 @@ var systemgroupsUpdateCmd = &cobra.Command{
 			currentData := Level27Client.SystemgroupsgetSingle(systemgroupID)
 
 			// fill in current data in request type (case only one thing has to change. the other one still needs to be send aswell (put))
-			request := types.SystemgroupRequest{
+			request := l27.SystemgroupRequest{
 				Name:         currentData.Name,
 				Organisation: currentData.Organisation.ID,
 			}

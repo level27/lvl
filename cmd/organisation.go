@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -40,20 +40,19 @@ func resolveOrganisation(arg string) int {
 		return id
 	}
 
-
 	return resolveShared(
 		Level27Client.LookupOrganisation(arg),
 		arg,
 		"organisation",
-		func (app types.Organisation) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.Organisation) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
 }
 
-func getOrganisations(ids []int) []types.Organisation {
+func getOrganisations(ids []int) []l27.Organisation {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Organisations(optGetParameters)
 	} else {
-		organisations := make([]types.Organisation, len(ids))
+		organisations := make([]l27.Organisation, len(ids))
 		for idx, id := range ids {
 			organisations[idx] = c.Organisation(id)
 		}

@@ -25,14 +25,14 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/Jeffail/gabs/v2"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
 // Contains parameters passed to get commands, like filter and max number of entries.
-var optGetParameters types.CommonGetParams
+var optGetParameters l27.CommonGetParams
 
 // Add common flags for get-style commands, such as --number and --filter.
 func addCommonGetFlags(cmd *cobra.Command) {
@@ -62,13 +62,14 @@ func CheckForMultipleIDs(ids []string) []string {
 
 	return currIds
 }
+
 // --------------------------- DYNAMICALY SETTING PARAMETERS
-// this can be used when you need flags to set different paramaters but you don't 
-// know the amount of parameters beforehand. 
+// this can be used when you need flags to set different paramaters but you don't
+// know the amount of parameters beforehand.
 // we can use something like a parameter flag where the user has to set the keys and values himself.
 // example lvl system cookbooks create -p key=value -p key2=value2
 // function used for commands with dynamic parameters. (different parameters defined by 1 flag)
-func SplitCustomParameters(customP []string) (map[string]interface{}) {
+func SplitCustomParameters(customP []string) map[string]interface{} {
 	checkedParameters := make(map[string]interface{})
 	var err error
 	// loop over raw data set by user with -p flag
@@ -109,7 +110,7 @@ func isValueValidForParameter(container gabs.Container, value interface{}, curre
 
 	// convert value to string
 	valueAsString := fmt.Sprintf("%v", value)
-	var option types.CookbookParameterOption
+	var option l27.CookbookParameterOption
 	var isAvailableforSystemOS bool = false
 
 	// unmarshal into struct, to easy and clearly manipulate options data
@@ -136,6 +137,7 @@ func isValueValidForParameter(container gabs.Container, value interface{}, curre
 
 	return isAvailableforSystemOS, option.Exclusive
 }
+
 // Open a file passed as an argument.
 // This handles the convention of "-" opening stdin.
 func openArgFile(file string) io.ReadCloser {
@@ -179,7 +181,7 @@ func loadSettings(fileName string) map[string]interface{} {
 
 	file := openArgFile(fileName)
 
-	defer func(){ cobra.CheckErr(file.Close()) }()
+	defer func() { cobra.CheckErr(file.Close()) }()
 
 	jsonBytes, err := io.ReadAll(file)
 	cobra.CheckErr(err)
@@ -366,7 +368,7 @@ func resolveGets[T interface{}](
 	args []string,
 	lookup func(string) []T,
 	getSingle func(int) T,
-	getList func(types.CommonGetParams) []T) []T {
+	getList func(l27.CommonGetParams) []T) []T {
 	if len(args) == 0 {
 		// No arguments, return full list from API.
 		return getList(optGetParameters)
@@ -402,7 +404,7 @@ func resolveShared[T interface{}](
 	case 0:
 		cobra.CheckErr(fmt.Sprintf("Unable to find %s: %s", name, arg))
 		// Unreachable
-		return options[0];
+		return options[0]
 	case 1:
 		return options[0]
 	default:
@@ -438,5 +440,5 @@ func isStdinTerminal() bool {
 	// See https://stackoverflow.com/a/43947435/4678631
 	fi, _ := os.Stdin.Stat()
 
-	return fi.Mode() & os.ModeCharDevice != 0
+	return fi.Mode()&os.ModeCharDevice != 0
 }

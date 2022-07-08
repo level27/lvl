@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +11,7 @@ import (
 func addBillingCmds(parent *cobra.Command, entityType string, resolve func(string) int) {
 	// BILLING
 	billingCmd := &cobra.Command{
-		Use: "billing",
+		Use:   "billing",
 		Short: "Manage entity's invoicing (BillableItem)",
 	}
 
@@ -25,7 +25,7 @@ func addBillingCmds(parent *cobra.Command, entityType string, resolve func(strin
 		Run: func(cmd *cobra.Command, args []string) {
 			entityID := resolve(args[0])
 
-			req := types.BillPostRequest{
+			req := l27.BillPostRequest{
 				ExternalInfo: billingOnExternalInfo,
 			}
 

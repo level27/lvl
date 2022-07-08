@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
 // MAIN COMMAND
 var domainCmd = &cobra.Command{
-	Use:   "domain",
-	Short: "Commands for managing domains",
+	Use:     "domain",
+	Short:   "Commands for managing domains",
 	Example: "lvl domain get -f example.be",
 }
 
@@ -208,12 +208,11 @@ func resolveDomain(arg string) int {
 		return id
 	}
 
-
 	return resolveShared(
 		Level27Client.LookupDomain(arg),
 		arg,
 		"domain",
-		func (domain types.Domain) string { return fmt.Sprintf("%s (%d)", domain.Name, domain.ID) }).ID
+		func(domain l27.Domain) string { return fmt.Sprintf("%s (%d)", domain.Name, domain.ID) }).ID
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -234,12 +233,12 @@ var domainGetCmd = &cobra.Command{
 	},
 }
 
-func getDomains(ids []int) []types.Domain {
+func getDomains(ids []int) []l27.Domain {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Domains(optGetParameters)
 	} else {
-		domains := make([]types.Domain, len(ids))
+		domains := make([]l27.Domain, len(ids))
 		for idx, id := range ids {
 			domains[idx] = c.Domain(id)
 		}
@@ -279,8 +278,8 @@ var domainDeleteCmd = &cobra.Command{
 
 // common functions for managing domains
 // change given flag data into request data to put or post
-func getDomainRequestData() types.DomainRequest {
-	requestData := types.DomainRequest{
+func getDomainRequestData() l27.DomainRequest {
+	requestData := l27.DomainRequest{
 		Name:          domainCreateName,
 		NameServer1:   &domainCreateNs1,
 		NameServer2:   domainCreateNs2,
@@ -447,12 +446,12 @@ var domainRecordGetCmd = &cobra.Command{
 	},
 }
 
-func getDomainRecords(domainId int, ids []int) []types.DomainRecord {
+func getDomainRecords(domainId int, ids []int) []l27.DomainRecord {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.DomainRecords(domainId, recordGetType, optGetParameters)
 	} else {
-		domains := make([]types.DomainRecord, len(ids))
+		domains := make([]l27.DomainRecord, len(ids))
 		for idx, id := range ids {
 			domains[idx] = c.DomainRecord(domainId, id)
 		}
@@ -476,7 +475,7 @@ var domainRecordCreateCmd = &cobra.Command{
 			log.Fatalln("Not a valid domain ID!")
 		}
 
-		Level27Client.DomainRecordCreate(id, types.DomainRecordRequest{
+		Level27Client.DomainRecordCreate(id, l27.DomainRecordRequest{
 			Name:     domainRecordCreateName,
 			Type:     domainRecordCreateType,
 			Priority: domainRecordCreatePriority,
@@ -527,7 +526,7 @@ var domainRecordUpdateCmd = &cobra.Command{
 
 		// Merge data with existing so we don't bulldoze anything.
 		data := Level27Client.DomainRecord(domainId, recordId)
-		request := types.DomainRecordRequest{
+		request := l27.DomainRecordRequest{
 			Type:     data.Type,
 			Name:     data.Name,
 			Content:  data.Content,
@@ -550,7 +549,6 @@ var domainRecordUpdateCmd = &cobra.Command{
 	},
 }
 
-
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 /*
 // MAIN COMMAND
@@ -572,7 +570,7 @@ var domainNotificationsCreateCmd = &cobra.Command{
 			log.Fatal("no valid domain ID")
 		}
 
-		Level27Client.DomainNotificationAdd(id, types.DomainNotificationPostRequest{
+		Level27Client.DomainNotificationAdd(id, DomainNotificationPostRequest{
 			Type:   domainNotificationPostType,
 			Group:  domainNotificationPostGroup,
 			Params: domainNotificationPostParams,

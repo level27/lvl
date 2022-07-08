@@ -22,9 +22,9 @@ import (
 	"strings"
 	"syscall"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -36,10 +36,10 @@ var loginCmd = &cobra.Command{
 	Short: "Login to CP4",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		var login types.Login
+		var login l27.Login
 		username, password, _ := credentials()
 
-		client := utils.NewAPIClient(apiUrl, "")
+		client := l27.NewAPIClient(apiUrl, "")
 		login, err := client.Login(username, password)
 		cobra.CheckErr(err)
 		fmt.Println()

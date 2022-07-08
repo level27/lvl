@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/Jeffail/gabs/v2"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -321,7 +321,7 @@ func resolveSystem(arg string) int {
 		Level27Client.LookupSystem(arg),
 		arg,
 		"system",
-		func(app types.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) }).Id
+		func(app l27.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) }).Id
 }
 func resolveSystemProviderConfiguration(region int, arg string) int {
 	id, err := strconv.Atoi(arg)
@@ -350,7 +350,7 @@ func resolveSystemHasNetwork(systemID int, arg string) int {
 		Level27Client.LookupSystemHasNetworks(systemID, arg),
 		arg,
 		"system network",
-		func(app types.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) }).ID
+		func(app l27.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) }).ID
 }
 
 func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
@@ -363,7 +363,7 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
 		Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg),
 		arg,
 		"system network IP",
-		func(app types.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) }).ID
+		func(app l27.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) }).ID
 }
 
 func resolveSystemVolume(systemID int, arg string) int {
@@ -396,12 +396,12 @@ var systemGetCmd = &cobra.Command{
 	},
 }
 
-func getSystems(ids []int) []types.System {
+func getSystems(ids []int) []l27.System {
 
 	if len(ids) == 0 {
 		return Level27Client.SystemGetList(optGetParameters)
 	} else {
-		systems := make([]types.System, len(ids))
+		systems := make([]l27.System, len(ids))
 		for idx, id := range ids {
 			systems[idx] = Level27Client.SystemGetSingle(id)
 		}
@@ -420,7 +420,7 @@ var systemDescribeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		systemID := resolveSystem(args[0])
 
-		var system types.DescribeSystem
+		var system DescribeSystem
 		system.System = Level27Client.SystemGetSingle(systemID)
 		if !systemDescribeHideJobs {
 			system.Jobs = Level27Client.EntityJobHistoryGet("system", systemID)
@@ -429,14 +429,14 @@ var systemDescribeCmd = &cobra.Command{
 			}
 		}
 
-		system.SshKeys = Level27Client.SystemGetSshKeys(systemID, types.CommonGetParams{})
+		system.SshKeys = Level27Client.SystemGetSshKeys(systemID, l27.CommonGetParams{})
 		securityUpdates := Level27Client.SecurityUpdateDates()
 		system.InstallSecurityUpdatesString = securityUpdates[system.InstallSecurityUpdates]
 		system.HasNetworks = Level27Client.SystemGetHasNetworks(systemID)
-		system.Volumes = Level27Client.SystemGetVolumes(systemID, types.CommonGetParams{})
+		system.Volumes = Level27Client.SystemGetVolumes(systemID, l27.CommonGetParams{})
 
 		if system.System.MonitoringEnabled {
-			system.Checks = Level27Client.SystemCheckGetList(systemID,  types.CommonGetParams{})
+			system.Checks = Level27Client.SystemCheckGetList(systemID, l27.CommonGetParams{})
 		}
 
 		outputFormatTemplate(system, "templates/system.tmpl")
@@ -463,8 +463,8 @@ var managementTypeArray = []string{"basic", "professional", "enterprise", "profe
 // var systemCreateSecurityUpdates string 											/
 
 var systemCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new system",
+	Use:     "create",
+	Short:   "Create a new system",
 	Example: "lvl system create -n mySystemName --zone hasselt --organisation level27 --image 'Ubuntu 20.04 LTS' --config 'Level27 Small' --management professional_level27",
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -493,7 +493,7 @@ var systemCreateCmd = &cobra.Command{
 		providerConfigID := resolveSystemProviderConfiguration(regionID, systemCreateProviderConfig)
 
 		// Using data from the flags to make the right type used for posting a new system. (types systemPost)
-		RequestData := types.SystemPost{
+		RequestData := l27.SystemPost{
 			Name:                        systemCreateName,
 			CustomerFqdn:                systemCreateFqdn,
 			Remarks:                     systemCreateRemarks,
@@ -554,7 +554,7 @@ var systemUpdateCmd = &cobra.Command{
 
 		system := Level27Client.SystemGetSingle(systemID)
 
-		systemPut := types.SystemPut{
+		systemPut := l27.SystemPut{
 			Id:                          system.Id,
 			Name:                        system.Name,
 			Type:                        system.Type,
@@ -628,8 +628,8 @@ var systemCheckGetCmd = &cobra.Command{
 			checks := Level27Client.SystemCheckGetList(id, optGetParameters)
 			// Creating readable output
 			outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-				[]interface{}{"Id", "CheckType", "Status", func(s types.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
-		}else{
+				[]interface{}{"Id", "CheckType", "Status", func(s l27.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+		} else {
 			log.Fatalf("Monitoring is currently disabled for system: [NAME:%v - ID: %v]. Use the 'monitoring' command to change monitoring status", system.Name, system.Id)
 		}
 
@@ -944,7 +944,7 @@ var systemCookbookGetCmd = &cobra.Command{
 	},
 }
 
-func getSystemCookbooks(id int) []types.Cookbook {
+func getSystemCookbooks(id int) []l27.Cookbook {
 
 	return Level27Client.SystemCookbookGetList(id)
 }
@@ -1130,7 +1130,7 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 // checks if a given parameter is valid for the specific cookbooktype.
 // also checks if given values are valid for chosen parameter or compatible with current system
-func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData types.CookbookType, currenSystemOs string, currenRequestData *gabs.Container) gabs.Container {
+func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData l27.CookbookType, currenSystemOs string, currenRequestData *gabs.Container) gabs.Container {
 
 	var err error
 	// for each custom set parameter, check if its one of the possible parameters for the current cookbooktype
@@ -1206,7 +1206,7 @@ func checkForValidCookbookParameter(customParameters map[string]interface{}, all
 
 // check a value if its a valid option for the given parameter for the cookbook.
 // also do checks on compatibility with system and exlusivity
-func CheckCBValueForParameter(value string, options types.CookbookParameterOptionValue, givenParameter string, currentSystemOs string) bool {
+func CheckCBValueForParameter(value string, options l27.CookbookParameterOptionValue, givenParameter string, currentSystemOs string) bool {
 	parameterOptionValue, found := options[value]
 
 	// check if given value is one of the options for the chosen selectable parameter
@@ -1394,7 +1394,7 @@ var systemNetworkGetCmd = &cobra.Command{
 		systemID := resolveSystem(args[0])
 		system := Level27Client.SystemGetSingle(systemID)
 
-		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "MAC", "IPs"}, []interface{}{"ID", "NetworkID", func(net types.SystemNetwork) string {
+		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "MAC", "IPs"}, []interface{}{"ID", "NetworkID", func(net l27.SystemNetwork) string {
 			if net.NetPublic {
 				return "public"
 			}
@@ -1405,7 +1405,7 @@ var systemNetworkGetCmd = &cobra.Command{
 				return "internal"
 			}
 			return ""
-		}, "Name", "Mac", func(net types.SystemNetwork) string {
+		}, "Name", "Mac", func(net l27.SystemNetwork) string {
 			return strconv.Itoa(len(net.Ips))
 		}})
 	},
@@ -1421,7 +1421,7 @@ var systemNetworkDescribeCmd = &cobra.Command{
 		system := Level27Client.SystemGetSingle(systemID)
 		networks := Level27Client.SystemGetHasNetworks(systemID)
 
-		outputFormatTemplate(types.DescribeSystemNetworks{
+		outputFormatTemplate(DescribeSystemNetworks{
 			Networks:    system.Networks,
 			HasNetworks: networks,
 		}, "templates/systemNetworks.tmpl")
@@ -1469,13 +1469,13 @@ var systemNetworkIpGetCmd = &cobra.Command{
 		networkID := resolveSystemHasNetwork(systemID, args[1])
 
 		ips := Level27Client.SystemGetHasNetworkIps(systemID, networkID)
-		outputFormatTableFuncs(ips, []string{"ID", "Public IP", "IP", "Hostname", "Status"}, []interface{}{"ID", func(i types.SystemHasNetworkIp) string {
+		outputFormatTableFuncs(ips, []string{"ID", "Public IP", "IP", "Hostname", "Status"}, []interface{}{"ID", func(i l27.SystemHasNetworkIp) string {
 			if i.PublicIpv4 != "" {
 				i, _ := strconv.Atoi(i.PublicIpv4)
 				if i == 0 {
 					return ""
 				} else {
-					return utils.Ipv4IntToString(i)
+					return ipv4IntToString(i)
 				}
 			} else if i.PublicIpv6 != "" {
 				ip := net.ParseIP(i.PublicIpv6)
@@ -1484,13 +1484,13 @@ var systemNetworkIpGetCmd = &cobra.Command{
 				return ""
 			}
 		},
-			func(i types.SystemHasNetworkIp) string {
+			func(i l27.SystemHasNetworkIp) string {
 				if i.Ipv4 != "" {
 					i, _ := strconv.Atoi(i.Ipv4)
 					if i == 0 {
 						return ""
 					} else {
-						return utils.Ipv4IntToString(i)
+						return ipv4IntToString(i)
 					}
 				} else if i.Ipv6 != "" {
 					ip := net.ParseIP(i.Ipv6)
@@ -1535,7 +1535,7 @@ var systemNetworkIpAddCmd = &cobra.Command{
 			address = choices[0]
 		}
 
-		var data types.SystemHasNetworkIpAdd
+		var data l27.SystemHasNetworkIpAdd
 		public := network.Network.Public
 
 		if strings.Contains(address, ":") {
@@ -1592,7 +1592,7 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 
 		ip := Level27Client.SystemGetHasNetworkIp(systemID, hasNetworkID, ipID)
 
-		ipPut := types.SystemHasNetworkIpPut{
+		ipPut := l27.SystemHasNetworkIpPut{
 			Hostname: ip.Hostname,
 		}
 
@@ -1644,7 +1644,7 @@ var systemVolumeCreateCmd = &cobra.Command{
 
 		organisationID := resolveOrganisation(systemVolumeCreateOrganisation)
 
-		create := types.VolumeCreate{
+		create := l27.VolumeCreate{
 			Name:         systemVolumeCreateName,
 			Space:        systemVolumeCreateSpace,
 			Organisation: organisationID,
@@ -1681,7 +1681,7 @@ var systemVolumeLinkCmd = &cobra.Command{
 		systemID := resolveSystem(args[0])
 		// To resolve from name -> ID we need the volume group
 		// Easiest way to get that is by getting the volume group ID from the first volume on the system.
-		volumeGroupID := Level27Client.SystemGetVolumes(systemID, types.CommonGetParams{})[0].Volumegroup.ID
+		volumeGroupID := Level27Client.SystemGetVolumes(systemID, l27.CommonGetParams{})[0].Volumegroup.ID
 		volumeID := resolveVolumegroupVolume(volumeGroupID, args[1])
 		deviceName := args[2]
 
@@ -1726,7 +1726,7 @@ var systemVolumeUpdateCmd = &cobra.Command{
 
 		volume := Level27Client.VolumeGetSingle(volumeID)
 
-		volumePut := types.VolumePut{
+		volumePut := l27.VolumePut{
 			Name:         volume.Name,
 			DeviceName:   volume.DeviceName,
 			Space:        volume.Space,
@@ -1744,4 +1744,18 @@ var systemVolumeUpdateCmd = &cobra.Command{
 
 		Level27Client.VolumeUpdate(volumeID, data)
 	},
+}
+
+type DescribeSystem struct {
+	l27.System
+	SshKeys                      []l27.SystemSshkey     `json:"sshKeys"`
+	InstallSecurityUpdatesString string                 `json:"installSecurityUpdatesString"`
+	HasNetworks                  []l27.SystemHasNetwork `json:"hasNetworks"`
+	Volumes                      []l27.SystemVolume     `json:"volumes"`
+	Checks                       []l27.SystemCheckGet   `json:"checks"`
+}
+
+type DescribeSystemNetworks struct {
+	Networks    []l27.SystemNetwork    `json:"networks"`
+	HasNetworks []l27.SystemHasNetwork `json:"hasNetworks"`
 }
