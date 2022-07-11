@@ -997,8 +997,10 @@ var systemCookbookAddCmd = &cobra.Command{
 		cookbooktypeData, _ := Level27Client.SystemCookbookTypeGet(inputType)
 
 		// // create base of json container, will be used for post request and eventually filled with custom parameters
-		jsonObjCookbookPost := gabs.New()
-		jsonObjCookbookPost.Set(inputType, "cookbooktype")
+		cookbookRequest := l27.CookbookRequest{
+			Cookbooktype:       inputType,
+			Cookbookparameters: map[string]interface{}{},
+		}
 
 		// // when user wants to use custom parameters
 		if cmd.Flag("parameters").Changed {
@@ -1006,15 +1008,15 @@ var systemCookbookAddCmd = &cobra.Command{
 			// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
 			customParameterDict := SplitCustomParameters(systemDynamicParams)
 
-			completeRequest := checkForValidCookbookParameter(customParameterDict, cookbooktypeData, currentSystemOS, jsonObjCookbookPost)
+			checkForValidCookbookParameter(customParameterDict, cookbooktypeData, currentSystemOS, &cookbookRequest)
 
 			// //log.Println("custom")
 			//log.Print(completeRequest.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(systemId, completeRequest)
+			Level27Client.SystemCookbookAdd(systemId, &cookbookRequest)
 		} else {
 			//log.Println("standard")
 			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(systemId, jsonObjCookbookPost)
+			Level27Client.SystemCookbookAdd(systemId, &cookbookRequest)
 		}
 
 		//apply changes to cookbooks
@@ -1117,13 +1119,15 @@ var systemCookbookUpdateCmd = &cobra.Command{
 		cookbookData, _ := Level27Client.SystemCookbookTypeGet(currentCookbookData.CookbookType)
 
 		// create base form of json for PUT request (cookbooktype is non-editable)
-		baseRequestData := gabs.New()
-		baseRequestData.Set(currentCookbookData.CookbookType, "cookbooktype")
+		baseRequestData := l27.CookbookRequest{
+			Cookbooktype:       currentCookbookData.CookbookType,
+			Cookbookparameters: map[string]interface{}{},
+		}
 
 		// loop over current data and check if values are default. (default values dont need to be in put request)
 		for key, value := range currentCookbookData.CookbookParameters {
 			if !value.Default {
-				baseRequestData.Set(value.Value, key)
+				baseRequestData.Cookbookparameters[key] = value.Value
 			}
 		}
 
@@ -1133,9 +1137,9 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 		// check for each set parameter if its one of the possible parameters for this cookbooktype
 		// als checks if values are valid in case of selectable parameter
-		completeRequest := checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, baseRequestData)
+		checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, &baseRequestData)
 
-		Level27Client.SystemCookbookUpdate(systemId, cookbookId, &completeRequest)
+		Level27Client.SystemCookbookUpdate(systemId, cookbookId, &baseRequestData)
 
 		// aplly changes to cookbooks
 		Level27Client.SystemCookbookChangesApply(systemId)
@@ -1149,7 +1153,7 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 // checks if a given parameter is valid for the specific cookbooktype.
 // also checks if given values are valid for chosen parameter or compatible with current system
-func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData l27.CookbookType, currenSystemOs string, currenRequestData *gabs.Container) gabs.Container {
+func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData l27.CookbookType, currenSystemOs string, currenRequestData *l27.CookbookRequest) {
 
 	var err error
 	// for each custom set parameter, check if its one of the possible parameters for the current cookbooktype
@@ -1190,8 +1194,8 @@ func checkForValidCookbookParameter(customParameters map[string]interface{}, all
 								log.Fatal(err)
 							}
 						}
-						// add json line to gabs container
-						currenRequestData.SetP(givenValuesSlice, givenParameter)
+
+						currenRequestData.Cookbookparameters[givenParameter] = givenValuesSlice
 
 					} else {
 						// only a single value was given by the user for the parameter
@@ -1200,12 +1204,11 @@ func checkForValidCookbookParameter(customParameters map[string]interface{}, all
 						//key has one value but needs to be sent in array type
 						var values []interface{}
 						values = append(values, valueString)
-						// add json line to gabs container
-						currenRequestData.SetP(values, givenParameter)
+
+						currenRequestData.Cookbookparameters[givenParameter] = values
 					}
 				} else {
-					// add json line to gabs container
-					currenRequestData.SetP(givenValue, givenParameter)
+					currenRequestData.Cookbookparameters[givenParameter] = givenValue
 				}
 
 			}
@@ -1219,8 +1222,6 @@ func checkForValidCookbookParameter(customParameters map[string]interface{}, all
 		}
 
 	}
-
-	return *currenRequestData
 }
 
 // check a value if its a valid option for the given parameter for the cookbook.
