@@ -116,7 +116,9 @@ func initConfig() {
 		apiKey = viper.GetString("apiKey")
 		apiUrl = viper.GetString("apiUrl")
 		Level27Client = l27.NewAPIClient(apiUrl, apiKey)
-		Level27Client.TraceRequests(&colorRequestTracer{})
+		if traceRequests {
+			Level27Client.TraceRequests(&colorRequestTracer{})
+		}
 	} else {
 		// config file is not found we create it
 		fmt.Println(cfgFile)
