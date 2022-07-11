@@ -47,9 +47,7 @@ func init() {
 
 	// --- DELETE
 	systemgroupCmd.AddCommand(systemgroupsDeleteCmd)
-	//flag to skip confirmation when deleting a systemgroup
-	systemgroupsDeleteCmd.Flags().BoolVarP(&systemgroupDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a systemgroup")
-
+	addDeleteConfirmFlag(systemgroupsDeleteCmd)
 }
 
 func resolveSystemgroup(arg string) int {
@@ -68,9 +66,7 @@ func resolveSystemgroup(arg string) int {
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 // ---------------- DESCRIBE
 var systemgroupDescribeCmd = &cobra.Command{
-	Use:   "describe",
-	Short: "Get detailed info about a systemgroup",
-	Args:  cobra.ExactArgs(1),
+	Use: "describe",
 	Run: func(cmd *cobra.Command, args []string) {
 		//check for valid systemgroupId type
 		systemgroupID := checkSingleIntID(args[0], "systemgroup")
@@ -128,9 +124,7 @@ var systemgroupsCreateCmd = &cobra.Command{
 // ---------------- UPDATE
 var systemgroupUpdateName, systemgroupUpdateOrg string
 var systemgroupsUpdateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "update a systemgroups name or organisation.",
-	Args:  cobra.ExactArgs(1),
+	Use: "update",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		//check for valid systemgroupId type
@@ -138,8 +132,6 @@ var systemgroupsUpdateCmd = &cobra.Command{
 
 		// when no flag has been set. -> dont need to do an update
 		if !cmd.Flag("name").Changed && !cmd.Flag("organisation").Changed {
-			cobra.CheckErr("Use at least one flag to change a value of the systemgroup.")
-		} else {
 			// get current data from the systemgroup
 			currentData := Level27Client.SystemgroupsgetSingle(systemgroupID)
 
@@ -175,17 +167,20 @@ var systemgroupsUpdateCmd = &cobra.Command{
 }
 
 // ---------------- DELETE
-var systemgroupDeleteConfirmed bool
 var systemgroupsDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete a systemgroup",
-	Args:  cobra.ExactArgs(1),
+	Use: "delete",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		//check for valid systemgroupId type
 		systemgroupId := checkSingleIntID(args[0], "systemgroup")
 
-		Level27Client.SystemgroupDelete(systemgroupId, systemgroupDeleteConfirmed)
+		if !optDeleteConfirmed {
+			group := Level27Client.SystemgroupsgetSingle(systemgroupId)
 
+			if !confirmPrompt(fmt.Sprintf("Delete system group %s (%d)?", group.Name, group.ID)) {
+				return
+			}
+		}
+
+		Level27Client.SystemgroupDelete(systemgroupId)
 	},
 }

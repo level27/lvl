@@ -42,6 +42,13 @@ func addCommonGetFlags(cmd *cobra.Command) {
 	pf.StringVarP(&optGetParameters.Filter, "filter", "f", optGetParameters.Filter, "How to filter API results?")
 }
 
+// Common flag to skip deletion confirmation prompts. Add flag with addDeleteConfirmFlag
+var optDeleteConfirmed bool
+
+func addDeleteConfirmFlag(cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&optDeleteConfirmed, "yes", "y", false, "Confirm deletion of entity without prompt")
+}
+
 //check for valid ID as type INT.
 func checkSingleIntID(arg string, entity string) int {
 	id, err := strconv.Atoi(arg)

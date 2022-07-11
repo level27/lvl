@@ -33,9 +33,7 @@ func init() {
 
 	// Delete (single domain)
 	domainCmd.AddCommand(domainDeleteCmd)
-
-	// flag used to skip confirmation on deleting domain(s)
-	domainDeleteCmd.Flags().BoolVarP(&isConfirmed, "yes", "y", false, "Confirmation flag. Set this flag to delete the domain without confirmation question.")
+	addDeleteConfirmFlag(domainDeleteCmd)
 
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
@@ -264,15 +262,23 @@ var domainDescribeCmd = &cobra.Command{
 }
 
 // DELETE DOMAIN [lvl domain delete <id>]
-var isConfirmed bool
 var domainDeleteCmd = &cobra.Command{
 	Use:   "delete [domainId]",
 	Short: "Delete a domain",
-	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		Level27Client.DomainDelete(args, isConfirmed)
+		domainID := resolveDomain(args[0])
+
+		if !optDeleteConfirmed {
+			domain := Level27Client.Domain(domainID)
+
+			if !confirmPrompt(fmt.Sprintf("Delete domain %s (%d)?", domain.Name, domain.ID)) {
+				return
+			}
+		}
+
+		Level27Client.DomainDelete(domainID)
 	},
 }
 

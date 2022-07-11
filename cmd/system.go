@@ -108,6 +108,7 @@ func init() {
 
 	systemCmd.AddCommand(systemDeleteCmd)
 	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
+	addDeleteConfirmFlag(systemDeleteCmd)
 	// #endregion
 
 	//-------------------------------------  SYSTEMS/CHECKS PARAMETERS (get parameters) --------------------------------------
@@ -145,9 +146,7 @@ func init() {
 	systemCheckCmd.AddCommand(systemCheckGetSingleCmd)
 	// --- DELETE CHECK
 	systemCheckCmd.AddCommand(systemCheckDeleteCmd)
-
-	//flag to skip confirmation when deleting a check
-	systemCheckDeleteCmd.Flags().BoolVarP(&systemCheckDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
+	addDeleteConfirmFlag(systemCheckDeleteCmd)
 
 	// --- UPDATE CHECK (ONLY FOR HTTP REQUEST)
 	systemCheckCmd.AddCommand(systemCheckUpdateCmd)
@@ -197,8 +196,7 @@ func init() {
 
 	// --- DELETE
 	systemCookbookCmd.AddCommand(systemCookbookDeleteCmd)
-	// optional flags
-	systemCookbookDeleteCmd.Flags().BoolVarP(&systemCookbookDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a cookbook")
+	addDeleteConfirmFlag(systemCookbookDeleteCmd)
 
 	// --- UPDATE
 	systemCookbookCmd.AddCommand(systemCookbookUpdateCmd)
@@ -592,6 +590,14 @@ var systemDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		systemID := resolveSystem(args[0])
 
+		if !optDeleteConfirmed {
+			system := Level27Client.SystemGetSingle(systemID)
+
+			if !confirmPrompt(fmt.Sprintf("Delete system %s (%d)?", system.Name, system.Id)) {
+				return
+			}
+		}
+
 		if systemDeleteForce {
 			Level27Client.SystemDeleteForce(systemID)
 		} else {
@@ -734,7 +740,6 @@ var systemCheckGetSingleCmd = &cobra.Command{
 }
 
 // -------------- DELETE SPECIFIC CHECK
-var systemCheckDeleteConfirmed bool
 var systemCheckDeleteCmd = &cobra.Command{
 	Use:   "delete [systemID] [checkID]",
 	Short: "Delete a specific check from a system",
@@ -749,7 +754,15 @@ var systemCheckDeleteCmd = &cobra.Command{
 			log.Fatalln("Not a valid check ID!")
 		}
 
-		Level27Client.SystemCheckDelete(systemID, checkID, systemCheckDeleteConfirmed)
+		if !optDeleteConfirmed {
+			system := Level27Client.SystemGetSingle(systemID)
+
+			if !confirmPrompt(fmt.Sprintf("Delete system check %d on system %s (%d)?", checkID, system.Name, system.Id)) {
+				return
+			}
+		}
+
+		Level27Client.SystemCheckDelete(systemID, checkID)
 	},
 }
 
@@ -1055,7 +1068,6 @@ var systemCookbookDescribeCmd = &cobra.Command{
 }
 
 // ---------------- DELETE
-var systemCookbookDeleteConfirmed bool
 var systemCookbookDeleteCmd = &cobra.Command{
 	Use:   "delete [systemID] [cookbookID]",
 	Short: "delete a cookbook from a system.",
@@ -1067,11 +1079,18 @@ var systemCookbookDeleteCmd = &cobra.Command{
 		// check for valid cookbook id
 		cookbookId := checkSingleIntID(args[1], "cookbook")
 
-		Level27Client.SystemCookbookDelete(systemId, cookbookId, systemCookbookDeleteConfirmed)
+		if !optDeleteConfirmed {
+			cookbook := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+
+			if !confirmPrompt(fmt.Sprintf("Delete system cookbook %s (%d) on system %s (%d)?", cookbook.CookbookType, cookbook.Id, cookbook.System.Name, cookbook.System.Id)) {
+				return
+			}
+		}
+
+		Level27Client.SystemCookbookDelete(systemId, cookbookId)
 
 		//apply changes
 		Level27Client.SystemCookbookChangesApply(systemId)
-
 	},
 }
 

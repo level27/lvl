@@ -37,7 +37,7 @@ func init() {
 	// ---- DELETE APP
 	appCmd.AddCommand(appDeleteCmd)
 	//flag to skip confirmation when deleting an app
-	appDeleteCmd.Flags().BoolVarP(&isAppDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+	addDeleteConfirmFlag(appCmd)
 
 	// ---- UPDATE APP
 	appCmd.AddCommand(appUpdateCmd)
@@ -92,8 +92,7 @@ func init() {
 
 	// ---- DELETE COMPONENTS
 	appComponentCmd.AddCommand(AppComponentDeleteCmd)
-	//flag to skip confirmation when deleting an appcomponent
-	AppComponentDeleteCmd.Flags().BoolVarP(&isComponentDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+	addDeleteConfirmFlag(AppComponentDeleteCmd)
 
 	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ COMPONENTTYPES/ PARAMETERS )-------------------------------------------------
 	// ---- GET COMPONENT CATEGORIES
@@ -176,7 +175,7 @@ func init() {
 	// ---- DELETE RESTORE
 	appComponentRestoreCmd.AddCommand(appRestoreDeleteCmd)
 	//flag to skip confirmation when deleting a restore
-	appRestoreDeleteCmd.Flags().BoolVarP(&isAppRestoreDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
+	addDeleteConfirmFlag(appRestoreDeleteCmd)
 
 	// ---- DOWNLOAD RESTORE FILE
 	appComponentRestoreCmd.AddCommand(appComponentRestoreDownloadCmd)
@@ -377,7 +376,6 @@ var appCreateCmd = &cobra.Command{
 }
 
 // ---- DELETE AN APP
-var isAppDeleteConfirmed bool
 var appDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete an app",
@@ -387,7 +385,15 @@ var appDeleteCmd = &cobra.Command{
 		// try to find appId based on name
 		appId := resolveApp(args[0])
 
-		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
+		if !optDeleteConfirmed {
+			app := Level27Client.App(appId)
+
+			if !confirmPrompt(fmt.Sprintf("Delete app %s (%d)?", app.Name, app.ID)) {
+				return
+			}
+		}
+
+		Level27Client.AppDelete(appId)
 	},
 }
 
@@ -979,7 +985,6 @@ func parseComponentParameter(param l27.AppComponentTypeParameter, paramValue int
 }
 
 // ---- DELETE COMPONENT
-var isComponentDeleteConfirmed bool
 var AppComponentDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete component from an app.",
@@ -991,7 +996,15 @@ var AppComponentDeleteCmd = &cobra.Command{
 		// search for component based on name
 		appComponentId := resolveAppComponent(appId, args[1])
 
-		Level27Client.AppComponentsDelete(appId, appComponentId, isComponentDeleteConfirmed)
+		if !optDeleteConfirmed {
+			appComponent := Level27Client.AppComponentGetSingle(appId, appComponentId)
+
+			if !confirmPrompt(fmt.Sprintf("Delete app component %s (%d) on app %s (%d)?", appComponent.Name, appComponent.ID, appComponent.App.Name, appComponent.App.ID)) {
+				return
+			}
+		}
+
+		Level27Client.AppComponentsDelete(appId, appComponentId)
 	},
 }
 
@@ -1141,7 +1154,6 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 }
 
 // ---- DELETE A RESTORE
-var isAppRestoreDeleteConfirmed bool
 var appRestoreDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete a specific restore from an app.",
@@ -1154,8 +1166,15 @@ var appRestoreDeleteCmd = &cobra.Command{
 		// check if restoreId is valid type
 		restoreId := checkSingleIntID(args[1], "restore")
 
-		Level27Client.AppComponentRestoresDelete(appId, restoreId, isAppRestoreDeleteConfirmed)
+		if !optDeleteConfirmed {
+			app := Level27Client.App(appId)
 
+			if !confirmPrompt(fmt.Sprintf("Delete restore %d on app %s (%d)?", restoreId, app.Name, app.ID)) {
+				return
+			}
+		}
+
+		Level27Client.AppComponentRestoresDelete(appId, restoreId)
 	},
 }
 
