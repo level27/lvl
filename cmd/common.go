@@ -25,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Jeffail/gabs/v2"
 	"github.com/level27/l27-go"
 	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
@@ -50,12 +49,12 @@ func addDeleteConfirmFlag(cmd *cobra.Command) {
 }
 
 //check for valid ID as type INT.
-func checkSingleIntID(arg string, entity string) int {
+func checkSingleIntID(arg string, entity string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err != nil {
-		log.Fatalf("Not a valid %v ID!", entity)
+		return 0, fmt.Errorf("not a valid %v ID: '%s'", entity, arg)
 	}
-	return id
+	return id, nil
 }
 
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
@@ -76,128 +75,101 @@ func CheckForMultipleIDs(ids []string) []string {
 // we can use something like a parameter flag where the user has to set the keys and values himself.
 // example lvl system cookbooks create -p key=value -p key2=value2
 // function used for commands with dynamic parameters. (different parameters defined by 1 flag)
-func SplitCustomParameters(customP []string) map[string]interface{} {
+func SplitCustomParameters(customP []string) (map[string]interface{}, error) {
 	checkedParameters := make(map[string]interface{})
-	var err error
 	// loop over raw data set by user with -p flag
 	for _, setParameter := range customP {
 		// check if correct way is used to define parameters -> key=value
-		if strings.Contains(setParameter, "=") {
-
-			// split each parameter set by user into its key and value. put them in the dictionary
-			line := strings.Split(setParameter, "=")
-			// some keys can use multiple values. check if values seperated by comma
-			if strings.Contains(line[1], ",") {
-				values := strings.Split(line[1], ",")
-				//removing spaces from splitted values
-				for i, _ := range values {
-					values[i] = strings.Trim(values[i], " ")
-				}
-				// add key value pair to dict
-				checkedParameters[strings.Trim(line[0], " ")] = values
-			} else {
-				// add key value pair to dict
-				checkedParameters[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
-			}
-
-		} else {
+		if !strings.Contains(setParameter, "=") {
 			// when there is no '=' in the parameter -> error
-			message := fmt.Sprintf("Wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
-			err = errors.New(message)
-			log.Fatal(err)
-
+			return nil, fmt.Errorf("wrong way of defining parameter is used for: '%v'. (use:[ -p key=value ])", setParameter)
 		}
 
-	}
-	return checkedParameters
-}
-
-// VALIDATION OF PARAMETER VALUES BASED ON JSON
-func isValueValidForParameter(container gabs.Container, value interface{}, currentOS string) (bool, bool) {
-
-	// convert value to string
-	valueAsString := fmt.Sprintf("%v", value)
-	var option l27.CookbookParameterOption
-	var isAvailableforSystemOS bool = false
-
-	// unmarshal into struct, to easy and clearly manipulate options data
-	err := json.Unmarshal([]byte(container.Search(valueAsString).String()), &option)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// loop over all possible OS systems for the chosen value
-	// and check if it matches the current system OS
-	for _, optionalOS := range option.OperatingSystemVersions {
-		if optionalOS.Name == currentOS || currentOS == "" {
-
-			isAvailableforSystemOS = true
-
+		// split each parameter set by user into its key and value. put them in the dictionary
+		line := strings.Split(setParameter, "=")
+		// some keys can use multiple values. check if values seperated by comma
+		if strings.Contains(line[1], ",") {
+			values := strings.Split(line[1], ",")
+			//removing spaces from splitted values
+			for i := range values {
+				values[i] = strings.Trim(values[i], " ")
+			}
+			// add key value pair to dict
+			checkedParameters[strings.Trim(line[0], " ")] = values
+		} else {
+			// add key value pair to dict
+			checkedParameters[strings.Trim(line[0], " ")] = strings.Trim(line[1], " ")
 		}
 	}
-	if !isAvailableforSystemOS {
-		message := fmt.Sprintf("Given Value: '%v' can not be installed on current OS: '%v'.", value, currentOS)
-		err = errors.New(message)
 
-		log.Fatal(err)
-	}
-
-	return isAvailableforSystemOS, option.Exclusive
+	return checkedParameters, nil
 }
 
 // Open a file passed as an argument.
 // This handles the convention of "-" opening stdin.
-func openArgFile(file string) io.ReadCloser {
+func openArgFile(file string) (io.ReadCloser, error) {
 	if file == "-" {
-		return os.Stdin
-	} else {
-		f, err := os.Open(file)
-		cobra.CheckErr(err)
-		return f
+		return os.Stdin, nil
 	}
+
+	return os.Open(file)
 }
 
 // Get the value of an argument. If the argument begins with "@",
 // it is interpreted as a file name and the contents of said file are read instead.
-func readArgFileSupported(arg string) string {
+func readArgFileSupported(arg string) (string, error) {
 	if strings.HasPrefix(arg, "@") {
 		filename := arg[1:]
-		file := openArgFile(filename)
-		contents, err := io.ReadAll(file)
+		file, err := openArgFile(filename)
 		if err != nil {
-			cobra.CheckErr(fmt.Sprintf("Error while reading file %s: %s", filename, err.Error()))
+			return "", fmt.Errorf("error while opening file %s: %v", filename, err)
 		}
 
-		return string(contents)
+		contents, err := io.ReadAll(file)
+		if err != nil {
+			return "", fmt.Errorf("error while reading file %s: %v", filename, err)
+		}
+
+		return string(contents), nil
 	}
 
-	return arg
+	return arg, nil
 }
 
 // Load JSON settings from arg-specified file and merge it with override settings from other args.
-func loadMergeSettings(fileName string, override map[string]interface{}) map[string]interface{} {
-	jsonSettings := loadSettings(fileName)
-
-	return mergeMaps(jsonSettings, override)
-}
-
-func loadSettings(fileName string) map[string]interface{} {
-	if fileName == "" {
-		return make(map[string]interface{})
+func loadMergeSettings(fileName string, override map[string]interface{}) (map[string]interface{}, error) {
+	jsonSettings, err := loadSettings(fileName)
+	if err != nil {
+		return nil, err
 	}
 
-	file := openArgFile(fileName)
+	return mergeMaps(jsonSettings, override), nil
+}
 
-	defer func() { cobra.CheckErr(file.Close()) }()
+func loadSettings(fileName string) (map[string]interface{}, error) {
+	if fileName == "" {
+		return make(map[string]interface{}), nil
+	}
+
+	file, err := openArgFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { file.Close() }()
 
 	jsonBytes, err := io.ReadAll(file)
-	cobra.CheckErr(err)
+	if err != nil {
+		return nil, err
+	}
 
 	var jsonSettings map[string]interface{}
 	err = json.Unmarshal(jsonBytes, &jsonSettings)
-	cobra.CheckErr(err)
+	if err != nil {
+		return nil, err
+	}
 
-	return jsonSettings
+	return jsonSettings, nil
 }
 
 func mergeMaps(base map[string]interface{}, override map[string]interface{}) map[string]interface{} {
@@ -345,7 +317,7 @@ func (c *boolMapValue) Type() string {
 
 // Ask the user to confirm an action with a y/n prompt.
 func confirmPrompt(message string) bool {
-	for true {
+	for {
 		fmt.Printf("%s [y]es/[n]o: ", message)
 		var resp string
 		_, err := fmt.Scan(&resp)
@@ -363,8 +335,6 @@ func confirmPrompt(message string) bool {
 			continue
 		}
 	}
-
-	panic("Unreachable")
 }
 
 // Generic helper function to implement "get" commands.
@@ -373,9 +343,9 @@ func confirmPrompt(message string) bool {
 // Will output the list of entities.
 func resolveGets[T interface{}](
 	args []string,
-	lookup func(string) []T,
-	getSingle func(int) T,
-	getList func(l27.CommonGetParams) []T) []T {
+	lookup func(string) ([]T, error),
+	getSingle func(int) (T, error),
+	getList func(l27.CommonGetParams) ([]T, error)) ([]T, error) {
 	if len(args) == 0 {
 		// No arguments, return full list from API.
 		return getList(optGetParameters)
@@ -385,19 +355,28 @@ func resolveGets[T interface{}](
 			id, err := strconv.Atoi(val)
 			if err == nil {
 				// Integer ID
-				results = append(results, getSingle(id))
+				res, err := getSingle(id)
+				if err != nil {
+					return nil, err
+				}
+
+				results = append(results, res)
 			} else {
 				// Look up by name
-				lookedUp := lookup(val)
-				if lookedUp == nil {
-					cobra.CheckErr(fmt.Sprintf("Unable to find '%s'", val))
+				lookedUp, err := lookup(val)
+				if err != nil {
+					return nil, err
 				}
+
+				if lookedUp == nil {
+					return nil, fmt.Errorf("unable to find '%s'", val)
+				}
+
 				results = append(results, lookedUp...)
 			}
 		}
 
-		return results
-
+		return results, nil
 	}
 }
 
@@ -406,14 +385,12 @@ func resolveShared[T interface{}](
 	arg string,
 	name string,
 	getDesc func(T) string,
-) T {
+) (*T, error) {
 	switch len(options) {
 	case 0:
-		cobra.CheckErr(fmt.Sprintf("Unable to find %s: %s", name, arg))
-		// Unreachable
-		return options[0]
+		return nil, fmt.Errorf("unable to find %s: %s", name, arg)
 	case 1:
-		return options[0]
+		return &options[0], nil
 	default:
 		// Multiple candidates, allow user to select which
 
@@ -422,7 +399,7 @@ func resolveShared[T interface{}](
 		if !isStdinTerminal() {
 			// If stdin isn't a terminal (e.g. being piped into) then we can't just prompt for input.
 			// So abort in that case.
-			cobra.CheckErr("Aborting because command not interactive")
+			return nil, errors.New("aborting because command not interactive")
 		}
 
 		for i, option := range options {
@@ -432,13 +409,15 @@ func resolveShared[T interface{}](
 		fmt.Printf("Choose one: ")
 		var resp int
 		_, err := fmt.Scan(&resp)
-		cobra.CheckErr(err)
-
-		if resp < 0 || resp >= len(options) {
-			cobra.CheckErr("Invalid index given")
+		if err != nil {
+			return nil, err
 		}
 
-		return options[resp]
+		if resp < 0 || resp >= len(options) {
+			return nil, errors.New("invalid index given")
+		}
+
+		return &options[resp], nil
 	}
 
 }

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -22,99 +21,123 @@ func init() {
 	regionCommand.AddCommand(regionZonesCommand)
 }
 
-
-func resolveZoneRegion(zoneName string) (int, int) {
-	zone, region := Level27Client.LookupZoneAndRegion(zoneName)
+func resolveZoneRegion(zoneName string) (int, int, error) {
+	zone, region, err := Level27Client.LookupZoneAndRegion(zoneName)
+	if err != nil {
+		return 0, 0, err
+	}
 
 	if zone == nil || region == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find zone: %s", zoneName))
-		return 0, 0
+		return 0, 0, fmt.Errorf("unable to find zone: %s", zoneName)
 	}
 
-	return zone.ID, region.ID
+	return zone.ID, region.ID, nil
 }
 
-func resolveRegionImage(region int, imageName string) int {
+func resolveRegionImage(region int, imageName string) (int, error) {
 	id, err := strconv.Atoi(imageName)
 	if err == nil {
-		return id
+		return id, nil
 	}
-
 
 	splittedImageData := strings.SplitN(imageName, " ", 2)
 	osName := splittedImageData[0]
 	osVersion := splittedImageData[1]
 
+	images, err := Level27Client.GetRegionImages(region)
+	if err != nil {
+		return 0, err
+	}
 
-
-	images := Level27Client.GetRegionImages(region)
 	for _, image := range images {
 		if image.OperatingsystemVersion.Version == osVersion && image.OperatingsystemVersion.Operatingsystem.Name == osName {
-			return image.ID
+			return image.ID, nil
 		}
 	}
 
-	cobra.CheckErr(fmt.Sprintf("Unable to find image with name %s in zone", imageName))
-	return 0
+	return 0, fmt.Errorf("unable to find image with name %s in zone", imageName)
 }
 
 var regionCommand = &cobra.Command{
-	Use: "region",
+	Use:   "region",
 	Short: "Commands to view available regions for systems",
 }
 
 var regionGetCommand = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "Get all available regions",
 
-	Run: func(cmd *cobra.Command, args []string) {
-		regions := Level27Client.GetRegions()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		regions, err := Level27Client.GetRegions()
+		if err != nil {
+			return err
+		}
 
-		outputFormatTable(regions, []string {"ID", "Name", "Country", "Provider"}, []string{"ID", "Name", "Country.Name", "Systemprovider.Name"})
+		outputFormatTable(regions, []string{"ID", "Name", "Country", "Provider"}, []string{"ID", "Name", "Country.Name", "Systemprovider.Name"})
+		return nil
 	},
 }
 
-
 var regionImagesCommand = &cobra.Command{
-	Use: "images [region]",
+	Use:   "images [region]",
 	Short: "Get all system images in a region",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		regionId := regionIdFromArg(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		regionId, err := regionIdFromArg(args[0])
+		if err != nil {
+			return err
+		}
 
-		regions := Level27Client.GetRegionImages(regionId)
+		regions, err := Level27Client.GetRegionImages(regionId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(
 			regions,
-			[]string {"ID", "Name", "OS", "Version"},
-			[]string {"ID", "Name", "OperatingsystemVersion.Operatingsystem.Name", "OperatingsystemVersion.Version"})
+			[]string{"ID", "Name", "OS", "Version"},
+			[]string{"ID", "Name", "OperatingsystemVersion.Operatingsystem.Name", "OperatingsystemVersion.Version"})
+
+		return nil
 	},
 }
 
 var regionZonesCommand = &cobra.Command{
-	Use: "zones",
+	Use:   "zones",
 	Short: "Get all zones in a region",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		regionId := regionIdFromArg(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		regionId, err := regionIdFromArg(args[0])
+		if err != nil {
+			return err
+		}
 
-		zones := Level27Client.GetZones(regionId)
+		zones, err := Level27Client.GetZones(regionId)
+		if err != nil {
+			return err
+		}
+
 		outputFormatTable(zones, []string{"ID", "Name", "Short"}, []string{"ID", "Name", "ShortName"})
+		return nil
 	},
 }
 
-func regionIdFromArg(arg string) int {
+func regionIdFromArg(arg string) (int, error) {
 	regionId, err := convertStringToId(arg)
 	if err != nil {
-		regionMaybe := Level27Client.LookupRegion(arg)
+		regionMaybe, err := Level27Client.LookupRegion(arg)
+		if err != nil {
+			return 0, err
+		}
+
 		if regionMaybe == nil {
-			log.Fatalln("Unknown region")
+			return 0, fmt.Errorf("unknown region: '%s'", arg)
 		}
 
 		regionId = regionMaybe.ID
 	}
 
-	return regionId;
+	return regionId, nil
 }

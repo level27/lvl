@@ -8,17 +8,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func resolveNetwork(arg string) int {
+func resolveNetwork(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.LookupNetwork(arg),
+	options, err := Level27Client.LookupNetwork(arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"network",
-		func(app l27.Network) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.Network) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, err
 }
 
 func init() {
@@ -36,8 +47,12 @@ var networkCmd = &cobra.Command{
 var networkGetCmd = &cobra.Command{
 	Use: "get",
 
-	Run: func(cmd *cobra.Command, args []string) {
-		networks := Level27Client.GetNetworks(optGetParameters)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		networks, err := Level27Client.GetNetworks(optGetParameters)
+		if err != nil {
+			return err
+		}
+
 		outputFormatTableFuncs(networks, []string{"ID", "Type", "Name", "VLAN", "Organisation", "Zone"}, []interface{}{"ID", func(net l27.Network) string {
 			if net.Public {
 				return "public"
@@ -50,6 +65,7 @@ var networkGetCmd = &cobra.Command{
 			}
 			return ""
 		}, "Name", "Vlan", "Organisation.Name", "Zone.Name"})
+		return nil
 	},
 }
 

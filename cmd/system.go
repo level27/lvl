@@ -309,73 +309,114 @@ func init() {
 
 // Resolve an integer or name domain.
 // If the domain is a name, a request is made to resolve the integer ID.
-func resolveSystem(arg string) int {
+func resolveSystem(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.LookupSystem(arg),
+	options, err := Level27Client.LookupSystem(arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"system",
-		func(app l27.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) }).Id
-}
-func resolveSystemProviderConfiguration(region int, arg string) int {
-	id, err := strconv.Atoi(arg)
-	if err == nil {
-		return id
+		func(app l27.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) })
+
+	if err != nil {
+		return 0, err
 	}
 
-	cfgs := Level27Client.GetSystemProviderConfigurations()
+	return res.Id, err
+}
+
+func resolveSystemProviderConfiguration(region int, arg string) (int, error) {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	cfgs, err := Level27Client.GetSystemProviderConfigurations()
+	if err != nil {
+		return 0, err
+	}
+
 	for _, cfg := range cfgs {
 		if cfg.Name == arg {
-			return cfg.ID
+			return cfg.ID, nil
 		}
 	}
 
-	cobra.CheckErr(fmt.Sprintf("Unable to find provider configuration: %s", arg))
-	return 0
+	return 0, fmt.Errorf("unable to find provider configuration: '%s'", arg)
 }
 
-func resolveSystemHasNetwork(systemID int, arg string) int {
+func resolveSystemHasNetwork(systemID int, arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.LookupSystemHasNetworks(systemID, arg),
+	options, err := Level27Client.LookupSystemHasNetworks(systemID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"system network",
-		func(app l27.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) }).ID
-}
+		func(app l27.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) })
 
-func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) int {
-	id, err := strconv.Atoi(arg)
-	if err == nil {
-		return id
+	if err != nil {
+		return 0, err
 	}
 
-	return resolveShared(
-		Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg),
+	return res.ID, err
+}
+
+func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) (int, error) {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.LookupSystemHasNetworkIp(systemID, hasNetworkID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"system network IP",
-		func(app l27.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) }).ID
+		func(app l27.SystemHasNetworkIp) string { return fmt.Sprintf("%d", app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, err
 }
 
-func resolveSystemVolume(systemID int, arg string) int {
+func resolveSystemVolume(systemID int, arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	ip := Level27Client.LookupSystemVolumes(systemID, arg)
+	ip, err := Level27Client.LookupSystemVolumes(systemID, arg)
+	if err != nil {
+		return 0, err
+	}
+
 	if ip == nil {
-		cobra.CheckErr(fmt.Sprintf("Unable to find volume: %s", arg))
+		return 0, fmt.Errorf("nable to find volume: %s", arg)
 	}
 
-	return ip.ID
+	return ip.ID, nil
 }
 
 //------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
@@ -384,28 +425,36 @@ func resolveSystemVolume(systemID int, arg string) int {
 var systemGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "get a list of all curent systems",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
-			log.Fatalln("Invalid system ID")
+			return err
 		}
-		outputFormatTable(getSystems(ids), []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
 
+		systems, err := getSystems(ids)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTable(systems, []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
+		return nil
 	},
 }
 
-func getSystems(ids []int) []l27.System {
-
+func getSystems(ids []int) ([]l27.System, error) {
 	if len(ids) == 0 {
 		return Level27Client.SystemGetList(optGetParameters)
-	} else {
-		systems := make([]l27.System, len(ids))
-		for idx, id := range ids {
-			systems[idx] = Level27Client.SystemGetSingle(id)
-		}
-		return systems
 	}
 
+	systems := make([]l27.System, len(ids))
+	for idx, id := range ids {
+		var err error
+		systems[idx], err = Level27Client.SystemGetSingle(id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return systems, nil
 }
 
 //----------------------------------------- DESCRIBE ---------------------------------------
@@ -415,29 +464,63 @@ var systemDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Get detailed information about a system.",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
 		var system DescribeSystem
-		system.System = Level27Client.SystemGetSingle(systemID)
+		system.System, err = Level27Client.SystemGetSingle(systemID)
+		if err != nil {
+			return err
+		}
+
 		if !systemDescribeHideJobs {
-			system.Jobs = Level27Client.EntityJobHistoryGet("system", systemID)
+			system.Jobs, err = Level27Client.EntityJobHistoryGet("system", systemID)
+			if err != nil {
+				return err
+			}
+
 			for idx, j := range system.Jobs {
-				system.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
+				system.Jobs[idx], err = Level27Client.JobHistoryRootGet(j.Id)
+
+				if err != nil {
+					return err
+				}
 			}
 		}
 
-		system.SshKeys = Level27Client.SystemGetSshKeys(systemID, l27.CommonGetParams{})
-		securityUpdates := Level27Client.SecurityUpdateDates()
+		system.SshKeys, err = Level27Client.SystemGetSshKeys(systemID, l27.CommonGetParams{})
+		if err != nil {
+			return err
+		}
+
+		securityUpdates, err := Level27Client.SecurityUpdateDates()
+		if err != nil {
+			return err
+		}
+
 		system.InstallSecurityUpdatesString = securityUpdates[system.InstallSecurityUpdates]
-		system.HasNetworks = Level27Client.SystemGetHasNetworks(systemID)
-		system.Volumes = Level27Client.SystemGetVolumes(systemID, l27.CommonGetParams{})
+		system.HasNetworks, err = Level27Client.SystemGetHasNetworks(systemID)
+		if err != nil {
+			return err
+		}
+
+		system.Volumes, err = Level27Client.SystemGetVolumes(systemID, l27.CommonGetParams{})
+		if err != nil {
+			return err
+		}
 
 		if system.System.MonitoringEnabled {
-			system.Checks = Level27Client.SystemCheckGetList(systemID, l27.CommonGetParams{})
+			system.Checks, err = Level27Client.SystemCheckGetList(systemID, l27.CommonGetParams{})
+			if err != nil {
+				return err
+			}
 		}
 
 		outputFormatTemplate(system, "templates/system.tmpl")
+		return nil
 	},
 }
 
@@ -464,7 +547,7 @@ var systemCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new system",
 	Example: "lvl system create -n mySystemName --zone hasselt --organisation level27 --image 'Ubuntu 20.04 LTS' --config 'Level27 Small' --management professional_level27",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		managementTypeValue := cmd.Flag("management").Value.String()
 
@@ -481,14 +564,29 @@ var systemCreateCmd = &cobra.Command{
 			}
 			// if no valid management type was given -> error for user
 			if !isValidManagementType {
-				log.Printf("ERROR: given managementType is not valid: '%v'", managementTypeValue)
+				return fmt.Errorf("ERROR: given managementType is not valid: '%v'", managementTypeValue)
 			}
 		}
 
-		zoneID, regionID := resolveZoneRegion(systemCreateZone)
-		imageID := resolveRegionImage(regionID, systemCreateImage)
-		orgID := resolveOrganisation(systemCreateOrganisation)
-		providerConfigID := resolveSystemProviderConfiguration(regionID, systemCreateProviderConfig)
+		zoneID, regionID, err := resolveZoneRegion(systemCreateZone)
+		if err != nil {
+			return err
+		}
+
+		imageID, err := resolveRegionImage(regionID, systemCreateImage)
+		if err != nil {
+			return err
+		}
+
+		orgID, err := resolveOrganisation(systemCreateOrganisation)
+		if err != nil {
+			return err
+		}
+
+		providerConfigID, err := resolveSystemProviderConfiguration(regionID, systemCreateProviderConfig)
+		if err != nil {
+			return err
+		}
 
 		// Using data from the flags to make the right type used for posting a new system. (types systemPost)
 		RequestData := l27.SystemPost{
@@ -532,8 +630,14 @@ var systemCreateCmd = &cobra.Command{
 		if *RequestData.ParentSystem == 0 {
 			RequestData.ParentSystem = nil
 		}
-		Level27Client.SystemCreate(RequestData)
 
+		system, err := Level27Client.SystemCreate(RequestData)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("System created! [Fullname: '%v' , ID: '%v']", system.Name, system.Id)
+		return nil
 	},
 }
 
@@ -545,12 +649,21 @@ var systemUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update settings on a system",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		systemID := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		system := Level27Client.SystemGetSingle(systemID)
+		system, err := Level27Client.SystemGetSingle(systemID)
+		if err != nil {
+			return err
+		}
 
 		systemPut := l27.SystemPut{
 			Id:                          system.Id,
@@ -576,9 +689,18 @@ var systemUpdateCmd = &cobra.Command{
 		data := utils.RoundTripJson(systemPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"], err = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemUpdate(systemID, data)
+		err = Level27Client.SystemUpdate(systemID, data)
+		if err != nil {
+			return err
+		}
+
+		log.Print("System succesfully updated!")
+		return nil
 	},
 }
 
@@ -587,22 +709,30 @@ var systemDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a system",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
 		if !optDeleteConfirmed {
-			system := Level27Client.SystemGetSingle(systemID)
+			system, err := Level27Client.SystemGetSingle(systemID)
+			if err != nil {
+				return err
+			}
 
 			if !confirmPrompt(fmt.Sprintf("Delete system %s (%d)?", system.Name, system.Id)) {
-				return
+				return nil
 			}
 		}
 
 		if systemDeleteForce {
-			Level27Client.SystemDeleteForce(systemID)
+			err = Level27Client.SystemDeleteForce(systemID)
 		} else {
-			Level27Client.SystemDelete(systemID)
+			err = Level27Client.SystemDelete(systemID)
 		}
+
+		return err
 	},
 }
 
@@ -623,22 +753,33 @@ var systemCheckGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
 	Short: "Get a list of all checks from a system",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system ID
-		id := resolveSystem(args[0])
+		id, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		system := Level27Client.SystemGetSingle(id)
+		system, err := Level27Client.SystemGetSingle(id)
+		if err != nil {
+			return err
+		}
 
 		// when monitoring is disabled on system -> checks dont need to be visible
 		if system.MonitoringEnabled {
-			checks := Level27Client.SystemCheckGetList(id, optGetParameters)
-			// Creating readable output
-			outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-				[]interface{}{"Id", "CheckType", "Status", func(s l27.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
-		} else {
-			log.Fatalf("Monitoring is currently disabled for system: [NAME:%v - ID: %v]. Use the 'monitoring' command to change monitoring status", system.Name, system.Id)
+			return fmt.Errorf("monitoring is currently disabled for system: [NAME:%v - ID: %v]. Use the 'monitoring' command to change monitoring status", system.Name, system.Id)
 		}
 
+		checks, err := Level27Client.SystemCheckGetList(id, optGetParameters)
+		if err != nil {
+			return err
+		}
+
+		// Creating readable output
+		outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
+			[]interface{}{"Id", "CheckType", "Status", func(s l27.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+
+		return nil
 	},
 }
 
@@ -648,16 +789,22 @@ var systemCheckAddCmd = &cobra.Command{
 	Use:   "add [system ID] [parameters]",
 	Short: "add a new check to a specific system",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system ID
-		id := resolveSystem(args[0])
+		id, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		var err error
 		// get the value of the flag type set by user
 		checkTypeInput := cmd.Flag("type").Value.String()
 
 		//get all data from the chosen checktype returned as Systemchecktype struct
-		checktypeResult := Level27Client.SystemCheckTypeGet(checkTypeInput)
+		checktypeResult, err := Level27Client.SystemCheckTypeGet(checkTypeInput)
+		if err != nil {
+			return err
+		}
+
 		possibleParameters := checktypeResult.ServiceType.Parameters
 
 		// create base of json container, will be used for post request and eventually filled with custom parameters
@@ -667,7 +814,10 @@ var systemCheckAddCmd = &cobra.Command{
 		// if user wants to use custom parameters
 		if cmd.Flag("parameters").Changed {
 			// check if given parameters and usage of -p flag is correct
-			customParameterDict := SplitCustomParameters(systemDynamicParams)
+			customParameterDict, err := SplitCustomParameters(systemDynamicParams)
+			if err != nil {
+				return err
+			}
 
 			// loop over all given custom parameters by user
 			for customParameterName, customParameterValue := range customParameterDict {
@@ -682,15 +832,21 @@ var systemCheckAddCmd = &cobra.Command{
 						jsonObjCheckPost.Set(customParameterValue, customParameterName)
 					}
 				}
+
 				if !isCustomParameterValid {
-					err = fmt.Errorf("given parameter name is not valid: '%v'", customParameterName)
-					log.Fatal(err)
+					return fmt.Errorf("given parameter name is not valid: '%v'", customParameterName)
 				}
 			}
 
 		}
-		//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-		Level27Client.SystemCheckAdd(id, jsonObjCheckPost)
+
+		check, err := Level27Client.SystemCheckAdd(id, jsonObjCheckPost)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("System check added! [Checktype: '%v' , ID: '%v']", check.CheckType, check.Id)
+		return nil
 	},
 }
 
@@ -703,13 +859,16 @@ var systemCheckAddCmd = &cobra.Command{
 var systemChecktypeParametersGetCmd = &cobra.Command{
 	Use:   "parameters",
 	Short: "Show all default parameters for a specific checktype.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		chosenType := cmd.Flag("type").Value.String()
 
-		checktypeResult := Level27Client.SystemCheckTypeGet(chosenType)
+		checktypeResult, err := Level27Client.SystemCheckTypeGet(chosenType)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(checktypeResult.ServiceType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
-
+		return nil
 	},
 }
 
@@ -723,19 +882,26 @@ var systemCheckGetSingleCmd = &cobra.Command{
 	Use:   "describe [systemID] [checkID]",
 	Short: "Get detailed info about a specific check.",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid system ID
-		systemID := resolveSystem(args[0])
-
-		//check for valid system checkID
-		checkID, err := strconv.Atoi(args[1])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
-			log.Fatalln("Not a valid check ID!")
+			return err
 		}
 
-		check := Level27Client.SystemCheckDescribe(systemID, checkID)
+		//check for valid system checkID
+		checkID, err := checkSingleIntID(args[1], "check")
+		if err != nil {
+			return err
+		}
+
+		check, err := Level27Client.SystemCheckDescribe(systemID, checkID)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTemplate(check, "templates/systemCheck.tmpl")
+		return nil
 	},
 }
 
@@ -744,25 +910,32 @@ var systemCheckDeleteCmd = &cobra.Command{
 	Use:   "delete [systemID] [checkID]",
 	Short: "Delete a specific check from a system",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid system ID
-		systemID := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
 		//check for valid system checkID
-		checkID, err := strconv.Atoi(args[1])
+		checkID, err := checkSingleIntID(args[1], "check")
 		if err != nil {
-			log.Fatalln("Not a valid check ID!")
+			return err
 		}
 
 		if !optDeleteConfirmed {
-			system := Level27Client.SystemGetSingle(systemID)
+			system, err := Level27Client.SystemGetSingle(systemID)
+			if err != nil {
+				return err
+			}
 
 			if !confirmPrompt(fmt.Sprintf("Delete system check %d on system %s (%d)?", checkID, system.Name, system.Id)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.SystemCheckDelete(systemID, checkID)
+		err = Level27Client.SystemCheckDelete(systemID, checkID)
+		return err
 	},
 }
 
@@ -771,14 +944,24 @@ var systemCheckUpdateCmd = &cobra.Command{
 	Use:   "update [SystemID] [CheckID]",
 	Short: "update a specific check from a system",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system ID
-		systemID := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid check ID
-		checkID := checkSingleIntID(args[1], "check")
+		checkID, err := checkSingleIntID(args[1], "check")
+		if err != nil {
+			return err
+		}
 
 		// get the current data from the check
-		currentData := Level27Client.SystemCheckDescribe(systemID, checkID)
+		currentData, err := Level27Client.SystemCheckDescribe(systemID, checkID)
+		if err != nil {
+			return err
+		}
 
 		// create base of PUT request in JSON (checktype required and cannot be changed)
 		updateCheckJson := gabs.New()
@@ -799,7 +982,10 @@ var systemCheckUpdateCmd = &cobra.Command{
 
 		// check wich parameters the user gave in.
 		// also check if way of using parameter flag is correct
-		customParamaterDict := SplitCustomParameters(systemDynamicParams)
+		customParamaterDict, err := SplitCustomParameters(systemDynamicParams)
+		if err != nil {
+			return err
+		}
 
 		// check for each given parameter if its one of the possible parameters
 		// if parameter = valid -> add key/value to json object for put request
@@ -813,13 +999,13 @@ var systemCheckUpdateCmd = &cobra.Command{
 			}
 
 			if !isValidParameter {
-				message := fmt.Sprintf("given parameter key: '%v' is not valid for checktype %v.", givenParameter, currentData.CheckType)
-				log.Fatalln(message)
+				return fmt.Errorf("given parameter key: '%v' is not valid for checktype %v", givenParameter, currentData.CheckType)
 			}
 		}
 
 		//log.Print(updateCheckJson.StringIndent(""," "))
-		Level27Client.SystemCheckUpdate(systemID, checkID, updateCheckJson)
+		err = Level27Client.SystemCheckUpdate(systemID, checkID, updateCheckJson)
+		return err
 	},
 }
 
@@ -839,13 +1025,20 @@ var systemMonitoringOnCmd = &cobra.Command{
 	Short:   "Turn on the monitoring for a system.",
 	Example: "lvl system monitoring on MySystemName",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for sytsemID based on name
-		systemId := resolveSystem(args[0])
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemAction(systemId, "enable_monitoring")
+		_, err = Level27Client.SystemAction(systemId, "enable_monitoring")
+		if err != nil {
+			return err
+		}
 
 		log.Printf("Monitoring is turned on for system: '%v'", args[0])
+		return nil
 	},
 }
 
@@ -855,13 +1048,20 @@ var systemMonitoringOffCmd = &cobra.Command{
 	Short:   "Turn off the monitoring for a system.",
 	Example: "lvl system monitoring off MySystemName",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for sytsemID based on name
-		systemId := resolveSystem(args[0])
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemAction(systemId, "disable_monitoring")
+		_, err = Level27Client.SystemAction(systemId, "disable_monitoring")
+		if err != nil {
+			return err
+		}
 
 		log.Printf("Monitoring is turned off for system: '%v'", args[0])
+		return nil
 	},
 }
 
@@ -876,67 +1076,71 @@ var systemActionsCmd = &cobra.Command{
 var systemActionsStartCmd = &cobra.Command{
 	Use:  "start",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("start", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("start", args) },
 }
 
 var systemActionsStopCmd = &cobra.Command{
 	Use:  "stop",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("stop", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("stop", args) },
 }
 
 var systemActionsShutdownCmd = &cobra.Command{
 	Use:  "shutdown",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("shutdown", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("shutdown", args) },
 }
 
 var systemActionsRebootCmd = &cobra.Command{
 	Use:  "reboot",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("reboot", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("reboot", args) },
 }
 
 var systemActionsResetCmd = &cobra.Command{
 	Use:  "reset",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("reset", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("reset", args) },
 }
 
 var systemActionsEmergencyPowerOffCmd = &cobra.Command{
 	Use:  "emergencyPowerOff",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("emergencyPowerOff", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("emergencyPowerOff", args) },
 }
 
 var systemActionsDeactivateCmd = &cobra.Command{
 	Use:  "deactivate",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("deactivate", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("deactivate", args) },
 }
 
 var systemActionsActivateCmd = &cobra.Command{
 	Use:  "activate",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("activate", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("activate", args) },
 }
 
 var systemActionsAutoInstallCmd = &cobra.Command{
 	Use:  "autoInstall",
 	Args: cobra.ExactArgs(1),
-	Run:  func(cmd *cobra.Command, args []string) { runAction("autoInstall", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("autoInstall", args) },
 }
 
-func runAction(action string, args []string) {
-	id := resolveSystem(args[0])
+func runAction(action string, args []string) error {
+	id, err := resolveSystem(args[0])
+	if err != nil {
+		return err
+	}
 
-	Level27Client.SystemAction(id, action)
+	_, err = Level27Client.SystemAction(id, action)
+	return err
 }
 
 // #endregion
 
-//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET / CREATE) ----------------------------------
-// ---------------- MAIN COMMAND (cookbooks)
+//------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET error / CREATE) ----------------------------------
+// ---------------- MAIN return COMMAND (cookbooks)
 var systemCookbookCmd = &cobra.Command{
 	Use:   "cookbooks",
 	Short: "Manage systems cookbooks",
@@ -949,17 +1153,21 @@ var systemCookbookGetCmd = &cobra.Command{
 	Use:   "get [system ID]",
 	Short: "Gets a list of all cookbooks from a system.",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system ID
-		id := resolveSystem(args[0])
+		id, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		outputFormatTable(getSystemCookbooks(id), []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
+		cookbooks, err := Level27Client.SystemCookbookGetList(id)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTable(cookbooks, []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
+		return nil
 	},
-}
-
-func getSystemCookbooks(id int) []l27.Cookbook {
-
-	return Level27Client.SystemCookbookGetList(id)
 }
 
 func CheckforValidType(input string, validTypes []string) (string, bool) {
@@ -982,19 +1190,29 @@ var systemCookbookAddCmd = &cobra.Command{
 	Use:   "add [systemID] [flags]",
 	Short: "add a cookbook to a system",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//checking for valid system ID
-		systemId := resolveSystem(args[0])
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
 		// get information about the current chosen system [systemID]
-		currentSystem := Level27Client.SystemGetSingle(systemId)
+		currentSystem, err := Level27Client.SystemGetSingle(systemId)
+		if err != nil {
+			return err
+		}
+
 		currentSystemOS := fmt.Sprintf("%v %v", currentSystem.OperatingSystemVersion.OsName, currentSystem.OperatingSystemVersion.OsVersion)
 
 		// get the user input from the type flag (cookbooktype)
 		inputType := cmd.Flag("type").Value.String()
 
 		// get all current data for the chosen cookbooktype
-		cookbooktypeData, _ := Level27Client.SystemCookbookTypeGet(inputType)
+		cookbooktypeData, _, err := Level27Client.SystemCookbookTypeGet(inputType)
+		if err != nil {
+			return err
+		}
 
 		// // create base of json container, will be used for post request and eventually filled with custom parameters
 		cookbookRequest := l27.CookbookRequest{
@@ -1002,25 +1220,28 @@ var systemCookbookAddCmd = &cobra.Command{
 			Cookbookparameters: map[string]interface{}{},
 		}
 
-		// // when user wants to use custom parameters
+		// when user wants to use custom parameters
 		if cmd.Flag("parameters").Changed {
 
 			// split the slice of customparameters set by user into key/value pairs. also check if declaration method is used correctly (-p key=value).
-			customParameterDict := SplitCustomParameters(systemDynamicParams)
+			customParameterDict, err := SplitCustomParameters(systemDynamicParams)
+			if err != nil {
+				return err
+			}
 
 			checkForValidCookbookParameter(customParameterDict, cookbooktypeData, currentSystemOS, &cookbookRequest)
-
-			// //log.Println("custom")
-			//log.Print(completeRequest.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(systemId, &cookbookRequest)
-		} else {
-			//log.Println("standard")
-			//log.Print(jsonObjCookbookPost.StringIndent("", " "))
-			Level27Client.SystemCookbookAdd(systemId, &cookbookRequest)
 		}
 
+		cookbook, err := Level27Client.SystemCookbookAdd(systemId, &cookbookRequest)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Cookbook: '%v' succesfully added!", cookbook.CookbookType)
+
 		//apply changes to cookbooks
-		Level27Client.SystemCookbookChangesApply(systemId)
+		err = Level27Client.SystemCookbookChangesApply(systemId)
+		return err
 	},
 }
 
@@ -1034,16 +1255,19 @@ var systemCookbookAddCmd = &cobra.Command{
 var SystemCookbookTypesGetCmd = &cobra.Command{
 	Use:   "parameters",
 	Short: "Show all default parameters for a specific cookbooktype.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		// get the user input from the type flag
 		inputType := cmd.Flag("type").Value.String()
 
 		// Get request to get all cookbooktypes data
-		validCookbooktype, _ := Level27Client.SystemCookbookTypeGet(inputType)
+		validCookbooktype, _, err := Level27Client.SystemCookbookTypeGet(inputType)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(validCookbooktype.CookbookType.Parameters, []string{"NAME", "DESCRIPTION", "DEFAULT_VALUE"}, []string{"Name", "Description", "DefaultValue"})
-
+		return nil
 	},
 }
 
@@ -1057,15 +1281,26 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "show detailed info about a cookbook on a system",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system id
-		systemId := resolveSystem(args[0])
-		// check for valid cookbook id
-		cookbookId := checkSingleIntID(args[1], "cookbook")
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		result := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		// check for valid cookbook id
+		cookbookId, err := checkSingleIntID(args[1], "cookbook")
+		if err != nil {
+			return err
+		}
+
+		result, err := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTemplate(result, "templates/systemCookbook.tmpl")
+		return nil
 	},
 }
 
@@ -1075,24 +1310,38 @@ var systemCookbookDeleteCmd = &cobra.Command{
 	Short: "delete a cookbook from a system.",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system id
-		systemId := resolveSystem(args[0])
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid cookbook id
-		cookbookId := checkSingleIntID(args[1], "cookbook")
+		cookbookId, err := checkSingleIntID(args[1], "cookbook")
+		if err != nil {
+			return err
+		}
 
 		if !optDeleteConfirmed {
-			cookbook := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+			cookbook, err := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+			if err != nil {
+				return err
+			}
 
 			if !confirmPrompt(fmt.Sprintf("Delete system cookbook %s (%d) on system %s (%d)?", cookbook.CookbookType, cookbook.Id, cookbook.System.Name, cookbook.System.Id)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.SystemCookbookDelete(systemId, cookbookId)
+		err = Level27Client.SystemCookbookDelete(systemId, cookbookId)
+		if err != nil {
+			return err
+		}
 
 		//apply changes
-		Level27Client.SystemCookbookChangesApply(systemId)
+		err = Level27Client.SystemCookbookChangesApply(systemId)
+		return err
 	},
 }
 
@@ -1102,21 +1351,38 @@ var systemCookbookUpdateCmd = &cobra.Command{
 	Short: "update existing cookbook from a system",
 	Example: "lvl system cookbooks update [systemID] [cookbookID] {-p}.\nSINGLE PARAMETER:		-p waf=true  \nMULTIPLE PARAMETERS:		-p waf=true -p timeout=200  \nMULTIPLE VALUES:		-p versions=''7, 5.4'' OR -p versions=7,5.4 (seperated by comma)",
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system id
-		systemId := resolveSystem(args[0])
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid cookbook id
-		cookbookId := checkSingleIntID(args[1], "cookbook")
+		cookbookId, err := checkSingleIntID(args[1], "cookbook")
+		if err != nil {
+			return err
+		}
 
 		// get current data from the current installed cookbooktype
-		currentCookbookData := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		currentCookbookData, err := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		if err != nil {
+			return err
+		}
+
 		// get current data from the chosen system
-		currentSystemData := Level27Client.SystemGetSingle(systemId)
+		currentSystemData, err := Level27Client.SystemGetSingle(systemId)
+		if err != nil {
+			return err
+		}
 
 		currentSystem := fmt.Sprintf("%v %v", currentSystemData.OperatingSystemVersion.OsName, currentSystemData.OperatingSystemVersion.OsVersion)
 
 		// get all standard data that belongs to this cookbooktype in general (parameters / parameteroptions..).
-		cookbookData, _ := Level27Client.SystemCookbookTypeGet(currentCookbookData.CookbookType)
+		cookbookData, _, err := Level27Client.SystemCookbookTypeGet(currentCookbookData.CookbookType)
+		if err != nil {
+			return err
+		}
 
 		// create base form of json for PUT request (cookbooktype is non-editable)
 		baseRequestData := l27.CookbookRequest{
@@ -1133,16 +1399,23 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 		//check if parameter flag is used correctly
 		//split key/value pairs from parameter flag
-		customParameterDict := SplitCustomParameters(systemDynamicParams)
+		customParameterDict, err := SplitCustomParameters(systemDynamicParams)
+		if err != nil {
+			return err
+		}
 
 		// check for each set parameter if its one of the possible parameters for this cookbooktype
 		// als checks if values are valid in case of selectable parameter
 		checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, &baseRequestData)
 
-		Level27Client.SystemCookbookUpdate(systemId, cookbookId, &baseRequestData)
+		err = Level27Client.SystemCookbookUpdate(systemId, cookbookId, &baseRequestData)
+		if err != nil {
+			return err
+		}
 
 		// aplly changes to cookbooks
-		Level27Client.SystemCookbookChangesApply(systemId)
+		err = Level27Client.SystemCookbookChangesApply(systemId)
+		return err
 	},
 }
 
@@ -1153,9 +1426,8 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 // checks if a given parameter is valid for the specific cookbooktype.
 // also checks if given values are valid for chosen parameter or compatible with current system
-func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData l27.CookbookType, currenSystemOs string, currenRequestData *l27.CookbookRequest) {
+func checkForValidCookbookParameter(customParameters map[string]interface{}, allCookbookData l27.CookbookType, currenSystemOs string, currenRequestData *l27.CookbookRequest) error {
 
-	var err error
 	// for each custom set parameter, check if its one of the possible parameters for the current cookbooktype
 	for givenParameter, givenValue := range customParameters {
 		var isValidParameter bool = false
@@ -1186,12 +1458,13 @@ func checkForValidCookbookParameter(customParameters map[string]interface{}, all
 
 							valueString := fmt.Sprintf("%v", value)
 							// is value valid for given parameter
-							isExclusive := CheckCBValueForParameter(valueString, AllParameterOptions[givenParameter], givenParameter, currenSystemOs)
+							isExclusive, err := CheckCBValueForParameter(valueString, AllParameterOptions[givenParameter], givenParameter, currenSystemOs)
+							if err != nil {
+								return err
+							}
 
 							if isExclusive {
-								message := fmt.Sprintf("Value '%v' is not possible for multiselect.", value)
-								err := errors.New(message)
-								log.Fatal(err)
+								return fmt.Errorf("value '%v' is not possible for multiselect", value)
 							}
 						}
 
@@ -1216,49 +1489,39 @@ func checkForValidCookbookParameter(customParameters map[string]interface{}, all
 
 		// when parameter is not valid for cookbooktype
 		if !isValidParameter {
-			message := fmt.Sprintf("Given parameter key: '%v' NOT valid for cookbooktype %v!", givenParameter, allCookbookData.CookbookType.Name)
-			err = errors.New(message)
-			log.Fatal(err)
+			return fmt.Errorf("given parameter key: '%v' NOT valid for cookbooktype %v", givenParameter, allCookbookData.CookbookType.Name)
 		}
-
 	}
+
+	return nil
 }
 
 // check a value if its a valid option for the given parameter for the cookbook.
 // also do checks on compatibility with system and exlusivity
-func CheckCBValueForParameter(value string, options l27.CookbookParameterOptionValue, givenParameter string, currentSystemOs string) bool {
+func CheckCBValueForParameter(value string, options l27.CookbookParameterOptionValue, givenParameter string, currentSystemOs string) (bool, error) {
 	parameterOptionValue, found := options[value]
 
 	// check if given value is one of the options for the chosen selectable parameter
-	if found {
-
-		//  loop over all possible OS version and check if the chosen value is compatible with current system
-		var isCompatibleWithSystem bool = false
-		for _, osVersion := range parameterOptionValue.OperatingSystemVersions {
-
-			if osVersion.Name == currentSystemOs {
-				isCompatibleWithSystem = true
-
-			}
-		}
-
-		// error when value required OS version doesnt equal current system OS version
-		if !isCompatibleWithSystem {
-			message := fmt.Sprintf("Given %v: '%v' NOT compatible with current system: %v.", givenParameter, value, currentSystemOs)
-			err := errors.New(message)
-			log.Fatal(err)
-		}
-
-		return parameterOptionValue.Exclusive
-
-		// when value is not one of the selectable parameter options
-	} else {
-		message := fmt.Sprintf("Given value: '%v' NOT a valid option for parameter '%v'", value, givenParameter)
-		err := errors.New(message)
-		log.Fatal(err)
-
-		return false
+	if !found {
+		return false, fmt.Errorf("given value: '%v' NOT a valid option for parameter '%v'", value, givenParameter)
 	}
+
+	//  loop over all possible OS version and check if the chosen value is compatible with current system
+	var isCompatibleWithSystem bool = false
+	for _, osVersion := range parameterOptionValue.OperatingSystemVersions {
+
+		if osVersion.Name == currentSystemOs {
+			isCompatibleWithSystem = true
+
+		}
+	}
+
+	// error when value required OS version doesnt equal current system OS version
+	if !isCompatibleWithSystem {
+		return false, fmt.Errorf("given %v: '%v' NOT compatible with current system: %v", givenParameter, value, currentSystemOs)
+	}
+
+	return parameterOptionValue.Exclusive, nil
 }
 
 // #endregion
@@ -1279,13 +1542,20 @@ var SystemSystemgroupsGetCmd = &cobra.Command{
 	Use:   "get [systemID]",
 	Short: "Show list of all groups from a system.",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid systemID
-		systemId := resolveSystem(args[0])
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		groups := Level27Client.SystemSystemgroupsGet(systemId)
+		groups, err := Level27Client.SystemSystemgroupsGet(systemId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(groups, []string{"ID", "NAME"}, []string{"ID", "Name"})
+		return nil
 	},
 }
 
@@ -1294,14 +1564,28 @@ var SystemSystemgroupsAddCmd = &cobra.Command{
 	Use:   "add [systemID] [systemgroupID]",
 	Short: "Link a system with a systemgroup.",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid systemID
-		systemID := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid groupID type (int)
-		groupId := checkSingleIntID(args[1], "systemgroup")
+		groupId, err := resolveSystemgroup(args[1])
+		if err != nil {
+			return err
+		}
+
 		jsonRequest := gabs.New()
 		jsonRequest.Set(groupId, "systemgroup")
-		Level27Client.SystemSystemgroupsAdd(systemID, jsonRequest)
+		err = Level27Client.SystemSystemgroupsAdd(systemID, jsonRequest)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("System succesfully linked to systemgroup!")
+		return nil
 	},
 }
 
@@ -1310,13 +1594,26 @@ var SystemSystemgroupsRemoveCmd = &cobra.Command{
 	Use:   "remove [systemID] [systemgroupID]",
 	Short: "Unlink a system from a systemgroup.",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid systemId
-		systemId := resolveSystem(args[0])
-		// check for valid systemgroupId
-		groupId := checkSingleIntID(args[1], "systemgroup")
+		systemId, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemSystemgroupsRemove(systemId, groupId)
+		// check for valid systemgroupId
+		groupId, err := resolveSystemgroup(args[1])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.SystemSystemgroupsRemove(systemId, groupId)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("System succesfully removed from systemgroup!")
+		return nil
 	},
 }
 
@@ -1335,10 +1632,19 @@ var systemSshKeysGetCmd = &cobra.Command{
 	Use: "get",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		outputFormatTable(Level27Client.SystemGetSshKeys(id, optGetParameters), []string{"ID", "DESCRIPTION", "STATUS", "FINGERPRINT"}, []string{"ID", "Description", "ShsStatus", "Fingerprint"})
+		keys, err := Level27Client.SystemGetSshKeys(id, optGetParameters)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTable(keys, []string{"ID", "DESCRIPTION", "STATUS", "FINGERPRINT"}, []string{"ID", "Description", "ShsStatus", "Fingerprint"})
+		return nil
 	},
 }
 
@@ -1347,29 +1653,45 @@ var systemSshKeysAddCmd = &cobra.Command{
 	Use: "add",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
 		keyName := args[1]
 		keyID, err := strconv.Atoi(keyName)
 		if err != nil {
 			user := viper.GetInt("user_id")
 			org := viper.GetInt("org_id")
-			system := Level27Client.LookupSystemNonAddedSshkey(systemID, org, user, keyName)
-			if system == nil {
-				existing := Level27Client.LookupSystemSshkey(systemID, keyName)
-				if existing != nil {
-					fmt.Println("SSH key already exists on system!")
-					return
-				} else {
-					cobra.CheckErr("Unable to find SSH key to add")
-					return
-				}
+			system, err := Level27Client.LookupSystemNonAddedSshkey(systemID, org, user, keyName)
+			if err != nil {
+				return err
 			}
+
+			if system == nil {
+				existing, err := Level27Client.LookupSystemSshkey(systemID, keyName)
+				if err != nil {
+					return err
+				}
+
+				if existing != nil {
+					return errors.New("SSH key already exists on system")
+				}
+
+				return fmt.Errorf("unable to find SSH key to add: '%s'", keyName)
+			}
+
 			keyID = system.Id
 		}
 
-		Level27Client.SystemAddSshKey(systemID, keyID)
+		_, err = Level27Client.SystemAddSshKey(systemID, keyID)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("SSH key added succesfully!")
+		return nil
 	},
 }
 
@@ -1378,22 +1700,29 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 	Use: "remove",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
 		keyName := args[1]
 		keyID, err := strconv.Atoi(keyName)
 		if err != nil {
-			existing := Level27Client.LookupSystemSshkey(systemID, keyName)
+			existing, err := Level27Client.LookupSystemSshkey(systemID, keyName)
+			if err != nil {
+				return err
+			}
+
 			if existing == nil {
-				cobra.CheckErr("Unable to find SSH key to remove!")
-				return
+				return fmt.Errorf("unable to find SSH key to remove: %s", keyName)
 			}
 
 			keyID = existing.ID
 		}
 
-		Level27Client.SystemRemoveSshKey(systemID, keyID)
+		err = Level27Client.SystemRemoveSshKey(systemID, keyID)
+		return err
 	},
 }
 
@@ -1410,9 +1739,16 @@ var systemNetworkGetCmd = &cobra.Command{
 	Short: "Get list of networks on a system",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		system := Level27Client.SystemGetSingle(systemID)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		system, err := Level27Client.SystemGetSingle(systemID)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTableFuncs(system.Networks, []string{"ID", "Network ID", "Type", "Name", "MAC", "IPs"}, []interface{}{"ID", "NetworkID", func(net l27.SystemNetwork) string {
 			if net.NetPublic {
@@ -1428,6 +1764,8 @@ var systemNetworkGetCmd = &cobra.Command{
 		}, "Name", "Mac", func(net l27.SystemNetwork) string {
 			return strconv.Itoa(len(net.Ips))
 		}})
+
+		return nil
 	},
 }
 
@@ -1436,15 +1774,28 @@ var systemNetworkDescribeCmd = &cobra.Command{
 	Short: "Display detailed information about all networks on a system",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		system := Level27Client.SystemGetSingle(systemID)
-		networks := Level27Client.SystemGetHasNetworks(systemID)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		system, err := Level27Client.SystemGetSingle(systemID)
+		if err != nil {
+			return err
+		}
+
+		networks, err := Level27Client.SystemGetHasNetworks(systemID)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTemplate(DescribeSystemNetworks{
 			Networks:    system.Networks,
 			HasNetworks: networks,
 		}, "templates/systemNetworks.tmpl")
+
+		return nil
 	},
 }
 
@@ -1453,11 +1804,24 @@ var systemNetworkAddCmd = &cobra.Command{
 	Short: "Add a network to a system",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		networkID := resolveNetwork(args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemAddHasNetwork(systemID, networkID)
+		networkID, err := resolveNetwork(args[1])
+		if err != nil {
+			return err
+		}
+
+		_, err = Level27Client.SystemAddHasNetwork(systemID, networkID)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Network succesfully added to system!")
+		return nil
 	},
 }
 
@@ -1466,11 +1830,24 @@ var systemNetworkRemoveCmd = &cobra.Command{
 	Short: "Remove a network from a system",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		networkID := resolveSystemHasNetwork(systemID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemRemoveHasNetwork(systemID, networkID)
+		networkID, err := resolveSystemHasNetwork(systemID, args[1])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.SystemRemoveHasNetwork(systemID, networkID)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Network succesfully removed from network!")
+		return nil
 	},
 }
 
@@ -1484,11 +1861,22 @@ var systemNetworkIpGetCmd = &cobra.Command{
 	Short: "Get all IP addresses for a system network",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		networkID := resolveSystemHasNetwork(systemID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		ips := Level27Client.SystemGetHasNetworkIps(systemID, networkID)
+		networkID, err := resolveSystemHasNetwork(systemID, args[1])
+		if err != nil {
+			return err
+		}
+
+		ips, err := Level27Client.SystemGetHasNetworkIps(systemID, networkID)
+		if err != nil {
+			return err
+		}
+
 		outputFormatTableFuncs(ips, []string{"ID", "Public IP", "IP", "Hostname", "Status"}, []interface{}{"ID", func(i l27.SystemHasNetworkIp) string {
 			if i.PublicIpv4 != "" {
 				i, _ := strconv.Atoi(i.PublicIpv4)
@@ -1519,6 +1907,8 @@ var systemNetworkIpGetCmd = &cobra.Command{
 					return ""
 				}
 			}, "Hostname", "Status"})
+
+		return nil
 	},
 }
 
@@ -1530,16 +1920,35 @@ var systemNetworkIpAddCmd = &cobra.Command{
 	Long:  "Adds an IP address to a system network. Address can be either IPv4 or IPv6. The special values 'auto' and 'auto-v6' automatically fetch an unused address to use.",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		system := Level27Client.SystemGetSingle(systemID)
-		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
-		network := Level27Client.GetSystemHasNetwork(systemID, hasNetworkID)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		system, err := Level27Client.SystemGetSingle(systemID)
+		if err != nil {
+			return err
+		}
+
+		hasNetworkID, err := resolveSystemHasNetwork(systemID, args[1])
+		if err != nil {
+			return err
+		}
+
+		network, err := Level27Client.GetSystemHasNetwork(systemID, hasNetworkID)
+		if err != nil {
+			return err
+		}
+
 		networkID := network.Network.ID
 		address := args[2]
 
 		if address == "auto" || address == "auto-v6" {
-			located := Level27Client.NetworkLocate(networkID)
+			located, err := Level27Client.NetworkLocate(networkID)
+			if err != nil {
+				return err
+			}
 
 			var choices []string
 			if address == "auto" {
@@ -1549,7 +1958,7 @@ var systemNetworkIpAddCmd = &cobra.Command{
 			}
 
 			if len(choices) == 0 {
-				cobra.CheckErr("Unable to find a free IP address")
+				return errors.New("unable to find a free IP address")
 			}
 
 			address = choices[0]
@@ -1579,7 +1988,8 @@ var systemNetworkIpAddCmd = &cobra.Command{
 			data.Hostname = systemNetworkIpAddHostname
 		}
 
-		Level27Client.SystemAddHasNetworkIps(systemID, hasNetworkID, data)
+		_, err = Level27Client.SystemAddHasNetworkIps(systemID, hasNetworkID, data)
+		return err
 	},
 }
 
@@ -1588,13 +1998,24 @@ var systemNetworkIpRemoveCmd = &cobra.Command{
 	Short: "Remove IP address from a system network",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		ipID := resolveSystemHasNetworkIP(systemID, hasNetworkID, args[2])
+		hasNetworkID, err := resolveSystemHasNetwork(systemID, args[1])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.SystemRemoveHasNetworkIps(systemID, hasNetworkID, ipID)
+		ipID, err := resolveSystemHasNetworkIP(systemID, hasNetworkID, args[2])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.SystemRemoveHasNetworkIps(systemID, hasNetworkID, ipID)
+		return err
 	},
 }
 
@@ -1603,14 +2024,31 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 	Short: "Update settings on a system network IP",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		systemID := resolveSystem(args[0])
-		hasNetworkID := resolveSystemHasNetwork(systemID, args[1])
-		ipID := resolveSystemHasNetworkIP(systemID, hasNetworkID, args[2])
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		ip := Level27Client.SystemGetHasNetworkIp(systemID, hasNetworkID, ipID)
+		hasNetworkID, err := resolveSystemHasNetwork(systemID, args[1])
+		if err != nil {
+			return err
+		}
+
+		ipID, err := resolveSystemHasNetworkIP(systemID, hasNetworkID, args[2])
+		if err != nil {
+			return err
+		}
+
+		ip, err := Level27Client.SystemGetHasNetworkIp(systemID, hasNetworkID, ipID)
+		if err != nil {
+			return err
+		}
 
 		ipPut := l27.SystemHasNetworkIpPut{
 			Hostname: ip.Hostname,
@@ -1618,7 +2056,8 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 
 		data := mergeSettingsWithEntity(ipPut, settings)
 
-		Level27Client.SystemHasNetworkIpUpdate(systemID, hasNetworkID, ipID, data)
+		err = Level27Client.SystemHasNetworkIpUpdate(systemID, hasNetworkID, ipID, data)
+		return err
 	},
 }
 
@@ -1636,14 +2075,23 @@ var systemVolumeGetCmd = &cobra.Command{
 	Short: "Get all volumes on a system",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		volumes := Level27Client.SystemGetVolumes(systemID, optGetParameters)
+		volumes, err := Level27Client.SystemGetVolumes(systemID, optGetParameters)
+		if err != nil {
+			return err
+		}
+
 		outputFormatTable(
 			volumes,
 			[]string{"ID", "Name", "Status", "Space", "UID", "AutoResize", "DeviceName"},
 			[]string{"ID", "Name", "Status", "Space", "UID", "AutoResize", "DeviceName"})
+
+		return nil
 	},
 }
 
@@ -1659,10 +2107,16 @@ var systemVolumeCreateCmd = &cobra.Command{
 	Short: "Create a new volume for a system",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		organisationID := resolveOrganisation(systemVolumeCreateOrganisation)
+		organisationID, err := resolveOrganisation(systemVolumeCreateOrganisation)
+		if err != nil {
+			return err
+		}
 
 		create := l27.VolumeCreate{
 			Name:         systemVolumeCreateName,
@@ -1673,7 +2127,8 @@ var systemVolumeCreateCmd = &cobra.Command{
 			DeviceName:   systemVolumeCreateDeviceName,
 		}
 
-		Level27Client.VolumeCreate(create)
+		_, err = Level27Client.VolumeCreate(create)
+		return err
 	},
 }
 
@@ -1683,11 +2138,19 @@ var systemVolumeUnlinkCmd = &cobra.Command{
 	Short: "Unlink a volume from a system",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		volumeID := resolveSystemVolume(systemID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.VolumeUnlink(volumeID, systemID)
+		volumeID, err := resolveSystemVolume(systemID, args[1])
+		if err != nil {
+			return err
+		}
+
+		_, err = Level27Client.VolumeUnlink(volumeID, systemID)
+		return err
 	},
 }
 
@@ -1697,15 +2160,30 @@ var systemVolumeLinkCmd = &cobra.Command{
 	Short: "Link a volume to a system",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
 		// To resolve from name -> ID we need the volume group
 		// Easiest way to get that is by getting the volume group ID from the first volume on the system.
-		volumeGroupID := Level27Client.SystemGetVolumes(systemID, l27.CommonGetParams{})[0].Volumegroup.ID
-		volumeID := resolveVolumegroupVolume(volumeGroupID, args[1])
+		volumes, err := Level27Client.SystemGetVolumes(systemID, l27.CommonGetParams{})
+		if err != nil {
+			return err
+		}
+
+		volumeGroupID := volumes[0].Volumegroup.ID
+
+		volumeID, err := resolveVolumegroupVolume(volumeGroupID, args[1])
+		if err != nil {
+			return err
+		}
+
 		deviceName := args[2]
 
-		Level27Client.VolumeLink(volumeID, systemID, deviceName)
+		_, err = Level27Client.VolumeLink(volumeID, systemID, deviceName)
+		return err
 	},
 }
 
@@ -1716,19 +2194,30 @@ var systemVolumeDeleteCmd = &cobra.Command{
 	Short: "Unlink and delete a volume on a system",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		systemID := resolveSystem(args[0])
-		volumeID := resolveSystemVolume(systemID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		volumeID, err := resolveSystemVolume(systemID, args[1])
+		if err != nil {
+			return err
+		}
 
 		if !systemVolumeDeleteForce {
-			volume := Level27Client.VolumeGetSingle(volumeID)
+			volume, err := Level27Client.VolumeGetSingle(volumeID)
+			if err != nil {
+				return err
+			}
 
 			if !confirmPrompt(fmt.Sprintf("Delete volume %s (%d)?", volume.Name, volume.ID)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.VolumeDelete(volumeID)
+		err = Level27Client.VolumeDelete(volumeID)
+		return err
 	},
 }
 
@@ -1738,13 +2227,26 @@ var systemVolumeUpdateCmd = &cobra.Command{
 	Short: "Update settings on a volume",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		systemID := resolveSystem(args[0])
-		volumeID := resolveSystemVolume(systemID, args[1])
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
 
-		volume := Level27Client.VolumeGetSingle(volumeID)
+		volumeID, err := resolveSystemVolume(systemID, args[1])
+		if err != nil {
+			return err
+		}
+
+		volume, err := Level27Client.VolumeGetSingle(volumeID)
+		if err != nil {
+			return err
+		}
 
 		volumePut := l27.VolumePut{
 			Name:         volume.Name,
@@ -1760,9 +2262,13 @@ var systemVolumeUpdateCmd = &cobra.Command{
 		data := utils.RoundTripJson(volumePut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"], err = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		if err != nil {
+			return err
+		}
 
-		Level27Client.VolumeUpdate(volumeID, data)
+		err = Level27Client.VolumeUpdate(volumeID, data)
+		return err
 	},
 }
 

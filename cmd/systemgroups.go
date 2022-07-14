@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -50,31 +51,49 @@ func init() {
 	addDeleteConfirmFlag(systemgroupsDeleteCmd)
 }
 
-func resolveSystemgroup(arg string) int {
+func resolveSystemgroup(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.SystemgroupLookup(arg),
+	options, err := Level27Client.SystemgroupLookup(arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"systemgroup",
-		func(group l27.Systemgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
+		func(group l27.Systemgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, err
 }
 
 //------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 // ---------------- DESCRIBE
 var systemgroupDescribeCmd = &cobra.Command{
 	Use: "describe",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid systemgroupId type
-		systemgroupID := checkSingleIntID(args[0], "systemgroup")
+		systemgroupID, err := checkSingleIntID(args[0], "systemgroup")
+		if err != nil {
+			return err
+		}
 
-		systemgroup := Level27Client.SystemgroupsgetSingle(systemgroupID)
+		systemgroup, err := Level27Client.SystemgroupsgetSingle(systemgroupID)
+		if err != nil {
+			return err
+		}
 
 		// create output on template
 		outputFormatTemplate(systemgroup, "templates/systemgroup.tmpl")
+		return nil
 	},
 }
 
@@ -82,12 +101,14 @@ var systemgroupDescribeCmd = &cobra.Command{
 var systemgroupsGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Show list of all available systemgroups.",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		systemgroups := Level27Client.SystemgroupsGet(optGetParameters)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemgroups, err := Level27Client.SystemgroupsGet(optGetParameters)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(systemgroups, []string{"ID", "NAME", "ORGANISATION"}, []string{"ID", "Name", "Organisation.Name"})
-
+		return nil
 	},
 }
 
@@ -96,28 +117,29 @@ var systemgroupCreateName, systemgroupCreateOrg string
 var systemgroupsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new systemgroup.",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		// this function accepts the organisation name (string)
-		// and will look up the ID if the name is found
-		organisationId := resolveOrganisation(systemgroupCreateOrg)
-
-		// when given an empty string as name
-		if len(systemgroupCreateName) == 0 {
-			cobra.CheckErr("Name cannot be empty!")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if systemgroupCreateName == "" {
+			return errors.New("name cannot be empty")
 		}
 
-		// fill in given data in request type
+		organisationId, err := resolveOrganisation(systemgroupCreateOrg)
+		if err != nil {
+			return err
+		}
+
 		request := l27.SystemgroupRequest{
 			Name:         systemgroupCreateName,
 			Organisation: organisationId,
 		}
 
-		systemgroup := Level27Client.SystemgroupsCreate(request)
+		systemgroup, err := Level27Client.SystemgroupsCreate(request)
+		if err != nil {
+			return err
+		}
 
 		// will only print if systemgroup is created successfully
 		log.Printf("systemgroup succesfully created. [ID: '%v' - NAME: '%v'].", systemgroup.ID, systemgroup.Name)
-
+		return err
 	},
 }
 
@@ -125,62 +147,77 @@ var systemgroupsCreateCmd = &cobra.Command{
 var systemgroupUpdateName, systemgroupUpdateOrg string
 var systemgroupsUpdateCmd = &cobra.Command{
 	Use: "update",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		//check for valid systemgroupId type
-		systemgroupID := checkSingleIntID(args[0], "systemgroup")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemgroupID, err := resolveSystemgroup(args[0])
+		if err != nil {
+			return err
+		}
 
 		// when no flag has been set. -> dont need to do an update
 		if !cmd.Flag("name").Changed && !cmd.Flag("organisation").Changed {
-			// get current data from the systemgroup
-			currentData := Level27Client.SystemgroupsgetSingle(systemgroupID)
-
-			// fill in current data in request type (case only one thing has to change. the other one still needs to be send aswell (put))
-			request := l27.SystemgroupRequest{
-				Name:         currentData.Name,
-				Organisation: currentData.Organisation.ID,
-			}
-
-			// when organisation flag is used
-			if cmd.Flag("organisation").Changed {
-				// this function accepts the organisation name (string)
-				// and will look up the ID if the name is found
-				organisationId := resolveOrganisation(systemgroupUpdateOrg)
-				request.Organisation = organisationId
-			}
-
-			// when name flag is used
-			if cmd.Flag("name").Changed {
-				// when given an empty string as name for systemgroup
-				if len(systemgroupUpdateName) == 0 {
-					cobra.CheckErr("Name cannot be empty!")
-				} else {
-					request.Name = systemgroupUpdateName
-				}
-			}
-
-			Level27Client.SystemgroupsUpdate(systemgroupID, request)
-
+			return nil
 		}
 
+		// get current data from the systemgroup
+		currentData, err := Level27Client.SystemgroupsgetSingle(systemgroupID)
+		if err != nil {
+			return err
+		}
+
+		// fill in current data in request type (case only one thing has to change. the other one still needs to be send aswell (put))
+		request := l27.SystemgroupRequest{
+			Name:         currentData.Name,
+			Organisation: currentData.Organisation.ID,
+		}
+
+		// when organisation flag is used
+		if cmd.Flag("organisation").Changed {
+			// this function accepts the organisation name (string)
+			// and will look up the ID if the name is found
+			organisationId, err := resolveOrganisation(systemgroupUpdateOrg)
+			if err != nil {
+				return err
+			}
+
+			request.Organisation = organisationId
+		}
+
+		// when name flag is used
+		if cmd.Flag("name").Changed {
+			// when given an empty string as name for systemgroup
+			if len(systemgroupUpdateName) == 0 {
+				return errors.New("name cannot be empty")
+			}
+
+			request.Name = systemgroupUpdateName
+		}
+
+		err = Level27Client.SystemgroupsUpdate(systemgroupID, request)
+		return err
 	},
 }
 
 // ---------------- DELETE
 var systemgroupsDeleteCmd = &cobra.Command{
 	Use: "delete",
-	Run: func(cmd *cobra.Command, args []string) {
-		//check for valid systemgroupId type
-		systemgroupId := checkSingleIntID(args[0], "systemgroup")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemgroupId, err := resolveSystemgroup(args[0])
+		if err != nil {
+			return err
+		}
 
 		if !optDeleteConfirmed {
-			group := Level27Client.SystemgroupsgetSingle(systemgroupId)
+			group, err := Level27Client.SystemgroupsgetSingle(systemgroupId)
+			if err != nil {
+				return err
+			}
 
 			if !confirmPrompt(fmt.Sprintf("Delete system group %s (%d)?", group.Name, group.ID)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.SystemgroupDelete(systemgroupId)
+		err = Level27Client.SystemgroupDelete(systemgroupId)
+		return err
 	},
 }

@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -47,11 +48,15 @@ var Level27Client *l27.Client
 // NOTE: subcommands like get add themselves to root in their init().
 // This requires importing them manually in main.go
 
+var errSilent = errors.New("silentErr")
+
 // rootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "lvl",
-	Short: "CLI tool to manage Level27 entities",
-	Long:  `lvl is a CLI tool that empowers users.`,
+	Use:           "lvl",
+	Short:         "CLI tool to manage Level27 entities",
+	Long:          `lvl is a CLI tool that empowers users.`,
+	SilenceErrors: true,
+	SilenceUsage:  true,
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		outputSet := viper.GetString("output")
@@ -70,7 +75,16 @@ var RootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	cobra.CheckErr(RootCmd.Execute())
+	// See https://github.com/spf13/cobra/issues/914 for some of the error handling details.
+
+	err := RootCmd.Execute()
+	if err != nil {
+		if err != errSilent {
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		}
+
+		os.Exit(1)
+	}
 }
 
 var traceRequests bool
@@ -89,6 +103,12 @@ func init() {
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("apikey", RootCmd.PersistentFlags().Lookup("apikey"))
 	viper.BindPFlag("output", RootCmd.PersistentFlags().Lookup("output"))
+
+	RootCmd.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
+		cmd.Println(err)
+		cmd.Println(cmd.UsageString())
+		return errSilent
+	})
 }
 
 // initConfig reads in config file and ENV variables if set.

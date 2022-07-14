@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/level27/l27-go"
@@ -10,7 +11,7 @@ import (
 // Add common commands for managing entity access to a parent command.
 // entityType is the type for /{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string) int) {
+func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
 	// <ENTITY> ACCESS
 	var accessCmd = &cobra.Command{
 		Use:   "access",
@@ -23,10 +24,16 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 		Short: "List organisations with access to an entity",
 
 		Args: cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return fmt.Errorf("unable to resolve %s '%s': %v", entityType, args[0], err)
+			}
 
-			organisations := Level27Client.EntityGetOrganisations(entityType, entityID)
+			organisations, err := Level27Client.EntityGetOrganisations(entityType, entityID)
+			if err != nil {
+				return err
+			}
 
 			outputFormatTableFuncs(
 				organisations,
@@ -34,6 +41,8 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 				[]interface{}{"ID", "Name", "Type", func(org l27.OrganisationAccess) int {
 					return len(org.Users)
 				}})
+
+			return nil
 		},
 	}
 
@@ -43,15 +52,26 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 		Short: "Grant an organisation access to an entity",
 
 		Args: cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
-			organisationID := resolveOrganisation(args[1])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
-			Level27Client.EntityAddAcl(entityType, entityID, l27.AclAdd{
+			organisationID, err := resolveOrganisation(args[1])
+			if err != nil {
+				return err
+			}
+
+			_, err = Level27Client.EntityAddAcl(entityType, entityID, l27.AclAdd{
 				Organisation: organisationID,
 			})
 
-			log.Printf("Succesfully added access!")
+			if err == nil {
+				log.Printf("Succesfully added access!")
+			}
+
+			return err
 		},
 	}
 
@@ -61,13 +81,24 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 		Short: "Revoke an organisation's access to an entity",
 
 		Args: cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
-			organisationID := resolveOrganisation(args[1])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
-			Level27Client.EntityRemoveAcl(entityType, entityID, organisationID)
+			organisationID, err := resolveOrganisation(args[1])
+			if err != nil {
+				return err
+			}
 
-			log.Printf("%v's access removed!", args[1])
+			err = Level27Client.EntityRemoveAcl(entityType, entityID, organisationID)
+
+			if err == nil {
+				log.Printf("%v's access removed!", args[1])
+			}
+
+			return err
 		},
 	}
 
