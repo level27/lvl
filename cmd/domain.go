@@ -426,7 +426,7 @@ var domainCreateCmd = &cobra.Command{
 			return err
 		}
 
-		domain, err := Level27Client.DomainCreate(args, requestData)
+		domain, err := Level27Client.DomainCreate(requestData)
 		if err != nil {
 			return err
 		}
@@ -446,7 +446,7 @@ var domainTransferCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.DomainTransfer(args, requestData)
+		Level27Client.DomainTransfer(requestData)
 		return nil
 	},
 }
@@ -461,7 +461,7 @@ var domainInternalTransferCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.DomainTransfer(args, requestData)
+		Level27Client.DomainTransfer(requestData)
 		return nil
 	},
 }
