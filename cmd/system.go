@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"os/exec"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/level27/l27-go"
@@ -235,6 +239,9 @@ func init() {
 	systemSshKeysCmd.AddCommand(systemSshKeysRemoveCmd)
 
 	// #endregion
+
+	// SYSTEM SSH
+	systemCmd.AddCommand(systemSshCmd)
 
 	//------------------------------------- NETWORKS -------------------------------------
 	// #region NETWORKS
@@ -1391,7 +1398,7 @@ var systemCookbookUpdateCmd = &cobra.Command{
 		}
 
 		// loop over current data and check if values are default. (default values dont need to be in put request)
-		for key, value := range currentCookbookData.CookbookParameters {
+		for key, value := range currentCookbookData.CookbookParameters.Map {
 			if !value.Default {
 				baseRequestData.Cookbookparameters[key] = value.Value
 			}
@@ -1727,6 +1734,138 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 }
 
 // #endregion
+
+// SYSTEM SSH
+var systemSshCmd = &cobra.Command{
+	Use:   "ssh [system] [ssh args]",
+	Short: "Connect to a system via SSH, automatically adding SSH keys to the system if necessary",
+
+	Args: cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		favoriteKeyID := viper.GetInt("ssh_favoritekey")
+		if favoriteKeyID == 0 {
+			return fmt.Errorf("no favorite SSH key configured. Use 'lvl sshkey favorite' to configure one")
+		}
+
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		// We need to do two things:
+		// 1. Make sure we have an SSH key on the system.
+		// 2. Fetch the host to pass in the ssh command.
+		// We send these as concurrent tasks to reduce latency on the command.
+
+		taskSshKey := taskRunVoid(func() error {
+			// Add favorite SSH key, if necessary.
+			_, err = Level27Client.SystemSshKeysGetSingle(systemID, favoriteKeyID)
+			if err != nil {
+				// Error, might indicate SSH key doesn't exist yet.
+				_, ok := err.(l27.ErrorResponse)
+				if !ok {
+					// Not an API error, could be network failure or something instead, abort.
+					return err
+				}
+
+				// TODO: check error code above, isn't currently correct thanks to PL-7611
+				// For now we assume it's just a 404, so try to add the SSH key.
+
+				err = waitAddSshKey(systemID, favoriteKeyID)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+
+		taskSshHost := taskRun(func() (string, error) {
+			system, err := Level27Client.SystemGetSingle(systemID)
+			if err != nil {
+				return "", err
+			}
+
+			ips, err := net.LookupIP(system.Fqdn)
+			if err == nil && len(ips) > 0 {
+				// FQDN resolves, pass it to the ssh command.
+				return system.Fqdn, nil
+			}
+
+			sort.Slice(system.Networks, func(i int, j int) bool {
+				netA := system.Networks[i]
+				netB := system.Networks[j]
+
+				return netA.NetPublic && netB.NetInternal
+			})
+
+			for _, net := range system.Networks {
+				for _, ip := range net.Ips {
+					if ip.PublicIpv4 != "" {
+						return ip.PublicIpv4, nil
+					}
+
+					if ip.Ipv4 != "" {
+						return ip.Ipv4, nil
+					}
+				}
+			}
+
+			// Not found
+			return "", fmt.Errorf("unable to find a suitable address to connect to")
+		})
+
+		sshHost := <-taskSshHost
+		if sshHost.Error != nil {
+			return sshHost.Error
+		}
+
+		err = <-taskSshKey
+		if err != nil {
+			return err
+		}
+
+		sshArgs := []string{fmt.Sprintf("root@%s", sshHost.Result)}
+		sshArgs = append(sshArgs, args[1:]...)
+
+		sshCmd := exec.Command("ssh", sshArgs...)
+		sshCmd.Stdin = os.Stdin
+		sshCmd.Stdout = os.Stdout
+		sshCmd.Stderr = os.Stderr
+		runErr := sshCmd.Run()
+		if exitErr, ok := runErr.(*exec.ExitError); ok {
+			os.Exit(exitErr.ExitCode())
+		}
+
+		return runErr
+	},
+}
+
+func waitAddSshKey(systemID int, sshKeyID int) error {
+	key, err := Level27Client.SystemAddSshKey(systemID, sshKeyID)
+	if err != nil {
+		return err
+	}
+
+	// Use polling to wait for the SSH key to be fully set-up on the system.
+
+	// Growing wait times on further iterations.
+	waitTimes := []int{1, 1, 2, 3, 5, 8, 13, 21, 34}
+	for _, wait := range waitTimes {
+		time.Sleep(time.Duration(wait * int(time.Second)))
+
+		key, err = Level27Client.SystemSshKeysGetSingle(systemID, key.ID)
+		if err != nil {
+			return err
+		}
+
+		if key.ShsStatus == "ok" {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("timeout waiting for added key to change to 'ok' status")
+}
 
 // NETWORKS
 
