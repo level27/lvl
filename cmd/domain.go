@@ -334,18 +334,18 @@ func getDomainRequestData() (l27.DomainRequest, error) {
 	requestData := l27.DomainRequest{
 		Name:          domainCreateName,
 		NameServer1:   &domainCreateNs1,
-		NameServer2:   domainCreateNs2,
-		NameServer3:   domainCreateNs3,
-		NameServer4:   domainCreateNs4,
-		NameServer1Ip: domainCreateNsIp1,
-		NameServer2Ip: domainCreateNsIp2,
-		NameServer3Ip: domainCreateNsIp3,
-		NameServer4Ip: domainCreateNsIp4,
+		NameServer2:   &domainCreateNs2,
+		NameServer3:   &domainCreateNs3,
+		NameServer4:   &domainCreateNs4,
+		NameServer1Ip: &domainCreateNsIp1,
+		NameServer2Ip: &domainCreateNsIp2,
+		NameServer3Ip: &domainCreateNsIp3,
+		NameServer4Ip: &domainCreateNsIp4,
 
-		NameServer1Ipv6: domainCreateNsIpv61,
-		NameServer2Ipv6: domainCreateNsIpv62,
-		NameServer3Ipv6: domainCreateNsIpv63,
-		NameServer4Ipv6: domainCreateNsIpv64,
+		NameServer1Ipv6: &domainCreateNsIpv61,
+		NameServer2Ipv6: &domainCreateNsIpv62,
+		NameServer3Ipv6: &domainCreateNsIpv63,
+		NameServer4Ipv6: &domainCreateNsIpv64,
 
 		TTL:                       domainCreateTtl,
 		Action:                    domainCreateAction,
@@ -363,7 +363,7 @@ func getDomainRequestData() (l27.DomainRequest, error) {
 		// DtExternalExpires:         domainCreateExternalExpires,
 		// ConvertDomainRecords:      domainCreateConvertDomainRecords,
 		AutoTeams:    domainCreateAutoTeams,
-		ExternalInfo: domainCreateExternalInfo,
+		ExternalInfo: &domainCreateExternalInfo,
 	}
 
 	if *requestData.DomainContactOnSite == 0 {
