@@ -9,7 +9,7 @@ System: {{.System.Name}}  SYSTEM_ID: {{.System.Id}}
 
   {{- $anyParams := false }}
 
-  CUSTOM_COOKBOOKPARAMETERS: {{ range $key, $dat := .CookbookParameters }}{{ if not $dat.Default }}
+  CUSTOM_COOKBOOKPARAMETERS: {{ range $key, $dat := .CookbookParameters.Map }}{{ if not $dat.Default }}
     {{- $anyParams = true }}
     {{ $key }}: {{vt "brightwhite"}}{{ $dat.Value}}    
   {{ end }}{{ end }}{{if not $anyParams}}(none){{ end -}}

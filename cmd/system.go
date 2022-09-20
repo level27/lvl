@@ -340,6 +340,24 @@ func resolveSystem(arg string) (int, error) {
 	return res.Id, err
 }
 
+func resolveSystemCookbook(systemID int, arg string) (int, error) {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	cookbook, err := Level27Client.SystemCookbookLookup(systemID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	if cookbook == nil {
+		return 0, fmt.Errorf("system (%d) does not have a cookbook of type '%s'", systemID, arg)
+	}
+
+	return cookbook.Id, nil
+}
+
 func resolveSystemProviderConfiguration(region int, arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
@@ -1285,7 +1303,7 @@ var SystemCookbookTypesGetCmd = &cobra.Command{
 
 // ---------------- DESCRIBE
 var systemCookbookDescribeCmd = &cobra.Command{
-	Use:   "describe",
+	Use:   "describe <system> <cookbook>",
 	Short: "show detailed info about a cookbook on a system",
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -1295,8 +1313,7 @@ var systemCookbookDescribeCmd = &cobra.Command{
 			return err
 		}
 
-		// check for valid cookbook id
-		cookbookId, err := checkSingleIntID(args[1], "cookbook")
+		cookbookId, err := resolveSystemCookbook(systemId, args[1])
 		if err != nil {
 			return err
 		}
@@ -1318,14 +1335,12 @@ var systemCookbookDeleteCmd = &cobra.Command{
 
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// check for valid system id
 		systemId, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid cookbook id
-		cookbookId, err := checkSingleIntID(args[1], "cookbook")
+		cookbookId, err := resolveSystemCookbook(systemId, args[1])
 		if err != nil {
 			return err
 		}
@@ -1365,8 +1380,7 @@ var systemCookbookUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		// check for valid cookbook id
-		cookbookId, err := checkSingleIntID(args[1], "cookbook")
+		cookbookId, err := resolveSystemCookbook(systemId, args[1])
 		if err != nil {
 			return err
 		}
