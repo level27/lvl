@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -267,14 +268,17 @@ func outputFormatTableYaml(objects interface{}) {
 	fmt.Println(string(b))
 }
 
+//go:embed templates
+var templates embed.FS
+
 func outputFormatTemplateText(object interface{}, templatePath string) {
 	_, fileName := path.Split(templatePath)
 
 	tmpl := template.New(fileName)
 	tmpl.Funcs(sprig.TxtFuncMap())
 	tmpl.Funcs(utils.MakeTemplateHelpers(tmpl))
-	tmpl = template.Must(tmpl.ParseFiles(templatePath))
-	tmpl = template.Must(tmpl.ParseGlob("templates/helpers/*.tmpl"))
+	tmpl = template.Must(tmpl.ParseFS(templates, templatePath))
+	tmpl = template.Must(tmpl.ParseFS(templates, "templates/helpers/*.tmpl"))
 
 	err := tmpl.Execute(os.Stdout, object)
 	if err != nil {
