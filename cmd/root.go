@@ -98,7 +98,7 @@ func init() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
 	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
-	RootCmd.PersistentFlags().BoolVar(&traceRequests, "trace", false, "Do detailed network request logging")
+	RootCmd.PersistentFlags().BoolVar(&traceRequests, "trace", false, "Do detailed network request logging. This is intended for debugging and should not be parsed.")
 	RootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "Specifies output mode for commands. Accepted values are text or json.")
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
