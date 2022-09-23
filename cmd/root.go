@@ -133,15 +133,13 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		apiKey = viper.GetString("apiKey")
-		apiUrl = viper.GetString("apiUrl")
-		Level27Client = l27.NewAPIClient(apiUrl, apiKey)
-		if traceRequests {
-			Level27Client.TraceRequests(&colorRequestTracer{})
+	if err := viper.ReadInConfig(); err != nil {
+		if !isViperConfigNotFound(err) {
+			// Error we can't handle.
+			log.Fatalf("Error while reading configuration: %s", err.Error())
 		}
-	} else {
-		// config file is not found we create it
+
+		// Config file doesn't exist yet, create it.
 		fmt.Println(cfgFile)
 		if cfgFile == "" {
 			home, _ := homedir.Dir()
@@ -156,6 +154,28 @@ func initConfig() {
 			}
 		}
 	}
+
+	// Load values from config.
+	apiKey = viper.GetString("apiKey")
+	apiUrl = viper.GetString("apiUrl")
+	Level27Client = l27.NewAPIClient(apiUrl, apiKey)
+	if traceRequests {
+		Level27Client.TraceRequests(&colorRequestTracer{})
+	}
+}
+
+// Viper doesn't consistently return a ConfigFileNotFoundError in all cases.
+// This helper function checks for ENOENT aswell.
+func isViperConfigNotFound(err error) bool {
+	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		return true
+	}
+
+	if os.IsNotExist(err) {
+		return true
+	}
+
+	return false
 }
 
 // Output formatting functions
