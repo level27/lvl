@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +43,6 @@ func init() {
 	// MAIL ACTIONS DEACTIVATE
 	mailActionsCmd.AddCommand(mailActionsDeactivateCmd)
 
-
 	// MAIL DOMAIN
 	mailCmd.AddCommand(mailDomainCmd)
 
@@ -61,7 +60,6 @@ func init() {
 	mailDomainCmd.AddCommand(mailDomainUpdateCmd)
 	settingsFileFlag(mailDomainUpdateCmd)
 	settingString(mailDomainUpdateCmd, updateSettings, "handleMailDns", "")
-
 
 	// MAIL BOX
 	mailCmd.AddCommand(mailBoxCmd)
@@ -102,7 +100,6 @@ func init() {
 
 	// MAIL BOX ADDRESS REMOVE
 	mailBoxAddressCmd.AddCommand(mailBoxAddressRemoveCmd)
-
 
 	// MAIL FORWARDER
 	mailCmd.AddCommand(mailForwarderCmd)
@@ -146,78 +143,123 @@ func init() {
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
 // Returns ID if it's a numeric ID, otherwise resolves by name.
-func resolveMailgroup(arg string) int {
+func resolveMailgroup(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.MailgroupsLookup(arg),
+	options, err := Level27Client.MailgroupsLookup(arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"mailgroup",
-		func (group types.Mailgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) }).ID
-}
+		func(group l27.Mailgroup) string { return fmt.Sprintf("%s (%d)", group.Name, group.ID) })
 
-func resolveMailbox(mailgroupID int, arg string) int {
-	id, err := strconv.Atoi(arg)
-	if err == nil {
-		return id
+	if err != nil {
+		return 0, err
 	}
 
-	return resolveShared(
-		Level27Client.MailgroupsMailboxesLookup(mailgroupID, arg),
+	return res.ID, nil
+}
+
+func resolveMailbox(mailgroupID int, arg string) (int, error) {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.MailgroupsMailboxesLookup(mailgroupID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"mailbox",
-		func (box types.MailboxShort) string { return fmt.Sprintf("%s (%s, %d)", box.Name, box.Username, box.ID) }).ID
-}
+		func(box l27.MailboxShort) string { return fmt.Sprintf("%s (%s, %d)", box.Name, box.Username, box.ID) })
 
-func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) int {
-	id, err := strconv.Atoi(arg)
-	if err == nil {
-		return id
+	if err != nil {
+		return 0, err
 	}
 
+	return res.ID, nil
+}
 
-	return resolveShared(
-		Level27Client.MailgroupsMailboxesAddressesLookup(mailgroupID, mailboxID, arg),
+func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) (int, error) {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.MailgroupsMailboxesAddressesLookup(mailgroupID, mailboxID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"mailbox address",
-		func (address types.MailboxAddress) string { return fmt.Sprintf("%s (%d)", address.Address, address.ID) }).ID
-}
+		func(address l27.MailboxAddress) string { return fmt.Sprintf("%s (%d)", address.Address, address.ID) })
 
-func resolveMailforwarder(mailgroupID int, arg string) int {
-	id, err := strconv.Atoi(arg)
-	if err == nil {
-		return id
+	if err != nil {
+		return 0, err
 	}
 
-
-	return resolveShared(
-		Level27Client.MailgroupsMailforwardersLookup(mailgroupID, arg),
-		arg,
-		"mailforwarder",
-		func (app types.Mailforwarder) string { return fmt.Sprintf("%s (%d)", app.Address, app.ID) }).ID
+	return res.ID, nil
 }
 
+func resolveMailforwarder(mailgroupID int, arg string) (int, error) {
+	id, err := strconv.Atoi(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.MailgroupsMailforwardersLookup(mailgroupID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
+		arg,
+		"mailforwarder",
+		func(app l27.Mailforwarder) string { return fmt.Sprintf("%s (%d)", app.Address, app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
+}
 
 // MAIL
 var mailCmd = &cobra.Command{
-	Use: "mail",
+	Use:   "mail",
 	Short: "Commands to manage mailgroups and mailboxes",
 }
 
 // MAIL GET
 var mailGetCmd = &cobra.Command{
-	Use: "get",
+	Use:   "get",
 	Short: "Get mailgroups",
 
-	Run: func(cmd *cobra.Command, args []string) {
-		mails := resolveGets(
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mails, err := resolveGets(
 			args,
 			Level27Client.MailgroupsLookup,
 			Level27Client.MailgroupsGetSingle,
 			Level27Client.MailgroupsGetList)
+
+		if err != nil {
+			return err
+		}
 
 		outputFormatTableFuncs(
 			mails,
@@ -226,10 +268,12 @@ var mailGetCmd = &cobra.Command{
 				"ID",
 				mailgroupDisplayName,
 				"Status",
-				func(m types.Mailgroup) int { return len(m.Domains) },
+				func(m l27.Mailgroup) int { return len(m.Domains) },
 				"MailboxCount",
 				"MailforwarderCount",
 			})
+
+		return nil
 	},
 }
 
@@ -240,77 +284,105 @@ var mailCreateAutoTeams string
 var mailCreateExternalInfo string
 
 var mailCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create a new mail group",
-	Long: "Does not automatically link any domains to the mail group. Use separate commands after the mail group has been created.",
+	Long:  "Does not automatically link any domains to the mail group. Use separate commands after the mail group has been created.",
 
 	Args: cobra.ExactArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
-		create := types.MailgroupCreate{
-			Name: mailCreateName,
-			Organisation: resolveOrganisation(mailCreateOrganisation),
-			AutoTeams: mailCreateAutoTeams,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		org, err := resolveOrganisation(mailCreateOrganisation)
+		if err != nil {
+			return err
+		}
+
+		create := l27.MailgroupCreate{
+			Name:         mailCreateName,
+			Organisation: org,
+			AutoTeams:    mailCreateAutoTeams,
 			ExternalInfo: mailCreateExternalInfo,
-			Type: "level27",
+			Type:         "level27",
 		}
 
 		Level27Client.MailgroupsCreate(create)
+		return nil
 	},
 }
 
 // MAIL DELETE
 var mailDeleteForce bool
 var mailDeleteCmd = &cobra.Command{
-	Use: "delete",
+	Use:   "delete",
 	Short: "Delete a mail group",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
 		if !mailDeleteForce {
-			mailgroup := Level27Client.MailgroupsGetSingle(mailgroupID)
+			mailgroup, err := Level27Client.MailgroupsGetSingle(mailgroupID)
+			if err != nil {
+				return err
+			}
+
 			displayName := mailgroupDisplayName(mailgroup)
 			if !confirmPrompt(fmt.Sprintf("Delete mailgroup %s (%d)?", displayName, mailgroupID)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.MailgroupsDelete(mailgroupID)
+		err = Level27Client.MailgroupsDelete(mailgroupID)
+		return err
 	},
 }
 
 // MAIL UPDATE
 var mailUpdateCmd = &cobra.Command{
-	Use: "update",
+	Use:   "update",
 	Short: "Update settings on a mail group",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		mailgroupID := resolveMailgroup(args[0])
-		mailgroup := Level27Client.MailgroupsGetSingle(mailgroupID)
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailgroupPut := types.MailgroupPut {
-			Name: mailgroup.Name,
-			Type: mailgroup.Type,
+		mailgroup, err := Level27Client.MailgroupsGetSingle(mailgroupID)
+		if err != nil {
+			return err
+		}
+
+		mailgroupPut := l27.MailgroupPut{
+			Name:         mailgroup.Name,
+			Type:         mailgroup.Type,
 			Organisation: mailgroup.Organisation.ID,
-			Systemgroup: mailgroup.Systemgroup.ID,
+			Systemgroup:  mailgroup.Systemgroup.ID,
 		}
 
 		data := utils.RoundTripJson(mailgroupPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		data["organisation"] = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		data["organisation"], err = resolveOrganisation(fmt.Sprint(data["organisation"]))
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsUpdate(mailgroupID, data)
+		err = Level27Client.MailgroupsUpdate(mailgroupID, data)
+		return err
 	},
 }
 
 // Get the display name for a mailgroup
 // Usually just the primary domain name, falling back to .Name if necessary.
-func mailgroupDisplayName(m types.Mailgroup) string {
+func mailgroupDisplayName(m l27.Mailgroup) string {
 	if len(m.Domains) == 0 {
 		return m.Name
 	}
@@ -327,7 +399,6 @@ func mailgroupDisplayName(m types.Mailgroup) string {
 	return fmt.Sprintf("%s.%s", domain.Name, domain.Domaintype.Extension)
 }
 
-
 // MAIL ACTIONS
 var mailActionsCmd = &cobra.Command{
 	Use: "actions",
@@ -338,10 +409,14 @@ var mailActionsActivateCmd = &cobra.Command{
 	Use: "activate",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsAction(mailgroupID, "activate")
+		_, err = Level27Client.MailgroupsAction(mailgroupID, "activate")
+		return err
 	},
 }
 
@@ -350,13 +425,16 @@ var mailActionsDeactivateCmd = &cobra.Command{
 	Use: "deactivate",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsAction(mailgroupID, "deactivate")
+		_, err = Level27Client.MailgroupsAction(mailgroupID, "deactivate")
+		return err
 	},
 }
-
 
 // MAIL DOMAIN
 var mailDomainCmd = &cobra.Command{
@@ -364,68 +442,102 @@ var mailDomainCmd = &cobra.Command{
 }
 
 // MAIL DOMAIN LINK
-var mailDomainLinkNoHandleDns bool;
+var mailDomainLinkNoHandleDns bool
 var mailDomainLinkCmd = &cobra.Command{
-	Use: "link [mailgroup] [domain]",
+	Use:   "link [mailgroup] [domain]",
 	Short: "Add a domain to a mail group",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		domainID := resolveDomain(args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsDomainsLink(mailgroupID, types.MailgroupDomainAdd{
-			Domain: domainID,
+		domainID, err := resolveDomain(args[1])
+		if err != nil {
+			return err
+		}
+
+		_, err = Level27Client.MailgroupsDomainsLink(mailgroupID, l27.MailgroupDomainAdd{
+			Domain:        domainID,
 			HandleMailDns: !mailDomainLinkNoHandleDns,
 		})
+
+		return err
 	},
 }
 
 // MAIL DOMAIN UNLINK
 var mailDomainUnlinkCmd = &cobra.Command{
-	Use: "unlink [mailgroup] [domain]",
+	Use:   "unlink [mailgroup] [domain]",
 	Short: "Remove a domain from a mail group",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		domainID := resolveDomain(args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsDomainsUnlink(mailgroupID, domainID)
+		domainID, err := resolveDomain(args[1])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.MailgroupsDomainsUnlink(mailgroupID, domainID)
+		return err
 	},
 }
 
 // MAIL DOMAIN SETPRIMARY
 var mailDomainSetPrimaryCmd = &cobra.Command{
-	Use: "setprimary [mailgroup] [domain]",
+	Use:   "setprimary [mailgroup] [domain]",
 	Short: "Set a domain on a mail group as primary",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		domainID := resolveDomain(args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsDomainsSetPrimary(mailgroupID, domainID)
+		domainID, err := resolveDomain(args[1])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.MailgroupsDomainsSetPrimary(mailgroupID, domainID)
+		return err
 	},
 }
-
 
 // MAIL DOMAIN UPDATE
 var mailDomainUpdateCmd = &cobra.Command{
-	Use: "update [mailgroup] [domain]",
+	Use:   "update [mailgroup] [domain]",
 	Short: "Update settings on a domain",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		mailgroupID := resolveMailgroup(args[0])
-		domainID := resolveDomain(args[1])
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsDomainsPatch(mailgroupID, domainID, settings)
+		domainID, err := resolveDomain(args[1])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.MailgroupsDomainsPatch(mailgroupID, domainID, settings)
+		return err
 	},
 }
-
 
 // MAIL BOX
 var mailBoxCmd = &cobra.Command{
@@ -437,15 +549,23 @@ var mailBoxGetCmd = &cobra.Command{
 	Use: "get",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailboxes := Level27Client.MailgroupsMailboxesGetList(mailgroupID, optGetParameters)
+		mailboxes, err := Level27Client.MailgroupsMailboxesGetList(mailgroupID, optGetParameters)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(
 			mailboxes,
 			[]string{"ID", "Name", "Username", "Status"},
 			[]string{"ID", "Name", "Username", "Status"})
+
+		return nil
 	},
 }
 
@@ -454,18 +574,34 @@ var mailBoxDescribeCmd = &cobra.Command{
 	Use: "describe",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailboxID := resolveMailbox(mailgroupID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailbox := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
-		addresses := Level27Client.MailgroupsMailboxesAddressesGetList(mailgroupID, mailboxID, types.CommonGetParams{})
-		describe := types.MailboxDescribe{
-			Mailbox: mailbox,
+		mailboxID, err := resolveMailbox(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
+		mailbox, err := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
+		if err != nil {
+			return err
+		}
+
+		addresses, err := Level27Client.MailgroupsMailboxesAddressesGetList(mailgroupID, mailboxID, l27.CommonGetParams{})
+		if err != nil {
+			return err
+		}
+
+		describe := l27.MailboxDescribe{
+			Mailbox:   mailbox,
 			Addresses: addresses,
 		}
 
 		outputFormatTemplate(describe, "templates/mailbox.tmpl")
+		return nil
 	},
 }
 
@@ -479,16 +615,21 @@ var mailBoxCreateCmd = &cobra.Command{
 	Use: "create",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsMailboxesCreate(mailgroupID, types.MailboxCreate{
-			Name: mailBoxCreateName,
-			Password: mailBoxCreatePassword,
+		_, err = Level27Client.MailgroupsMailboxesCreate(mailgroupID, l27.MailboxCreate{
+			Name:       mailBoxCreateName,
+			Password:   mailBoxCreatePassword,
 			OooEnabled: mailBoxCreateOooEnabled,
 			OooSubject: mailBoxCreateOooSubject,
-			OooText: mailBoxCreateOooText,
+			OooText:    mailBoxCreateOooText,
 		})
+
+		return err
 	},
 }
 
@@ -498,18 +639,30 @@ var mailBoxDeleteCmd = &cobra.Command{
 	Use: "delete",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailboxID := resolveMailbox(mailgroupID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
+
+		mailboxID, err := resolveMailbox(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
 
 		if !mailBoxDeleteForce {
-			mailbox := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
+			mailbox, err := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
+			if err != nil {
+				return err
+			}
+
 			if !confirmPrompt(fmt.Sprintf("Delete mailbox %s (%d)?", mailbox.Username, mailboxID)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.MailgroupsMailboxesDelete(mailgroupID, mailboxID)
+		err = Level27Client.MailgroupsMailboxesDelete(mailgroupID, mailboxID)
+		return err
 	},
 }
 
@@ -518,25 +671,40 @@ var mailBoxUpdateCmd = &cobra.Command{
 	Use: "update",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		mailgroupID := resolveMailgroup(args[0])
-		mailboxID := resolveMailbox(mailgroupID, args[1])
-		mailbox := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailboxPut := types.MailboxPut {
-			Name: mailbox.Name,
-			Password: "",
+		mailboxID, err := resolveMailbox(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
+		mailbox, err := Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID)
+		if err != nil {
+			return err
+		}
+
+		mailboxPut := l27.MailboxPut{
+			Name:       mailbox.Name,
+			Password:   "",
 			OooEnabled: mailbox.OooEnabled,
-			OooText: mailbox.OooText,
+			OooText:    mailbox.OooText,
 			OooSubject: mailbox.OooSubject,
 		}
 
 		data := utils.RoundTripJson(mailboxPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		Level27Client.MailgroupsMailboxesUpdate(mailgroupID, mailboxID, data)
+		err = Level27Client.MailgroupsMailboxesUpdate(mailgroupID, mailboxID, data)
+		return err
 	},
 }
 
@@ -550,17 +718,26 @@ var mailBoxAddressAddCmd = &cobra.Command{
 	Use: "add",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailboxID := resolveMailbox(mailgroupID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsMailboxesAddressesCreate(
+		mailboxID, err := resolveMailbox(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
+		_, err = Level27Client.MailgroupsMailboxesAddressesCreate(
 			mailgroupID,
 			mailboxID,
-			types.MailboxAddressCreate{
+			l27.MailboxAddressCreate{
 				Address: args[2],
 			},
 		)
+
+		return err
 	},
 }
 
@@ -569,23 +746,34 @@ var mailBoxAddressRemoveCmd = &cobra.Command{
 	Use: "remove",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailboxID := resolveMailbox(mailgroupID, args[1])
-		addressID := resolveMailboxAdress(mailgroupID, mailboxID, args[2])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsMailboxesAddressesDelete(
+		mailboxID, err := resolveMailbox(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
+		addressID, err := resolveMailboxAdress(mailgroupID, mailboxID, args[2])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.MailgroupsMailboxesAddressesDelete(
 			mailgroupID,
 			mailboxID,
 			addressID,
 		)
+		return err
 	},
 }
 
-
 // MAIL FORWARDER
 var mailForwarderCmd = &cobra.Command{
-	Use: "forwarder",
+	Use:   "forwarder",
 	Short: "Commands for managing mail forwarders",
 
 	Aliases: []string{"fwd"},
@@ -593,19 +781,25 @@ var mailForwarderCmd = &cobra.Command{
 
 // MAIL FORWARDER GET
 var mailForwarderGetCmd = &cobra.Command{
-	Use: "get [mailgroup]",
+	Use:   "get [mailgroup]",
 	Short: "Get a list of mail forwarders in a mail group",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailboxes := Level27Client.MailgroupsMailforwardersGetList(mailgroupID, optGetParameters)
+		mailboxes, err := Level27Client.MailgroupsMailforwardersGetList(mailgroupID, optGetParameters)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTableFuncs(
 			mailboxes,
 			[]string{"ID", "Status", "Address", "Destimations"},
-			[]interface{}{"ID", "Status", "Address", func(f types.Mailforwarder) string {
+			[]interface{}{"ID", "Status", "Address", func(f l27.Mailforwarder) string {
 				first := true
 				result := ""
 				for _, dest := range f.Destination {
@@ -621,6 +815,8 @@ var mailForwarderGetCmd = &cobra.Command{
 
 				return result
 			}})
+
+		return nil
 	},
 }
 
@@ -628,70 +824,102 @@ var mailForwarderGetCmd = &cobra.Command{
 var mailForwarderCreateAddress string
 var mailForwarderCreateDestination string
 var mailForwarderCreateCmd = &cobra.Command{
-	Use: "create [mailgroup]",
+	Use:   "create [mailgroup]",
 	Short: "Create a new mail forwarder",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.MailgroupsMailforwardersCreate(mailgroupID, types.MailforwarderCreate{
-			Address: mailForwarderCreateAddress,
+		_, err = Level27Client.MailgroupsMailforwardersCreate(mailgroupID, l27.MailforwarderCreate{
+			Address:     mailForwarderCreateAddress,
 			Destination: mailForwarderCreateDestination,
 		})
+
+		return err
 	},
 }
 
 // MAIL FORWARDER DELETE
 var mailForwarderDeleteForce bool
 var mailForwarderDeleteCmd = &cobra.Command{
-	Use: "delete [mailgroup] [mail forwarder]",
+	Use:   "delete [mailgroup] [mail forwarder]",
 	Short: "Delete a mail forwarder",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
+
+		mailforwarderID, err := resolveMailforwarder(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
 
 		if !mailForwarderDeleteForce {
-			mailbox := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+			mailbox, err := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+			if err != nil {
+				return err
+			}
+
 			if !confirmPrompt(fmt.Sprintf("Delete mail forwarder %s (%d)?", mailbox.Address, mailforwarderID)) {
-				return
+				return nil
 			}
 		}
 
-		Level27Client.MailgroupsMailforwardersDelete(mailgroupID, mailforwarderID)
+		err = Level27Client.MailgroupsMailforwardersDelete(mailgroupID, mailforwarderID)
+		return err
 	},
 }
 
 // MAIL FORWARDER UPDATE
 var mailForwarderUpdateCmd = &cobra.Command{
-	Use: "update [mailgroup] [mail forwarder]",
+	Use:   "update [mailgroup] [mail forwarder]",
 	Short: "Update settings on a mail forwarder",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		mailgroupID := resolveMailgroup(args[0])
-		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
-		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailforwarderPut := types.MailforwarderPut {
-			Address: mailforwarder.Address,
+		mailforwarderID, err := resolveMailforwarder(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
+		mailforwarder, err := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		if err != nil {
+			return err
+		}
+
+		mailforwarderPut := l27.MailforwarderPut{
+			Address:     mailforwarder.Address,
 			Destination: strings.Join(mailforwarder.Destination, ","),
 		}
 
 		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+		err = Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+		return err
 	},
 }
 
 // MAIL FORWARDER DESTINATION
 var mailForwarderDestinationCmd = &cobra.Command{
-	Use: "destination",
+	Use:   "destination",
 	Short: "Commands for managing destination addresses on a mail forwarder easily",
 
 	Aliases: []string{"dest"},
@@ -699,54 +927,79 @@ var mailForwarderDestinationCmd = &cobra.Command{
 
 // MAIL FORWARDER DESTINATION ADD
 var mailForwarderDestinationAddCmd = &cobra.Command{
-	Use: "add [mail group] [mail forwarder] [new destination]",
+	Use:   "add [mail group] [mail forwarder] [new destination]",
 	Short: "Add a single destination address to a mail forwarder",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
 
-		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		mailforwarderID, err := resolveMailforwarder(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
+		mailforwarder, err := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		if err != nil {
+			return err
+		}
+
 		destination := append(mailforwarder.Destination, args[2])
 
-		mailforwarderPut := types.MailforwarderPut {
-			Address: mailforwarder.Address,
+		mailforwarderPut := l27.MailforwarderPut{
+			Address:     mailforwarder.Address,
 			Destination: strings.Join(destination, ","),
 		}
 
 		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
-		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+		err = Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+		return err
 	},
 }
 
 // MAIL FORWARDER DESTINATION REMOVE
 var mailForwarderDestinationRemoveCmd = &cobra.Command{
-	Use: "remove [mail group] [mail forwarder] [old destination]",
+	Use:   "remove [mail group] [mail forwarder] [old destination]",
 	Short: "Remove a single destination address from a mail forwarder",
 
 	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		mailgroupID := resolveMailgroup(args[0])
-		mailforwarderID := resolveMailforwarder(mailgroupID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
+
+		mailforwarderID, err := resolveMailforwarder(mailgroupID, args[1])
+		if err != nil {
+			return err
+		}
+
 		destAddress := args[2]
 
-		mailforwarder := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		mailforwarder, err := Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+		if err != nil {
+			return err
+		}
+
 		destination := mailforwarder.Destination
 		idx := indexOf(destination, destAddress)
 		if idx == -1 {
 			fmt.Printf("'%s' is not a destination on this mail forwarder.", destAddress)
-			return
+			return nil
 		}
 
 		destination = append(destination[:idx], destination[idx+1:]...)
 
-		mailforwarderPut := types.MailforwarderPut {
-			Address: mailforwarder.Address,
+		mailforwarderPut := l27.MailforwarderPut{
+			Address:     mailforwarder.Address,
 			Destination: strings.Join(destination, ","),
 		}
 
 		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
-		Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+		err = Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
+		return err
 	},
 }

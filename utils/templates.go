@@ -7,8 +7,8 @@ import (
 	"text/template"
 	"time"
 
-	"bitbucket.org/level27/lvl/types"
 	"github.com/fatih/color"
+	"github.com/level27/l27-go"
 )
 
 // Returns the template helper functions accessible to our templates.
@@ -66,27 +66,27 @@ func MakeTemplateHelpers(t *template.Template) template.FuncMap {
 }
 
 var vtCsi = "\x1B["
-var vtCodes = map[string]string {
-	"reset": vtCsi + "0m",
-	"black": vtCsi + "30m",
-	"red": vtCsi + "31m",
-	"green": vtCsi + "32m",
-	"yellow": vtCsi + "33m",
-	"blue": vtCsi + "34m",
-	"magenta": vtCsi + "35m",
-	"cyan": vtCsi + "36m",
-	"white": vtCsi + "37m",
-	"brightblack": vtCsi + "90m",
-	"brightred": vtCsi + "91m",
-	"brightgreen": vtCsi + "92m",
-	"brightyellow": vtCsi + "93m",
-	"brightblue": vtCsi + "94m",
+var vtCodes = map[string]string{
+	"reset":         vtCsi + "0m",
+	"black":         vtCsi + "30m",
+	"red":           vtCsi + "31m",
+	"green":         vtCsi + "32m",
+	"yellow":        vtCsi + "33m",
+	"blue":          vtCsi + "34m",
+	"magenta":       vtCsi + "35m",
+	"cyan":          vtCsi + "36m",
+	"white":         vtCsi + "37m",
+	"brightblack":   vtCsi + "90m",
+	"brightred":     vtCsi + "91m",
+	"brightgreen":   vtCsi + "92m",
+	"brightyellow":  vtCsi + "93m",
+	"brightblue":    vtCsi + "94m",
 	"brightmagenta": vtCsi + "95m",
-	"brightcyan": vtCsi + "96m",
-	"brightwhite": vtCsi + "97m",
+	"brightcyan":    vtCsi + "96m",
+	"brightwhite":   vtCsi + "97m",
 }
 
-func jobChildCountTotalRecurse(job types.Job) int {
+func jobChildCountTotalRecurse(job l27.Job) int {
 	counter := len(job.Jobs)
 	for _, j := range job.Jobs {
 		counter += jobChildCountTotalRecurse(j)
@@ -95,7 +95,7 @@ func jobChildCountTotalRecurse(job types.Job) int {
 }
 
 func FormatUnixTimeF(seconds interface{}, fmt string) string {
-	if seconds == nil{
+	if seconds == nil {
 		return "null"
 	}
 	var secs int64
@@ -108,7 +108,7 @@ func FormatUnixTimeF(seconds interface{}, fmt string) string {
 		}
 	} else {
 		secsFloat, success := seconds.(float64)
-		if (success) {
+		if success {
 			secs = int64(secsFloat)
 		} else {
 			secs = seconds.(int64)
@@ -121,10 +121,10 @@ func FormatUnixTimeF(seconds interface{}, fmt string) string {
 
 // Format a unix time value returned by the API in a way that is human-readable.
 func FormatUnixTime(seconds interface{}) string {
-	result :=  FormatUnixTimeF(seconds, time.RFC1123)
+	result := FormatUnixTimeF(seconds, time.RFC1123)
 	if result == "1970 Jan  1 01:00:00" || result == "Thu, 01 Jan 1970 01:00:00 CET" {
 		return "null"
-	}else{
+	} else {
 		return result
 	}
 }

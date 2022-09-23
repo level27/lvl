@@ -16,12 +16,10 @@ limitations under the License.
 package main
 
 import (
-	"bitbucket.org/level27/lvl/cmd"
+	"github.com/level27/lvl/cmd"
 )
 
 func main() {
 
-	
 	cmd.Execute()
 }
-

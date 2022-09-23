@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +17,19 @@ var organisationGetCmd = &cobra.Command{
 	Use: "get",
 
 	Args: cobra.ArbitraryArgs,
-	Run: func(ccmd *cobra.Command, args []string) {
+	RunE: func(ccmd *cobra.Command, args []string) error {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
-			log.Fatalln("Invalid organisation ID")
+			return err
 		}
-		outputFormatTable(getOrganisations(ids), []string{"ID", "NAME"}, []string{"ID", "Name"})
+
+		options, err := getOrganisations(ids)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTable(options, []string{"ID", "NAME"}, []string{"ID", "Name"})
+		return nil
 	},
 }
 
@@ -34,29 +40,44 @@ func init() {
 	addCommonGetFlags(organisationGetCmd)
 }
 
-func resolveOrganisation(arg string) int {
+func resolveOrganisation(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
+	options, err := Level27Client.LookupOrganisation(arg)
+	if err != nil {
+		return id, nil
+	}
 
-	return resolveShared(
-		Level27Client.LookupOrganisation(arg),
+	res, err := resolveShared(
+		options,
 		arg,
 		"organisation",
-		func (app types.Organisation) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.Organisation) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
 }
 
-func getOrganisations(ids []int) []types.Organisation {
+func getOrganisations(ids []int) ([]l27.Organisation, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Organisations(optGetParameters)
 	} else {
-		organisations := make([]types.Organisation, len(ids))
+		organisations := make([]l27.Organisation, len(ids))
 		for idx, id := range ids {
-			organisations[idx] = c.Organisation(id)
+			var err error
+			organisations[idx], err = c.Organisation(id)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return organisations
+
+		return organisations, nil
 	}
 }

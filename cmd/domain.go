@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
 // MAIN COMMAND
 var domainCmd = &cobra.Command{
-	Use:   "domain",
-	Short: "Commands for managing domains",
+	Use:     "domain",
+	Short:   "Commands for managing domains",
 	Example: "lvl domain get -f example.be",
 }
 
@@ -33,9 +33,7 @@ func init() {
 
 	// Delete (single domain)
 	domainCmd.AddCommand(domainDeleteCmd)
-
-	// flag used to skip confirmation on deleting domain(s)
-	domainDeleteCmd.Flags().BoolVarP(&isConfirmed, "yes", "y", false, "Confirmation flag. Set this flag to delete the domain without confirmation question.")
+	addDeleteConfirmFlag(domainDeleteCmd)
 
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
@@ -202,18 +200,28 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 
 // Resolve an integer or name domain.
 // If the domain is a name, a request is made to resolve the integer ID.
-func resolveDomain(arg string) int {
+func resolveDomain(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
+	options, err := Level27Client.LookupDomain(arg)
+	if err == nil {
+		return 0, nil
+	}
 
-	return resolveShared(
-		Level27Client.LookupDomain(arg),
+	res, err := resolveShared(
+		options,
 		arg,
 		"domain",
-		func (domain types.Domain) string { return fmt.Sprintf("%s (%d)", domain.Name, domain.ID) }).ID
+		func(domain l27.Domain) string { return fmt.Sprintf("%s (%d)", domain.Name, domain.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
@@ -221,29 +229,41 @@ func resolveDomain(arg string) int {
 var domainGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a list of all current domains",
-	Run: func(ccmd *cobra.Command, args []string) {
+	RunE: func(ccmd *cobra.Command, args []string) error {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
-			log.Fatalln("Invalid domain ID")
+			return err
+		}
+
+		options, err := getDomains(ids)
+		if err != nil {
+			return err
 		}
 
 		outputFormatTable(
-			getDomains(ids),
+			options,
 			[]string{"ID", "NAME", "STATUS"},
 			[]string{"ID", "Fullname", "Status"})
+
+		return nil
 	},
 }
 
-func getDomains(ids []int) []types.Domain {
+func getDomains(ids []int) ([]l27.Domain, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Domains(optGetParameters)
 	} else {
-		domains := make([]types.Domain, len(ids))
+		domains := make([]l27.Domain, len(ids))
 		for idx, id := range ids {
-			domains[idx] = c.Domain(id)
+			var err error
+			domains[idx], err = c.Domain(id)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return domains
+
+		return domains, nil
 	}
 }
 
@@ -252,49 +272,80 @@ var domainDescribeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "Get detailed info about a domain",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		domainID := resolveDomain(args[0])
-		domain := Level27Client.Domain(domainID)
-		domain.Jobs = Level27Client.EntityJobHistoryGet("domain", domainID)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		domainID, err := resolveDomain(args[0])
+		if err != nil {
+			return err
+		}
+
+		domain, err := Level27Client.Domain(domainID)
+		if err != nil {
+			return err
+		}
+
+		domain.Jobs, err = Level27Client.EntityJobHistoryGet("domain", domainID)
+		if err != nil {
+			return err
+		}
+
 		for idx, j := range domain.Jobs {
-			domain.Jobs[idx] = Level27Client.JobHistoryRootGet(j.Id)
+			domain.Jobs[idx], err = Level27Client.JobHistoryRootGet(j.Id)
+			if err != nil {
+				return err
+			}
 		}
 
 		outputFormatTemplate(domain, "templates/domain.tmpl")
+		return nil
 	},
 }
 
 // DELETE DOMAIN [lvl domain delete <id>]
-var isConfirmed bool
 var domainDeleteCmd = &cobra.Command{
 	Use:   "delete [domainId]",
 	Short: "Delete a domain",
-	Long:  "use LVL DOMAIN DELETE <ID or ID's>. You can give multiple ID's to this command by seperating them trough whitespaces.",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 
-	Run: func(cmd *cobra.Command, args []string) {
-		Level27Client.DomainDelete(args, isConfirmed)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		domainID, err := resolveDomain(args[0])
+		if err != nil {
+			return err
+		}
+
+		if !optDeleteConfirmed {
+			domain, err := Level27Client.Domain(domainID)
+			if err != nil {
+				return err
+			}
+
+			if !confirmPrompt(fmt.Sprintf("Delete domain %s (%d)?", domain.Name, domain.ID)) {
+				return nil
+			}
+		}
+
+		Level27Client.DomainDelete(domainID)
+		return nil
 	},
 }
 
 // common functions for managing domains
 // change given flag data into request data to put or post
-func getDomainRequestData() types.DomainRequest {
-	requestData := types.DomainRequest{
+func getDomainRequestData() (l27.DomainRequest, error) {
+	requestData := l27.DomainRequest{
 		Name:          domainCreateName,
 		NameServer1:   &domainCreateNs1,
-		NameServer2:   domainCreateNs2,
-		NameServer3:   domainCreateNs3,
-		NameServer4:   domainCreateNs4,
-		NameServer1Ip: domainCreateNsIp1,
-		NameServer2Ip: domainCreateNsIp2,
-		NameServer3Ip: domainCreateNsIp3,
-		NameServer4Ip: domainCreateNsIp4,
+		NameServer2:   &domainCreateNs2,
+		NameServer3:   &domainCreateNs3,
+		NameServer4:   &domainCreateNs4,
+		NameServer1Ip: &domainCreateNsIp1,
+		NameServer2Ip: &domainCreateNsIp2,
+		NameServer3Ip: &domainCreateNsIp3,
+		NameServer4Ip: &domainCreateNsIp4,
 
-		NameServer1Ipv6: domainCreateNsIpv61,
-		NameServer2Ipv6: domainCreateNsIpv62,
-		NameServer3Ipv6: domainCreateNsIpv63,
-		NameServer4Ipv6: domainCreateNsIpv64,
+		NameServer1Ipv6: &domainCreateNsIpv61,
+		NameServer2Ipv6: &domainCreateNsIpv62,
+		NameServer3Ipv6: &domainCreateNsIpv63,
+		NameServer4Ipv6: &domainCreateNsIpv64,
 
 		TTL:                       domainCreateTtl,
 		Action:                    domainCreateAction,
@@ -312,7 +363,7 @@ func getDomainRequestData() types.DomainRequest {
 		// DtExternalExpires:         domainCreateExternalExpires,
 		// ConvertDomainRecords:      domainCreateConvertDomainRecords,
 		AutoTeams:    domainCreateAutoTeams,
-		ExternalInfo: domainCreateExternalInfo,
+		ExternalInfo: &domainCreateExternalInfo,
 	}
 
 	if *requestData.DomainContactOnSite == 0 {
@@ -320,16 +371,20 @@ func getDomainRequestData() types.DomainRequest {
 	}
 
 	if requestData.Domaintype == 0 {
-		name, extension, domainType := getDomainTypeForDomain(requestData.Name)
+		name, extension, domainType, err := getDomainTypeForDomain(requestData.Name)
+		if err != nil {
+			return l27.DomainRequest{}, err
+		}
+
 		if domainType == 0 {
-			log.Fatalf("Invalid domain extension: '%s'", extension)
+			return l27.DomainRequest{}, fmt.Errorf("invalid domain extension: '%s'", extension)
 		}
 
 		requestData.Domaintype = domainType
 		requestData.Name = name
 	}
 
-	return requestData
+	return requestData, nil
 }
 
 // Splits a domain name into its name and extension respectively.
@@ -342,19 +397,22 @@ func splitDomainName(domain string) (string, string) {
 }
 
 // Gets the domain type extension for a full domain name.
-func getDomainTypeForDomain(domain string) (string, string, int) {
+func getDomainTypeForDomain(domain string) (string, string, int, error) {
 	name, extension := splitDomainName(domain)
-	res := Level27Client.Extension()
+	res, err := Level27Client.Extension()
+	if err != nil {
+		return "", "", 0, err
+	}
 
 	for _, provider := range res {
 		for _, domainType := range provider.Domaintypes {
 			if domainType.Extension == extension {
-				return name, extension, domainType.ID
+				return name, extension, domainType.ID, nil
 			}
 		}
 	}
 
-	return name, extension, 0
+	return name, extension, 0, nil
 }
 
 // CREATE DOMAIN [lvl domain create (action:create/none)]
@@ -362,23 +420,19 @@ var domainCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new domain",
 	Args:  cobra.ExactArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
-		requestData := getDomainRequestData()
-
-		if cmd.Flags().Changed("action") {
-
-			if requestData.Action == "create" {
-				Level27Client.DomainCreate(args, requestData)
-
-			} else if requestData.Action == "none" {
-				Level27Client.DomainCreate(args, requestData)
-			} else {
-				log.Printf("given action: '%v' is not recognized.", requestData.Action)
-			}
-		} else {
-			Level27Client.DomainCreate(args, requestData)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		requestData, err := getDomainRequestData()
+		if err != nil {
+			return err
 		}
 
+		domain, err := Level27Client.DomainCreate(requestData)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", domain.Fullname, domain.ID)
+		return nil
 	},
 }
 
@@ -386,10 +440,14 @@ var domainCreateCmd = &cobra.Command{
 var domainTransferCmd = &cobra.Command{
 	Use:   "transfer",
 	Short: "Transfer a domain",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		requestData, err := getDomainRequestData()
+		if err != nil {
+			return err
+		}
 
-		requestData := getDomainRequestData()
-		Level27Client.DomainTransfer(args, requestData)
+		Level27Client.DomainTransfer(requestData)
+		return nil
 	},
 }
 
@@ -397,28 +455,36 @@ var domainTransferCmd = &cobra.Command{
 var domainInternalTransferCmd = &cobra.Command{
 	Use:   "internaltransfer",
 	Short: "Internal transfer (available only for dnsbe domains)",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		requestData, err := getDomainRequestData()
+		if err != nil {
+			return err
+		}
 
-		requestData := getDomainRequestData()
-		Level27Client.DomainTransfer(args, requestData)
+		Level27Client.DomainTransfer(requestData)
+		return nil
 	},
 }
-var domainUpdateSettings map[string]interface{} = make(map[string]interface{})
 
 // UPDATE DOMAIN
+var domainUpdateSettings map[string]interface{} = make(map[string]interface{})
 var domainUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Command for updating an existing domain",
 	Args:  cobra.ExactArgs(1),
 
-	Run: func(cmd *cobra.Command, args []string) {
-		domainId := resolveDomain(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		domainId, err := resolveDomain(args[0])
+		if err != nil {
+			return err
+		}
 
 		if len(domainUpdateSettings) == 0 {
 			fmt.Println("No options specified!")
 		}
 
 		Level27Client.DomainUpdate(domainId, domainUpdateSettings)
+		return nil
 	},
 }
 
@@ -436,27 +502,42 @@ var domainRecordGetCmd = &cobra.Command{
 	Use:   "get [domain]",
 	Short: "Get a list of all records configured for a domain",
 	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		domainId := resolveDomain(args[0])
-		recordIds, err := convertStringsToIds(args[1:])
-		cobra.CheckErr(err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		domainId, err := resolveDomain(args[0])
+		if err != nil {
+			return err
+		}
 
-		records := getDomainRecords(domainId, recordIds)
+		recordIds, err := convertStringsToIds(args[1:])
+		if err != nil {
+			return err
+		}
+
+		records, err := getDomainRecords(domainId, recordIds)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(records, []string{"ID", "TYPE", "NAME", "CONTENT"}, []string{"ID", "Type", "Name", "Content"})
+		return nil
 	},
 }
 
-func getDomainRecords(domainId int, ids []int) []types.DomainRecord {
+func getDomainRecords(domainId int, ids []int) ([]l27.DomainRecord, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.DomainRecords(domainId, recordGetType, optGetParameters)
 	} else {
-		domains := make([]types.DomainRecord, len(ids))
+		domains := make([]l27.DomainRecord, len(ids))
 		for idx, id := range ids {
-			domains[idx] = c.DomainRecord(domainId, id)
+			var err error
+			domains[idx], err = c.DomainRecord(domainId, id)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return domains
+
+		return domains, nil
 	}
 }
 
@@ -470,18 +551,20 @@ var domainRecordCreateCmd = &cobra.Command{
 	Use:   "create [domain]",
 	Short: "Create a new record for a domain",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		id, err := strconv.Atoi(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := resolveDomain(args[0])
 		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
+			return err
 		}
 
-		Level27Client.DomainRecordCreate(id, types.DomainRecordRequest{
+		_, err = Level27Client.DomainRecordCreate(id, l27.DomainRecordRequest{
 			Name:     domainRecordCreateName,
 			Type:     domainRecordCreateType,
 			Priority: domainRecordCreatePriority,
 			Content:  domainRecordCreateContent,
 		})
+
+		return err
 	},
 }
 
@@ -490,19 +573,20 @@ var domainRecordDeleteCmd = &cobra.Command{
 	Use:   "delete [domain] [record]",
 	Short: "Delete a record for a domain",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid domain id
-		domainId, err := strconv.Atoi(args[0])
+		domainId, err := resolveDomain(args[0])
 		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
+			return err
 		}
 
-		recordId, err := strconv.Atoi(args[1])
+		recordId, err := checkSingleIntID(args[1], "record")
 		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
+			return err
 		}
 
-		Level27Client.DomainRecordDelete(domainId, recordId)
+		err = Level27Client.DomainRecordDelete(domainId, recordId)
+		return err
 	},
 }
 
@@ -514,20 +598,23 @@ var domainRecordUpdateCmd = &cobra.Command{
 	Use:   "update [domain] [record]",
 	Short: "Update a record for a domain",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		domainId, err := strconv.Atoi(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		domainId, err := resolveDomain(args[0])
 		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
+			return err
 		}
 
-		recordId, err := strconv.Atoi(args[1])
+		recordId, err := checkSingleIntID(args[1], "record")
 		if err != nil {
-			log.Fatalln("Not a valid domain ID!")
+			return err
 		}
 
 		// Merge data with existing so we don't bulldoze anything.
-		data := Level27Client.DomainRecord(domainId, recordId)
-		request := types.DomainRecordRequest{
+		data, err := Level27Client.DomainRecord(domainId, recordId)
+		if err != nil {
+			return err
+		}
+		request := l27.DomainRecordRequest{
 			Type:     data.Type,
 			Name:     data.Name,
 			Content:  data.Content,
@@ -547,9 +634,9 @@ var domainRecordUpdateCmd = &cobra.Command{
 		}
 
 		Level27Client.DomainRecordUpdate(domainId, recordId, request)
+		return nil
 	},
 }
-
 
 // --------------------------------------------------- NOTIFICATIONS --------------------------------------------------------
 /*
@@ -572,7 +659,7 @@ var domainNotificationsCreateCmd = &cobra.Command{
 			log.Fatal("no valid domain ID")
 		}
 
-		Level27Client.DomainNotificationAdd(id, types.DomainNotificationPostRequest{
+		Level27Client.DomainNotificationAdd(id, DomainNotificationPostRequest{
 			Type:   domainNotificationPostType,
 			Group:  domainNotificationPostGroup,
 			Params: domainNotificationPostParams,
@@ -604,12 +691,16 @@ var domainCheckCmd = &cobra.Command{
 	Use:   "check [domain name]",
 	Short: "Check availability of a domain",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		domain := args[0]
 		name, extension := splitDomainName(domain)
 
-		status := Level27Client.DomainCheck(name, extension)
+		status, err := Level27Client.DomainCheck(name, extension)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTemplate(status, "templates/domainCheck.tmpl")
+		return nil
 	},
 }

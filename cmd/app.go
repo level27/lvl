@@ -1,14 +1,15 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sort"
 	"strconv"
 	"strings"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +38,7 @@ func init() {
 	// ---- DELETE APP
 	appCmd.AddCommand(appDeleteCmd)
 	//flag to skip confirmation when deleting an app
-	appDeleteCmd.Flags().BoolVarP(&isAppDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+	addDeleteConfirmFlag(appCmd)
 
 	// ---- UPDATE APP
 	appCmd.AddCommand(appUpdateCmd)
@@ -90,11 +91,9 @@ func init() {
 	settingString(appComponentUpdateCmd, updateSettings, "name", "New name for this app component")
 	appComponentUpdateParams = appComponentUpdateCmd.Flags().StringArray("param", nil, "")
 
-
 	// ---- DELETE COMPONENTS
 	appComponentCmd.AddCommand(AppComponentDeleteCmd)
-	//flag to skip confirmation when deleting an appcomponent
-	AppComponentDeleteCmd.Flags().BoolVarP(&isComponentDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting an app")
+	addDeleteConfirmFlag(AppComponentDeleteCmd)
 
 	//------------------------------------------------- APP COMPONENTS HELPERS (CATEGORY/ COMPONENTTYPES/ PARAMETERS )-------------------------------------------------
 	// ---- GET COMPONENT CATEGORIES
@@ -177,7 +176,7 @@ func init() {
 	// ---- DELETE RESTORE
 	appComponentRestoreCmd.AddCommand(appRestoreDeleteCmd)
 	//flag to skip confirmation when deleting a restore
-	appRestoreDeleteCmd.Flags().BoolVarP(&isAppRestoreDeleteConfirmed, "yes", "y", false, "Set this flag to skip confirmation when deleting a check")
+	addDeleteConfirmFlag(appRestoreDeleteCmd)
 
 	// ---- DOWNLOAD RESTORE FILE
 	appComponentRestoreCmd.AddCommand(appComponentRestoreDownloadCmd)
@@ -188,7 +187,6 @@ func init() {
 	appComponentCmd.AddCommand(appComponentBackupsCmd)
 	// ---- GET LIST OF BACKUPS
 	appComponentBackupsCmd.AddCommand(appComponentBackupsGetCmd)
-
 
 	// APP COMPONENT URL
 	appComponentCmd.AddCommand(appComponentUrlCmd)
@@ -248,62 +246,106 @@ func init() {
 
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
 // GET AN APPID BASED ON THE NAME
-func resolveApp(arg string) int {
+func resolveApp(arg string) (int, error) {
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.AppLookup(arg),
+	options, err := Level27Client.AppLookup(arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"app",
-		func(app types.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.App) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
 }
 
 // GET SSL CERTIFICATE ID BASED ON ID
-func resolveAppSslCertificate(appID int, arg string) int {
+func resolveAppSslCertificate(appID int, arg string) (int, error) {
 	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.AppSslCertificatesLookup(appID, arg),
+	options, err := Level27Client.AppSslCertificatesLookup(appID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"app SSL certificate",
-		func(app types.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) }).ID
+		func(app l27.AppSslCertificate) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
 }
 
 // GET AN APPCOMPONENT ID BASED ON THE NAME
-func resolveAppComponent(appId int, arg string) int {
+func resolveAppComponent(appId int, arg string) (int, error) {
 	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return int(resolveShared(
-		Level27Client.AppComponentLookup(appId, arg),
+	options, err := Level27Client.AppComponentLookup(appId, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"component",
-		func(comp types.AppComponent) string { return fmt.Sprintf("%s (%d)", comp.Name, comp.ID) }).ID)
+		func(comp l27.AppComponent) string { return fmt.Sprintf("%s (%d)", comp.Name, comp.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int(res.ID), nil
 }
 
 // GET AN APP URL ID BASED ON THE NAME
-func resolveAppComponentUrl(appId int, appComponentId int, arg string) int {
+func resolveAppComponentUrl(appId int, appComponentId int, arg string) (int, error) {
 	// if arg already int, this is the ID
 	id, err := strconv.Atoi(arg)
 	if err == nil {
-		return id
+		return id, nil
 	}
 
-	return resolveShared(
-		Level27Client.AppComponentUrlLookup(appId, appComponentId, arg),
+	options, err := Level27Client.AppComponentUrlLookup(appId, appComponentId, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
 		arg,
 		"url",
-		func(url types.AppComponentUrlShort) string { return fmt.Sprintf("%s (%d)", url.Content, url.ID) }).ID
+		func(url l27.AppComponentUrlShort) string { return fmt.Sprintf("%s (%d)", url.Content, url.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, err
 }
 
 // MAIN COMMAND APPS
@@ -322,30 +364,41 @@ var appGetCmd = &cobra.Command{
 	Short:   "Shows a list of all available apps.",
 	Example: "lvl app get -f FilterByName",
 	Args:    cobra.ArbitraryArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ids, err := convertStringsToIds(args)
 		if err != nil {
-			log.Fatalln("Invalid app ID")
+			return err
+		}
+
+		apps, err := getApps(ids)
+		if err != nil {
+			return err
 		}
 
 		outputFormatTable(
-			getApps(ids),
+			apps,
 			[]string{"ID", "NAME", "STATUS"},
 			[]string{"ID", "Name", "Status"})
+
+		return nil
 	},
 }
 
-func getApps(ids []int) []types.App {
+func getApps(ids []int) ([]l27.App, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Apps(optGetParameters)
 	} else {
-		apps := make([]types.App, len(ids))
+		apps := make([]l27.App, len(ids))
 		for idx, id := range ids {
-			apps[idx] = c.App(id)
+			var err error
+			apps[idx], err = c.App(id)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return apps
+
+		return apps, nil
 	}
 }
 
@@ -356,15 +409,19 @@ var appCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new app.",
 	Example: "lvl app create -n myNewApp --organisation level27",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check if name is valid.
 		if appCreateName == "" {
-			log.Fatalln("app name cannot be empty.")
+			return errors.New("app name cannot be empty")
 		}
 
 		// fill in all the props needed for the post request
-		organisation := resolveOrganisation(appCreateOrg)
-		request := types.AppPostRequest{
+		organisation, err := resolveOrganisation(appCreateOrg)
+		if err != nil {
+			return err
+		}
+
+		request := l27.AppPostRequest{
 			Name:         appCreateName,
 			Organisation: organisation,
 			AutoTeams:    appCreateTeams,
@@ -372,24 +429,42 @@ var appCreateCmd = &cobra.Command{
 		}
 
 		// when succesfully creating app. app will be returned
-		app := Level27Client.AppCreate(request)
-		log.Printf("Succesfully created app! [name: '%v' - ID: '%v']", app.Name, app.ID)
+		app, err := Level27Client.AppCreate(request)
+		if err != nil {
+			return err
+		}
 
+		log.Printf("Succesfully created app! [name: '%v' - ID: '%v']", app.Name, app.ID)
+		return nil
 	},
 }
 
 // ---- DELETE AN APP
-var isAppDeleteConfirmed bool
 var appDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete an app",
 	Example: "lvl app delete NameOfMyApp",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// try to find appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.AppDelete(appId, isAppDeleteConfirmed)
+		if !optDeleteConfirmed {
+			app, err := Level27Client.App(appId)
+			if err != nil {
+				return err
+			}
+
+			if !confirmPrompt(fmt.Sprintf("Delete app %s (%d)?", app.Name, app.ID)) {
+				return nil
+			}
+		}
+
+		Level27Client.AppDelete(appId)
+		return nil
 	},
 }
 
@@ -401,19 +476,25 @@ var appUpdateCmd = &cobra.Command{
 	Short:   "Update an app.",
 	Example: "lvl app update 2067 --name myUpdatedName",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check if appId is valid
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
 		//get the current data from the app. if not changed its needed for put request
-		currentData := Level27Client.App(appId)
+		currentData, err := Level27Client.App(appId)
+		if err != nil {
+			return err
+		}
 
 		var currentTeamIds []string
 		for _, team := range currentData.Teams {
 			currentTeamIds = append(currentTeamIds, strconv.Itoa(team.ID))
 		}
 		// fill in request with the current data.
-		request := types.AppPutRequest{
+		request := l27.AppPutRequest{
 			Name:         currentData.Name,
 			Organisation: currentData.Organisation.ID,
 			AutoTeams:    currentTeamIds,
@@ -425,7 +506,10 @@ var appUpdateCmd = &cobra.Command{
 		}
 
 		if cmd.Flag("organisation").Changed {
-			organisationID := resolveOrganisation(appUpdateOrg)
+			organisationID, err := resolveOrganisation(appUpdateOrg)
+			if err != nil {
+				return err
+			}
 			request.Organisation = organisationID
 		}
 
@@ -434,7 +518,7 @@ var appUpdateCmd = &cobra.Command{
 		}
 
 		Level27Client.AppUpdate(appId, request)
-
+		return nil
 	},
 }
 
@@ -444,12 +528,21 @@ var AppDescribeCmd = &cobra.Command{
 	Short:   "Get detailed info about an app.",
 	Example: "lvl app describe 2077",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid appId
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
 		// get all data from app by appId
-		app := Level27Client.App(appId)
+		app, err := Level27Client.App(appId)
+		if err != nil {
+			return err
+		}
+
 		outputFormatTemplate(app, "templates/app.tmpl")
+		return nil
 	},
 }
 
@@ -471,11 +564,15 @@ var AppActionActivateCmd = &cobra.Command{
 	Short:   "Activate an app",
 	Example: "lvl app action activate 2077",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid appId
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppAction(appId, "activate")
+		return nil
 	},
 }
 
@@ -485,11 +582,15 @@ var AppActionDeactivateCmd = &cobra.Command{
 	Short:   "Deactivate an app",
 	Example: "lvl app action deactivate 2077",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid appId
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppAction(appId, "deactivate")
+		return nil
 	},
 }
 
@@ -513,27 +614,36 @@ var appSslGetCmd = &cobra.Command{
 	Example: "lvl app ssl get forum\nlvl app ssl get forum -f admin",
 
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		certs := resolveGets(
+		certs, err := resolveGets(
 			// First arg is app ID.
 			args[1:],
-			func(name string) []types.AppSslCertificate {
+			func(name string) ([]l27.AppSslCertificate, error) {
 				return Level27Client.AppSslCertificatesLookup(appID, name)
 			},
-			func(certID int) types.AppSslCertificate {
+			func(certID int) (l27.AppSslCertificate, error) {
 				return Level27Client.AppSslCertificatesGetSingle(appID, certID)
 			},
-			func(get types.CommonGetParams) []types.AppSslCertificate {
+			func(get l27.CommonGetParams) ([]l27.AppSslCertificate, error) {
 				return Level27Client.AppSslCertificatesGetList(appID, appSslGetType, appSslGetStatus, get)
 			},
 		)
 
+		if err != nil {
+			return err
+		}
+
 		outputFormatTableFuncs(
 			certs,
 			[]string{"ID", "Name", "Type", "Status", "SSL Status", "Expiry Date"},
-			[]interface{}{"ID", "Name", "SslType", "Status", "SslStatus", "DtExpires", func(c types.AppSslCertificate) string { return utils.FormatUnixTime(c.DtExpires) }})
+			[]interface{}{"ID", "Name", "SslType", "Status", "SslStatus", "DtExpires", func(c l27.AppSslCertificate) string { return utils.FormatUnixTime(c.DtExpires) }})
+
+		return nil
 	},
 }
 
@@ -545,13 +655,24 @@ var appSslDescribeCmd = &cobra.Command{
 	Example: "lvl app ssl describe forum forum.example.com",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		cert := Level27Client.AppSslCertificatesGetSingle(appID, certID)
+		certID, err := resolveAppSslCertificate(appID, args[1])
+		if err != nil {
+			return err
+		}
+
+		cert, err := Level27Client.AppSslCertificatesGetSingle(appID, certID)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTemplate(cert, "templates/appSslCertificate.tmpl")
+		return nil
 	},
 }
 
@@ -571,10 +692,13 @@ var appSslCreateCmd = &cobra.Command{
 	Example: "lvl app ssl create forum --name forum.example.com --auto-urls forum.example.com --auto-link --type letsencrypt\nlvl app ssl create forum --name forum.example.com --type own --ssl-cabundle '@cert.ca-bundle' --ssl-key '@key.pem' --ssl-crt '@cert.crt'",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		create := types.AppSslCertificateCreate{
+		create := l27.AppSslCertificateCreate{
 			Name:                   appSslCreateName,
 			SslType:                appSslCreateSslType,
 			AutoSslCertificateUrls: appSslCreateAutoSslCertificateUrls,
@@ -582,26 +706,49 @@ var appSslCreateCmd = &cobra.Command{
 			AutoUrlLink:            appSslCreateAutoUrlLink,
 		}
 
-		var certificate types.AppSslCertificate
+		var certificate l27.AppSslCertificate
 
 		switch appSslCreateSslType {
 		case "own":
-			createOwn := types.AppSslCertificateCreateOwn{
-				AppSslCertificateCreate: create,
-				SslKey:                  readArgFileSupported(appSslCreateSslKey),
-				SslCrt:                  readArgFileSupported(appSslCreateSslCrt),
-				SslCabundle:             readArgFileSupported(appSslCreateSslCabundle),
+			sslKey, err := readArgFileSupported(appSslCreateSslKey)
+			if err != nil {
+				return err
 			}
-			certificate = Level27Client.AppSslCertificatesCreateOwn(appID, createOwn)
+
+			sslCrt, err := readArgFileSupported(appSslCreateSslCrt)
+			if err != nil {
+				return err
+			}
+
+			sslCabundle, err := readArgFileSupported(appSslCreateSslCabundle)
+			if err != nil {
+				return err
+			}
+
+			createOwn := l27.AppSslCertificateCreateOwn{
+				AppSslCertificateCreate: create,
+				SslKey:                  sslKey,
+				SslCrt:                  sslCrt,
+				SslCabundle:             sslCabundle,
+			}
+
+			certificate, err = Level27Client.AppSslCertificatesCreateOwn(appID, createOwn)
+			if err != nil {
+				return err
+			}
 
 		case "letsencrypt", "xolphin":
-			certificate = Level27Client.AppSslCertificatesCreate(appID, create)
+			certificate, err = Level27Client.AppSslCertificatesCreate(appID, create)
+			if err != nil {
+				return err
+			}
 
 		default:
-			cobra.CheckErr(fmt.Sprintf("Invalid SSL type: %s", appSslCreateSslType))
+			return fmt.Errorf("invalid SSL type: %s", appSslCreateSslType)
 		}
 
 		fmt.Printf("sslCertificate created: [name: '%s' - ID: '%d'].", certificate.Name, certificate.ID)
+		return nil
 	},
 }
 
@@ -614,19 +761,35 @@ var appSslDeleteCmd = &cobra.Command{
 	Example: "lvl app ssl delete forum forum.example.com",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		certID, err := resolveAppSslCertificate(appID, args[1])
+		if err != nil {
+			return err
+		}
 
 		if !appSslDeleteForce {
-			app := Level27Client.App(appID)
-			cert := Level27Client.AppSslCertificatesGetSingle(appID, certID)
+			app, err := Level27Client.App(appID)
+			if err != nil {
+				return err
+			}
+
+			cert, err := Level27Client.AppSslCertificatesGetSingle(appID, certID)
+			if err != nil {
+				return err
+			}
+
 			if !confirmPrompt(fmt.Sprintf("Delete SSL certificate %s (%d) on app %s (%d)?", cert.Name, certID, app.Name, appID)) {
-				return
+				return nil
 			}
 		}
 
 		Level27Client.AppSslCertificatesDelete(appID, certID)
+		return nil
 	},
 }
 
@@ -635,14 +798,28 @@ var appSslUpdateCmd = &cobra.Command{
 	Use: "update [app] [SSL cert]",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		appID := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appID, args[1])
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		cert := Level27Client.AppSslCertificatesGetSingle(appID, certID)
-		put := types.AppSslCertificatePut{
+		certID, err := resolveAppSslCertificate(appID, args[1])
+		if err != nil {
+			return err
+		}
+
+		cert, err := Level27Client.AppSslCertificatesGetSingle(appID, certID)
+		if err != nil {
+			return err
+		}
+
+		put := l27.AppSslCertificatePut{
 			Name:    cert.Name,
 			SslType: cert.SslType,
 		}
@@ -651,6 +828,7 @@ var appSslUpdateCmd = &cobra.Command{
 		data = mergeMaps(data, settings)
 
 		Level27Client.AppSslCertificatesUpdate(appID, certID, data)
+		return nil
 	},
 }
 
@@ -661,11 +839,19 @@ var appSslFixCmd = &cobra.Command{
 	Example: "lvl app ssl fix forum forum.example.com",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		certID, err := resolveAppSslCertificate(appID, args[1])
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppSslCertificatesFix(appID, certID)
+		return nil
 	},
 }
 
@@ -679,11 +865,19 @@ var appSslActionRetryCmd = &cobra.Command{
 	Use: "retry [app] [SSL cert]",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		certID, err := resolveAppSslCertificate(appID, args[1])
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppSslCertificatesActions(appID, certID, "retry")
+		return nil
 	},
 }
 
@@ -691,11 +885,19 @@ var appSslActionValidateChallengeCmd = &cobra.Command{
 	Use: "validateChallenge [app] [SSL cert]",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		certID, err := resolveAppSslCertificate(appID, args[1])
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppSslCertificatesActions(appID, certID, "validateChallenge")
+		return nil
 	},
 }
 
@@ -706,13 +908,24 @@ var appSslKeyCmd = &cobra.Command{
 	Example: "lvl app ssl key MyAppName",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appId := resolveApp(args[0])
-		certID := resolveAppSslCertificate(appId, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		key := Level27Client.AppSslCertificatesKey(appId, certID)
+		certID, err := resolveAppSslCertificate(appId, args[1])
+		if err != nil {
+			return err
+		}
+
+		key, err := Level27Client.AppSslCertificatesKey(appId, certID)
+		if err != nil {
+			return err
+		}
 
 		fmt.Print(key.SslKey)
+		return nil
 	},
 }
 
@@ -732,32 +945,47 @@ var appComponentGetCmd = &cobra.Command{
 	Short:   "Show list of all available components on an app.",
 	Example: "lvl app component get MyAppName",
 	Args:    cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for appId based on Appname
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
 		ids, err := convertStringsToIds(args[1:])
 		if err != nil {
-			log.Fatalln("Invalid component ID")
+			return errors.New("nvalid component ID")
+		}
+
+		res, err := getComponents(appId, ids)
+		if err != nil {
+			return err
 		}
 
 		outputFormatTable(
-			getComponents(appId, ids),
+			res,
 			[]string{"ID", "NAME", "STATUS"},
 			[]string{"ID", "Name", "Status"})
+
+		return nil
 	},
 }
 
-func getComponents(appId int, ids []int) []types.AppComponent {
+func getComponents(appId int, ids []int) ([]l27.AppComponent, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.AppComponentsGet(appId, optGetParameters)
 	} else {
-		components := make([]types.AppComponent, len(ids))
+		components := make([]l27.AppComponent, len(ids))
 		for idx, id := range ids {
-			components[idx] = c.AppComponentGetSingle(appId, id)
+			var err error
+			components[idx], err = c.AppComponentGetSingle(appId, id)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return components
+
+		return components, nil
 	}
 }
 
@@ -775,33 +1003,46 @@ var appComponentCreateCmd = &cobra.Command{
 	Example: "lvl app component create --name myComponentName --type docker",
 
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if appComponentCreateSystem == "" && appComponentCreateSystemgroup == "" {
-			cobra.CheckErr("Must specify either a system or a system group")
+			return errors.New("must specify either a system or a system group")
 		}
 
 		if appComponentCreateSystem != "" && appComponentCreateSystemgroup != "" {
-			cobra.CheckErr("Cannot specify both a system and a system group")
+			return errors.New("cannot specify both a system and a system group")
 		}
 
-		appID := resolveApp(args[0])
-		componentTypes := Level27Client.AppComponenttypesGet();
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		componentTypes, err := Level27Client.AppComponenttypesGet()
+		if err != nil {
+			return err
+		}
 
 		val, ok := componentTypes[appComponentCreateType]
 		if !ok {
-			cobra.CheckErr(fmt.Sprintf("Unknown component type: %s", appComponentCreateType))
+			return fmt.Errorf("unknown component type: %s", appComponentCreateType)
 		}
 
-		paramsPassed := loadSettings(appComponentCreateParamsFile)
+		paramsPassed, err := loadSettings(appComponentCreateParamsFile)
+		if err != nil {
+			return err
+		}
 
 		// Parse params from command line
 		for _, param := range *appComponentCreateParams {
 			split := strings.SplitN(param, "=", 2)
 			if len(split) != 2 {
-				cobra.CheckErr(fmt.Sprintf("Expected key=value pair to --param: %s", param))
+				return fmt.Errorf("expected key=value pair to --param: %s", param)
 			}
 
-			paramsPassed[split[0]] = readArgFileSupported(split[1])
+			paramsPassed[split[0]], err = readArgFileSupported(split[1])
+			if err != nil {
+				return err
+			}
 		}
 
 		create := map[string]interface{}{}
@@ -810,11 +1051,17 @@ var appComponentCreateCmd = &cobra.Command{
 		create["appcomponenttype"] = appComponentCreateType
 
 		if appComponentCreateSystem != "" {
-			create["system"] = resolveSystem(appComponentCreateSystem)
+			create["system"], err = resolveSystem(appComponentCreateSystem)
+			if err != nil {
+				return err
+			}
 		}
 
 		if appComponentCreateSystemgroup != "" {
-			create["systemgroup"] = checkSingleIntID(appComponentCreateSystemgroup, "systemgroup")
+			create["systemgroup"], err = checkSingleIntID(appComponentCreateSystemgroup, "systemgroup")
+			if err != nil {
+				return err
+			}
 		}
 
 		if appComponentCreateSystemprovider != 0 {
@@ -830,22 +1077,29 @@ var appComponentCreateCmd = &cobra.Command{
 			paramValue, hasValue := paramsPassed[paramName]
 			if hasValue {
 				if param.Readonly || param.DisableEdit {
-					cobra.CheckErr(fmt.Sprintf("Param cannot be changed: %s", paramName))
+					return fmt.Errorf("param cannot be changed: %s", paramName)
 				}
-				create[paramName] = parseComponentParameter(param, paramValue)
+
+				res, err := parseComponentParameter(param, paramValue)
+				if err != nil {
+					return err
+				}
+
+				create[paramName] = res
 			} else if param.Required && param.DefaultValue == nil {
-				cobra.CheckErr(fmt.Sprintf("Required parameter not given: %s", paramName))
+				return fmt.Errorf("required parameter not given: %s", paramName)
 			}
 		}
 
 		// Check that there aren't any params given that don't exist.
 		for k := range paramsPassed {
 			if !paramNames[k] {
-				cobra.CheckErr(fmt.Sprintf("Unknown parameter given: %s", k))
+				return fmt.Errorf("unknown parameter given: %s", k)
 			}
 		}
 
 		Level27Client.AppComponentCreate(appID, create)
+		return nil
 	},
 }
 
@@ -856,16 +1110,33 @@ var appComponentUpdateCmd = &cobra.Command{
 	Example: "",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := loadMergeSettings(updateSettingsFile, updateSettings)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := loadMergeSettings(updateSettingsFile, updateSettings)
+		if err != nil {
+			return err
+		}
 
-		appID := resolveApp(args[0])
-		appComponentID := resolveAppComponent(appID, args[1])
-		componentTypes := Level27Client.AppComponenttypesGet();
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		appComponent := Level27Client.AppComponentGetSingle(appID, appComponentID)
+		appComponentID, err := resolveAppComponent(appID, args[1])
+		if err != nil {
+			return err
+		}
 
-		parameterTypes := make(map[string]types.AppComponentTypeParameter)
+		componentTypes, err := Level27Client.AppComponenttypesGet()
+		if err != nil {
+			return err
+		}
+
+		appComponent, err := Level27Client.AppComponentGetSingle(appID, appComponentID)
+		if err != nil {
+			return err
+		}
+
+		parameterTypes := make(map[string]l27.AppComponentTypeParameter)
 		for _, param := range componentTypes[appComponent.Appcomponenttype].Servicetype.Parameters {
 			parameterTypes[param.Name] = param
 		}
@@ -888,9 +1159,9 @@ var appComponentUpdateCmd = &cobra.Command{
 				continue
 			}
 
-			switch (paramType) {
+			switch paramType {
 			case "password-sha512", "password-plain", "password-sha1", "passowrd-sha256-scram":
-			// Passwords are sent as "******". Skip them to avoid getting API errors.
+				// Passwords are sent as "******". Skip them to avoid getting API errors.
 				continue
 			case "sshkey[]":
 				// Need to map SSH keys -> IDs
@@ -914,32 +1185,41 @@ var appComponentUpdateCmd = &cobra.Command{
 		for _, param := range *appComponentUpdateParams {
 			split := strings.SplitN(param, "=", 2)
 			if len(split) != 2 {
-				cobra.CheckErr(fmt.Sprintf("Expected key=value pair to --param: %s", param))
+				return fmt.Errorf("expected key=value pair to --param: %s", param)
 			}
 
 			paramName := split[0]
-			paramValue := readArgFileSupported(split[1])
-			paramType, ok := parameterTypes[paramName]
-			if !ok {
-				cobra.CheckErr(fmt.Sprintf("Unknown parameter: %s", paramName))
+			paramValue, err := readArgFileSupported(split[1])
+			if err != nil {
+				return err
 			}
 
-			data[paramName] = parseComponentParameter(paramType, paramValue)
+			paramType, ok := parameterTypes[paramName]
+			if !ok {
+				return fmt.Errorf("unknown parameter: %s", paramName)
+			}
+
+			res, err := parseComponentParameter(paramType, paramValue)
+			if err != nil {
+				return err
+			}
+
+			data[paramName] = res
 		}
 
 		Level27Client.AppComponentUpdate(appID, appComponentID, data)
+		return nil
 	},
 }
 
-
-func parseComponentParameter(param types.AppComponentTypeParameter, paramValue interface{}) interface{} {
+func parseComponentParameter(param l27.AppComponentTypeParameter, paramValue interface{}) (interface{}, error) {
 	// Convert parameters to the correct types in-JSON.
 	var str string
 	var ok bool
 	if str, ok = paramValue.(string); !ok {
 		// Value isn't a string. This means it must have come from a JSON input file or something (i.e. not command line arg)
 		// So assume it's the correct type and let the API complain if it isn't.
-		return paramValue
+		return paramValue, nil
 	}
 
 	switch param.Type {
@@ -947,15 +1227,18 @@ func parseComponentParameter(param types.AppComponentTypeParameter, paramValue i
 		keys := []int{}
 		for _, key := range strings.Split(str, ",") {
 			// TODO: Resolve SSH key
-			keys = append(keys, checkSingleIntID(key, "SSH key"))
+			res, err := checkSingleIntID(key, "SSH key")
+			if err != nil {
+				return nil, err
+			}
+
+			keys = append(keys, res)
 		}
-		return keys
+		return keys, nil
 	case "integer":
-		intVal, err := strconv.Atoi(str)
-		cobra.CheckErr(err)
-		return intVal
+		return strconv.Atoi(str)
 	case "boolean":
-		return strings.EqualFold(str, "true")
+		return strings.EqualFold(str, "true"), nil
 	case "array":
 		found := false
 		for _, possibleValue := range param.PossibleValues {
@@ -966,35 +1249,53 @@ func parseComponentParameter(param types.AppComponentTypeParameter, paramValue i
 		}
 
 		if !found {
-			cobra.CheckErr(
-				fmt.Sprintf(
-					"Parameter %s: value '%s' not in range of possible values: %s",
-					param.Name,
-					str,
-					strings.Join(param.PossibleValues, ", ")))
+			return nil, fmt.Errorf(
+				"parameter %s: value '%s' not in range of possible values: %s",
+				param.Name,
+				str,
+				strings.Join(param.PossibleValues, ", "))
 		}
 
-		return str
+		return str, nil
+
 	default:
 		// Pass as string
-		return str
+		return str, nil
 	}
 }
 
 // ---- DELETE COMPONENT
-var isComponentDeleteConfirmed bool
 var AppComponentDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete component from an app.",
 	Example: "lvl app component delete MyAppName MyComponentName",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on appName
-		appId := resolveApp(args[0])
-		// search for component based on name
-		appComponentId := resolveAppComponent(appId, args[1])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		Level27Client.AppComponentsDelete(appId, appComponentId, isComponentDeleteConfirmed)
+		// search for component based on name
+		appComponentId, err := resolveAppComponent(appId, args[1])
+		if err != nil {
+			return err
+		}
+
+		if !optDeleteConfirmed {
+			appComponent, err := Level27Client.AppComponentGetSingle(appId, appComponentId)
+			if err != nil {
+				return err
+			}
+
+			if !confirmPrompt(fmt.Sprintf("Delete app component %s (%d) on app %s (%d)?", appComponent.Name, appComponent.ID, appComponent.App.Name, appComponent.App.ID)) {
+				return nil
+			}
+		}
+
+		Level27Client.AppComponentsDelete(appId, appComponentId)
+		return nil
 	},
 }
 
@@ -1014,13 +1315,14 @@ var appComponentCategoryGetCmd = &cobra.Command{
 
 		// type to convert string into category type
 		var AppcomponentCategories struct {
-			Data []types.AppcomponentCategory
+			Data []l27.AppcomponentCategory
 		}
 
 		for _, category := range currentComponentCategories {
-			cat := types.AppcomponentCategory{Name: category}
+			cat := l27.AppcomponentCategory{Name: category}
 			AppcomponentCategories.Data = append(AppcomponentCategories.Data, cat)
 		}
+
 		// display output in readable table
 		outputFormatTable(AppcomponentCategories.Data, []string{"CATEGORY"}, []string{"Name"})
 	},
@@ -1031,10 +1333,12 @@ var appComponentTypeCmd = &cobra.Command{
 	Use:     "types",
 	Short:   "Shows a list of all current componenttypes.",
 	Example: "lvl app component types",
-	Run: func(cmd *cobra.Command, args []string) {
-
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// get map of all types back from API (API doesnt give slice back in this case.)
-		types := Level27Client.AppComponenttypesGet()
+		types, err := Level27Client.AppComponenttypesGet()
+		if err != nil {
+			return err
+		}
 
 		//create a type that contains an appcomponenttype name and category
 		type typeInfo struct {
@@ -1057,7 +1361,7 @@ var appComponentTypeCmd = &cobra.Command{
 
 		// print result for user
 		outputFormatTable(allTypes, []string{"NAME", "CATEGORY"}, []string{"Name", "Category"})
-
+		return nil
 	},
 }
 
@@ -1068,21 +1372,25 @@ var appComponentParametersCmd = &cobra.Command{
 	Short:   "Show list of all possible parameters with their default values of a specific componenttype.",
 	Example: "lvl app component parameters -t python",
 	Args:    cobra.ExactArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// get map of all types (and their parameters) back from API (API doesnt give slice back in this case.)
-		types := Level27Client.AppComponenttypesGet()
+		types, err := Level27Client.AppComponenttypesGet()
+		if err != nil {
+			return err
+		}
 
 		// check if chosen componenttype is found
 		componenttype, isTypeFound := types[appComponentType]
 
-		if isTypeFound {
-			outputFormatTable(componenttype.Servicetype.Parameters,
-				[]string{"NAME", "DESCRIPTION", "TYPE", "DEFAULT_VALUE", "REQUIRED"},
-				[]string{"Name", "Description", "Type", "DefaultValue", "Required"})
-		} else {
-			log.Fatalf("Given componenttype: '%v' NOT found!", appComponentType)
+		if !isTypeFound {
+			return fmt.Errorf("given componenttype: '%v' NOT found", appComponentType)
 		}
 
+		outputFormatTable(componenttype.Servicetype.Parameters,
+			[]string{"NAME", "DESCRIPTION", "TYPE", "DEFAULT_VALUE", "REQUIRED"},
+			[]string{"Name", "Description", "Type", "DefaultValue", "Required"})
+
+		return nil
 	},
 }
 
@@ -1102,63 +1410,97 @@ var appComponentRestoreGetCmd = &cobra.Command{
 	Short:   "Show a list of al available restores on an app.",
 	Example: "lvl app restore get NameOfMyApp",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		Restores := Level27Client.AppComponentRestoresGet(appId)
+		Restores, err := Level27Client.AppComponentRestoresGet(appId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTableFuncs(Restores,
 			[]string{"ID", "FILENAME", "STATUS", "DATE", "APPCOMPONENT_ID", "APPCOMPONENT_NAME"},
-			[]interface{}{"ID", "Filename", "Status", func(r types.AppComponentRestore) string { return utils.FormatUnixTime(r.AvailableBackup.Date) }, "Appcomponent.ID", "Appcomponent.Name"})
+			[]interface{}{"ID", "Filename", "Status", func(r l27.AppComponentRestore) string { return utils.FormatUnixTime(r.AvailableBackup.Date) }, "Appcomponent.ID", "Appcomponent.Name"})
+
+		return nil
 	},
 }
 
 // ---- CREATE A NEW RESTORE
-var appRestoreCreateComponent string
-var appRestoreCreateBackup int
 var appComponentRestoreCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new restore for an app.",
 	Example: "lvl app restore create MyAppName MyComponentName 453",
 	Args:    cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search AppId based on appname
-		appId := resolveApp(args[0])
-		// search componentId based on name
-		componentId := resolveAppComponent(appId, args[1])
-		backupId, err := strconv.Atoi(args[2])
-
+		appId, err := resolveApp(args[0])
 		if err != nil {
-			log.Fatalf("BackupID is NOT valid! '%v'.", args[2])
+			return err
 		}
 
-		request := types.AppComponentRestoreRequest{
+		// search componentId based on name
+		componentId, err := resolveAppComponent(appId, args[1])
+		if err != nil {
+			return err
+		}
+
+		backupId, err := checkSingleIntID(args[2], "backup")
+		if err != nil {
+			return err
+		}
+
+		request := l27.AppComponentRestoreRequest{
 			Appcomponent:    componentId,
 			AvailableBackup: backupId,
 		}
-		restore := Level27Client.AppComponentRestoreCreate(appId, request)
+
+		restore, err := Level27Client.AppComponentRestoreCreate(appId, request)
+		if err != nil {
+			return err
+		}
 
 		log.Printf("Restore created. [ID: %v].", restore.ID)
+		return nil
 	},
 }
 
 // ---- DELETE A RESTORE
-var isAppRestoreDeleteConfirmed bool
 var appRestoreDeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Delete a specific restore from an app.",
 	Example: "lvl app component restore delete MyAppName 4532",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
 		// check if restoreId is valid type
-		restoreId := checkSingleIntID(args[1], "restore")
+		restoreId, err := checkSingleIntID(args[1], "restore")
+		if err != nil {
+			return err
+		}
 
-		Level27Client.AppComponentRestoresDelete(appId, restoreId, isAppRestoreDeleteConfirmed)
+		if !optDeleteConfirmed {
+			app, err := Level27Client.App(appId)
+			if err != nil {
+				return err
+			}
 
+			if !confirmPrompt(fmt.Sprintf("Delete restore %d on app %s (%d)?", restoreId, app.Name, app.ID)) {
+				return nil
+			}
+		}
+
+		Level27Client.AppComponentRestoresDelete(appId, restoreId)
+		return nil
 	},
 }
 
@@ -1169,18 +1511,25 @@ var appComponentRestoreDownloadCmd = &cobra.Command{
 	Short:   "Download the restore file.",
 	Example: "lvl app component restore download MyAppName 4123",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check if restoreId is valid type
-		restoreId := checkSingleIntID(args[1], "Restore")
+		restoreId, err := checkSingleIntID(args[1], "Restore")
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppComponentRestoreDownload(appId, restoreId, appComponentRestoreDownloadName)
+		return nil
 	},
 }
 
 //-------------------------------------------------  APP COMPONENT BACKUPS (GET) -------------------------------------------------
-var appComponentNameBackup string
 var appComponentBackupsCmd = &cobra.Command{
 	Use:     "backup",
 	Short:   "Commands for managing availableBackups.",
@@ -1192,19 +1541,31 @@ var appComponentBackupsGetCmd = &cobra.Command{
 	Short:   "Show list of available backups.",
 	Example: "lvl app component backup get MyAppName MyComponentName",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search appId based on appname
-		appId := resolveApp(args[0])
-		// search componentId based on name
-		componentId := resolveAppComponent(appId, args[1])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		availableBackups := Level27Client.AppComponentbackupsGet(appId, componentId)
+		// search componentId based on name
+		componentId, err := resolveAppComponent(appId, args[1])
+		if err != nil {
+			return err
+		}
+
+		availableBackups, err := Level27Client.AppComponentbackupsGet(appId, componentId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTableFuncs(availableBackups,
 			[]string{"ID", "SNAPSHOTNAME", "DATE"},
-			[]interface{}{"ID", "SnapshotName", func(a types.AppComponentAvailableBackup) string {
+			[]interface{}{"ID", "SnapshotName", func(a l27.AppComponentAvailableBackup) string {
 				return utils.FormatUnixTime(a.Date)
 			}})
+
+		return nil
 	},
 }
 
@@ -1222,17 +1583,25 @@ var appMigrationsGetCmd = &cobra.Command{
 	Short:   "Show a list of all available migrations.",
 	Example: "lvl app migrations get MyAppName",
 	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for AppId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		migrations := Level27Client.AppMigrationsGet(appId)
+		migrations, err := Level27Client.AppMigrationsGet(appId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTableFuncs(migrations,
 			[]string{"ID", "MIGRATION_TYPE", "STATUS", "DATE_PLANNED"},
-			[]interface{}{"ID", "MigrationType", "Status", func(m types.AppMigration) string {
+			[]interface{}{"ID", "MigrationType", "Status", func(m l27.AppMigration) string {
 				return utils.FormatUnixTime(m.DtPlanned)
 			}})
+
+		return nil
 	},
 }
 
@@ -1246,31 +1615,45 @@ var appMigrationsCreateCmd = &cobra.Command{
 	Example: "lvl app migrations create MyAppName --migration-item 'source=forum, destSystem=newForumSystem' --migration-item 'source=database, destGroup=newDbGroup, ord=2'",
 	Args:    cobra.ExactArgs(1),
 
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for appid based on appName
-		appId := resolveApp(args[0])
-
-		items := []types.AppMigrationItem{}
-
-		for _, migrationItem := range appMigrationCreateItems {
-			items = append(items, ParseMigrationItem(appId, migrationItem))
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
 		}
 
-		request := types.AppMigrationRequest{
+		items := []l27.AppMigrationItem{}
+
+		for _, migrationItem := range appMigrationCreateItems {
+			res, err := ParseMigrationItem(appId, migrationItem)
+			if err != nil {
+				return err
+			}
+
+			items = append(items, res)
+		}
+
+		request := l27.AppMigrationRequest{
 			MigrationType:      "automatic",
 			DtPlanned:          appMigrationCreatePlanned,
 			MigrationItemArray: items,
 		}
 
-		Level27Client.AppMigrationsCreate(appId, request)
+		migration, err := Level27Client.AppMigrationsCreate(appId, request)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("migration created! [ID: '%v']", migration.ID)
+		return nil
 	},
 }
 
-func ParseMigrationItem(appID int, values string) types.AppMigrationItem{
+func ParseMigrationItem(appID int, values string) (l27.AppMigrationItem, error) {
 	valueSplitted := strings.Split(values, ",")
 
-	item := types.AppMigrationItem{
-		Ord: 1,
+	item := l27.AppMigrationItem{
+		Ord:    1,
 		Source: "cp4",
 	}
 
@@ -1279,59 +1662,77 @@ func ParseMigrationItem(appID int, values string) types.AppMigrationItem{
 	for _, keyValuePair := range valueSplitted {
 		// Go over key value pairs and fill out the migration item as we go.
 
-		key, value := ParseMigrationItemKeyValuePair(keyValuePair)
+		key, value, err := ParseMigrationItemKeyValuePair(keyValuePair)
+		if err != nil {
+			return l27.AppMigrationItem{}, err
+		}
 
 		switch key {
 		case "ord":
 			val, err := strconv.Atoi(value)
-			cobra.CheckErr(err)
+			if err != nil {
+				return l27.AppMigrationItem{}, err
+			}
 			item.Ord = val
 
 		case "destSystem":
-			item.DestinationEntityId = resolveSystem(value)
+			item.DestinationEntityId, err = resolveSystem(value)
 			item.DestinationEntity = "system"
 			haveAnyDst = true
+			if err != nil {
+				return l27.AppMigrationItem{}, err
+			}
 
 		case "destGroup":
-			item.DestinationEntityId = resolveSystemgroup(value)
+			item.DestinationEntityId, err = resolveSystemgroup(value)
 			item.DestinationEntity = "systemgroup"
 			haveAnyDst = true
+			if err != nil {
+				return l27.AppMigrationItem{}, err
+			}
 
 		case "source":
-			appComponent := resolveAppComponent(appID, value)
-			appComponentType := Level27Client.AppComponentGetSingle(appID, appComponent).Appcomponenttype
+			appComponent, err := resolveAppComponent(appID, value)
+			if err != nil {
+				return l27.AppMigrationItem{}, err
+			}
+
+			appComponentType, err := Level27Client.AppComponentGetSingle(appID, appComponent)
+			if err != nil {
+				return l27.AppMigrationItem{}, err
+			}
+
 			haveAnySrc = true
 
 			item.SourceInfo = appComponent
-			item.Type = appComponentType
+			item.Type = appComponentType.Appcomponenttype
 
 		default:
-			log.Fatalf("Unknown property in migration item: %s", key)
+			return l27.AppMigrationItem{}, fmt.Errorf("unknown property in migration item: %s", key)
 		}
 	}
 
 	if !haveAnyDst {
-		cobra.CheckErr(fmt.Sprintf("No destination specified for migration item!"))
+		return l27.AppMigrationItem{}, errors.New("no destination specified for migration item")
 	}
 
 	if !haveAnySrc {
-		cobra.CheckErr(fmt.Sprintf("No source specified for migration item!"))
+		return l27.AppMigrationItem{}, errors.New("no source specified for migration item")
 	}
 
-	return item
+	return item, nil
 }
 
-
-func ParseMigrationItemKeyValuePair(keyValuePair string) (string, string) {
+func ParseMigrationItemKeyValuePair(keyValuePair string) (string, string, error) {
 	split := strings.SplitN(keyValuePair, "=", 2)
 	if len(split) == 1 {
-		log.Fatalf("MigrationItem property not defined correctly: '%v'. Use '=' to define properties.", keyValuePair)
+		return "", "", fmt.Errorf("migrationItem property not defined correctly: '%v'. Use '=' to define properties", keyValuePair)
 	}
 
 	key := strings.TrimSpace(split[0])
 	value := strings.TrimSpace(split[1])
 
-	return key, value
+	return key, value, nil
 }
 
 // ---- UPDATE MIGRATION
@@ -1341,18 +1742,31 @@ var appMigrationsUpdateCmd = &cobra.Command{
 	Short:   "Update an app migration.",
 	Example: "lvl app migrations update MyAppName 3414",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for appID based on name
-		appId := resolveApp(args[0])
-		// check for valid migrationId type
-		migrationId := checkSingleIntID(args[1], "appMigration")
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		request := types.AppMigrationUpdate{
+		// check for valid migrationId type
+		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		if err != nil {
+			return err
+		}
+
+		request := l27.AppMigrationUpdate{
 			MigrationType: appMigrationsUpdateType,
 			DtPlanned:     appMigrationsUpdateDtPlanned,
 		}
 
-		Level27Client.AppMigrationsUpdate(appId, migrationId, request)
+		err = Level27Client.AppMigrationsUpdate(appId, migrationId, request)
+		if err != nil {
+			return err
+		}
+
+		log.Print("migration succesfully updated!")
+		return nil
 	},
 }
 
@@ -1362,15 +1776,26 @@ var appMigrationDescribeCmd = &cobra.Command{
 	Short:   "Get detailed info about a specific migration.",
 	Example: "lvl app migrations describe MyAppName 1243",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on name
-		appId := resolveApp(args[0])
-		// check for valid migrationId type
-		migrationId := checkSingleIntID(args[1], "appMigration")
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		migration := Level27Client.AppMigrationDescribe(appId, migrationId)
+		// check for valid migrationId type
+		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		if err != nil {
+			return err
+		}
+
+		migration, err := Level27Client.AppMigrationDescribe(appId, migrationId)
+		if err != nil {
+			return err
+		}
 
 		outputFormatTemplate(migration, "templates/appMigration.tmpl")
+		return nil
 	},
 }
 
@@ -1388,13 +1813,21 @@ var appMigrationsActionConfirmCmd = &cobra.Command{
 	Short:   "Execute confirm action on a migration",
 	Example: "lvl app migrations action confirm MyAppName 332",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid migrationId type
-		migrationId := checkSingleIntID(args[1], "appMigration")
+		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppMigrationsAction(appId, migrationId, "confirm")
+		return nil
 	},
 }
 
@@ -1404,13 +1837,21 @@ var appMigrationsActionDenyCmd = &cobra.Command{
 	Short:   "Execute confirm action on a migration",
 	Example: "lvl app migrations action deny MyAppName 332",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid migrationId type
-		migrationId := checkSingleIntID(args[1], "appMigration")
+		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppMigrationsAction(appId, migrationId, "deny")
+		return nil
 	},
 }
 
@@ -1420,13 +1861,21 @@ var appMigrationsActionRetryCmd = &cobra.Command{
 	Short:   "Execute confirm action on a migration",
 	Example: "lvl app migrations action retry MyAppName 332",
 	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// search for appId based on name
-		appId := resolveApp(args[0])
+		appId, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
 		// check for valid migrationId type
-		migrationId := checkSingleIntID(args[1], "appMigration")
+		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		if err != nil {
+			return err
+		}
 
 		Level27Client.AppMigrationsAction(appId, migrationId, "retry")
+		return nil
 	},
 }
 
@@ -1434,7 +1883,7 @@ var appMigrationsActionRetryCmd = &cobra.Command{
 
 // APP COMPONENT URL
 var appComponentUrlCmd = &cobra.Command{
-	Use: "url",
+	Use:     "url",
 	Aliases: []string{"urls"},
 }
 
@@ -1443,27 +1892,44 @@ var appComponentUrlGetCmd = &cobra.Command{
 	Use: "get",
 
 	Args: cobra.MinimumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		componentID := resolveAppComponent(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
 
-		results := resolveGets(
+		componentID, err := resolveAppComponent(appID, args[1])
+		if err != nil {
+			return err
+		}
+
+		results, err := resolveGets(
 			args[2:],
-			func (name string) []types.AppComponentUrlShort {
+			func(name string) ([]l27.AppComponentUrlShort, error) {
 				return Level27Client.AppComponentUrlLookup(appID, componentID, name)
 			},
-			func (i int) types.AppComponentUrlShort {
-				return Level27Client.AppComponentUrlGetSingle(appID, componentID, i).ToShort()
+			func(i int) (l27.AppComponentUrlShort, error) {
+				res, err := Level27Client.AppComponentUrlGetSingle(appID, componentID, i)
+				if err != nil {
+					return l27.AppComponentUrlShort{}, err
+				}
+				return res.ToShort(), nil
 			},
-			func(cgp types.CommonGetParams) []types.AppComponentUrlShort {
+			func(cgp l27.CommonGetParams) ([]l27.AppComponentUrlShort, error) {
 				return Level27Client.AppComponentUrlGetList(appID, componentID, cgp)
 			},
 		)
+
+		if err != nil {
+			return err
+		}
 
 		outputFormatTable(
 			results,
 			[]string{"ID", "CONTENT", "STATUS", "TYPE", "SSL CERT", "FORCE SSL", "HANDLE DNS", "AUTHENTICATE"},
 			[]string{"ID", "Content", "Status", "Type", "SslCertificate.Name", "SslForce", "HandleDNS", "Authentication"})
+
+		return nil
 	},
 }
 
@@ -1475,13 +1941,20 @@ var appComponentUrlCreateSslCertificate int
 var appComponentUrlCreateHandleDns bool
 var appComponentUrlCreateAutoSslCertificate bool
 var appComponentUrlCreateCmd = &cobra.Command{
-	Use: "create",
+	Use:   "create",
 	Short: "Create an url for an appcomponent.",
 
 	Args: cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		componentID := resolveAppComponent(appID, args[1])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		componentID, err := resolveAppComponent(appID, args[1])
+		if err != nil {
+			return err
+		}
 
 		var cert *int
 		if appComponentUrlCreateSslCertificate == 0 {
@@ -1490,32 +1963,51 @@ var appComponentUrlCreateCmd = &cobra.Command{
 			cert = &appComponentUrlCreateSslCertificate
 		}
 
-		create := types.AppComponentUrlCreate {
-			Authentication: appComponentUrlCreateAuthentication,
-			Content: appComponentUrlCreateContent,
-			SslForce: appComponentUrlCreateSslForce,
-			SslCertificate: cert,
-			HandleDns: appComponentUrlCreateHandleDns,
+		create := l27.AppComponentUrlCreate{
+			Authentication:     appComponentUrlCreateAuthentication,
+			Content:            appComponentUrlCreateContent,
+			SslForce:           appComponentUrlCreateSslForce,
+			SslCertificate:     cert,
+			HandleDns:          appComponentUrlCreateHandleDns,
 			AutoSslCertificate: appComponentUrlCreateAutoSslCertificate,
 		}
 
-		Level27Client.AppComponentUrlCreate(appID, componentID, create)
+		_, err = Level27Client.AppComponentUrlCreate(appID, componentID, create)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	},
 }
 
 // APP COMPONENT URL DELETE
 var appComponentUrlDeleteForce bool
 var appComponentUrlDeleteCmd = &cobra.Command{
-	Use: "delete",
+	Use:   "delete",
 	Short: "Delete an url from an appcomponent.",
-	Args: cobra.ExactArgs(3),
-	Run: func(cmd *cobra.Command, args []string) {
-		appID := resolveApp(args[0])
-		componentID := resolveAppComponent(appID, args[1])
-		urlID := resolveAppComponentUrl(appID, componentID, args[2])
+	Args:  cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		componentID, err := resolveAppComponent(appID, args[1])
+		if err != nil {
+			return err
+		}
+
+		urlID, err := resolveAppComponentUrl(appID, componentID, args[2])
+		if err != nil {
+			return err
+		}
 
 		if !appComponentUrlDeleteForce {
-			url := Level27Client.AppComponentUrlGetSingle(appID, componentID, urlID)
+			url, err := Level27Client.AppComponentUrlGetSingle(appID, componentID, urlID)
+			if err != nil {
+				return err
+			}
 
 			msg := fmt.Sprintf(
 				"Delete URL %s (%d) on app comp %s (%d)?",
@@ -1523,10 +2015,11 @@ var appComponentUrlDeleteCmd = &cobra.Command{
 				url.Appcomponent.Name, url.Appcomponent.ID)
 
 			if !confirmPrompt(msg) {
-				return
+				return nil
 			}
 		}
 
 		Level27Client.AppComponentUrlDelete(appID, componentID, urlID)
+		return nil
 	},
 }

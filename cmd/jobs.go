@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"log"
-
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -14,47 +12,61 @@ func init() {
 }
 
 var jobCmd = &cobra.Command{
-	Use: "job",
+	Use:   "job",
 	Short: "Commands related to viewing and managing jobs",
 }
 
 var jobDescribeCmd = &cobra.Command{
-	Use: "describe",
+	Use:   "describe",
 	Short: "Get complete overview of a job",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 
-	Run: func(cmd *cobra.Command, args []string) {
-		jobId, err := convertStringToId(args[0])
+	RunE: func(cmd *cobra.Command, args []string) error {
+		jobId, err := checkSingleIntID(args[0], "job")
 		if err != nil {
-			log.Fatalln("Invalid job ID!")
+			return err
 		}
 
-		job := Level27Client.JobHistoryRootGet(jobId)
+		job, err := Level27Client.JobHistoryRootGet(jobId)
+		if err != nil {
+			return err
+		}
+
 		outputFormatTemplate(job, "templates/job.tmpl")
+		return err
 	},
 }
 
 // Add common commands for managing entity jobs to a parent command.
 // entityType is the type for /jobs/history/{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) int) {
+func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
 	jobsCmd := &cobra.Command{
-		Use: "jobs",
+		Use:   "jobs",
 		Short: "View job history for this entity",
 		Args:  cobra.ExactArgs(1),
 
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
 			//get full history of toplevel jobs
-			history := Level27Client.EntityJobHistoryGet(entityType, entityID)
+			history, err := Level27Client.EntityJobHistoryGet(entityType, entityID)
+			if err != nil {
+				return err
+			}
 
 			// filter jobs where status is not 50.
 			notCompleted := FindNotcompletedJobs(history)
 
 			// check for every job without status 50. the subjobs who don't have status 50
 			for _, RootJob := range notCompleted {
-				fullData := Level27Client.JobHistoryRootGet(RootJob.Id)
+				fullData, err := Level27Client.JobHistoryRootGet(RootJob.Id)
+				if err != nil {
+					return err
+				}
 
 				for _, subjob := range fullData.Jobs {
 					if subjob.Status != 50 {
@@ -67,14 +79,14 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) i
 			}
 
 			outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"Id", "Status", "Message", "Dt"})
+			return nil
 		},
 	}
 
 	parent.AddCommand(jobsCmd)
 }
 
-
-func CheckSubJobs(job types.Job) bool {
+func CheckSubJobs(job l27.Job) bool {
 	if len(job.Jobs) == 0 {
 		return false
 	} else {
@@ -82,8 +94,8 @@ func CheckSubJobs(job types.Job) bool {
 	}
 }
 
-func FindNotcompletedJobs(jobs []types.Job) []types.Job {
-	var NotCompleted []types.Job
+func FindNotcompletedJobs(jobs []l27.Job) []l27.Job {
+	var NotCompleted []l27.Job
 	for _, job := range jobs {
 		if job.Status != 50 {
 			NotCompleted = append(NotCompleted, job)

@@ -1,17 +1,17 @@
 package cmd
 
 import (
-	"bitbucket.org/level27/lvl/types"
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
 // Add common commands for managing entity billing to a parent command.
 // entityType is the type for /{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addBillingCmds(parent *cobra.Command, entityType string, resolve func(string) int) {
+func addBillingCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
 	// BILLING
 	billingCmd := &cobra.Command{
-		Use: "billing",
+		Use:   "billing",
 		Short: "Manage entity's invoicing (BillableItem)",
 	}
 
@@ -22,14 +22,22 @@ func addBillingCmds(parent *cobra.Command, entityType string, resolve func(strin
 		Use:   "on [domain] [flags]",
 		Short: "Turn on billing for an entity (admin only)",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
-			req := types.BillPostRequest{
+			req := l27.BillPostRequest{
 				ExternalInfo: billingOnExternalInfo,
 			}
 
-			Level27Client.EntityBillableItemCreate(entityType, entityID, req)
+			err = Level27Client.EntityBillableItemCreate(entityType, entityID, req)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
@@ -40,10 +48,14 @@ func addBillingCmds(parent *cobra.Command, entityType string, resolve func(strin
 		Use:   "off [domainID]",
 		Short: "Turn off the billing for an entity (admin only)",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
 			Level27Client.EntityBillableItemDelete(entityType, entityID)
+			return nil
 		},
 	}
 

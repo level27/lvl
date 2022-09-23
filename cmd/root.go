@@ -16,9 +16,12 @@ limitations under the License.
 package cmd
 
 import (
+	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"reflect"
@@ -27,8 +30,9 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/Masterminds/sprig/v3"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
@@ -40,16 +44,20 @@ var cfgFile string
 var apiKey string
 var apiUrl string
 var output string
-var Level27Client *utils.Client
+var Level27Client *l27.Client
 
 // NOTE: subcommands like get add themselves to root in their init().
 // This requires importing them manually in main.go
 
+var errSilent = errors.New("silentErr")
+
 // rootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "lvl",
-	Short: "CLI tool to manage Level27 entities",
-	Long:  `lvl is a CLI tool that empowers users.`,
+	Use:           "lvl",
+	Short:         "CLI tool to manage Level27 entities",
+	Long:          `lvl is a CLI tool that empowers users.`,
+	SilenceErrors: true,
+	SilenceUsage:  true,
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		outputSet := viper.GetString("output")
@@ -68,8 +76,19 @@ var RootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	cobra.CheckErr(RootCmd.Execute())
+	// See https://github.com/spf13/cobra/issues/914 for some of the error handling details.
+
+	err := RootCmd.Execute()
+	if err != nil {
+		if err != errSilent {
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		}
+
+		os.Exit(1)
+	}
 }
+
+var traceRequests bool
 
 func init() {
 	cobra.OnInitialize(initConfig)
@@ -79,12 +98,18 @@ func init() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
 	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
-	RootCmd.PersistentFlags().BoolVar(&utils.TraceRequests, "trace", false, "Do detailed network request logging")
+	RootCmd.PersistentFlags().BoolVar(&traceRequests, "trace", false, "Do detailed network request logging. This is intended for debugging and should not be parsed.")
 	RootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "Specifies output mode for commands. Accepted values are text or json.")
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("apikey", RootCmd.PersistentFlags().Lookup("apikey"))
 	viper.BindPFlag("output", RootCmd.PersistentFlags().Lookup("output"))
+
+	RootCmd.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
+		cmd.Println(err)
+		cmd.Println(cmd.UsageString())
+		return errSilent
+	})
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -111,7 +136,10 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		apiKey = viper.GetString("apiKey")
 		apiUrl = viper.GetString("apiUrl")
-		Level27Client = utils.NewAPIClient(apiUrl, apiKey)
+		Level27Client = l27.NewAPIClient(apiUrl, apiKey)
+		if traceRequests {
+			Level27Client.TraceRequests(&colorRequestTracer{})
+		}
 	} else {
 		// config file is not found we create it
 		fmt.Println(cfgFile)
@@ -240,14 +268,17 @@ func outputFormatTableYaml(objects interface{}) {
 	fmt.Println(string(b))
 }
 
+//go:embed templates
+var templates embed.FS
+
 func outputFormatTemplateText(object interface{}, templatePath string) {
 	_, fileName := path.Split(templatePath)
 
 	tmpl := template.New(fileName)
 	tmpl.Funcs(sprig.TxtFuncMap())
 	tmpl.Funcs(utils.MakeTemplateHelpers(tmpl))
-	tmpl = template.Must(tmpl.ParseFiles(templatePath))
-	tmpl = template.Must(tmpl.ParseGlob("templates/helpers/*.tmpl"))
+	tmpl = template.Must(tmpl.ParseFS(templates, templatePath))
+	tmpl = template.Must(tmpl.ParseFS(templates, "templates/helpers/*.tmpl"))
 
 	err := tmpl.Execute(os.Stdout, object)
 	if err != nil {
@@ -293,4 +324,33 @@ func convertStringsToIds(ids []string) ([]int, error) {
 	}
 
 	return ints, nil
+}
+
+type colorRequestTracer struct{}
+
+func (c *colorRequestTracer) TraceRequest(method string, url string, reqData []byte) {
+	fmt.Fprintf(os.Stderr, "Request: %s %s\n", method, url)
+	if len(reqData) != 0 {
+		colored, err := utils.ColorJson(reqData)
+		var str string
+		if err == nil {
+			str = string(colored)
+		} else {
+			str = string(reqData)
+		}
+
+		fmt.Fprintf(os.Stderr, "Request Body: %s\n", str)
+	}
+}
+
+func (c *colorRequestTracer) TraceResponse(response *http.Response) {
+	fmt.Fprintf(os.Stderr, "Response: %d %s\n", response.StatusCode, http.StatusText(response.StatusCode))
+}
+
+func (c *colorRequestTracer) TraceResponseBody(response *http.Response, data []byte) {
+	bodyPrint := data
+	if json.Valid(bodyPrint) {
+		bodyPrint, _ = utils.ColorJson(bodyPrint)
+	}
+	fmt.Fprintf(os.Stderr, "Response Body: %s\n", string(bodyPrint))
 }

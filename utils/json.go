@@ -6,7 +6,7 @@ import (
 	"github.com/TylerBrock/colorjson"
 )
 
-func colorJson(jsonData []byte) ([]byte, error) {
+func ColorJson(jsonData []byte) ([]byte, error) {
 	var colorJsonMap interface{}
 	err := json.Unmarshal(jsonData, &colorJsonMap)
 	if err != nil {

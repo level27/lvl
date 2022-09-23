@@ -1,16 +1,18 @@
 package cmd
 
 import (
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
+	"errors"
+
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
 
-func outputFormatIntegrityCheckTable(checks []types.IntegrityCheck) {
+func outputFormatIntegrityCheckTable(checks []l27.IntegrityCheck) {
 	outputFormatTableFuncs(
 		checks,
 		[]string{"ID", "STATUS", "DATE"},
-		[]interface{}{"Id", "Status", func(s types.IntegrityCheck) string {
+		[]interface{}{"Id", "Status", func(s l27.IntegrityCheck) string {
 			return utils.FormatUnixTime(s.DtRequested)
 		}})
 }
@@ -18,7 +20,7 @@ func outputFormatIntegrityCheckTable(checks []types.IntegrityCheck) {
 // Add common commands for managing integrity checks to a parent command.
 // entityType is the type for /{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve func(string) int) {
+func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
 	var integrityCmd = &cobra.Command{
 		Use:   "integrity",
 		Short: "Commands for managing integrity checks",
@@ -28,19 +30,33 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 		Use:   "get [entity]",
 		Short: "Get a list of all integrity checks for an entity",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
-			checks := resolveGets(
+			checks, err := resolveGets(
 				// First arg is entity ID.
 				args[1:],
 				// Can't do lookups for integrity checks.
-				func(name string) []types.IntegrityCheck { return nil },
+				func(name string) ([]l27.IntegrityCheck, error) {
+					return nil, errors.New("integrity checks cannot be looked up by any name")
+				},
 				// Large funcs to pass entity type and ID along.
-				func(checkID int) types.IntegrityCheck { return Level27Client.EntityIntegrityCheck(entityType, entityID, checkID)},
-				func(get types.CommonGetParams) []types.IntegrityCheck { return Level27Client.EntityIntegrityChecks(entityType, entityID, get)})
+				func(checkID int) (l27.IntegrityCheck, error) {
+					return Level27Client.EntityIntegrityCheck(entityType, entityID, checkID)
+				},
+				func(get l27.CommonGetParams) ([]l27.IntegrityCheck, error) {
+					return Level27Client.EntityIntegrityChecks(entityType, entityID, get)
+				})
+
+			if err != nil {
+				return err
+			}
 
 			outputFormatIntegrityCheckTable(checks)
+			return nil
 		},
 	}
 
@@ -50,11 +66,19 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 		Use:   "create [entity]",
 		Short: "Create a new integrity report",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
 
-			result := Level27Client.EntityIntegrityCreate(entityType, entityID, integrityCheckDoJobs, integrityCheckForceJobs)
+			result, err := Level27Client.EntityIntegrityCreate(entityType, entityID, integrityCheckDoJobs, integrityCheckForceJobs)
+			if err != nil {
+				return err
+			}
+
 			outputFormatTemplate(result, "templates/integrityCreate.tmpl")
+			return nil
 		},
 	}
 
@@ -63,15 +87,21 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 		Use:   "download [entity] [check id]",
 		Short: "Download an integrity check as PDF file",
 		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			entityID := resolve(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
+
 			checkId, err := convertStringToId(args[1])
-			cobra.CheckErr(err)
+			if err != nil {
+				return err
+			}
 
 			Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkId, integrityDownload)
+			return nil
 		},
 	}
-
 
 	parent.AddCommand(integrityCmd)
 

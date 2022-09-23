@@ -22,9 +22,9 @@ import (
 	"strings"
 	"syscall"
 
-	"bitbucket.org/level27/lvl/types"
-	"bitbucket.org/level27/lvl/utils"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/level27/l27-go"
+	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -35,13 +35,16 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login to CP4",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		var login types.Login
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var login l27.Login
 		username, password, _ := credentials()
 
-		client := utils.NewAPIClient(apiUrl, "")
+		client := l27.NewAPIClient(apiUrl, "")
 		login, err := client.Login(username, password)
-		cobra.CheckErr(err)
+		if err != nil {
+			return err
+		}
+
 		fmt.Println()
 		loginFigure := figure.NewColorFigure("LEVEL27 CLI", "", "gray", true)
 		loginFigure.Print()
@@ -52,6 +55,7 @@ var loginCmd = &cobra.Command{
 		utils.SaveConfig("apikey", login.Hash)
 		utils.SaveConfig("user_id", login.User.ID)
 		utils.SaveConfig("org_id", login.User.Organisation.ID)
+		return nil
 	},
 }
 
