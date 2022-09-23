@@ -11,6 +11,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.9.0
 	github.com/level27/l27-go v0.1.0
+	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
 )
 
 require (

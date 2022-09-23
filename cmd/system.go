@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"os/exec"
 	"reflect"
 	"sort"
 	"strconv"
@@ -18,6 +16,7 @@ import (
 	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 )
 
 // MAIN COMMAND
@@ -242,6 +241,9 @@ func init() {
 
 	// SYSTEM SSH
 	systemCmd.AddCommand(systemSshCmd)
+
+	// SYSTEM SCP
+	systemCmd.AddCommand(systemScpCommand)
 
 	//------------------------------------- NETWORKS -------------------------------------
 	// #region NETWORKS
@@ -1772,61 +1774,11 @@ var systemSshCmd = &cobra.Command{
 		// We send these as concurrent tasks to reduce latency on the command.
 
 		taskSshKey := taskRunVoid(func() error {
-			// Add favorite SSH key, if necessary.
-			_, err = Level27Client.SystemSshKeysGetSingle(systemID, favoriteKeyID)
-			if err != nil {
-				// Error, might indicate SSH key doesn't exist yet.
-				_, ok := err.(l27.ErrorResponse)
-				if !ok {
-					// Not an API error, could be network failure or something instead, abort.
-					return err
-				}
-
-				// TODO: check error code above, isn't currently correct thanks to PL-7611
-				// For now we assume it's just a 404, so try to add the SSH key.
-
-				err = waitAddSshKey(systemID, favoriteKeyID)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
+			return waitEnsureSshKey(systemID, favoriteKeyID)
 		})
 
 		taskSshHost := taskRun(func() (string, error) {
-			system, err := Level27Client.SystemGetSingle(systemID)
-			if err != nil {
-				return "", err
-			}
-
-			ips, err := net.LookupIP(system.Fqdn)
-			if err == nil && len(ips) > 0 {
-				// FQDN resolves, pass it to the ssh command.
-				return system.Fqdn, nil
-			}
-
-			sort.Slice(system.Networks, func(i int, j int) bool {
-				netA := system.Networks[i]
-				netB := system.Networks[j]
-
-				return netA.NetPublic && netB.NetInternal
-			})
-
-			for _, net := range system.Networks {
-				for _, ip := range net.Ips {
-					if ip.PublicIpv4 != "" {
-						return ip.PublicIpv4, nil
-					}
-
-					if ip.Ipv4 != "" {
-						return ip.Ipv4, nil
-					}
-				}
-			}
-
-			// Not found
-			return "", fmt.Errorf("unable to find a suitable address to connect to")
+			return sshResolveHost(systemID)
 		})
 
 		sshHost := <-taskSshHost
@@ -1842,19 +1794,33 @@ var systemSshCmd = &cobra.Command{
 		sshArgs := []string{fmt.Sprintf("root@%s", sshHost.Result)}
 		sshArgs = append(sshArgs, args[1:]...)
 
-		sshCmd := exec.Command("ssh", sshArgs...)
-		sshCmd.Stdin = os.Stdin
-		sshCmd.Stdout = os.Stdout
-		sshCmd.Stderr = os.Stderr
-		runErr := sshCmd.Run()
-		if exitErr, ok := runErr.(*exec.ExitError); ok {
-			os.Exit(exitErr.ExitCode())
-		}
-
-		return runErr
+		return tailExecProcess("ssh", sshArgs)
 	},
 }
 
+// Ensure the given SSH key is available and 'ok' on a system.
+func waitEnsureSshKey(systemID int, sshKeyId int) error {
+	_, err := Level27Client.SystemSshKeysGetSingle(systemID, sshKeyId)
+	if err == nil {
+		// No error, so key exists.
+		return nil
+	}
+
+	// Error, might indicate SSH key doesn't exist yet.
+	_, ok := err.(l27.ErrorResponse)
+	if !ok {
+		// Not an API error, could be network failure or something instead, abort.
+		return err
+	}
+
+	// TODO: check error code above, isn't currently correct thanks to PL-7611
+	// For now we assume it's just a 404, so try to add the SSH key.
+
+	err = waitAddSshKey(systemID, sshKeyId)
+	return err
+}
+
+// Add an SSH key to a system, waiting for the status to change to 'ok'.
 func waitAddSshKey(systemID int, sshKeyID int) error {
 	key, err := Level27Client.SystemAddSshKey(systemID, sshKeyID)
 	if err != nil {
@@ -1879,6 +1845,155 @@ func waitAddSshKey(systemID int, sshKeyID int) error {
 	}
 
 	return fmt.Errorf("timeout waiting for added key to change to 'ok' status")
+}
+
+// Resolve the hostname to SSH into a system.
+func sshResolveHost(systemID int) (string, error) {
+	system, err := Level27Client.SystemGetSingle(systemID)
+	if err != nil {
+		return "", err
+	}
+
+	ips, err := net.LookupIP(system.Fqdn)
+	if err == nil && len(ips) > 0 {
+		// FQDN resolves, pass it to the ssh command.
+		return system.Fqdn, nil
+	}
+
+	sort.Slice(system.Networks, func(i int, j int) bool {
+		netA := system.Networks[i]
+		netB := system.Networks[j]
+
+		return netA.NetPublic && netB.NetInternal
+	})
+
+	for _, net := range system.Networks {
+		for _, ip := range net.Ips {
+			if ip.PublicIpv4 != "" {
+				return ip.PublicIpv4, nil
+			}
+
+			if ip.Ipv4 != "" {
+				return ip.Ipv4, nil
+			}
+		}
+	}
+
+	// Couldn't find anything.
+	return "", fmt.Errorf("unable to find a suitable address to connect to on system '%s' (%d)", system.Name, system.Id)
+}
+
+// SYSTEM SCP
+var systemScpCommand = &cobra.Command{
+	Use:     "scp [system1:]file1 ... [system2:]file2",
+	Short:   "Copy files to/from the system using scp",
+	Long:    "Uses the same syntax as regular scp. Arguments are passed through, but host names (before the :) are interpreted as system names/IDs and resolved. To pass flags through to scp, put them after a --",
+	Example: "lvl system scp foo.txt mySystem:~/foo.txt",
+
+	Args: cobra.MinimumNArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		favoriteKeyID := viper.GetInt("ssh_favoritekey")
+		if favoriteKeyID == 0 {
+			return fmt.Errorf("no favorite SSH key configured. Use 'lvl sshkey favorite' to configure one")
+		}
+
+		// This code is quite complex to be able to be as optimally concurrent (and fast) as possible.
+		// Basically how it works:
+		// For each argument, we need to resolve the system if it's a system:file argument
+		// These resolves are done concurrently. They send back the new value of the arg when they're done.
+		// We also need to make sure SSH keys are added, this goes via another set of channels to also be concurrent.
+
+		// Goroutine to asynchronously add SSH keys to systems while we go through resolving systems down below.
+		// We need this to avoid trying to add an SSH key to the same system twice, causing race conditions.
+		keyAddChannel := make(chan int)
+		keyDone := taskRunVoid(func() error {
+			var group errgroup.Group
+			// Map of systems we're already handling SSH keys on, to avoid running them twice.
+			systemsEnsured := map[int]bool{}
+			for systemID := range keyAddChannel {
+				sysID := systemID
+				if _, ok := systemsEnsured[systemID]; ok {
+					continue
+				}
+
+				systemsEnsured[systemID] = true
+				group.Go(func() error { return waitEnsureSshKey(sysID, favoriteKeyID) })
+			}
+
+			return group.Wait()
+		})
+
+		var systemArgsGroup errgroup.Group
+		systemArgsChannel := make(chan tuple2[int, string])
+
+		// Copy input arguments to pass them through to scp.
+		// We will modify the ones that are remote files to replace system hosts with the real IP/domain
+		scpArgs := append([]string{}, args...)
+
+		argTask := taskRunVoid(func() error {
+			// Go over remote arguments, and resolve the system.
+			for i, arg := range args {
+				split := strings.SplitN(arg, ":", 2)
+				if len(split) == 1 {
+					// No host specified, so local file or flag or something.
+					// TODO: this means of parsing mostly works, but it means that any flag parameters with a colon in them
+					// will be interpreted as a remote file.
+					// It might be a good idea to manually pass-through flag args for well-known flags.
+					continue
+				}
+
+				// Do this all in parallel with goroutines to avoid chaining latency, nice and fast.
+				ii := i
+				systemArgsGroup.Go(func() error {
+					system := split[0]
+					file := split[1]
+
+					systemID, err := resolveSystem(system)
+					if err != nil {
+						return err
+					}
+
+					// Send ID to SSH key channel so the SSH key gets added.
+					keyAddChannel <- systemID
+
+					host, err := sshResolveHost(systemID)
+					if err != nil {
+						return err
+					}
+
+					// Send arg index and new value so the value gets replaced.
+					systemArgsChannel <- makeTuple2(ii, fmt.Sprintf("root@%s:%s", host, file))
+					return nil
+				})
+			}
+
+			// Wait for all systems to finish resolving.
+			err := systemArgsGroup.Wait()
+			close(systemArgsChannel)
+			return err
+		})
+
+		// Update all the args that need updating from the above loop.
+		for tuple := range systemArgsChannel {
+			scpArgs[tuple.Item1] = tuple.Item2
+		}
+
+		// Handle errors from argument processing.
+		if err := <-argTask; err != nil {
+			return err
+		}
+
+		// All args have been processed, so also all SSH keys have been dispatched at least.
+		close(keyAddChannel)
+
+		// Wait for all SSH keys to be available on systems.
+		err := <-keyDone
+		if err != nil {
+			return err
+		}
+
+		return tailExecProcess("scp", scpArgs)
+	},
 }
 
 // NETWORKS
