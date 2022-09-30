@@ -163,6 +163,7 @@ func initConfig() {
 	apiKey = viper.GetString("apiKey")
 	apiUrl = viper.GetString("apiUrl")
 	Level27Client = l27.NewAPIClient(apiUrl, apiKey)
+	Level27Client.DefaultRequestHeaders["User-Agent"] = fmt.Sprintf("level27_lvl/%s", strings.TrimSpace(version))
 	if traceRequests {
 		Level27Client.TraceRequests(&colorRequestTracer{})
 	}
