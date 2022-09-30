@@ -51,6 +51,9 @@ var Level27Client *l27.Client
 
 var errSilent = errors.New("silentErr")
 
+//go:embed version.txt
+var version string
+
 // rootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:           "lvl",
@@ -58,6 +61,7 @@ var RootCmd = &cobra.Command{
 	Long:          `lvl is a CLI tool that empowers users.`,
 	SilenceErrors: true,
 	SilenceUsage:  true,
+	Version:       strings.TrimSpace(version),
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		outputSet := viper.GetString("output")

@@ -19,6 +19,9 @@ jobs:
     - name: Create build directory
       run: mkdir build
 
+    - name: Write version
+      run: git describe --tags > cmd/version.txt
+
     - name: Build windows/amd64
       run: GOARCH=amd64 GOOS=windows go build -o build/lvl-windows-amd64.exe .
 
