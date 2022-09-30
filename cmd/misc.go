@@ -76,3 +76,13 @@ func makeTuple2[T1 any, T2 any](item1 T1, item2 T2) tuple2[T1, T2] {
 		Item2: item2,
 	}
 }
+
+func sliceContains[T comparable](slice []T, value T) bool {
+	for _, opt := range slice {
+		if opt == value {
+			return true
+		}
+	}
+
+	return false
+}
