@@ -10,7 +10,6 @@
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/level27/lvl) ![](https://img.shields.io/badge/docs-cli.docs.level27.eu-green)
 
-
 ## Installation
 
 You can get compiled builds of `lvl` from the [Releases](https://github.com/level27/lvl/releases/latest) page. We do not currently provide a convenient automatic method of installation, so it has to be done manually:
@@ -35,6 +34,14 @@ To build and run `lvl` yourself, simply run:
 ```
 go run .
 ```
+
+**Note: `lvl` is developed in-sync with [`l27-go`](git@github.com:level27/l27-go.git). At some times, `lvl` may need to be compiled against the `main` branch of `l27-go`. To do this, you can edit `go.mod` and add a line like so:**
+
+```go.mod
+replace github.com/level27/l27-go => /Users/pjb/Projects/l27go-api
+```
+
+Edit the path to point to your local repo of `l27-go`.
 
 ## License
 
