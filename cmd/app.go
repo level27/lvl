@@ -39,6 +39,7 @@ func init() {
 	appCmd.AddCommand(appDeleteCmd)
 	//flag to skip confirmation when deleting an app
 	addDeleteConfirmFlag(appCmd)
+	addWaitFlag(appDeleteCmd)
 
 	// ---- UPDATE APP
 	appCmd.AddCommand(appUpdateCmd)
@@ -464,7 +465,23 @@ var appDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppDelete(appId)
+		err = Level27Client.AppDelete(appId)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.App, error) { return Level27Client.App(appId) },
+				func(a l27.App) string { return a.Status },
+				[]string{"deleting"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on app status failed: %s", err.Error())
+			}
+		}
+
 		return nil
 	},
 }

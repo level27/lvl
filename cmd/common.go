@@ -442,6 +442,9 @@ func isStdinTerminal() bool {
 	return fi.Mode()&os.ModeCharDevice != 0
 }
 
+const waitPollInterval = 1 * time.Second
+const waitPollTotal = 120
+
 // Helper function to wait on the status of an entity to change to a desired value.
 // poll is a function to fetch an entity from the API.
 // status is a function to read the status field on the pulled entity.
@@ -456,9 +459,6 @@ func waitForStatus[Entity any](
 ) error {
 	// poll and status are separate, to allow error handling to be done all in this function.
 
-	waitPollTotal := 120
-	waitPollInterval := 1 * time.Second
-
 	for i := 0; i < waitPollTotal; i += 1 {
 		ent, err := poll()
 		if err != nil {
@@ -468,6 +468,43 @@ func waitForStatus[Entity any](
 		status := status(ent)
 
 		if status == want {
+			return nil
+		}
+
+		if !sliceContains(ignore, status) {
+			return fmt.Errorf("got unexpected status: %s", status)
+		}
+
+		time.Sleep(waitPollInterval)
+	}
+
+	return fmt.Errorf("timed out")
+}
+
+// Version of waitForStatus that waits on a system deletion.
+// This means it waits for a status of "deleted" or a 404 error.
+func waitForDelete[Entity any](
+	poll func() (Entity, error),
+	status func(Entity) string,
+	ignore []string,
+) error {
+	// poll and status are separate, to allow error handling to be done all in this function.
+
+	for i := 0; i < waitPollTotal; i += 1 {
+		ent, err := poll()
+		if err != nil {
+			if errResp, ok := err.(l27.ErrorResponse); ok {
+				if errResp.HTTPCode == 404 || errResp.Code == 404 {
+					// 404 means deleted, we're done here.
+					return nil
+				}
+			}
+			return err
+		}
+
+		status := status(ent)
+
+		if status == "deleted" {
 			return nil
 		}
 
