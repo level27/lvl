@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/level27/l27-go"
@@ -43,6 +43,7 @@ func init() {
 	// --- CREATE
 	systemCmd.AddCommand(systemCreateCmd)
 	flags := systemCreateCmd.Flags()
+	addWaitFlag(systemCreateCmd)
 	flags.StringVarP(&systemCreateName, "name", "n", "", "The name you want to give the system")
 	flags.StringVarP(&systemCreateFqdn, "Fqdn", "", "", "Valid hostname for the system")
 	flags.StringVarP(&systemCreateRemarks, "remarks", "", "", "Remarks (Admin only)")
@@ -661,6 +662,19 @@ var systemCreateCmd = &cobra.Command{
 		system, err := Level27Client.SystemCreate(RequestData)
 		if err != nil {
 			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.System, error) { return Level27Client.SystemGetSingle(system.Id) },
+				func(s l27.System) string { return s.Status },
+				"allocated",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on system status failed: %s", err.Error())
+			}
 		}
 
 		log.Printf("System created! [Fullname: '%v' , ID: '%v']", system.Name, system.Id)
@@ -1822,29 +1836,27 @@ func waitEnsureSshKey(systemID int, sshKeyId int) error {
 
 // Add an SSH key to a system, waiting for the status to change to 'ok'.
 func waitAddSshKey(systemID int, sshKeyID int) error {
+	fmt.Fprint(os.Stderr, "Adding SSH key to system")
+
 	key, err := Level27Client.SystemAddSshKey(systemID, sshKeyID)
 	if err != nil {
 		return err
 	}
 
-	// Use polling to wait for the SSH key to be fully set-up on the system.
+	waitIndicator(func() {
+		err = waitForStatus(
+			func() (l27.SystemSshkey, error) { return Level27Client.SystemSshKeysGetSingle(systemID, key.ID) },
+			func(ss l27.SystemSshkey) string { return ss.ShsStatus },
+			"ok",
+			[]string{"updating"},
+		)
+	})
 
-	// Growing wait times on further iterations.
-	waitTimes := []int{1, 1, 2, 3, 5, 8, 13, 21, 34}
-	for _, wait := range waitTimes {
-		time.Sleep(time.Duration(wait * int(time.Second)))
-
-		key, err = Level27Client.SystemSshKeysGetSingle(systemID, key.ID)
-		if err != nil {
-			return err
-		}
-
-		if key.ShsStatus == "ok" {
-			return nil
-		}
+	if err != nil {
+		return fmt.Errorf("waiting for SSH key to change status failed: %s", err.Error())
 	}
 
-	return fmt.Errorf("timeout waiting for added key to change to 'ok' status")
+	return nil
 }
 
 // Resolve the hostname to SSH into a system.

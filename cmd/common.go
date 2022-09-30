@@ -24,11 +24,17 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/level27/l27-go"
 	"github.com/level27/lvl/utils"
 	"github.com/spf13/cobra"
 )
+
+//
+// common.go:
+// Contains common functionality used by many commands.
+//
 
 // Contains parameters passed to get commands, like filter and max number of entries.
 var optGetParameters l27.CommonGetParams
@@ -46,6 +52,13 @@ var optDeleteConfirmed bool
 
 func addDeleteConfirmFlag(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&optDeleteConfirmed, "yes", "y", false, "Confirm deletion of entity without prompt")
+}
+
+// Common flag to wait on an operation like create, delete, etc...
+var optWait bool
+
+func addWaitFlag(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&optWait, "wait", false, "Wait for the operation to finish on the API.")
 }
 
 //check for valid ID as type INT.
@@ -427,4 +440,66 @@ func isStdinTerminal() bool {
 	fi, _ := os.Stdin.Stat()
 
 	return fi.Mode()&os.ModeCharDevice != 0
+}
+
+// Helper function to wait on the status of an entity to change to a desired value.
+// poll is a function to fetch an entity from the API.
+// status is a function to read the status field on the pulled entity.
+// want is the desired entity state, and ignore is a set of "in-progress" states.
+// For example, you may want to wait on a status of "ok" with an ignore of "updating".
+// If the status were to change to "update_failed", the function returns with an error.
+func waitForStatus[Entity any](
+	poll func() (Entity, error),
+	status func(Entity) string,
+	want string,
+	ignore []string,
+) error {
+	// poll and status are separate, to allow error handling to be done all in this function.
+
+	waitPollTotal := 120
+	waitPollInterval := 1 * time.Second
+
+	for i := 0; i < waitPollTotal; i += 1 {
+		ent, err := poll()
+		if err != nil {
+			return err
+		}
+
+		status := status(ent)
+
+		if status == want {
+			return nil
+		}
+
+		if !sliceContains(ignore, status) {
+			return fmt.Errorf("got unexpected status: %s", status)
+		}
+
+		time.Sleep(waitPollInterval)
+	}
+
+	return fmt.Errorf("timed out")
+}
+
+func waitIndicator(block func()) {
+	interval := 1 * time.Second
+
+	done := make(chan bool)
+
+	go func() {
+		block()
+		done <- true
+	}()
+
+	for {
+		select {
+		case <-done:
+			fmt.Fprint(os.Stderr, "\n")
+			return
+		default:
+			time.Sleep(interval)
+			fmt.Fprint(os.Stderr, ".")
+			continue
+		}
+	}
 }

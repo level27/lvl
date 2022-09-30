@@ -75,6 +75,7 @@ func init() {
 
 	// ---- CREATE COMPONENT
 	appComponentCmd.AddCommand(appComponentCreateCmd)
+	addWaitFlag(appComponentCreateCmd)
 	appComponentCreateCmd.Flags().StringVarP(&appComponentCreateParamsFile, "params-file", "f", "", "JSON file to read params from. Pass '-' to read from stdin.")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateName, "name", "", "")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateType, "type", "", "")
@@ -1098,7 +1099,24 @@ var appComponentCreateCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppComponentCreate(appID, create)
+		component, err := Level27Client.AppComponentCreate(appID, create)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.AppComponent, error) { return Level27Client.AppComponentGetSingle(appID, int(component.ID)) },
+				func(ac l27.AppComponent) string { return ac.Status },
+				"ok",
+				[]string{"creating", "to_create"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on component status failed: %s", err.Error())
+			}
+		}
+
 		return nil
 	},
 }
