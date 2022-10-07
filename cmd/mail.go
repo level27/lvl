@@ -20,12 +20,14 @@ func init() {
 
 	// MAIL CREATE
 	mailCmd.AddCommand(mailCreateCmd)
+	addWaitFlag(mailCreateCmd)
 	mailCreateCmd.Flags().StringVar(&mailCreateName, "name", "", "Name of the new mailgroup")
 	mailCreateCmd.Flags().StringVar(&mailCreateOrganisation, "organisation", "", "Organisation owning the new mailgroup")
 	mailCreateCmd.Flags().StringVar(&mailCreateExternalInfo, "externalInfo", "", "")
 
 	// MAIL DELETE
 	mailCmd.AddCommand(mailDeleteCmd)
+	addWaitFlag(mailDeleteCmd)
 	mailDeleteCmd.Flags().BoolVar(&mailDeleteForce, "force", false, "Do not ask for confirmation to delete the mail group")
 
 	// MAIL UPDATE
@@ -73,6 +75,7 @@ func init() {
 
 	// MAIL BOX CREATE
 	mailBoxCmd.AddCommand(mailBoxCreateCmd)
+	addWaitFlag(mailBoxCreateCmd)
 	mailBoxCreateCmd.Flags().StringVar(&mailBoxCreateName, "name", "", "Name of the new mail box")
 	mailBoxCreateCmd.Flags().StringVar(&mailBoxCreatePassword, "password", "", "Password of the new mail box")
 	mailBoxCreateCmd.Flags().BoolVar(&mailBoxCreateOooEnabled, "oooEnabled", false, "Whether the account is marked as out-of-office.")
@@ -81,6 +84,7 @@ func init() {
 
 	// MAIL BOX DELETE
 	mailBoxCmd.AddCommand(mailBoxDeleteCmd)
+	addWaitFlag(mailBoxDeleteCmd)
 	mailBoxDeleteCmd.Flags().BoolVar(&mailBoxDeleteForce, "force", false, "Do not ask for confirmation to delete the mail box")
 
 	// MAIL BOX UPDATE
@@ -110,11 +114,13 @@ func init() {
 
 	// MAIL FORWARDER CREATE
 	mailForwarderCmd.AddCommand(mailForwarderCreateCmd)
+	addWaitFlag(mailForwarderCreateCmd)
 	mailForwarderCreateCmd.Flags().StringVar(&mailForwarderCreateAddress, "address", "", "Address of the mail forwarder")
 	mailForwarderCreateCmd.Flags().StringVar(&mailForwarderCreateDestination, "destination", "", "Comma-separated list of destination addresses to forward to")
 
 	// MAIL FORWARDER DELETE
 	mailForwarderCmd.AddCommand(mailForwarderDeleteCmd)
+	addWaitFlag(mailForwarderDeleteCmd)
 	mailForwarderDeleteCmd.Flags().BoolVar(&mailForwarderDeleteForce, "force", false, "Do not ask for confirmation to delete the mail forwarder")
 
 	// MAIL FORWARDER UPDATE
@@ -303,7 +309,24 @@ var mailCreateCmd = &cobra.Command{
 			Type:         "level27",
 		}
 
-		Level27Client.MailgroupsCreate(create)
+		group, err := Level27Client.MailgroupsCreate(create)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.Mailgroup, error) { return Level27Client.MailgroupsGetSingle(group.ID) },
+				func(s l27.Mailgroup) string { return s.Status },
+				"ok",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on mailgroup status failed: %s", err.Error())
+			}
+		}
+
 		return nil
 	},
 }
@@ -334,7 +357,23 @@ var mailDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsDelete(mailgroupID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.Mailgroup, error) { return Level27Client.MailgroupsGetSingle(mailgroupID) },
+				func(a l27.Mailgroup) string { return a.Status },
+				[]string{"deleting", "to_delete"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on mailgroup status failed: %s", err.Error())
+			}
+		}
+
+		return nil
 	},
 }
 
@@ -621,7 +660,7 @@ var mailBoxCreateCmd = &cobra.Command{
 			return err
 		}
 
-		_, err = Level27Client.MailgroupsMailboxesCreate(mailgroupID, l27.MailboxCreate{
+		mailbox, err := Level27Client.MailgroupsMailboxesCreate(mailgroupID, l27.MailboxCreate{
 			Name:       mailBoxCreateName,
 			Password:   mailBoxCreatePassword,
 			OooEnabled: mailBoxCreateOooEnabled,
@@ -629,7 +668,26 @@ var mailBoxCreateCmd = &cobra.Command{
 			OooText:    mailBoxCreateOooText,
 		})
 
-		return err
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.Mailbox, error) {
+					return Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailbox.ID)
+				},
+				func(s l27.Mailbox) string { return s.Status },
+				"ok",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on mailbox status failed: %s", err.Error())
+			}
+		}
+
+		return nil
 	},
 }
 
@@ -662,7 +720,23 @@ var mailBoxDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsMailboxesDelete(mailgroupID, mailboxID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.Mailbox, error) { return Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailboxID) },
+				func(a l27.Mailbox) string { return a.Status },
+				[]string{"deleting", "to_delete"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on mailbox status failed: %s", err.Error())
+			}
+		}
+
+		return nil
 	},
 }
 
@@ -834,12 +908,31 @@ var mailForwarderCreateCmd = &cobra.Command{
 			return err
 		}
 
-		_, err = Level27Client.MailgroupsMailforwardersCreate(mailgroupID, l27.MailforwarderCreate{
+		mailforwarder, err := Level27Client.MailgroupsMailforwardersCreate(mailgroupID, l27.MailforwarderCreate{
 			Address:     mailForwarderCreateAddress,
 			Destination: mailForwarderCreateDestination,
 		})
 
-		return err
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.Mailforwarder, error) {
+					return Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarder.ID)
+				},
+				func(s l27.Mailforwarder) string { return s.Status },
+				"ok",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on mailboxforwarder status failed: %s", err.Error())
+			}
+		}
+
+		return nil
 	},
 }
 
@@ -873,7 +966,25 @@ var mailForwarderDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsMailforwardersDelete(mailgroupID, mailforwarderID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.Mailforwarder, error) {
+					return Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarderID)
+				},
+				func(a l27.Mailforwarder) string { return a.Status },
+				[]string{"deleting", "to_delete"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on mail forwarder status failed: %s", err.Error())
+			}
+		}
+
+		return nil
 	},
 }
 

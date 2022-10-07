@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/level27/l27-go"
 	"github.com/level27/lvl/utils"
@@ -77,6 +78,21 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 				return err
 			}
 
+			if optWait {
+				err = waitForStatus(
+					func() (l27.IntegrityCheck, error) {
+						return Level27Client.EntityIntegrityCheck(entityType, entityID, result.Id)
+					},
+					func(s l27.IntegrityCheck) string { return s.Status },
+					"ok",
+					[]string{"to_create", "creating"},
+				)
+
+				if err != nil {
+					return fmt.Errorf("waiting on check status failed: %s", err.Error())
+				}
+			}
+
 			outputFormatTemplate(result, "templates/integrityCreate.tmpl")
 			return nil
 		},
@@ -109,6 +125,7 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 	addCommonGetFlags(integrityGetCmd)
 
 	integrityCmd.AddCommand(integrityCreateCmd)
+	addWaitFlag(integrityCreateCmd)
 	flags := integrityCreateCmd.Flags()
 	flags.BoolVar(&integrityCheckDoJobs, "doJobs", integrityCheckDoJobs, "Create jobs")
 	flags.BoolVar(&integrityCheckForceJobs, "forceJobs", integrityCheckForceJobs, "Create jobs even if integrity check failed")

@@ -26,6 +26,7 @@ func init() {
 
 	// ---- CREATE
 	appCmd.AddCommand(appCreateCmd)
+	addWaitFlag(appCreateCmd)
 	// flags used for creating app
 	flags := appCreateCmd.Flags()
 	flags.StringVarP(&appCreateName, "name", "n", "", "Name of the app.")
@@ -127,6 +128,7 @@ func init() {
 
 	// ---- APP SSL CREATE
 	appSslCmd.AddCommand(appSslCreateCmd)
+	addWaitFlag(appSslCreateCmd)
 	appSslCreateCmd.Flags().StringVarP(&appSslCreateName, "name", "n", "", "Name of this SSL certificate")
 	appSslCreateCmd.Flags().StringVarP(&appSslCreateSslType, "type", "t", "", "Type of SSL certificate to use. Options are: letsencrypt, xolphin, own")
 	appSslCreateCmd.Flags().StringVar(&appSslCreateAutoSslCertificateUrls, "auto-urls", "", "URL or CSV list of URLs (required for Let's Encrypt)")
@@ -199,6 +201,7 @@ func init() {
 
 	// APP COMPONENT URL CREATE
 	appComponentUrlCmd.AddCommand(appComponentUrlCreateCmd)
+	addWaitFlag(appComponentUrlCreateCmd)
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateAuthentication, "authentication", false, "Require HTTP Basic authentication on the URL")
 	appComponentUrlCreateCmd.Flags().StringVarP(&appComponentUrlCreateContent, "content", "c", "", "Content for the new URL")
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateSslForce, "force-ssl", false, "Force usage of SSL on the URL")
@@ -208,6 +211,7 @@ func init() {
 
 	// APP COMPONENT URL DELETE
 	appComponentUrlCmd.AddCommand(appComponentUrlDeleteCmd)
+	addWaitFlag(appComponentUrlDeleteCmd)
 	appComponentUrlDeleteCmd.Flags().BoolVar(&appComponentUrlDeleteForce, "force", false, "Do not ask for confirmation to delete the URL")
 
 	//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
@@ -434,6 +438,21 @@ var appCreateCmd = &cobra.Command{
 		app, err := Level27Client.AppCreate(request)
 		if err != nil {
 			return err
+		}
+
+		if optWait {
+			// I'm fairly certain creating apps always completes instantly,
+			// but for consistency's sake I'll add the parameter anyways.
+			err = waitForStatus(
+				func() (l27.App, error) { return Level27Client.App(app.ID) },
+				func(s l27.App) string { return s.Status },
+				"ok",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on app status failed: %s", err.Error())
+			}
 		}
 
 		log.Printf("Succesfully created app! [name: '%v' - ID: '%v']", app.Name, app.ID)
@@ -763,6 +782,21 @@ var appSslCreateCmd = &cobra.Command{
 
 		default:
 			return fmt.Errorf("invalid SSL type: %s", appSslCreateSslType)
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.AppSslCertificate, error) {
+					return Level27Client.AppSslCertificatesGetSingle(appID, certificate.ID)
+				},
+				func(s l27.AppSslCertificate) string { return s.Status },
+				"ok",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on certificate status failed: %s", err.Error())
+			}
 		}
 
 		fmt.Printf("sslCertificate created: [name: '%s' - ID: '%d'].", certificate.Name, certificate.ID)
@@ -2007,9 +2041,24 @@ var appComponentUrlCreateCmd = &cobra.Command{
 			AutoSslCertificate: appComponentUrlCreateAutoSslCertificate,
 		}
 
-		_, err = Level27Client.AppComponentUrlCreate(appID, componentID, create)
+		url, err := Level27Client.AppComponentUrlCreate(appID, componentID, create)
 		if err != nil {
 			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.AppComponentUrl, error) {
+					return Level27Client.AppComponentUrlGetSingle(appID, componentID, url.ID)
+				},
+				func(s l27.AppComponentUrl) string { return s.Status },
+				"ok",
+				[]string{"creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on URL status failed: %s", err.Error())
+			}
 		}
 
 		return nil
@@ -2054,7 +2103,25 @@ var appComponentUrlDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppComponentUrlDelete(appID, componentID, urlID)
+		err = Level27Client.AppComponentUrlDelete(appID, componentID, urlID)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.AppComponentUrl, error) {
+					return Level27Client.AppComponentUrlGetSingle(appID, componentID, urlID)
+				},
+				func(a l27.AppComponentUrl) string { return a.Status },
+				[]string{"to_delete"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on app status failed: %s", err.Error())
+			}
+		}
+
 		return nil
 	},
 }

@@ -111,6 +111,7 @@ func init() {
 	// --- Delete
 
 	systemCmd.AddCommand(systemDeleteCmd)
+	addWaitFlag(systemDeleteCmd)
 	systemDeleteCmd.Flags().BoolVar(&systemDeleteForce, "force", false, "")
 	addDeleteConfirmFlag(systemDeleteCmd)
 	// #endregion
@@ -773,7 +774,23 @@ var systemDeleteCmd = &cobra.Command{
 			err = Level27Client.SystemDelete(systemID)
 		}
 
-		return err
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.System, error) { return Level27Client.SystemGetSingle(systemID) },
+				func(s l27.System) string { return s.Status },
+				[]string{"to_delete"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on system status failed: %s", err.Error())
+			}
+		}
+
+		return nil
 	},
 }
 

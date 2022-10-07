@@ -33,10 +33,12 @@ func init() {
 
 	// Delete (single domain)
 	domainCmd.AddCommand(domainDeleteCmd)
+	addWaitFlag(domainDeleteCmd)
 	addDeleteConfirmFlag(domainDeleteCmd)
 
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
+	addWaitFlag(domainCreateCmd)
 	domainCreateCmd.Flags().StringVarP(&domainCreateAction, "action", "a", "", "Specify the action you want to commit")
 	domainCreateCmd.Flags().StringVarP(&domainCreateExternalInfo, "externalInfo", "", "", "Required when billableItemInfo for an organisation exist in db")
 	addDomainCommonPostFlags(domainCreateCmd)
@@ -323,7 +325,23 @@ var domainDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.DomainDelete(domainID)
+		err = Level27Client.DomainDelete(domainID)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.Domain, error) { return Level27Client.Domain(domainID) },
+				func(a l27.Domain) string { return a.Status },
+				[]string{"deleting", "to_delete"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on domain status failed: %s", err.Error())
+			}
+		}
+
 		return nil
 	},
 }
@@ -429,6 +447,19 @@ var domainCreateCmd = &cobra.Command{
 		domain, err := Level27Client.DomainCreate(requestData)
 		if err != nil {
 			return err
+		}
+
+		if optWait {
+			err = waitForStatus(
+				func() (l27.Domain, error) { return Level27Client.Domain(domain.ID) },
+				func(s l27.Domain) string { return s.Status },
+				"ok",
+				[]string{"to_create", "creating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on domain status failed: %s", err.Error())
+			}
 		}
 
 		log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", domain.Fullname, domain.ID)
