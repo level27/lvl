@@ -356,7 +356,15 @@ func resolveSystemCookbook(systemID int, arg string) (int, error) {
 	}
 
 	if cookbook == nil {
-		return 0, fmt.Errorf("system (%d) does not have a cookbook of type '%s'", systemID, arg)
+		// Try system settings instead.
+		cookbook, err = Level27Client.SystemSettingsLookup(systemID, arg)
+		if err != nil {
+			return 0, err
+		}
+
+		if cookbook == nil {
+			return 0, fmt.Errorf("system (%d) does not have a cookbook of type '%s'", systemID, arg)
+		}
 	}
 
 	return cookbook.Id, nil
@@ -1218,10 +1226,17 @@ var systemCookbookGetCmd = &cobra.Command{
 			return err
 		}
 
-		cookbooks, err := Level27Client.SystemCookbookGetList(id)
+		cookbooks, err := Level27Client.SystemCookbookGetList(id, l27.CommonGetParams{})
 		if err != nil {
 			return err
 		}
+
+		settings, err := Level27Client.SystemSettingsGetList(id, l27.CommonGetParams{})
+		if err != nil {
+			return err
+		}
+
+		cookbooks = append(cookbooks, settings...)
 
 		outputFormatTable(cookbooks, []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
 		return nil
