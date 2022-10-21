@@ -226,25 +226,25 @@ func settingStringP(c *cobra.Command, settings map[string]interface{}, name stri
 // Add an int setting flag to a command, that will be stored in a map.
 // This is intended to be easily used with PATCH APIs.
 func settingID(c *cobra.Command, settings map[string]interface{}, name string, usage string) {
-	c.Flags().Var(&intMapValue{Map: settings, Name: name}, name, usage)
+	c.Flags().Var(&idMapValue{Map: settings, Name: name}, name, usage)
 }
 
 // Add an int setting flag to a command, that will be stored in a map. Shorthand version.
 // This is intended to be easily used with PATCH APIs.
 func settingIDP(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
-	c.Flags().VarP(&intMapValue{Map: settings, Name: name}, name, short, usage)
+	c.Flags().VarP(&idMapValue{Map: settings, Name: name}, name, short, usage)
 }
 
 // Add an int setting flag to a command, that will be stored in a map.
 // This is intended to be easily used with PATCH APIs.
 func settingInt32(c *cobra.Command, settings map[string]interface{}, name string, usage string) {
-	c.Flags().Var(&intMapValue{Map: settings, Name: name}, name, usage)
+	c.Flags().Var(&int32MapValue{Map: settings, Name: name}, name, usage)
 }
 
 // Add an int setting flag to a command, that will be stored in a map. Shorthand version.
 // This is intended to be easily used with PATCH APIs.
 func settingInt32P(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
-	c.Flags().VarP(&intMapValue{Map: settings, Name: name}, name, short, usage)
+	c.Flags().VarP(&int32MapValue{Map: settings, Name: name}, name, short, usage)
 }
 
 // Add a bool setting flag to a command, that will be stored in a map.
@@ -284,12 +284,12 @@ func (c *stringMapValue) Type() string {
 	return "string"
 }
 
-type intMapValue struct {
+type idMapValue struct {
 	Map  map[string]interface{}
 	Name string
 }
 
-func (c *intMapValue) String() string {
+func (c *idMapValue) String() string {
 	val := c.Map[c.Name]
 	if val == nil {
 		return ""
@@ -298,7 +298,7 @@ func (c *intMapValue) String() string {
 	return fmt.Sprint(val)
 }
 
-func (c *intMapValue) Set(val string) error {
+func (c *idMapValue) Set(val string) error {
 	i, err := l27.ParseID(val)
 	if err != nil {
 		return err
@@ -308,7 +308,7 @@ func (c *intMapValue) Set(val string) error {
 	return nil
 }
 
-func (c *intMapValue) Type() string {
+func (c *idMapValue) Type() string {
 	return "ID"
 }
 
