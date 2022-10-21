@@ -79,7 +79,7 @@ func resolveSystemgroup(arg string) (l27.IntID, error) {
 var systemgroupDescribeCmd = &cobra.Command{
 	Use: "describe",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//check for valid systemgroupId type
+		//check for valid systemgroupID type
 		systemgroupID, err := checkSingleIntID(args[0], "systemgroup")
 		if err != nil {
 			return err
@@ -121,14 +121,14 @@ var systemgroupsCreateCmd = &cobra.Command{
 			return errors.New("name cannot be empty")
 		}
 
-		organisationId, err := resolveOrganisation(systemgroupCreateOrg)
+		organisationID, err := resolveOrganisation(systemgroupCreateOrg)
 		if err != nil {
 			return err
 		}
 
 		request := l27.SystemgroupRequest{
 			Name:         systemgroupCreateName,
-			Organisation: organisationId,
+			Organisation: organisationID,
 		}
 
 		systemgroup, err := Level27Client.SystemgroupsCreate(request)
@@ -173,12 +173,12 @@ var systemgroupsUpdateCmd = &cobra.Command{
 		if cmd.Flag("organisation").Changed {
 			// this function accepts the organisation name (string)
 			// and will look up the ID if the name is found
-			organisationId, err := resolveOrganisation(systemgroupUpdateOrg)
+			organisationID, err := resolveOrganisation(systemgroupUpdateOrg)
 			if err != nil {
 				return err
 			}
 
-			request.Organisation = organisationId
+			request.Organisation = organisationID
 		}
 
 		// when name flag is used
@@ -200,13 +200,13 @@ var systemgroupsUpdateCmd = &cobra.Command{
 var systemgroupsDeleteCmd = &cobra.Command{
 	Use: "delete",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		systemgroupId, err := resolveSystemgroup(args[0])
+		systemgroupID, err := resolveSystemgroup(args[0])
 		if err != nil {
 			return err
 		}
 
 		if !optDeleteConfirmed {
-			group, err := Level27Client.SystemgroupsgetSingle(systemgroupId)
+			group, err := Level27Client.SystemgroupsgetSingle(systemgroupID)
 			if err != nil {
 				return err
 			}
@@ -216,7 +216,7 @@ var systemgroupsDeleteCmd = &cobra.Command{
 			}
 		}
 
-		err = Level27Client.SystemgroupDelete(systemgroupId)
+		err = Level27Client.SystemgroupDelete(systemgroupID)
 		return err
 	},
 }

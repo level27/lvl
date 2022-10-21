@@ -303,14 +303,14 @@ func resolveAppSslCertificate(appID l27.IntID, arg string) (l27.IntID, error) {
 }
 
 // GET AN APPCOMPONENT ID BASED ON THE NAME
-func resolveAppComponent(appId l27.IntID, arg string) (l27.IntID, error) {
+func resolveAppComponent(appID l27.IntID, arg string) (l27.IntID, error) {
 	// if arg already int, this is the ID
 	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
 
-	options, err := Level27Client.AppComponentLookup(appId, arg)
+	options, err := Level27Client.AppComponentLookup(appID, arg)
 	if err != nil {
 		return 0, err
 	}
@@ -329,14 +329,14 @@ func resolveAppComponent(appId l27.IntID, arg string) (l27.IntID, error) {
 }
 
 // GET AN APP URL ID BASED ON THE NAME
-func resolveAppComponentUrl(appId l27.IntID, appComponentId l27.IntID, arg string) (l27.IntID, error) {
+func resolveAppComponentUrl(appID l27.IntID, appComponentID l27.IntID, arg string) (l27.IntID, error) {
 	// if arg already int, this is the ID
 	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
 
-	options, err := Level27Client.AppComponentUrlLookup(appId, appComponentId, arg)
+	options, err := Level27Client.AppComponentUrlLookup(appID, appComponentID, arg)
 	if err != nil {
 		return 0, err
 	}
@@ -371,7 +371,7 @@ var appGetCmd = &cobra.Command{
 	Example: "lvl app get -f FilterByName",
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIds(args)
+		ids, err := convertStringsToIDs(args)
 		if err != nil {
 			return err
 		}
@@ -467,14 +467,14 @@ var appDeleteCmd = &cobra.Command{
 	Example: "lvl app delete NameOfMyApp",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// try to find appId based on name
-		appId, err := resolveApp(args[0])
+		// try to find appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
 		if !optDeleteConfirmed {
-			app, err := Level27Client.App(appId)
+			app, err := Level27Client.App(appID)
 			if err != nil {
 				return err
 			}
@@ -484,14 +484,14 @@ var appDeleteCmd = &cobra.Command{
 			}
 		}
 
-		err = Level27Client.AppDelete(appId)
+		err = Level27Client.AppDelete(appID)
 		if err != nil {
 			return err
 		}
 
 		if optWait {
 			err = waitForDelete(
-				func() (l27.App, error) { return Level27Client.App(appId) },
+				func() (l27.App, error) { return Level27Client.App(appID) },
 				func(a l27.App) string { return a.Status },
 				[]string{"deleting"},
 			)
@@ -514,27 +514,27 @@ var appUpdateCmd = &cobra.Command{
 	Example: "lvl app update 2067 --name myUpdatedName",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//check if appId is valid
-		appId, err := resolveApp(args[0])
+		//check if appID is valid
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
 		//get the current data from the app. if not changed its needed for put request
-		currentData, err := Level27Client.App(appId)
+		currentData, err := Level27Client.App(appID)
 		if err != nil {
 			return err
 		}
 
-		var currentTeamIds []string
+		var currentTeamIDs []string
 		for _, team := range currentData.Teams {
-			currentTeamIds = append(currentTeamIds, fmt.Sprint(team.ID))
+			currentTeamIDs = append(currentTeamIDs, fmt.Sprint(team.ID))
 		}
 		// fill in request with the current data.
 		request := l27.AppPutRequest{
 			Name:         currentData.Name,
 			Organisation: currentData.Organisation.ID,
-			AutoTeams:    currentTeamIds,
+			AutoTeams:    currentTeamIDs,
 		}
 
 		//when flags have been set. we need the currentdata to be updated.
@@ -554,7 +554,7 @@ var appUpdateCmd = &cobra.Command{
 			request.AutoTeams = appUpdateTeams
 		}
 
-		Level27Client.AppUpdate(appId, request)
+		Level27Client.AppUpdate(appID, request)
 		return nil
 	},
 }
@@ -566,14 +566,14 @@ var AppDescribeCmd = &cobra.Command{
 	Example: "lvl app describe 2077",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//check for valid appId
-		appId, err := resolveApp(args[0])
+		//check for valid appID
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// get all data from app by appId
-		app, err := Level27Client.App(appId)
+		// get all data from app by appID
+		app, err := Level27Client.App(appID)
 		if err != nil {
 			return err
 		}
@@ -602,13 +602,13 @@ var AppActionActivateCmd = &cobra.Command{
 	Example: "lvl app action activate 2077",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// check for valid appId
-		appId, err := resolveApp(args[0])
+		// check for valid appID
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		Level27Client.AppAction(appId, "activate")
+		Level27Client.AppAction(appID, "activate")
 		return nil
 	},
 }
@@ -620,13 +620,13 @@ var AppActionDeactivateCmd = &cobra.Command{
 	Example: "lvl app action deactivate 2077",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// check for valid appId
-		appId, err := resolveApp(args[0])
+		// check for valid appID
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		Level27Client.AppAction(appId, "deactivate")
+		Level27Client.AppAction(appID, "deactivate")
 		return nil
 	},
 }
@@ -961,17 +961,17 @@ var appSslKeyCmd = &cobra.Command{
 
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		appId, err := resolveApp(args[0])
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		certID, err := resolveAppSslCertificate(appId, args[1])
+		certID, err := resolveAppSslCertificate(appID, args[1])
 		if err != nil {
 			return err
 		}
 
-		key, err := Level27Client.AppSslCertificatesKey(appId, certID)
+		key, err := Level27Client.AppSslCertificatesKey(appID, certID)
 		if err != nil {
 			return err
 		}
@@ -998,18 +998,18 @@ var appComponentGetCmd = &cobra.Command{
 	Example: "lvl app component get MyAppName",
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//search for appId based on Appname
-		appId, err := resolveApp(args[0])
+		//search for appID based on Appname
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		ids, err := convertStringsToIds(args[1:])
+		ids, err := convertStringsToIDs(args[1:])
 		if err != nil {
 			return errors.New("nvalid component ID")
 		}
 
-		res, err := getComponents(appId, ids)
+		res, err := getComponents(appID, ids)
 		if err != nil {
 			return err
 		}
@@ -1023,15 +1023,15 @@ var appComponentGetCmd = &cobra.Command{
 	},
 }
 
-func getComponents(appId l27.IntID, ids []l27.IntID) ([]l27.AppComponent, error) {
+func getComponents(appID l27.IntID, ids []l27.IntID) ([]l27.AppComponent, error) {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.AppComponentsGet(appId, optGetParameters)
+		return c.AppComponentsGet(appID, optGetParameters)
 	} else {
 		components := make([]l27.AppComponent, len(ids))
 		for idx, id := range ids {
 			var err error
-			components[idx], err = c.AppComponentGetSingle(appId, id)
+			components[idx], err = c.AppComponentGetSingle(appID, id)
 			if err != nil {
 				return nil, err
 			}
@@ -1341,20 +1341,20 @@ var AppComponentDeleteCmd = &cobra.Command{
 	Example: "lvl app component delete MyAppName MyComponentName",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on appName
-		appId, err := resolveApp(args[0])
+		// search for appID based on appName
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
 		// search for component based on name
-		appComponentId, err := resolveAppComponent(appId, args[1])
+		appComponentID, err := resolveAppComponent(appID, args[1])
 		if err != nil {
 			return err
 		}
 
 		if !optDeleteConfirmed {
-			appComponent, err := Level27Client.AppComponentGetSingle(appId, appComponentId)
+			appComponent, err := Level27Client.AppComponentGetSingle(appID, appComponentID)
 			if err != nil {
 				return err
 			}
@@ -1364,7 +1364,7 @@ var AppComponentDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppComponentsDelete(appId, appComponentId)
+		Level27Client.AppComponentsDelete(appID, appComponentID)
 		return nil
 	},
 }
@@ -1481,13 +1481,13 @@ var appComponentRestoreGetCmd = &cobra.Command{
 	Example: "lvl app restore get NameOfMyApp",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on name
-		appId, err := resolveApp(args[0])
+		// search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		Restores, err := Level27Client.AppComponentRestoresGet(appId)
+		Restores, err := Level27Client.AppComponentRestoresGet(appID)
 		if err != nil {
 			return err
 		}
@@ -1507,29 +1507,29 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 	Example: "lvl app restore create MyAppName MyComponentName 453",
 	Args:    cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//search AppId based on appname
-		appId, err := resolveApp(args[0])
+		//search appID based on appname
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// search componentId based on name
-		componentId, err := resolveAppComponent(appId, args[1])
+		// search componentID based on name
+		componentID, err := resolveAppComponent(appID, args[1])
 		if err != nil {
 			return err
 		}
 
-		backupId, err := checkSingleIntID(args[2], "backup")
+		backupID, err := checkSingleIntID(args[2], "backup")
 		if err != nil {
 			return err
 		}
 
 		request := l27.AppComponentRestoreRequest{
-			Appcomponent:    componentId,
-			AvailableBackup: backupId,
+			Appcomponent:    componentID,
+			AvailableBackup: backupID,
 		}
 
-		restore, err := Level27Client.AppComponentRestoreCreate(appId, request)
+		restore, err := Level27Client.AppComponentRestoreCreate(appID, request)
 		if err != nil {
 			return err
 		}
@@ -1546,30 +1546,30 @@ var appRestoreDeleteCmd = &cobra.Command{
 	Example: "lvl app component restore delete MyAppName 4532",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on name
-		appId, err := resolveApp(args[0])
+		// search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check if restoreId is valid type
-		restoreId, err := checkSingleIntID(args[1], "restore")
+		// check if restoreID is valid type
+		restoreID, err := checkSingleIntID(args[1], "restore")
 		if err != nil {
 			return err
 		}
 
 		if !optDeleteConfirmed {
-			app, err := Level27Client.App(appId)
+			app, err := Level27Client.App(appID)
 			if err != nil {
 				return err
 			}
 
-			if !confirmPrompt(fmt.Sprintf("Delete restore %d on app %s (%d)?", restoreId, app.Name, app.ID)) {
+			if !confirmPrompt(fmt.Sprintf("Delete restore %d on app %s (%d)?", restoreID, app.Name, app.ID)) {
 				return nil
 			}
 		}
 
-		Level27Client.AppComponentRestoresDelete(appId, restoreId)
+		Level27Client.AppComponentRestoresDelete(appID, restoreID)
 		return nil
 	},
 }
@@ -1582,19 +1582,19 @@ var appComponentRestoreDownloadCmd = &cobra.Command{
 	Example: "lvl app component restore download MyAppName 4123",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search appId based on name
-		appId, err := resolveApp(args[0])
+		// search appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check if restoreId is valid type
-		restoreId, err := checkSingleIntID(args[1], "Restore")
+		// check if restoreID is valid type
+		restoreID, err := checkSingleIntID(args[1], "Restore")
 		if err != nil {
 			return err
 		}
 
-		Level27Client.AppComponentRestoreDownload(appId, restoreId, appComponentRestoreDownloadName)
+		Level27Client.AppComponentRestoreDownload(appID, restoreID, appComponentRestoreDownloadName)
 		return nil
 	},
 }
@@ -1612,19 +1612,19 @@ var appComponentBackupsGetCmd = &cobra.Command{
 	Example: "lvl app component backup get MyAppName MyComponentName",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search appId based on appname
-		appId, err := resolveApp(args[0])
+		// search appID based on appname
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// search componentId based on name
-		componentId, err := resolveAppComponent(appId, args[1])
+		// search componentID based on name
+		componentID, err := resolveAppComponent(appID, args[1])
 		if err != nil {
 			return err
 		}
 
-		availableBackups, err := Level27Client.AppComponentbackupsGet(appId, componentId)
+		availableBackups, err := Level27Client.AppComponentbackupsGet(appID, componentID)
 		if err != nil {
 			return err
 		}
@@ -1654,13 +1654,13 @@ var appMigrationsGetCmd = &cobra.Command{
 	Example: "lvl app migrations get MyAppName",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//search for AppId based on name
-		appId, err := resolveApp(args[0])
+		//search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		migrations, err := Level27Client.AppMigrationsGet(appId)
+		migrations, err := Level27Client.AppMigrationsGet(appID)
 		if err != nil {
 			return err
 		}
@@ -1687,7 +1687,7 @@ var appMigrationsCreateCmd = &cobra.Command{
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for appid based on appName
-		appId, err := resolveApp(args[0])
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
@@ -1695,7 +1695,7 @@ var appMigrationsCreateCmd = &cobra.Command{
 		items := []l27.AppMigrationItem{}
 
 		for _, migrationItem := range appMigrationCreateItems {
-			res, err := ParseMigrationItem(appId, migrationItem)
+			res, err := ParseMigrationItem(appID, migrationItem)
 			if err != nil {
 				return err
 			}
@@ -1709,7 +1709,7 @@ var appMigrationsCreateCmd = &cobra.Command{
 			MigrationItemArray: items,
 		}
 
-		migration, err := Level27Client.AppMigrationsCreate(appId, request)
+		migration, err := Level27Client.AppMigrationsCreate(appID, request)
 		if err != nil {
 			return err
 		}
@@ -1746,7 +1746,7 @@ func ParseMigrationItem(appID l27.IntID, values string) (l27.AppMigrationItem, e
 			item.Ord = int32(val)
 
 		case "destSystem":
-			item.DestinationEntityId, err = resolveSystem(value)
+			item.DestinationEntityID, err = resolveSystem(value)
 			item.DestinationEntity = "system"
 			haveAnyDst = true
 			if err != nil {
@@ -1754,7 +1754,7 @@ func ParseMigrationItem(appID l27.IntID, values string) (l27.AppMigrationItem, e
 			}
 
 		case "destGroup":
-			item.DestinationEntityId, err = resolveSystemgroup(value)
+			item.DestinationEntityID, err = resolveSystemgroup(value)
 			item.DestinationEntity = "systemgroup"
 			haveAnyDst = true
 			if err != nil {
@@ -1814,13 +1814,13 @@ var appMigrationsUpdateCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for appID based on name
-		appId, err := resolveApp(args[0])
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid migrationId type
-		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		// check for valid migrationID type
+		migrationID, err := checkSingleIntID(args[1], "appMigration")
 		if err != nil {
 			return err
 		}
@@ -1830,7 +1830,7 @@ var appMigrationsUpdateCmd = &cobra.Command{
 			DtPlanned:     appMigrationsUpdateDtPlanned,
 		}
 
-		err = Level27Client.AppMigrationsUpdate(appId, migrationId, request)
+		err = Level27Client.AppMigrationsUpdate(appID, migrationID, request)
 		if err != nil {
 			return err
 		}
@@ -1847,19 +1847,19 @@ var appMigrationDescribeCmd = &cobra.Command{
 	Example: "lvl app migrations describe MyAppName 1243",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on name
-		appId, err := resolveApp(args[0])
+		// search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid migrationId type
-		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		// check for valid migrationID type
+		migrationID, err := checkSingleIntID(args[1], "appMigration")
 		if err != nil {
 			return err
 		}
 
-		migration, err := Level27Client.AppMigrationDescribe(appId, migrationId)
+		migration, err := Level27Client.AppMigrationDescribe(appID, migrationID)
 		if err != nil {
 			return err
 		}
@@ -1884,19 +1884,19 @@ var appMigrationsActionConfirmCmd = &cobra.Command{
 	Example: "lvl app migrations action confirm MyAppName 332",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on name
-		appId, err := resolveApp(args[0])
+		// search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid migrationId type
-		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		// check for valid migrationID type
+		migrationID, err := checkSingleIntID(args[1], "appMigration")
 		if err != nil {
 			return err
 		}
 
-		Level27Client.AppMigrationsAction(appId, migrationId, "confirm")
+		Level27Client.AppMigrationsAction(appID, migrationID, "confirm")
 		return nil
 	},
 }
@@ -1908,19 +1908,19 @@ var appMigrationsActionDenyCmd = &cobra.Command{
 	Example: "lvl app migrations action deny MyAppName 332",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on name
-		appId, err := resolveApp(args[0])
+		// search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid migrationId type
-		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		// check for valid migrationID type
+		migrationID, err := checkSingleIntID(args[1], "appMigration")
 		if err != nil {
 			return err
 		}
 
-		Level27Client.AppMigrationsAction(appId, migrationId, "deny")
+		Level27Client.AppMigrationsAction(appID, migrationID, "deny")
 		return nil
 	},
 }
@@ -1932,19 +1932,19 @@ var appMigrationsActionRetryCmd = &cobra.Command{
 	Example: "lvl app migrations action retry MyAppName 332",
 	Args:    cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// search for appId based on name
-		appId, err := resolveApp(args[0])
+		// search for appID based on name
+		appID, err := resolveApp(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid migrationId type
-		migrationId, err := checkSingleIntID(args[1], "appMigration")
+		// check for valid migrationID type
+		migrationID, err := checkSingleIntID(args[1], "appMigration")
 		if err != nil {
 			return err
 		}
 
-		Level27Client.AppMigrationsAction(appId, migrationId, "retry")
+		Level27Client.AppMigrationsAction(appID, migrationID, "retry")
 		return nil
 	},
 }

@@ -327,24 +327,24 @@ func outputFormatTemplateYaml(object interface{}) {
 }
 
 // Tries to convert a string command line argument to an integer ID
-func convertStringToId(id string) (l27.IntID, error) {
-	intId, err := l27.ParseID(id)
+func convertStringToID(id string) (l27.IntID, error) {
+	intID, err := l27.ParseID(id)
 	if err != nil {
 		return 0, fmt.Errorf("'%s' is not a valid ID", id)
 	}
 
-	return intId, nil
+	return intID, nil
 }
 
 // Tries to convert a slice of command line arguments to integer IDs
-func convertStringsToIds(ids []string) ([]l27.IntID, error) {
+func convertStringsToIDs(ids []string) ([]l27.IntID, error) {
 	ints := make([]l27.IntID, len(ids))
 	for idx, id := range ids {
-		intId, err := convertStringToId(id)
+		intID, err := convertStringToID(id)
 		if err != nil {
 			return nil, err
 		}
-		ints[idx] = intId
+		ints[idx] = intID
 	}
 
 	return ints, nil

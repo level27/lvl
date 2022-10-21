@@ -22,12 +22,12 @@ var jobDescribeCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		jobId, err := checkSingleIntID(args[0], "job")
+		jobID, err := checkSingleIntID(args[0], "job")
 		if err != nil {
 			return err
 		}
 
-		job, err := Level27Client.JobHistoryRootGet(jobId)
+		job, err := Level27Client.JobHistoryRootGet(jobID)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 
 			// check for every job without status 50. the subjobs who don't have status 50
 			for _, RootJob := range notCompleted {
-				fullData, err := Level27Client.JobHistoryRootGet(RootJob.Id)
+				fullData, err := Level27Client.JobHistoryRootGet(RootJob.ID)
 				if err != nil {
 					return err
 				}
@@ -78,7 +78,7 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 				}
 			}
 
-			outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"Id", "Status", "Message", "Dt"})
+			outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"ID", "Status", "Message", "Dt"})
 			return nil
 		},
 	}

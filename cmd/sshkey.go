@@ -45,8 +45,8 @@ var sshKeyFavoriteCmd = cobra.Command{
 			return err
 		}
 
-		utils.SaveConfig("ssh_favoriteKey", sshKey.Id)
-		fmt.Printf("Key %s (%d) has been set as favorite.", sshKey.Description, sshKey.Id)
+		utils.SaveConfig("ssh_favoriteKey", sshKey.ID)
+		fmt.Printf("Key %s (%d) has been set as favorite.", sshKey.Description, sshKey.ID)
 
 		return nil
 	},
@@ -67,11 +67,11 @@ func resolveSshKey(organisationID l27.IntID, userID l27.IntID, arg string) (l27.
 		options,
 		arg,
 		"ssh key",
-		func(app l27.SshKey) string { return fmt.Sprintf("%s (%d)", app.Description, app.Id) })
+		func(app l27.SshKey) string { return fmt.Sprintf("%s (%d)", app.Description, app.ID) })
 
 	if err != nil {
 		return 0, err
 	}
 
-	return res.Id, err
+	return res.ID, err
 }

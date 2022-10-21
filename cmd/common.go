@@ -72,14 +72,14 @@ func checkSingleIntID(arg string, entity string) (l27.IntID, error) {
 
 // Try to split the given cmd args into ID's (works with whitespace and komma's)
 func CheckForMultipleIDs(ids []string) []string {
-	var currIds []string
+	var currIDs []string
 
 	for _, id := range ids {
-		tempId := strings.Split(id, ",")
-		currIds = append(currIds, tempId...)
+		tempID := strings.Split(id, ",")
+		currIDs = append(currIDs, tempID...)
 	}
 
-	return currIds
+	return currIDs
 }
 
 // --------------------------- DYNAMICALY SETTING PARAMETERS

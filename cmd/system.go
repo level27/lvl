@@ -335,13 +335,13 @@ func resolveSystem(arg string) (l27.IntID, error) {
 		options,
 		arg,
 		"system",
-		func(app l27.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.Id) })
+		func(app l27.System) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) })
 
 	if err != nil {
 		return 0, err
 	}
 
-	return res.Id, err
+	return res.ID, err
 }
 
 func resolveSystemCookbook(systemID l27.IntID, arg string) (l27.IntID, error) {
@@ -367,7 +367,7 @@ func resolveSystemCookbook(systemID l27.IntID, arg string) (l27.IntID, error) {
 		}
 	}
 
-	return cookbook.Id, nil
+	return cookbook.ID, nil
 }
 
 func resolveSystemProviderConfiguration(region l27.IntID, arg string) (l27.IntID, error) {
@@ -463,7 +463,7 @@ var systemGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "get a list of all curent systems",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIds(args)
+		ids, err := convertStringsToIDs(args)
 		if err != nil {
 			return err
 		}
@@ -473,7 +473,7 @@ var systemGetCmd = &cobra.Command{
 			return err
 		}
 
-		outputFormatTable(systems, []string{"ID", "NAME", "STATUS"}, []string{"Id", "Name", "Status"})
+		outputFormatTable(systems, []string{"ID", "NAME", "STATUS"}, []string{"ID", "Name", "Status"})
 		return nil
 	},
 }
@@ -520,7 +520,7 @@ var systemDescribeCmd = &cobra.Command{
 			}
 
 			for idx, j := range system.Jobs {
-				system.Jobs[idx], err = Level27Client.JobHistoryRootGet(j.Id)
+				system.Jobs[idx], err = Level27Client.JobHistoryRootGet(j.ID)
 
 				if err != nil {
 					return err
@@ -675,7 +675,7 @@ var systemCreateCmd = &cobra.Command{
 
 		if optWait {
 			system, err = waitForStatus(
-				func() (l27.System, error) { return Level27Client.SystemGetSingle(system.Id) },
+				func() (l27.System, error) { return Level27Client.SystemGetSingle(system.ID) },
 				func(s l27.System) string { return s.Status },
 				"allocated",
 				[]string{"to_create", "creating"},
@@ -716,7 +716,7 @@ var systemUpdateCmd = &cobra.Command{
 		}
 
 		systemPut := l27.SystemPut{
-			Id:                          system.Id,
+			ID:                          system.ID,
 			Name:                        system.Name,
 			Type:                        system.Type,
 			Cpu:                         system.Cpu,
@@ -724,10 +724,10 @@ var systemUpdateCmd = &cobra.Command{
 			Disk:                        system.Disk,
 			ManagementType:              system.ManagementType,
 			Organisation:                system.Organisation.ID,
-			SystemImage:                 system.SystemImage.Id,
-			OperatingsystemVersion:      system.OperatingSystemVersion.Id,
+			SystemImage:                 system.SystemImage.ID,
+			OperatingsystemVersion:      system.OperatingSystemVersion.ID,
 			SystemProviderConfiguration: system.SystemProviderConfiguration.ID,
-			Zone:                        system.Zone.Id,
+			Zone:                        system.Zone.ID,
 			PublicNetworking:            system.PublicNetworking,
 			Preferredparentsystem:       system.Preferredparentsystem.ID,
 			Remarks:                     system.Remarks,
@@ -771,7 +771,7 @@ var systemDeleteCmd = &cobra.Command{
 				return err
 			}
 
-			if !confirmPrompt(fmt.Sprintf("Delete system %s (%d)?", system.Name, system.Id)) {
+			if !confirmPrompt(fmt.Sprintf("Delete system %s (%d)?", system.Name, system.ID)) {
 				return nil
 			}
 		}
@@ -833,7 +833,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 		// when monitoring is disabled on system -> checks dont need to be visible
 		if system.MonitoringEnabled {
-			return fmt.Errorf("monitoring is currently disabled for system: [NAME:%v - ID: %v]. Use the 'monitoring' command to change monitoring status", system.Name, system.Id)
+			return fmt.Errorf("monitoring is currently disabled for system: [NAME:%v - ID: %v]. Use the 'monitoring' command to change monitoring status", system.Name, system.ID)
 		}
 
 		checks, err := Level27Client.SystemCheckGetList(id, optGetParameters)
@@ -843,7 +843,7 @@ var systemCheckGetCmd = &cobra.Command{
 
 		// Creating readable output
 		outputFormatTableFuncs(checks, []string{"ID", "CHECKTYPE", "STATUS", "LAST_STATUS_CHANGE", "INFORMATION"},
-			[]interface{}{"Id", "CheckType", "Status", func(s l27.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
+			[]interface{}{"ID", "CheckType", "Status", func(s l27.SystemCheckGet) string { return utils.FormatUnixTime(s.DtLastStatusChanged) }, "StatusInformation"})
 
 		return nil
 	},
@@ -911,7 +911,7 @@ var systemCheckAddCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("System check added! [Checktype: '%v' , ID: '%v']", check.CheckType, check.Id)
+		log.Printf("System check added! [Checktype: '%v' , ID: '%v']", check.CheckType, check.ID)
 		return nil
 	},
 }
@@ -995,7 +995,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 				return err
 			}
 
-			if !confirmPrompt(fmt.Sprintf("Delete system check %d on system %s (%d)?", checkID, system.Name, system.Id)) {
+			if !confirmPrompt(fmt.Sprintf("Delete system check %d on system %s (%d)?", checkID, system.Name, system.ID)) {
 				return nil
 			}
 		}
@@ -1093,12 +1093,12 @@ var systemMonitoringOnCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for sytsemID based on name
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		_, err = Level27Client.SystemAction(systemId, "enable_monitoring")
+		_, err = Level27Client.SystemAction(systemID, "enable_monitoring")
 		if err != nil {
 			return err
 		}
@@ -1116,12 +1116,12 @@ var systemMonitoringOffCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//search for sytsemID based on name
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		_, err = Level27Client.SystemAction(systemId, "disable_monitoring")
+		_, err = Level27Client.SystemAction(systemID, "disable_monitoring")
 		if err != nil {
 			return err
 		}
@@ -1238,7 +1238,7 @@ var systemCookbookGetCmd = &cobra.Command{
 
 		cookbooks = append(cookbooks, settings...)
 
-		outputFormatTable(cookbooks, []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"Id", "CookbookType", "Status"})
+		outputFormatTable(cookbooks, []string{"ID", "COOKBOOKTYPE", "STATUS"}, []string{"ID", "CookbookType", "Status"})
 		return nil
 	},
 }
@@ -1265,13 +1265,13 @@ var systemCookbookAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//checking for valid system ID
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
 		// get information about the current chosen system [systemID]
-		currentSystem, err := Level27Client.SystemGetSingle(systemId)
+		currentSystem, err := Level27Client.SystemGetSingle(systemID)
 		if err != nil {
 			return err
 		}
@@ -1305,7 +1305,7 @@ var systemCookbookAddCmd = &cobra.Command{
 			checkForValidCookbookParameter(customParameterDict, cookbooktypeData, currentSystemOS, &cookbookRequest)
 		}
 
-		cookbook, err := Level27Client.SystemCookbookAdd(systemId, &cookbookRequest)
+		cookbook, err := Level27Client.SystemCookbookAdd(systemID, &cookbookRequest)
 		if err != nil {
 			return err
 		}
@@ -1313,7 +1313,7 @@ var systemCookbookAddCmd = &cobra.Command{
 		log.Printf("Cookbook: '%v' succesfully added!", cookbook.CookbookType)
 
 		//apply changes to cookbooks
-		err = Level27Client.SystemCookbookChangesApply(systemId)
+		err = Level27Client.SystemCookbookChangesApply(systemID)
 		return err
 	},
 }
@@ -1356,17 +1356,17 @@ var systemCookbookDescribeCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system id
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		cookbookId, err := resolveSystemCookbook(systemId, args[1])
+		cookbookID, err := resolveSystemCookbook(systemID, args[1])
 		if err != nil {
 			return err
 		}
 
-		result, err := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		result, err := Level27Client.SystemCookbookDescribe(systemID, cookbookID)
 		if err != nil {
 			return err
 		}
@@ -1383,34 +1383,34 @@ var systemCookbookDeleteCmd = &cobra.Command{
 
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		cookbookId, err := resolveSystemCookbook(systemId, args[1])
+		cookbookID, err := resolveSystemCookbook(systemID, args[1])
 		if err != nil {
 			return err
 		}
 
 		if !optDeleteConfirmed {
-			cookbook, err := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+			cookbook, err := Level27Client.SystemCookbookDescribe(systemID, cookbookID)
 			if err != nil {
 				return err
 			}
 
-			if !confirmPrompt(fmt.Sprintf("Delete system cookbook %s (%d) on system %s (%d)?", cookbook.CookbookType, cookbook.Id, cookbook.System.Name, cookbook.System.Id)) {
+			if !confirmPrompt(fmt.Sprintf("Delete system cookbook %s (%d) on system %s (%d)?", cookbook.CookbookType, cookbook.ID, cookbook.System.Name, cookbook.System.ID)) {
 				return nil
 			}
 		}
 
-		err = Level27Client.SystemCookbookDelete(systemId, cookbookId)
+		err = Level27Client.SystemCookbookDelete(systemID, cookbookID)
 		if err != nil {
 			return err
 		}
 
 		//apply changes
-		err = Level27Client.SystemCookbookChangesApply(systemId)
+		err = Level27Client.SystemCookbookChangesApply(systemID)
 		return err
 	},
 }
@@ -1423,24 +1423,24 @@ var systemCookbookUpdateCmd = &cobra.Command{
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check for valid system id
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		cookbookId, err := resolveSystemCookbook(systemId, args[1])
+		cookbookID, err := resolveSystemCookbook(systemID, args[1])
 		if err != nil {
 			return err
 		}
 
 		// get current data from the current installed cookbooktype
-		currentCookbookData, err := Level27Client.SystemCookbookDescribe(systemId, cookbookId)
+		currentCookbookData, err := Level27Client.SystemCookbookDescribe(systemID, cookbookID)
 		if err != nil {
 			return err
 		}
 
 		// get current data from the chosen system
-		currentSystemData, err := Level27Client.SystemGetSingle(systemId)
+		currentSystemData, err := Level27Client.SystemGetSingle(systemID)
 		if err != nil {
 			return err
 		}
@@ -1477,13 +1477,13 @@ var systemCookbookUpdateCmd = &cobra.Command{
 		// als checks if values are valid in case of selectable parameter
 		checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, &baseRequestData)
 
-		err = Level27Client.SystemCookbookUpdate(systemId, cookbookId, &baseRequestData)
+		err = Level27Client.SystemCookbookUpdate(systemID, cookbookID, &baseRequestData)
 		if err != nil {
 			return err
 		}
 
 		// aplly changes to cookbooks
-		err = Level27Client.SystemCookbookChangesApply(systemId)
+		err = Level27Client.SystemCookbookChangesApply(systemID)
 		return err
 	},
 }
@@ -1613,12 +1613,12 @@ var SystemSystemgroupsGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid systemID
-		systemId, err := resolveSystem(args[0])
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		groups, err := Level27Client.SystemSystemgroupsGet(systemId)
+		groups, err := Level27Client.SystemSystemgroupsGet(systemID)
 		if err != nil {
 			return err
 		}
@@ -1641,13 +1641,13 @@ var SystemSystemgroupsAddCmd = &cobra.Command{
 		}
 
 		// check for valid groupID type (int)
-		groupId, err := resolveSystemgroup(args[1])
+		groupID, err := resolveSystemgroup(args[1])
 		if err != nil {
 			return err
 		}
 
 		jsonRequest := gabs.New()
-		jsonRequest.Set(groupId, "systemgroup")
+		jsonRequest.Set(groupID, "systemgroup")
 		err = Level27Client.SystemSystemgroupsAdd(systemID, jsonRequest)
 		if err != nil {
 			return err
@@ -1664,19 +1664,19 @@ var SystemSystemgroupsRemoveCmd = &cobra.Command{
 	Short: "Unlink a system from a systemgroup.",
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// check for valid systemId
-		systemId, err := resolveSystem(args[0])
+		// check for valid systemID
+		systemID, err := resolveSystem(args[0])
 		if err != nil {
 			return err
 		}
 
-		// check for valid systemgroupId
-		groupId, err := resolveSystemgroup(args[1])
+		// check for valid systemgroupID
+		groupID, err := resolveSystemgroup(args[1])
 		if err != nil {
 			return err
 		}
 
-		err = Level27Client.SystemSystemgroupsRemove(systemId, groupId)
+		err = Level27Client.SystemSystemgroupsRemove(systemID, groupID)
 		if err != nil {
 			return err
 		}
@@ -1751,7 +1751,7 @@ var systemSshKeysAddCmd = &cobra.Command{
 				return fmt.Errorf("unable to find SSH key to add: '%s'", keyName)
 			}
 
-			keyID = system.Id
+			keyID = system.ID
 		}
 
 		_, err = Level27Client.SystemAddSshKey(systemID, keyID)
@@ -1845,8 +1845,8 @@ var systemSshCmd = &cobra.Command{
 }
 
 // Ensure the given SSH key is available and 'ok' on a system.
-func waitEnsureSshKey(systemID l27.IntID, sshKeyId l27.IntID) error {
-	_, err := Level27Client.SystemSshKeysGetSingle(systemID, sshKeyId)
+func waitEnsureSshKey(systemID l27.IntID, sshKeyID l27.IntID) error {
+	_, err := Level27Client.SystemSshKeysGetSingle(systemID, sshKeyID)
 	if err == nil {
 		// No error, so key exists.
 		return nil
@@ -1862,7 +1862,7 @@ func waitEnsureSshKey(systemID l27.IntID, sshKeyId l27.IntID) error {
 	// TODO: check error code above, isn't currently correct thanks to PL-7611
 	// For now we assume it's just a 404, so try to add the SSH key.
 
-	err = waitAddSshKey(systemID, sshKeyId)
+	err = waitAddSshKey(systemID, sshKeyID)
 	return err
 }
 
@@ -1924,7 +1924,7 @@ func sshResolveHost(systemID l27.IntID) (string, error) {
 	}
 
 	// Couldn't find anything.
-	return "", fmt.Errorf("unable to find a suitable address to connect to on system '%s' (%d)", system.Name, system.Id)
+	return "", fmt.Errorf("unable to find a suitable address to connect to on system '%s' (%d)", system.Name, system.ID)
 }
 
 // SYSTEM SCP
@@ -2567,7 +2567,7 @@ var systemVolumeUpdateCmd = &cobra.Command{
 			Organisation: volume.Organisation.ID,
 			AutoResize:   volume.AutoResize,
 			Remarks:      volume.Remarks,
-			System:       volume.System.Id,
+			System:       volume.System.ID,
 			Volumegroup:  volume.Volumegroup.ID,
 		}
 

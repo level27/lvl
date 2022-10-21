@@ -13,7 +13,7 @@ func outputFormatIntegrityCheckTable(checks []l27.IntegrityCheck) {
 	outputFormatTableFuncs(
 		checks,
 		[]string{"ID", "STATUS", "DATE"},
-		[]interface{}{"Id", "Status", func(s l27.IntegrityCheck) string {
+		[]interface{}{"ID", "Status", func(s l27.IntegrityCheck) string {
 			return utils.FormatUnixTime(s.DtRequested)
 		}})
 }
@@ -81,7 +81,7 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 			if optWait {
 				result, err = waitForStatus(
 					func() (l27.IntegrityCheck, error) {
-						return Level27Client.EntityIntegrityCheck(entityType, entityID, result.Id)
+						return Level27Client.EntityIntegrityCheck(entityType, entityID, result.ID)
 					},
 					func(s l27.IntegrityCheck) string { return s.Status },
 					"ok",
@@ -109,12 +109,12 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 				return err
 			}
 
-			checkId, err := convertStringToId(args[1])
+			checkID, err := convertStringToID(args[1])
 			if err != nil {
 				return err
 			}
 
-			Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkId, integrityDownload)
+			Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkID, integrityDownload)
 			return nil
 		},
 	}

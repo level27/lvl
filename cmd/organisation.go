@@ -17,7 +17,7 @@ var organisationGetCmd = &cobra.Command{
 
 	Args: cobra.ArbitraryArgs,
 	RunE: func(ccmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIds(args)
+		ids, err := convertStringsToIDs(args)
 		if err != nil {
 			return err
 		}

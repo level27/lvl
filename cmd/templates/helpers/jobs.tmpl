@@ -31,7 +31,7 @@
 
 {{/* JOB TITLE */}}
 {{ define "jobTitle" }}
-[{{vt "brightwhite"}}{{.Id}}{{vt "reset"}}] [{{vt "brightblue"}}{{formatUnixTimeF .Dt "2006-01-02 15:04:05" }}{{vt "reset"}}] {{template "jobStatus" .}}
+[{{vt "brightwhite"}}{{.ID}}{{vt "reset"}}] [{{vt "brightblue"}}{{formatUnixTimeF .Dt "2006-01-02 15:04:05" }}{{vt "reset"}}] {{template "jobStatus" .}}
 {{- if ne .Message "" -}}
 : {{vt "brightwhite"}}{{.Message}}{{vt "reset" -}}
 {{end -}}

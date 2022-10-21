@@ -1,6 +1,6 @@
 {{- /* BASIC INFO */ -}}
 
-{{vt "yellow"}}ID:               {{vt "brightwhite"}}{{ .Id }}
+{{vt "yellow"}}ID:               {{vt "brightwhite"}}{{ .ID }}
 {{vt "yellow"}}Name:             {{vt "brightwhite"}}{{ .Name }}
 {{vt "yellow"}}Status:           {{template "statusVt" .StatusCategory}}{{ .Status }}
 {{vt "yellow"}}System Status:    {{template "statusVt" .RunningStatusCategory}}{{ .RunningStatus }}
@@ -17,7 +17,7 @@
 {{vt "yellow"}}Security updates: {{vt "brightwhite"}}{{ .InstallSecurityUpdatesString }} 
 {{vt "yellow"}}Zone:             {{vt "brightwhite"}}{{ .Zone.Name }}
 {{vt "yellow"}}Host system:      {{ if .ParentSystem -}}
-{{vt "brightwhite"}}{{ .ParentSystem.Name }} ({{ .ParentSystem.Id }})
+{{vt "brightwhite"}}{{ .ParentSystem.Name }} ({{ .ParentSystem.ID }})
 {{- else -}}
 {{vt "brightblack"}}None{{vt "reset"}}
 {{- end }}
@@ -59,7 +59,7 @@
 
 {{- /* VOLUMES */}}
 {{vt "yellow"}}Volumes: {{ range .Volumes }}
-{{vt "brightblue"}}- {{ if eq $.BootVolume.Id .ID }}{{vt "brightgreen"}}Boot Volume
+{{vt "brightblue"}}- {{ if eq $.BootVolume.ID .ID }}{{vt "brightgreen"}}Boot Volume
   {{ end -}}
   {{vt "yellow"}}Name:         {{vt "brightwhite"}}{{ .Name }}
   {{vt "yellow"}}ID:           {{vt "brightwhite"}}{{ .ID }}
@@ -77,7 +77,7 @@
 {{ if gt (len .Cookbooks) 0 }}
 {{vt "yellow"}}Cookbooks: {{ range .Cookbooks }}
 {{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CookbookType }}
-  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .Id }}
+  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
   {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
 {{ end -}}
 {{ else }}
@@ -89,7 +89,7 @@
 {{ if gt (len .Checks) 0 }}
 {{vt "yellow"}}Checks: {{ range .Checks }}
 {{vt "brightblue"}}- {{vt "yellow"}}Type:       {{vt "brightwhite"}}{{ .CheckType }}
-  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .Id }}
+  {{vt "yellow"}}ID:         {{vt "brightwhite"}}{{ .ID }}
   {{vt "yellow"}}Status:     {{template "statusVt" .StatusCategory}}{{ .Status }}
 {{end}}
 {{ else }}

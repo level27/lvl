@@ -230,7 +230,7 @@ var domainGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a list of all current domains",
 	RunE: func(ccmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIds(args)
+		ids, err := convertStringsToIDs(args)
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ var domainDescribeCmd = &cobra.Command{
 		}
 
 		for idx, j := range domain.Jobs {
-			domain.Jobs[idx], err = Level27Client.JobHistoryRootGet(j.Id)
+			domain.Jobs[idx], err = Level27Client.JobHistoryRootGet(j.ID)
 			if err != nil {
 				return err
 			}
@@ -302,7 +302,7 @@ var domainDescribeCmd = &cobra.Command{
 
 // DELETE DOMAIN [lvl domain delete <id>]
 var domainDeleteCmd = &cobra.Command{
-	Use:   "delete [domainId]",
+	Use:   "delete [domainID]",
 	Short: "Delete a domain",
 	Args:  cobra.ExactArgs(1),
 
@@ -503,7 +503,7 @@ var domainUpdateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		domainId, err := resolveDomain(args[0])
+		domainID, err := resolveDomain(args[0])
 		if err != nil {
 			return err
 		}
@@ -512,7 +512,7 @@ var domainUpdateCmd = &cobra.Command{
 			fmt.Println("No options specified!")
 		}
 
-		Level27Client.DomainUpdate(domainId, domainUpdateSettings)
+		Level27Client.DomainUpdate(domainID, domainUpdateSettings)
 		return nil
 	},
 }
@@ -532,17 +532,17 @@ var domainRecordGetCmd = &cobra.Command{
 	Short: "Get a list of all records configured for a domain",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		domainId, err := resolveDomain(args[0])
+		domainID, err := resolveDomain(args[0])
 		if err != nil {
 			return err
 		}
 
-		recordIds, err := convertStringsToIds(args[1:])
+		recordIDs, err := convertStringsToIDs(args[1:])
 		if err != nil {
 			return err
 		}
 
-		records, err := getDomainRecords(domainId, recordIds)
+		records, err := getDomainRecords(domainID, recordIDs)
 		if err != nil {
 			return err
 		}
@@ -552,15 +552,15 @@ var domainRecordGetCmd = &cobra.Command{
 	},
 }
 
-func getDomainRecords(domainId l27.IntID, ids []l27.IntID) ([]l27.DomainRecord, error) {
+func getDomainRecords(domainID l27.IntID, ids []l27.IntID) ([]l27.DomainRecord, error) {
 	c := Level27Client
 	if len(ids) == 0 {
-		return c.DomainRecords(domainId, recordGetType, optGetParameters)
+		return c.DomainRecords(domainID, recordGetType, optGetParameters)
 	} else {
 		domains := make([]l27.DomainRecord, len(ids))
 		for idx, id := range ids {
 			var err error
-			domains[idx], err = c.DomainRecord(domainId, id)
+			domains[idx], err = c.DomainRecord(domainID, id)
 			if err != nil {
 				return nil, err
 			}
@@ -604,17 +604,17 @@ var domainRecordDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		//check for valid domain id
-		domainId, err := resolveDomain(args[0])
+		domainID, err := resolveDomain(args[0])
 		if err != nil {
 			return err
 		}
 
-		recordId, err := checkSingleIntID(args[1], "record")
+		recordID, err := checkSingleIntID(args[1], "record")
 		if err != nil {
 			return err
 		}
 
-		err = Level27Client.DomainRecordDelete(domainId, recordId)
+		err = Level27Client.DomainRecordDelete(domainID, recordID)
 		return err
 	},
 }
@@ -628,18 +628,18 @@ var domainRecordUpdateCmd = &cobra.Command{
 	Short: "Update a record for a domain",
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		domainId, err := resolveDomain(args[0])
+		domainID, err := resolveDomain(args[0])
 		if err != nil {
 			return err
 		}
 
-		recordId, err := checkSingleIntID(args[1], "record")
+		recordID, err := checkSingleIntID(args[1], "record")
 		if err != nil {
 			return err
 		}
 
 		// Merge data with existing so we don't bulldoze anything.
-		data, err := Level27Client.DomainRecord(domainId, recordId)
+		data, err := Level27Client.DomainRecord(domainID, recordID)
 		if err != nil {
 			return err
 		}
@@ -662,7 +662,7 @@ var domainRecordUpdateCmd = &cobra.Command{
 			request.Priority = domainRecordUpdatePriority
 		}
 
-		Level27Client.DomainRecordUpdate(domainId, recordId, request)
+		Level27Client.DomainRecordUpdate(domainID, recordID, request)
 		return nil
 	},
 }

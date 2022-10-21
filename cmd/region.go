@@ -84,12 +84,12 @@ var regionImagesCommand = &cobra.Command{
 
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		regionId, err := regionIdFromArg(args[0])
+		regionID, err := regionIDFromArg(args[0])
 		if err != nil {
 			return err
 		}
 
-		regions, err := Level27Client.GetRegionImages(regionId)
+		regions, err := Level27Client.GetRegionImages(regionID)
 		if err != nil {
 			return err
 		}
@@ -109,12 +109,12 @@ var regionZonesCommand = &cobra.Command{
 
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		regionId, err := regionIdFromArg(args[0])
+		regionID, err := regionIDFromArg(args[0])
 		if err != nil {
 			return err
 		}
 
-		zones, err := Level27Client.GetZones(regionId)
+		zones, err := Level27Client.GetZones(regionID)
 		if err != nil {
 			return err
 		}
@@ -124,8 +124,8 @@ var regionZonesCommand = &cobra.Command{
 	},
 }
 
-func regionIdFromArg(arg string) (l27.IntID, error) {
-	regionId, err := convertStringToId(arg)
+func regionIDFromArg(arg string) (l27.IntID, error) {
+	regionID, err := convertStringToID(arg)
 	if err != nil {
 		regionMaybe, err := Level27Client.LookupRegion(arg)
 		if err != nil {
@@ -136,8 +136,8 @@ func regionIdFromArg(arg string) (l27.IntID, error) {
 			return 0, fmt.Errorf("unknown region: '%s'", arg)
 		}
 
-		regionId = regionMaybe.ID
+		regionID = regionMaybe.ID
 	}
 
-	return regionId, nil
+	return regionID, nil
 }
