@@ -674,7 +674,7 @@ var systemCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			system, err = waitForStatus(
 				func() (l27.System, error) { return Level27Client.SystemGetSingle(system.Id) },
 				func(s l27.System) string { return s.Status },
 				"allocated",
@@ -686,7 +686,7 @@ var systemCreateCmd = &cobra.Command{
 			}
 		}
 
-		log.Printf("System created! [Fullname: '%v' , ID: '%v']", system.Name, system.Id)
+		outputFormatTemplate(system, "templates/entities/system/create.tmpl")
 		return nil
 	},
 }
@@ -1876,7 +1876,7 @@ func waitAddSshKey(systemID int, sshKeyID int) error {
 	}
 
 	waitIndicator(func() {
-		err = waitForStatus(
+		_, err = waitForStatus(
 			func() (l27.SystemSshkey, error) { return Level27Client.SystemSshKeysGetSingle(systemID, key.ID) },
 			func(ss l27.SystemSshkey) string { return ss.ShsStatus },
 			"ok",

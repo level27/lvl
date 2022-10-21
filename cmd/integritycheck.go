@@ -79,7 +79,7 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 			}
 
 			if optWait {
-				err = waitForStatus(
+				result, err = waitForStatus(
 					func() (l27.IntegrityCheck, error) {
 						return Level27Client.EntityIntegrityCheck(entityType, entityID, result.Id)
 					},

@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"log"
 	"strconv"
 	"strings"
 
@@ -450,7 +449,7 @@ var domainCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			domain, err = waitForStatus(
 				func() (l27.Domain, error) { return Level27Client.Domain(domain.ID) },
 				func(s l27.Domain) string { return s.Status },
 				"ok",
@@ -462,7 +461,7 @@ var domainCreateCmd = &cobra.Command{
 			}
 		}
 
-		log.Printf("Domain created! [Fullname: '%v' , ID: '%v']", domain.Fullname, domain.ID)
+		outputFormatTemplate(domain, "templates/entities/domain/create.tmpl")
 		return nil
 	},
 }

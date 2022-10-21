@@ -456,29 +456,32 @@ func waitForStatus[Entity any](
 	status func(Entity) string,
 	want string,
 	ignore []string,
-) error {
+) (Entity, error) {
 	// poll and status are separate, to allow error handling to be done all in this function.
 
+	var ent Entity
+	var err error
+
 	for i := 0; i < waitPollTotal; i += 1 {
-		ent, err := poll()
+		ent, err = poll()
 		if err != nil {
-			return err
+			return ent, err
 		}
 
 		status := status(ent)
 
 		if status == want {
-			return nil
+			return ent, nil
 		}
 
 		if !sliceContains(ignore, status) {
-			return fmt.Errorf("got unexpected status: %s", status)
+			return ent, fmt.Errorf("got unexpected status: %s", status)
 		}
 
 		time.Sleep(waitPollInterval)
 	}
 
-	return fmt.Errorf("timed out")
+	return ent, fmt.Errorf("timed out")
 }
 
 // Version of waitForStatus that waits on a system deletion.

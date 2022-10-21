@@ -443,7 +443,7 @@ var appCreateCmd = &cobra.Command{
 		if optWait {
 			// I'm fairly certain creating apps always completes instantly,
 			// but for consistency's sake I'll add the parameter anyways.
-			err = waitForStatus(
+			app, err = waitForStatus(
 				func() (l27.App, error) { return Level27Client.App(app.ID) },
 				func(s l27.App) string { return s.Status },
 				"ok",
@@ -455,7 +455,7 @@ var appCreateCmd = &cobra.Command{
 			}
 		}
 
-		log.Printf("Succesfully created app! [name: '%v' - ID: '%v']", app.Name, app.ID)
+		outputFormatTemplate(app, "templates/entities/app/create.tmpl")
 		return nil
 	},
 }
@@ -785,7 +785,7 @@ var appSslCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			certificate, err = waitForStatus(
 				func() (l27.AppSslCertificate, error) {
 					return Level27Client.AppSslCertificatesGetSingle(appID, certificate.ID)
 				},
@@ -799,7 +799,7 @@ var appSslCreateCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("sslCertificate created: [name: '%s' - ID: '%d'].", certificate.Name, certificate.ID)
+		outputFormatTemplate(certificate, "templates/entities/appSslCertificate/create.tmpl")
 		return nil
 	},
 }
@@ -1156,7 +1156,7 @@ var appComponentCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			component, err = waitForStatus(
 				func() (l27.AppComponent, error) { return Level27Client.AppComponentGetSingle(appID, int(component.ID)) },
 				func(ac l27.AppComponent) string { return ac.Status },
 				"ok",
@@ -1168,6 +1168,7 @@ var appComponentCreateCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(component, "templates/entities/appComponent/create.tmpl")
 		return nil
 	},
 }
@@ -2047,7 +2048,7 @@ var appComponentUrlCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			url, err = waitForStatus(
 				func() (l27.AppComponentUrl, error) {
 					return Level27Client.AppComponentUrlGetSingle(appID, componentID, url.ID)
 				},
@@ -2061,6 +2062,7 @@ var appComponentUrlCreateCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(url, "templates/entities/appComponentUrl/create.tmpl")
 		return nil
 	},
 }

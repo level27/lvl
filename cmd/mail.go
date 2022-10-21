@@ -315,7 +315,7 @@ var mailCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			group, err = waitForStatus(
 				func() (l27.Mailgroup, error) { return Level27Client.MailgroupsGetSingle(group.ID) },
 				func(s l27.Mailgroup) string { return s.Status },
 				"ok",
@@ -327,6 +327,7 @@ var mailCreateCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(group, "templates/entities/mail/create.tmpl")
 		return nil
 	},
 }
@@ -673,7 +674,7 @@ var mailBoxCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			mailbox, err = waitForStatus(
 				func() (l27.Mailbox, error) {
 					return Level27Client.MailgroupsMailboxesGetSingle(mailgroupID, mailbox.ID)
 				},
@@ -687,6 +688,7 @@ var mailBoxCreateCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(mailbox, "templates/entities/mailBox/create.tmpl")
 		return nil
 	},
 }
@@ -918,7 +920,7 @@ var mailForwarderCreateCmd = &cobra.Command{
 		}
 
 		if optWait {
-			err = waitForStatus(
+			mailforwarder, err = waitForStatus(
 				func() (l27.Mailforwarder, error) {
 					return Level27Client.MailgroupsMailforwardersGetSingle(mailgroupID, mailforwarder.ID)
 				},
@@ -932,6 +934,7 @@ var mailForwarderCreateCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(mailforwarder, "templates/entities/mailForwarder/create.tmpl")
 		return nil
 	},
 }
