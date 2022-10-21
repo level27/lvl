@@ -21,7 +21,7 @@ func outputFormatIntegrityCheckTable(checks []l27.IntegrityCheck) {
 // Add common commands for managing integrity checks to a parent command.
 // entityType is the type for /{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
+func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve func(string) (l27.IntID, error)) {
 	var integrityCmd = &cobra.Command{
 		Use:   "integrity",
 		Short: "Commands for managing integrity checks",
@@ -45,7 +45,7 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 					return nil, errors.New("integrity checks cannot be looked up by any name")
 				},
 				// Large funcs to pass entity type and ID along.
-				func(checkID int) (l27.IntegrityCheck, error) {
+				func(checkID l27.IntID) (l27.IntegrityCheck, error) {
 					return Level27Client.EntityIntegrityCheck(entityType, entityID, checkID)
 				},
 				func(get l27.CommonGetParams) ([]l27.IntegrityCheck, error) {

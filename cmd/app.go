@@ -31,7 +31,7 @@ func init() {
 	flags := appCreateCmd.Flags()
 	flags.StringVarP(&appCreateName, "name", "n", "", "Name of the app.")
 	flags.StringVarP(&appCreateOrg, "organisation", "", "", "The name of the organisation/owner of the app.")
-	flags.IntSliceVar(&appCreateTeams, "autoTeams", appCreateTeams, "A csv list of team ID's.")
+	flags.Int32SliceVar(&appCreateTeams, "autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
 	appCreateCmd.MarkFlagRequired("name")
 	appCreateCmd.MarkFlagRequired("organisation")
@@ -83,7 +83,7 @@ func init() {
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateType, "type", "", "")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystem, "system", "", "")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystemgroup, "systemgroup", "", "")
-	appComponentCreateCmd.Flags().IntVar(&appComponentCreateSystemprovider, "systemprovider", 0, "")
+	appComponentCreateCmd.Flags().Int32Var(&appComponentCreateSystemprovider, "systemprovider", 0, "")
 	appComponentCreateParams = appComponentCreateCmd.Flags().StringArray("param", nil, "")
 	appComponentCreateCmd.MarkFlagRequired("name")
 	appComponentCreateCmd.MarkFlagRequired("type")
@@ -205,7 +205,7 @@ func init() {
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateAuthentication, "authentication", false, "Require HTTP Basic authentication on the URL")
 	appComponentUrlCreateCmd.Flags().StringVarP(&appComponentUrlCreateContent, "content", "c", "", "Content for the new URL")
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateSslForce, "force-ssl", false, "Force usage of SSL on the URL")
-	appComponentUrlCreateCmd.Flags().IntVar(&appComponentUrlCreateSslCertificate, "ssl-certificate", 0, "SSL certificate to use.")
+	appComponentUrlCreateCmd.Flags().Int32Var(&appComponentUrlCreateSslCertificate, "ssl-certificate", 0, "SSL certificate to use.")
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateHandleDns, "handle-dns", false, "Automatically create DNS records")
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateAutoSslCertificate, "auto-ssl-certificate", false, "Automatically create SSL certificate with Let's Encrypt")
 
@@ -252,8 +252,8 @@ func init() {
 
 //------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
 // GET AN APPID BASED ON THE NAME
-func resolveApp(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveApp(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -277,9 +277,9 @@ func resolveApp(arg string) (int, error) {
 }
 
 // GET SSL CERTIFICATE ID BASED ON ID
-func resolveAppSslCertificate(appID int, arg string) (int, error) {
+func resolveAppSslCertificate(appID l27.IntID, arg string) (l27.IntID, error) {
 	// if arg already int, this is the ID
-	id, err := strconv.Atoi(arg)
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -303,9 +303,9 @@ func resolveAppSslCertificate(appID int, arg string) (int, error) {
 }
 
 // GET AN APPCOMPONENT ID BASED ON THE NAME
-func resolveAppComponent(appId int, arg string) (int, error) {
+func resolveAppComponent(appId l27.IntID, arg string) (l27.IntID, error) {
 	// if arg already int, this is the ID
-	id, err := strconv.Atoi(arg)
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -325,13 +325,13 @@ func resolveAppComponent(appId int, arg string) (int, error) {
 		return 0, err
 	}
 
-	return int(res.ID), nil
+	return res.ID, nil
 }
 
 // GET AN APP URL ID BASED ON THE NAME
-func resolveAppComponentUrl(appId int, appComponentId int, arg string) (int, error) {
+func resolveAppComponentUrl(appId l27.IntID, appComponentId l27.IntID, arg string) (l27.IntID, error) {
 	// if arg already int, this is the ID
-	id, err := strconv.Atoi(arg)
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -390,7 +390,7 @@ var appGetCmd = &cobra.Command{
 	},
 }
 
-func getApps(ids []int) ([]l27.App, error) {
+func getApps(ids []l27.IntID) ([]l27.App, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Apps(optGetParameters)
@@ -410,7 +410,7 @@ func getApps(ids []int) ([]l27.App, error) {
 
 // ---- CREATE NEW APP
 var appCreateName, appCreateOrg, appCreateExtInfo string
-var appCreateTeams []int
+var appCreateTeams []l27.IntID
 var appCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new app.",
@@ -528,7 +528,7 @@ var appUpdateCmd = &cobra.Command{
 
 		var currentTeamIds []string
 		for _, team := range currentData.Teams {
-			currentTeamIds = append(currentTeamIds, strconv.Itoa(team.ID))
+			currentTeamIds = append(currentTeamIds, fmt.Sprint(team.ID))
 		}
 		// fill in request with the current data.
 		request := l27.AppPutRequest{
@@ -663,7 +663,7 @@ var appSslGetCmd = &cobra.Command{
 			func(name string) ([]l27.AppSslCertificate, error) {
 				return Level27Client.AppSslCertificatesLookup(appID, name)
 			},
-			func(certID int) (l27.AppSslCertificate, error) {
+			func(certID l27.IntID) (l27.AppSslCertificate, error) {
 				return Level27Client.AppSslCertificatesGetSingle(appID, certID)
 			},
 			func(get l27.CommonGetParams) ([]l27.AppSslCertificate, error) {
@@ -1023,7 +1023,7 @@ var appComponentGetCmd = &cobra.Command{
 	},
 }
 
-func getComponents(appId int, ids []int) ([]l27.AppComponent, error) {
+func getComponents(appId l27.IntID, ids []l27.IntID) ([]l27.AppComponent, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.AppComponentsGet(appId, optGetParameters)
@@ -1047,7 +1047,7 @@ var appComponentCreateName string
 var appComponentCreateType string
 var appComponentCreateSystem string
 var appComponentCreateSystemgroup string
-var appComponentCreateSystemprovider int
+var appComponentCreateSystemprovider l27.IntID
 var appComponentCreateParams *[]string
 var appComponentCreateCmd = &cobra.Command{
 	Use:     "create",
@@ -1157,7 +1157,7 @@ var appComponentCreateCmd = &cobra.Command{
 
 		if optWait {
 			component, err = waitForStatus(
-				func() (l27.AppComponent, error) { return Level27Client.AppComponentGetSingle(appID, int(component.ID)) },
+				func() (l27.AppComponent, error) { return Level27Client.AppComponentGetSingle(appID, component.ID) },
 				func(ac l27.AppComponent) string { return ac.Status },
 				"ok",
 				[]string{"creating", "to_create"},
@@ -1236,10 +1236,10 @@ var appComponentUpdateCmd = &cobra.Command{
 			case "sshkey[]":
 				// Need to map SSH keys -> IDs
 				sshKeys := v.([]interface{})
-				ids := make([]int, len(sshKeys))
+				ids := make([]l27.IntID, len(sshKeys))
 				for i, sshKey := range sshKeys {
 					keyCast := sshKey.(map[string]interface{})
-					ids[i] = int(keyCast["id"].(float64))
+					ids[i] = l27.IntID(keyCast["id"].(float64))
 				}
 				v = ids
 			default:
@@ -1294,7 +1294,7 @@ func parseComponentParameter(param l27.AppComponentTypeParameter, paramValue int
 
 	switch param.Type {
 	case "sshkey[]":
-		keys := []int{}
+		keys := []l27.IntID{}
 		for _, key := range strings.Split(str, ",") {
 			// TODO: Resolve SSH key
 			res, err := checkSingleIntID(key, "SSH key")
@@ -1719,7 +1719,7 @@ var appMigrationsCreateCmd = &cobra.Command{
 	},
 }
 
-func ParseMigrationItem(appID int, values string) (l27.AppMigrationItem, error) {
+func ParseMigrationItem(appID l27.IntID, values string) (l27.AppMigrationItem, error) {
 	valueSplitted := strings.Split(values, ",")
 
 	item := l27.AppMigrationItem{
@@ -1743,7 +1743,7 @@ func ParseMigrationItem(appID int, values string) (l27.AppMigrationItem, error) 
 			if err != nil {
 				return l27.AppMigrationItem{}, err
 			}
-			item.Ord = val
+			item.Ord = int32(val)
 
 		case "destSystem":
 			item.DestinationEntityId, err = resolveSystem(value)
@@ -1978,7 +1978,7 @@ var appComponentUrlGetCmd = &cobra.Command{
 			func(name string) ([]l27.AppComponentUrlShort, error) {
 				return Level27Client.AppComponentUrlLookup(appID, componentID, name)
 			},
-			func(i int) (l27.AppComponentUrlShort, error) {
+			func(i l27.IntID) (l27.AppComponentUrlShort, error) {
 				res, err := Level27Client.AppComponentUrlGetSingle(appID, componentID, i)
 				if err != nil {
 					return l27.AppComponentUrlShort{}, err
@@ -2007,7 +2007,7 @@ var appComponentUrlGetCmd = &cobra.Command{
 var appComponentUrlCreateAuthentication bool
 var appComponentUrlCreateContent string
 var appComponentUrlCreateSslForce bool
-var appComponentUrlCreateSslCertificate int
+var appComponentUrlCreateSslCertificate l27.IntID
 var appComponentUrlCreateHandleDns bool
 var appComponentUrlCreateAutoSslCertificate bool
 var appComponentUrlCreateCmd = &cobra.Command{
@@ -2026,7 +2026,7 @@ var appComponentUrlCreateCmd = &cobra.Command{
 			return err
 		}
 
-		var cert *int
+		var cert *l27.IntID
 		if appComponentUrlCreateSslCertificate == 0 {
 			cert = nil
 		} else {

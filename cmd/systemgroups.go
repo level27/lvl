@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
@@ -51,8 +50,8 @@ func init() {
 	addDeleteConfirmFlag(systemgroupsDeleteCmd)
 }
 
-func resolveSystemgroup(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystemgroup(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}

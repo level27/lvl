@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
-func resolveNetwork(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveNetwork(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}

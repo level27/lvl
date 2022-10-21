@@ -38,7 +38,7 @@ func MakeTemplateHelpers(t *template.Template) template.FuncMap {
 
 			return buf.String(), nil
 		},
-		"jobStatusSafe": func(status interface{}) (int, error) {
+		"jobStatusSafe": func(status interface{}) (int32, error) {
 			str, success := status.(string)
 			if success {
 				if str == "busy" {
@@ -47,7 +47,7 @@ func MakeTemplateHelpers(t *template.Template) template.FuncMap {
 
 				return 0, fmt.Errorf("unknown job status: %s", str)
 			} else {
-				i, success := status.(int)
+				i, success := status.(int32)
 				if !success {
 					return 0, fmt.Errorf("unknown job status type")
 				}

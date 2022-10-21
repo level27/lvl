@@ -47,9 +47,9 @@ func init() {
 	flags.StringVarP(&systemCreateName, "name", "n", "", "The name you want to give the system")
 	flags.StringVarP(&systemCreateFqdn, "Fqdn", "", "", "Valid hostname for the system")
 	flags.StringVarP(&systemCreateRemarks, "remarks", "", "", "Remarks (Admin only)")
-	flags.IntVarP(&systemCreateDisk, "disk", "", 0, "Disk (non-editable)")
-	flags.IntVarP(&systemCreateCpu, "cpu", "", 0, "Cpu (Required for Level27 systems)")
-	flags.IntVarP(&systemCreateMemory, "memory", "", 0, "Memory (Required for Level27 systems)")
+	flags.Int32VarP(&systemCreateDisk, "disk", "", 0, "Disk (non-editable)")
+	flags.Int32VarP(&systemCreateCpu, "cpu", "", 0, "Cpu (Required for Level27 systems)")
+	flags.Int32VarP(&systemCreateMemory, "memory", "", 0, "Memory (Required for Level27 systems)")
 	flags.StringVarP(&systemCreateManageType, "management", "", "basic", "Managament type (one of basic, professional, enterprise, professional_level27).")
 	flags.BoolVarP(&systemCreatePublicNetworking, "publicNetworking", "", true, "For digitalOcean servers always true. (non-editable)")
 	flags.StringVarP(&systemCreateImage, "image", "", "", "The ID of a systemimage. (must match selected configuration and zone. non-editable)")
@@ -59,8 +59,8 @@ func init() {
 	//	flags.StringVarP(&systemCreateSecurityUpdates, "security", "", "", "installSecurityUpdates (default: random POST:1-8, PUT:0-12)") NOT NEEDED FOR CREATE REQUEST
 	flags.StringVarP(&systemCreateAutoTeams, "autoTeams", "", "", "A csv list of team ID's")
 	flags.StringVarP(&systemCreateExternalInfo, "externalInfo", "", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in db)")
-	flags.IntVarP(&systemCreateOperatingSystemVersion, "version", "", 0, "The unique ID of an OperatingsystemVersion (non-editable)")
-	flags.IntVarP(&systemCreateParentSystem, "parent", "", 0, "The unique ID of a system (parent system)")
+	flags.Int32VarP(&systemCreateOperatingSystemVersion, "version", "", 0, "The unique ID of an OperatingsystemVersion (non-editable)")
+	flags.Int32VarP(&systemCreateParentSystem, "parent", "", 0, "The unique ID of a system (parent system)")
 	flags.StringVarP(&systemCreateType, "type", "", "", "System type")
 	flags.StringArrayP("networks", "", []string{""}, "Array of network IP's. (default: null)")
 
@@ -98,14 +98,14 @@ func init() {
 	systemCmd.AddCommand(systemUpdateCmd)
 	settingsFileFlag(systemUpdateCmd)
 	settingString(systemUpdateCmd, updateSettings, "name", "New name for this system")
-	settingInt(systemUpdateCmd, updateSettings, "cpu", "Set amount of CPU cores of the system")
-	settingInt(systemUpdateCmd, updateSettings, "memory", "Set amount of memory in GB of the system")
+	settingInt32(systemUpdateCmd, updateSettings, "cpu", "Set amount of CPU cores of the system")
+	settingInt32(systemUpdateCmd, updateSettings, "memory", "Set amount of memory in GB of the system")
 	settingString(systemUpdateCmd, updateSettings, "managementType", "Set management type of the system")
 	settingString(systemUpdateCmd, updateSettings, "organisation", "Set organisation that owns this system. Can be both a name or an ID")
-	settingInt(systemUpdateCmd, updateSettings, "publicNetworking", "")
-	settingInt(systemUpdateCmd, updateSettings, "limitRiops", "Set read IOPS limit")
-	settingInt(systemUpdateCmd, updateSettings, "limitWiops", "Set write IOPS limit")
-	settingInt(systemUpdateCmd, updateSettings, "installSecurityUpdates", "Set security updates mode index")
+	settingInt32(systemUpdateCmd, updateSettings, "publicNetworking", "")
+	settingInt32(systemUpdateCmd, updateSettings, "limitRiops", "Set read IOPS limit")
+	settingInt32(systemUpdateCmd, updateSettings, "limitWiops", "Set write IOPS limit")
+	settingInt32(systemUpdateCmd, updateSettings, "installSecurityUpdates", "Set security updates mode index")
 	settingString(systemUpdateCmd, updateSettings, "remarks", "")
 
 	// --- Delete
@@ -289,7 +289,7 @@ func init() {
 	systemVolumeCreateCmd.Flags().StringVar(&systemVolumeCreateOrganisation, "organisation", "", "Organisation for the new volume")
 	systemVolumeCreateCmd.Flags().StringVar(&systemVolumeCreateDeviceName, "deviceName", "", "Device name for the new volume")
 	systemVolumeCreateCmd.Flags().BoolVar(&systemVolumeCreateAutoResize, "autoResize", false, "Enable automatic resizing")
-	systemVolumeCreateCmd.Flags().IntVar(&systemVolumeCreateSpace, "space", 0, "Space of the new volume (in GB)")
+	systemVolumeCreateCmd.Flags().Int32Var(&systemVolumeCreateSpace, "space", 0, "Space of the new volume (in GB)")
 
 	// SYSTEM VOLUME LINK
 	systemVolumeCmd.AddCommand(systemVolumeLinkCmd)
@@ -306,7 +306,7 @@ func init() {
 	settingsFileFlag(systemVolumeUpdateCmd)
 	settingString(systemVolumeUpdateCmd, updateSettings, "name", "New name for the volume")
 	settingBool(systemVolumeUpdateCmd, updateSettings, "autoResize", "New autoResize setting")
-	settingInt(systemVolumeUpdateCmd, updateSettings, "space", "New volume space (in GB)")
+	settingInt32(systemVolumeUpdateCmd, updateSettings, "space", "New volume space (in GB)")
 
 	// ACCESS
 	addAccessCmds(systemCmd, "systems", resolveSystem)
@@ -320,8 +320,8 @@ func init() {
 
 // Resolve an integer or name domain.
 // If the domain is a name, a request is made to resolve the integer ID.
-func resolveSystem(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystem(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -344,8 +344,8 @@ func resolveSystem(arg string) (int, error) {
 	return res.Id, err
 }
 
-func resolveSystemCookbook(systemID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystemCookbook(systemID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -370,8 +370,8 @@ func resolveSystemCookbook(systemID int, arg string) (int, error) {
 	return cookbook.Id, nil
 }
 
-func resolveSystemProviderConfiguration(region int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystemProviderConfiguration(region l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -390,8 +390,8 @@ func resolveSystemProviderConfiguration(region int, arg string) (int, error) {
 	return 0, fmt.Errorf("unable to find provider configuration: '%s'", arg)
 }
 
-func resolveSystemHasNetwork(systemID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystemHasNetwork(systemID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -414,8 +414,8 @@ func resolveSystemHasNetwork(systemID int, arg string) (int, error) {
 	return res.ID, err
 }
 
-func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystemHasNetworkIP(systemID l27.IntID, hasNetworkID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -438,8 +438,8 @@ func resolveSystemHasNetworkIP(systemID int, hasNetworkID int, arg string) (int,
 	return res.ID, err
 }
 
-func resolveSystemVolume(systemID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSystemVolume(systemID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -478,7 +478,7 @@ var systemGetCmd = &cobra.Command{
 	},
 }
 
-func getSystems(ids []int) ([]l27.System, error) {
+func getSystems(ids []l27.IntID) ([]l27.System, error) {
 	if len(ids) == 0 {
 		return Level27Client.SystemGetList(optGetParameters)
 	}
@@ -564,13 +564,13 @@ var systemDescribeCmd = &cobra.Command{
 //----------------------------------------- CREATE ---------------------------------------
 // vars needed to save flag data.
 var systemCreateName, systemCreateFqdn, systemCreateRemarks string
-var systemCreateDisk, systemCreateCpu, systemCreateMemory int
+var systemCreateDisk, systemCreateCpu, systemCreateMemory int32
 var systemCreateManageType string
 var systemCreatePublicNetworking bool
 var systemCreateImage, systemCreateOrganisation, systemCreateProviderConfig, systemCreateZone string
 
 var systemCreateAutoTeams, systemCreateExternalInfo string
-var systemCreateOperatingSystemVersion, systemCreateParentSystem int
+var systemCreateOperatingSystemVersion, systemCreateParentSystem l27.IntID
 var systemCreateType string
 var systemCreateAutoNetworks []interface{}
 
@@ -1729,10 +1729,10 @@ var systemSshKeysAddCmd = &cobra.Command{
 		}
 
 		keyName := args[1]
-		keyID, err := strconv.Atoi(keyName)
+		keyID, err := l27.ParseID(keyName)
 		if err != nil {
-			user := viper.GetInt("user_id")
-			org := viper.GetInt("org_id")
+			user := viper.GetInt32("user_id")
+			org := viper.GetInt32("org_id")
 			system, err := Level27Client.LookupSystemNonAddedSshkey(systemID, org, user, keyName)
 			if err != nil {
 				return err
@@ -1776,7 +1776,7 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 		}
 
 		keyName := args[1]
-		keyID, err := strconv.Atoi(keyName)
+		keyID, err := l27.ParseID(keyName)
 		if err != nil {
 			existing, err := Level27Client.LookupSystemSshkey(systemID, keyName)
 			if err != nil {
@@ -1804,7 +1804,7 @@ var systemSshCmd = &cobra.Command{
 
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		favoriteKeyID := viper.GetInt("ssh_favoritekey")
+		favoriteKeyID := viper.GetInt32("ssh_favoritekey")
 		if favoriteKeyID == 0 {
 			return fmt.Errorf("no favorite SSH key configured. Use 'lvl sshkey favorite' to configure one")
 		}
@@ -1845,7 +1845,7 @@ var systemSshCmd = &cobra.Command{
 }
 
 // Ensure the given SSH key is available and 'ok' on a system.
-func waitEnsureSshKey(systemID int, sshKeyId int) error {
+func waitEnsureSshKey(systemID l27.IntID, sshKeyId l27.IntID) error {
 	_, err := Level27Client.SystemSshKeysGetSingle(systemID, sshKeyId)
 	if err == nil {
 		// No error, so key exists.
@@ -1867,7 +1867,7 @@ func waitEnsureSshKey(systemID int, sshKeyId int) error {
 }
 
 // Add an SSH key to a system, waiting for the status to change to 'ok'.
-func waitAddSshKey(systemID int, sshKeyID int) error {
+func waitAddSshKey(systemID l27.IntID, sshKeyID l27.IntID) error {
 	fmt.Fprint(os.Stderr, "Adding SSH key to system")
 
 	key, err := Level27Client.SystemAddSshKey(systemID, sshKeyID)
@@ -1892,7 +1892,7 @@ func waitAddSshKey(systemID int, sshKeyID int) error {
 }
 
 // Resolve the hostname to SSH into a system.
-func sshResolveHost(systemID int) (string, error) {
+func sshResolveHost(systemID l27.IntID) (string, error) {
 	system, err := Level27Client.SystemGetSingle(systemID)
 	if err != nil {
 		return "", err
@@ -1936,7 +1936,7 @@ var systemScpCommand = &cobra.Command{
 
 	Args: cobra.MinimumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		favoriteKeyID := viper.GetInt("ssh_favoritekey")
+		favoriteKeyID := viper.GetInt32("ssh_favoritekey")
 		if favoriteKeyID == 0 {
 			return fmt.Errorf("no favorite SSH key configured. Use 'lvl sshkey favorite' to configure one")
 		}
@@ -1949,11 +1949,11 @@ var systemScpCommand = &cobra.Command{
 
 		// Goroutine to asynchronously add SSH keys to systems while we go through resolving systems down below.
 		// We need this to avoid trying to add an SSH key to the same system twice, causing race conditions.
-		keyAddChannel := make(chan int)
+		keyAddChannel := make(chan l27.IntID)
 		keyDone := taskRunVoid(func() error {
 			var group errgroup.Group
 			// Map of systems we're already handling SSH keys on, to avoid running them twice.
-			systemsEnsured := map[int]bool{}
+			systemsEnsured := map[l27.IntID]bool{}
 			for systemID := range keyAddChannel {
 				sysID := systemID
 				if _, ok := systemsEnsured[systemID]; ok {
@@ -2409,7 +2409,7 @@ var systemVolumeGetCmd = &cobra.Command{
 
 // SYSTEM VOLUME CREATE
 var systemVolumeCreateName string
-var systemVolumeCreateSpace int
+var systemVolumeCreateSpace int32
 var systemVolumeCreateOrganisation string
 var systemVolumeCreateAutoResize bool
 var systemVolumeCreateDeviceName string

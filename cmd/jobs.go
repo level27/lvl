@@ -40,7 +40,7 @@ var jobDescribeCmd = &cobra.Command{
 // Add common commands for managing entity jobs to a parent command.
 // entityType is the type for /jobs/history/{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
+func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (l27.IntID, error)) {
 	jobsCmd := &cobra.Command{
 		Use:   "jobs",
 		Short: "View job history for this entity",

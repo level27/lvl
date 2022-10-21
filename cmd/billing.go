@@ -8,7 +8,7 @@ import (
 // Add common commands for managing entity billing to a parent command.
 // entityType is the type for /{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addBillingCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
+func addBillingCmds(parent *cobra.Command, entityType string, resolve func(string) (l27.IntID, error)) {
 	// BILLING
 	billingCmd := &cobra.Command{
 		Use:   "billing",

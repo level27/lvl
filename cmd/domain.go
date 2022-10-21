@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"strconv"
 	"strings"
 
 	"github.com/level27/l27-go"
@@ -70,11 +69,11 @@ func init() {
 	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv61", "")
 	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv62", "")
 	settingString(domainUpdateCmd, domainUpdateSettings, "nameserverIpv63", "")
-	settingInt(domainUpdateCmd, domainUpdateSettings, "ttl", "")
+	settingInt32(domainUpdateCmd, domainUpdateSettings, "ttl", "")
 	settingBool(domainUpdateCmd, domainUpdateSettings, "handleDns", "")
-	settingInt(domainUpdateCmd, domainUpdateSettings, "domaincontactLicensee", "")
-	settingInt(domainUpdateCmd, domainUpdateSettings, "domaincontactOnSite", "")
-	settingInt(domainUpdateCmd, domainUpdateSettings, "organisation", "")
+	settingID(domainUpdateCmd, domainUpdateSettings, "domaincontactLicensee", "")
+	settingID(domainUpdateCmd, domainUpdateSettings, "domaincontactOnSite", "")
+	settingID(domainUpdateCmd, domainUpdateSettings, "organisation", "")
 
 	// ------------------------------------------------- RECORDS ---------------------------------------------------------
 	domainCmd.AddCommand(domainRecordCmd)
@@ -89,7 +88,7 @@ func init() {
 	flags.StringVarP(&domainRecordCreateType, "type", "t", "", "Type of the domain record")
 	flags.StringVarP(&domainRecordCreateName, "name", "n", "", "Name of the domain record")
 	flags.StringVarP(&domainRecordCreateContent, "content", "c", "", "Content of the domain record")
-	flags.IntVarP(&domainRecordCreatePriority, "priority", "p", 0, "Priority of the domain record")
+	flags.Int32VarP(&domainRecordCreatePriority, "priority", "p", 0, "Priority of the domain record")
 	domainRecordCreateCmd.MarkFlagRequired("type")
 	domainRecordCreateCmd.MarkFlagRequired("content")
 	domainRecordCmd.AddCommand(domainRecordCreateCmd)
@@ -98,7 +97,7 @@ func init() {
 	flags = domainRecordUpdateCmd.Flags()
 	flags.StringVarP(&domainRecordUpdateName, "name", "n", "", "Name of the domain record")
 	flags.StringVarP(&domainRecordUpdateContent, "content", "c", "", "Content of the domain record")
-	flags.IntVarP(&domainRecordUpdatePriority, "priority", "p", 0, "Priority of the domain record")
+	flags.Int32VarP(&domainRecordUpdatePriority, "priority", "p", 0, "Priority of the domain record")
 	domainRecordCmd.AddCommand(domainRecordUpdateCmd)
 
 	// Record delete
@@ -144,27 +143,27 @@ func init() {
 }
 
 //flag vars needed for all post or put requests on Domain level [Domains/]
-var domainCreateType, domainCreateLicensee, domainCreateOrganisation int
+var domainCreateType, domainCreateLicensee, domainCreateOrganisation l27.IntID
 var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
 var domainCreateNsIpv61, domainCreateNsIpv62, domainCreateNsIpv63, domainCreateNsIpv64 string
-var domainCreateTtl int
+var domainCreateTtl int32
 var domainCreateEppCode, domainCreateAutoRecordTemplate string
 var domainCreateHandleDns, domainCreateAutoRecordTemplateRep bool
 var domainCreateExtraFields string
 var domainCreateAutoTeams, domainCreateExternalInfo, domainCreateAction string
-var domainCreateContactOnSite int
+var domainCreateContactOnSite l27.IntID
 
 // common date used for Post operations at /Domains
 func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command := cmd.Flags()
 
 	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (REQUIRED)")
-	command.IntVarP(&domainCreateType, "type", "t", 0, "the type of the domain")
+	command.Int32VarP(&domainCreateType, "type", "t", 0, "the type of the domain")
 	command.MarkHidden("type")
-	command.IntVarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
-	command.IntVarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
+	command.Int32VarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
+	command.Int32VarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
 
 	command.StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
 	command.StringVarP(&domainCreateNs2, "nameserver2", "", "", "Nameserver")
@@ -181,12 +180,12 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.StringVarP(&domainCreateNsIpv63, "nameserverIpv63", "", "", "IPv6 address for nameserver")
 	command.StringVarP(&domainCreateNsIpv64, "nameserverIpv64", "", "", "IPv6 address for nameserver")
 
-	command.IntVarP(&domainCreateTtl, "ttl", "", 28800, "Time to live: amount of time (in seconds) the DNS-records stay in the cache")
+	command.Int32VarP(&domainCreateTtl, "ttl", "", 28800, "Time to live: amount of time (in seconds) the DNS-records stay in the cache")
 	command.StringVarP(&domainCreateEppCode, "eppCode", "", "", "eppCode")
 	command.BoolVarP(&domainCreateHandleDns, "handleDns", "", true, "should dns be handled by lvl27")
 	command.StringVarP(&domainCreateExtraFields, "extra fields", "", "", "extra fields (json, non-editable)")
 
-	command.IntVarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
+	command.Int32VarP(&domainCreateContactOnSite, "domaincontactOnsite", "", 0, "the unique id of a domaincontact with type onsite")
 
 	// command.StringVarP(&domainCreateAutoRecordTemplate, "autorecordTemplate", "", "", "AutorecordTemplate")
 	// command.BoolVarP(&domainCreateAutoRecordTemplateRep, "autorecordTemplateReplace", "", false, "autorecordTemplate replace")
@@ -201,8 +200,8 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 
 // Resolve an integer or name domain.
 // If the domain is a name, a request is made to resolve the integer ID.
-func resolveDomain(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveDomain(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -250,7 +249,7 @@ var domainGetCmd = &cobra.Command{
 	},
 }
 
-func getDomains(ids []int) ([]l27.Domain, error) {
+func getDomains(ids []l27.IntID) ([]l27.Domain, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Domains(optGetParameters)
@@ -414,7 +413,7 @@ func splitDomainName(domain string) (string, string) {
 }
 
 // Gets the domain type extension for a full domain name.
-func getDomainTypeForDomain(domain string) (string, string, int, error) {
+func getDomainTypeForDomain(domain string) (string, string, l27.IntID, error) {
 	name, extension := splitDomainName(domain)
 	res, err := Level27Client.Extension()
 	if err != nil {
@@ -553,7 +552,7 @@ var domainRecordGetCmd = &cobra.Command{
 	},
 }
 
-func getDomainRecords(domainId int, ids []int) ([]l27.DomainRecord, error) {
+func getDomainRecords(domainId l27.IntID, ids []l27.IntID) ([]l27.DomainRecord, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.DomainRecords(domainId, recordGetType, optGetParameters)
@@ -575,7 +574,7 @@ func getDomainRecords(domainId int, ids []int) ([]l27.DomainRecord, error) {
 var domainRecordCreateType string
 var domainRecordCreateName string
 var domainRecordCreateContent string
-var domainRecordCreatePriority int
+var domainRecordCreatePriority int32
 
 var domainRecordCreateCmd = &cobra.Command{
 	Use:   "create [domain]",
@@ -622,7 +621,7 @@ var domainRecordDeleteCmd = &cobra.Command{
 
 var domainRecordUpdateName string
 var domainRecordUpdateContent string
-var domainRecordUpdatePriority int
+var domainRecordUpdatePriority int32
 
 var domainRecordUpdateCmd = &cobra.Command{
 	Use:   "update [domain] [record]",

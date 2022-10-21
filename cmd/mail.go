@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/level27/l27-go"
@@ -149,8 +148,8 @@ func init() {
 
 // Resolve the integer ID of a mail group, from a commandline-passed argument.
 // Returns ID if it's a numeric ID, otherwise resolves by name.
-func resolveMailgroup(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveMailgroup(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -173,8 +172,8 @@ func resolveMailgroup(arg string) (int, error) {
 	return res.ID, nil
 }
 
-func resolveMailbox(mailgroupID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveMailbox(mailgroupID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -197,8 +196,8 @@ func resolveMailbox(mailgroupID int, arg string) (int, error) {
 	return res.ID, nil
 }
 
-func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveMailboxAdress(mailgroupID l27.IntID, mailboxID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -221,8 +220,8 @@ func resolveMailboxAdress(mailgroupID int, mailboxID int, arg string) (int, erro
 	return res.ID, nil
 }
 
-func resolveMailforwarder(mailgroupID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveMailforwarder(mailgroupID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}

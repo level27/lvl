@@ -25,7 +25,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"strconv"
 	"strings"
 	"text/tabwriter"
 	"text/template"
@@ -328,8 +327,8 @@ func outputFormatTemplateYaml(object interface{}) {
 }
 
 // Tries to convert a string command line argument to an integer ID
-func convertStringToId(id string) (int, error) {
-	intId, err := strconv.Atoi(id)
+func convertStringToId(id string) (l27.IntID, error) {
+	intId, err := l27.ParseID(id)
 	if err != nil {
 		return 0, fmt.Errorf("'%s' is not a valid ID", id)
 	}
@@ -338,12 +337,12 @@ func convertStringToId(id string) (int, error) {
 }
 
 // Tries to convert a slice of command line arguments to integer IDs
-func convertStringsToIds(ids []string) ([]int, error) {
-	ints := make([]int, len(ids))
+func convertStringsToIds(ids []string) ([]l27.IntID, error) {
+	ints := make([]l27.IntID, len(ids))
 	for idx, id := range ids {
-		intId, err := strconv.Atoi(id)
+		intId, err := convertStringToId(id)
 		if err != nil {
-			return nil, fmt.Errorf("'%s' is not a valid ID", id)
+			return nil, err
 		}
 		ints[idx] = intId
 	}

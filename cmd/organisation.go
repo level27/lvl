@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
@@ -40,8 +39,8 @@ func init() {
 	addCommonGetFlags(organisationGetCmd)
 }
 
-func resolveOrganisation(arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveOrganisation(arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}
@@ -64,7 +63,7 @@ func resolveOrganisation(arg string) (int, error) {
 	return res.ID, nil
 }
 
-func getOrganisations(ids []int) ([]l27.Organisation, error) {
+func getOrganisations(ids []l27.IntID) ([]l27.Organisation, error) {
 	c := Level27Client
 	if len(ids) == 0 {
 		return c.Organisations(optGetParameters)

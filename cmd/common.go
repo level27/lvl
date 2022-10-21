@@ -43,7 +43,7 @@ var optGetParameters l27.CommonGetParams
 func addCommonGetFlags(cmd *cobra.Command) {
 	pf := cmd.Flags()
 
-	pf.IntVarP(&optGetParameters.Limit, "number", "n", optGetParameters.Limit, "How many things should we retrieve from the API?")
+	pf.Int32VarP(&optGetParameters.Limit, "number", "n", optGetParameters.Limit, "How many things should we retrieve from the API?")
 	pf.StringVarP(&optGetParameters.Filter, "filter", "f", optGetParameters.Filter, "How to filter API results?")
 }
 
@@ -62,8 +62,8 @@ func addWaitFlag(cmd *cobra.Command) {
 }
 
 //check for valid ID as type INT.
-func checkSingleIntID(arg string, entity string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func checkSingleIntID(arg string, entity string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err != nil {
 		return 0, fmt.Errorf("not a valid %v ID: '%s'", entity, arg)
 	}
@@ -225,13 +225,25 @@ func settingStringP(c *cobra.Command, settings map[string]interface{}, name stri
 
 // Add an int setting flag to a command, that will be stored in a map.
 // This is intended to be easily used with PATCH APIs.
-func settingInt(c *cobra.Command, settings map[string]interface{}, name string, usage string) {
+func settingID(c *cobra.Command, settings map[string]interface{}, name string, usage string) {
 	c.Flags().Var(&intMapValue{Map: settings, Name: name}, name, usage)
 }
 
 // Add an int setting flag to a command, that will be stored in a map. Shorthand version.
 // This is intended to be easily used with PATCH APIs.
-func settingIntP(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
+func settingIDP(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
+	c.Flags().VarP(&intMapValue{Map: settings, Name: name}, name, short, usage)
+}
+
+// Add an int setting flag to a command, that will be stored in a map.
+// This is intended to be easily used with PATCH APIs.
+func settingInt32(c *cobra.Command, settings map[string]interface{}, name string, usage string) {
+	c.Flags().Var(&intMapValue{Map: settings, Name: name}, name, usage)
+}
+
+// Add an int setting flag to a command, that will be stored in a map. Shorthand version.
+// This is intended to be easily used with PATCH APIs.
+func settingInt32P(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
 	c.Flags().VarP(&intMapValue{Map: settings, Name: name}, name, short, usage)
 }
 
@@ -283,11 +295,11 @@ func (c *intMapValue) String() string {
 		return ""
 	}
 
-	return strconv.Itoa(val.(int))
+	return fmt.Sprint(val)
 }
 
 func (c *intMapValue) Set(val string) error {
-	i, err := strconv.Atoi(val)
+	i, err := l27.ParseID(val)
 	if err != nil {
 		return err
 	}
@@ -297,7 +309,35 @@ func (c *intMapValue) Set(val string) error {
 }
 
 func (c *intMapValue) Type() string {
-	return "int"
+	return "ID"
+}
+
+type int32MapValue struct {
+	Map  map[string]interface{}
+	Name string
+}
+
+func (c *int32MapValue) String() string {
+	val := c.Map[c.Name]
+	if val == nil {
+		return ""
+	}
+
+	return fmt.Sprint(val)
+}
+
+func (c *int32MapValue) Set(val string) error {
+	i, err := strconv.ParseInt(val, 10, 32)
+	if err != nil {
+		return err
+	}
+
+	c.Map[c.Name] = i
+	return nil
+}
+
+func (c *int32MapValue) Type() string {
+	return "int32"
 }
 
 type boolMapValue struct {
@@ -357,7 +397,7 @@ func confirmPrompt(message string) bool {
 func resolveGets[T interface{}](
 	args []string,
 	lookup func(string) ([]T, error),
-	getSingle func(int) (T, error),
+	getSingle func(l27.IntID) (T, error),
 	getList func(l27.CommonGetParams) ([]T, error)) ([]T, error) {
 	if len(args) == 0 {
 		// No arguments, return full list from API.
@@ -365,7 +405,7 @@ func resolveGets[T interface{}](
 	} else {
 		results := make([]T, 0, len(args))
 		for _, val := range args {
-			id, err := strconv.Atoi(val)
+			id, err := l27.ParseID(val)
 			if err == nil {
 				// Integer ID
 				res, err := getSingle(id)

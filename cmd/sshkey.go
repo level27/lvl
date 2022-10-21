@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/level27/l27-go"
 	"github.com/level27/lvl/utils"
@@ -53,8 +52,8 @@ var sshKeyFavoriteCmd = cobra.Command{
 	},
 }
 
-func resolveSshKey(organisationID int, userID int, arg string) (int, error) {
-	id, err := strconv.Atoi(arg)
+func resolveSshKey(organisationID l27.IntID, userID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
 	if err == nil {
 		return id, nil
 	}

@@ -11,7 +11,7 @@ import (
 // Add common commands for managing entity access to a parent command.
 // entityType is the type for /{type}/{id} which this function uses.
 // resolve is a function that turns an argument in the ID of the entity.
-func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string) (int, error)) {
+func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string) (l27.IntID, error)) {
 	// <ENTITY> ACCESS
 	var accessCmd = &cobra.Command{
 		Use:   "access",

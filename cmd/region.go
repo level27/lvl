@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
+	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ func init() {
 	regionCommand.AddCommand(regionZonesCommand)
 }
 
-func resolveZoneRegion(zoneName string) (int, int, error) {
+func resolveZoneRegion(zoneName string) (l27.IntID, l27.IntID, error) {
 	zone, region, err := Level27Client.LookupZoneAndRegion(zoneName)
 	if err != nil {
 		return 0, 0, err
@@ -34,8 +34,8 @@ func resolveZoneRegion(zoneName string) (int, int, error) {
 	return zone.ID, region.ID, nil
 }
 
-func resolveRegionImage(region int, imageName string) (int, error) {
-	id, err := strconv.Atoi(imageName)
+func resolveRegionImage(region l27.IntID, imageName string) (l27.IntID, error) {
+	id, err := l27.ParseID(imageName)
 	if err == nil {
 		return id, nil
 	}
@@ -124,7 +124,7 @@ var regionZonesCommand = &cobra.Command{
 	},
 }
 
-func regionIdFromArg(arg string) (int, error) {
+func regionIdFromArg(arg string) (l27.IntID, error) {
 	regionId, err := convertStringToId(arg)
 	if err != nil {
 		regionMaybe, err := Level27Client.LookupRegion(arg)
