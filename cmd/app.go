@@ -1128,7 +1128,7 @@ var appComponentCreateCmd = &cobra.Command{
 			paramNames[paramName] = true
 			paramValue, hasValue := paramsPassed[paramName]
 			if hasValue {
-				if param.Readonly || param.DisableEdit {
+				if (param.Readonly || param.DisableEdit) && param.Type != "dependentSelect" {
 					return fmt.Errorf("param cannot be changed: %s", paramName)
 				}
 
@@ -1138,7 +1138,7 @@ var appComponentCreateCmd = &cobra.Command{
 				}
 
 				create[paramName] = res
-			} else if param.Required && param.DefaultValue == nil {
+			} else if param.Required && param.DefaultValue == nil && !param.Received {
 				return fmt.Errorf("required parameter not given: %s", paramName)
 			}
 		}
