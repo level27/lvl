@@ -9,6 +9,7 @@ func init() {
 	RootCmd.AddCommand(jobCmd)
 
 	jobCmd.AddCommand(jobDescribeCmd)
+	jobCmd.AddCommand(jobRetryCmd)
 }
 
 var jobCmd = &cobra.Command{
@@ -27,13 +28,35 @@ var jobDescribeCmd = &cobra.Command{
 			return err
 		}
 
-		job, err := Level27Client.JobHistoryRootGet(jobID)
+		job, err := Level27Client.JobHistoryRootGet(jobID, l27.JobHistoryGetParams{})
 		if err != nil {
 			return err
 		}
 
 		outputFormatTemplate(job, "templates/job.tmpl")
 		return err
+	},
+}
+
+var jobRetryCmd = &cobra.Command{
+	Use:     "retry <id>",
+	Short:   "(admin only) Retry execution of a job",
+	Example: "lvl job retry 12345",
+	Args:    cobra.ExactArgs(1),
+
+	RunE: func(cmd *cobra.Command, args []string) error {
+		jobID, err := checkSingleIntID(args[0], "job")
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.JobRetry(jobID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/jobs/retry.tmpl")
+		return nil
 	},
 }
 
@@ -63,7 +86,9 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 
 			// check for every job without status 50. the subjobs who don't have status 50
 			for _, RootJob := range notCompleted {
-				fullData, err := Level27Client.JobHistoryRootGet(RootJob.ID)
+				fullData, err := Level27Client.JobHistoryRootGet(
+					RootJob.ID,
+					l27.JobHistoryGetParams{})
 				if err != nil {
 					return err
 				}
