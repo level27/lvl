@@ -1,5 +1,7 @@
 ## Current (main branch)
 
+## 1.3.0
+
 * Added `job delete <id>` command.
 
 ## 1.2.0
