@@ -514,7 +514,7 @@ var systemDescribeCmd = &cobra.Command{
 		}
 
 		if !systemDescribeHideJobs {
-			system.Jobs, err = Level27Client.EntityJobHistoryGet("system", systemID)
+			system.Jobs, err = Level27Client.EntityJobHistoryGet("system", systemID, l27.PageableParams{})
 			if err != nil {
 				return err
 			}

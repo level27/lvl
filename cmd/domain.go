@@ -283,7 +283,7 @@ var domainDescribeCmd = &cobra.Command{
 			return err
 		}
 
-		domain.Jobs, err = Level27Client.EntityJobHistoryGet("domain", domainID)
+		domain.Jobs, err = Level27Client.EntityJobHistoryGet("domain", domainID, l27.PageableParams{})
 		if err != nil {
 			return err
 		}

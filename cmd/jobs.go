@@ -76,7 +76,7 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 			}
 
 			//get full history of toplevel jobs
-			history, err := Level27Client.EntityJobHistoryGet(entityType, entityID)
+			history, err := Level27Client.EntityJobHistoryGet(entityType, entityID, l27.PageableParams{})
 			if err != nil {
 				return err
 			}
