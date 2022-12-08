@@ -1,5 +1,7 @@
 ## Current (main branch)
 
+## 1.2.0
+
 * Started tracking this changelog.
 * Fix first run not being able to log in.
 * `--version` flag and embed lvl version in the `User-Agent` headers sent.
