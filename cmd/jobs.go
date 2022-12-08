@@ -10,6 +10,7 @@ func init() {
 
 	jobCmd.AddCommand(jobDescribeCmd)
 	jobCmd.AddCommand(jobRetryCmd)
+	jobCmd.AddCommand(jobDeleteCmd)
 }
 
 var jobCmd = &cobra.Command{
@@ -56,6 +57,28 @@ var jobRetryCmd = &cobra.Command{
 		}
 
 		outputFormatTemplate(nil, "templates/jobs/retry.tmpl")
+		return nil
+	},
+}
+
+var jobDeleteCmd = &cobra.Command{
+	Use:     "delete <id>",
+	Short:   "(admin only) Delete a job",
+	Example: "lvl job delete 12345",
+	Args:    cobra.ExactArgs(1),
+
+	RunE: func(cmd *cobra.Command, args []string) error {
+		jobID, err := checkSingleIntID(args[0], "job")
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.JobDelete(jobID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/jobs/delete.tmpl")
 		return nil
 	},
 }
