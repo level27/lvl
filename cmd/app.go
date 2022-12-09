@@ -1079,6 +1079,8 @@ var appComponentCreateCmd = &cobra.Command{
 			return fmt.Errorf("unknown component type: %s", appComponentCreateType)
 		}
 
+		addSshKeyParameter(&val)
+
 		paramsPassed, err := loadSettings(appComponentCreateParamsFile)
 		if err != nil {
 			return err
@@ -1206,8 +1208,12 @@ var appComponentUpdateCmd = &cobra.Command{
 			return err
 		}
 
+		serviceType := componentTypes[appComponent.Appcomponenttype]
+
+		addSshKeyParameter(&serviceType)
+
 		parameterTypes := make(map[string]l27.AppComponentTypeParameter)
-		for _, param := range componentTypes[appComponent.Appcomponenttype].Servicetype.Parameters {
+		for _, param := range serviceType.Servicetype.Parameters {
 			parameterTypes[param.Name] = param
 		}
 
@@ -1222,7 +1228,12 @@ var appComponentUpdateCmd = &cobra.Command{
 		}
 
 		for k, v := range appComponent.Appcomponentparameters {
-			param := parameterTypes[k]
+			param, ok := parameterTypes[k]
+			if !ok {
+				// Maybe should be a panic instead?
+				return fmt.Errorf("API returned unknown parameter in component data: '%s'", k)
+			}
+
 			paramType := parameterTypes[k].Type
 
 			if param.Readonly {
@@ -1331,6 +1342,31 @@ func parseComponentParameter(param l27.AppComponentTypeParameter, paramValue int
 	default:
 		// Pass as string
 		return str, nil
+	}
+}
+
+func addSshKeyParameter(appComponentType *l27.AppcomponenttypeServicetype) {
+	// Older versions of the API used to expose SSH keys as a component parameter with the "sshkey[]" type.
+	// This was changed to .SSHKeyPossible on the service type,
+	// which would make the existing parameter parsing code far less elegant.
+	// I've decided the best solution is to add an SSH key parameter back to the list locally.
+
+	if appComponentType.Servicetype.SSHKeyPossible {
+		appComponentType.Servicetype.Parameters = append(
+			appComponentType.Servicetype.Parameters,
+			l27.AppComponentTypeParameter{
+				Name:           "sshkeys",
+				DisplayName:    "SSH Keys",
+				Description:    "The SSH keys that can be used to log into the component",
+				Type:           "sshkey[]",
+				DefaultValue:   nil,
+				Readonly:       false,
+				DisableEdit:    false,
+				Required:       false,
+				Received:       false,
+				Category:       "credential",
+				PossibleValues: nil,
+			})
 	}
 }
 
@@ -1455,6 +1491,8 @@ var appComponentParametersCmd = &cobra.Command{
 		if !isTypeFound {
 			return fmt.Errorf("given componenttype: '%v' NOT found", appComponentType)
 		}
+
+		addSshKeyParameter(&componenttype)
 
 		outputFormatTable(componenttype.Servicetype.Parameters,
 			[]string{"NAME", "DESCRIPTION", "TYPE", "DEFAULT_VALUE", "REQUIRED"},
