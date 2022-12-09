@@ -2,6 +2,7 @@
 
 * Fixed updating linked app components.
 * Fixed errors during app component update not being reported.
+* New `lvl system sshconfig` command to add system names to your SSH config. This allows easier access via non-lvl commands such as `rsync`.
 
 ## 1.3.1
 
