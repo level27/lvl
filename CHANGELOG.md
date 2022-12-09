@@ -1,5 +1,9 @@
 ## Current (main branch)
 
+## 1.3.1
+
+* Fixed the `sshkey` parameter on app components.
+
 ## 1.3.0
 
 * Added `job delete <id>` command.
