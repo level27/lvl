@@ -1236,7 +1236,7 @@ var appComponentUpdateCmd = &cobra.Command{
 
 			paramType := parameterTypes[k].Type
 
-			if param.Readonly {
+			if param.Readonly || param.DisableEdit {
 				continue
 			}
 
@@ -1288,7 +1288,11 @@ var appComponentUpdateCmd = &cobra.Command{
 			data[paramName] = res
 		}
 
-		Level27Client.AppComponentUpdate(appID, appComponentID, data)
+		err = Level27Client.AppComponentUpdate(appID, appComponentID, data)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 }

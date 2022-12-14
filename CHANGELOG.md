@@ -1,5 +1,8 @@
 ## Current (main branch)
 
+* Fixed updating linked app components.
+* Fixed errors during app component update not being reported.
+
 ## 1.3.1
 
 * Fixed the `sshkey` parameter on app components.
