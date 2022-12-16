@@ -42,7 +42,6 @@ func init() {
 	addDomainCommonPostFlags(domainCreateCmd)
 	//Required flags
 	domainCreateCmd.MarkFlagRequired("name")
-	domainCreateCmd.MarkFlagRequired("licensee")
 	domainCreateCmd.MarkFlagRequired("organisation")
 
 	// TRANSFER (single domain)
@@ -142,7 +141,7 @@ func init() {
 	addIntegrityCheckCmds(domainCmd, "domains", resolveDomain)
 }
 
-//flag vars needed for all post or put requests on Domain level [Domains/]
+// flag vars needed for all post or put requests on Domain level [Domains/]
 var domainCreateType, domainCreateLicensee, domainCreateOrganisation l27.IntID
 var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
@@ -162,7 +161,7 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.StringVarP(&domainCreateName, "name", "n", "", "the name of the domain (REQUIRED)")
 	command.Int32VarP(&domainCreateType, "type", "t", 0, "the type of the domain")
 	command.MarkHidden("type")
-	command.Int32VarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee (REQUIRED)")
+	command.Int32VarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee")
 	command.Int32VarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
 
 	command.StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
@@ -225,7 +224,7 @@ func resolveDomain(arg string) (l27.IntID, error) {
 }
 
 // --------------------------------------------------- DOMAINS --------------------------------------------------------
-//GET LIST OF ALL DOMAINS [lvl domain get]
+// GET LIST OF ALL DOMAINS [lvl domain get]
 var domainGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a list of all current domains",
@@ -369,7 +368,7 @@ func getDomainRequestData() (l27.DomainRequest, error) {
 		Handledns:                 domainCreateHandleDns,
 		ExtraFields:               domainCreateExtraFields,
 		Domaintype:                domainCreateType,
-		Domaincontactlicensee:     domainCreateLicensee,
+		Domaincontactlicensee:     &domainCreateLicensee,
 		DomainContactOnSite:       &domainCreateContactOnSite,
 		Organisation:              domainCreateOrganisation,
 		AutoRecordTemplate:        domainCreateAutoRecordTemplate,
@@ -384,6 +383,10 @@ func getDomainRequestData() (l27.DomainRequest, error) {
 
 	if *requestData.DomainContactOnSite == 0 {
 		requestData.DomainContactOnSite = nil
+	}
+
+	if *requestData.Domaincontactlicensee == 0 {
+		requestData.Domaincontactlicensee = nil
 	}
 
 	if requestData.Domaintype == 0 {
@@ -480,7 +483,7 @@ var domainTransferCmd = &cobra.Command{
 	},
 }
 
-//INTERNAL TRANSFER
+// INTERNAL TRANSFER
 var domainInternalTransferCmd = &cobra.Command{
 	Use:   "internaltransfer",
 	Short: "Internal transfer (available only for dnsbe domains)",

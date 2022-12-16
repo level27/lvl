@@ -4,6 +4,7 @@
 * Fixed errors during app component update not being reported.
 * New `lvl system sshconfig` command to add system names to your SSH config. This allows easier access via non-lvl commands such as `rsync`.
 * Fixed `lvl organisation get` sometimes giving an error due to API schema changes.
+* `lvl domain create` can now be used without licensee for certain actions like `none`.
 
 ## 1.3.1
 
