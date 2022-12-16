@@ -5,6 +5,7 @@
 * New `lvl system sshconfig` command to add system names to your SSH config. This allows easier access via non-lvl commands such as `rsync`.
 * Fixed `lvl organisation get` sometimes giving an error due to API schema changes.
 * `lvl domain create` can now be used without licensee for certain actions like `none`.
+* `lvl domain create` now accepts organisation names for `--organisation`, instead of solely IDs.
 
 ## 1.3.1
 

@@ -142,7 +142,8 @@ func init() {
 }
 
 // flag vars needed for all post or put requests on Domain level [Domains/]
-var domainCreateType, domainCreateLicensee, domainCreateOrganisation l27.IntID
+var domainCreateType, domainCreateLicensee l27.IntID
+var domainCreateOrganisation string
 var domainCreateName string
 var domainCreateNs1, domainCreateNs2, domainCreateNs3, domainCreateNs4 string
 var domainCreateNsIp1, domainCreateNsIp2, domainCreateNsIp3, domainCreateNsIp4 string
@@ -162,7 +163,7 @@ func addDomainCommonPostFlags(cmd *cobra.Command) {
 	command.Int32VarP(&domainCreateType, "type", "t", 0, "the type of the domain")
 	command.MarkHidden("type")
 	command.Int32VarP(&domainCreateLicensee, "licensee", "l", 0, "The unique identifier of a domaincontact with type licensee")
-	command.Int32VarP(&domainCreateOrganisation, "organisation", "", 0, "the organisation of the domain (REQUIRED)")
+	command.StringVar(&domainCreateOrganisation, "organisation", "", "The organisation that will own the new domain.")
 
 	command.StringVarP(&domainCreateNs1, "nameserver1", "", "", "Nameserver")
 	command.StringVarP(&domainCreateNs2, "nameserver2", "", "", "Nameserver")
@@ -346,6 +347,11 @@ var domainDeleteCmd = &cobra.Command{
 // common functions for managing domains
 // change given flag data into request data to put or post
 func getDomainRequestData() (l27.DomainRequest, error) {
+	organisationID, err := resolveOrganisation(domainCreateOrganisation)
+	if err != nil {
+		return l27.DomainRequest{}, err
+	}
+
 	requestData := l27.DomainRequest{
 		Name:          domainCreateName,
 		NameServer1:   &domainCreateNs1,
@@ -370,7 +376,7 @@ func getDomainRequestData() (l27.DomainRequest, error) {
 		Domaintype:                domainCreateType,
 		Domaincontactlicensee:     &domainCreateLicensee,
 		DomainContactOnSite:       &domainCreateContactOnSite,
-		Organisation:              domainCreateOrganisation,
+		Organisation:              organisationID,
 		AutoRecordTemplate:        domainCreateAutoRecordTemplate,
 		AutoRecordTemplateReplace: domainCreateAutoRecordTemplateRep,
 		//DomainProvider:            &domainCreateDomainProvider,
