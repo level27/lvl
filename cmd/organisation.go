@@ -47,7 +47,7 @@ func resolveOrganisation(arg string) (l27.IntID, error) {
 
 	options, err := Level27Client.LookupOrganisation(arg)
 	if err != nil {
-		return id, nil
+		return 0, err
 	}
 
 	res, err := resolveShared(
