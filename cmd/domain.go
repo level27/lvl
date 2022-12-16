@@ -37,7 +37,7 @@ func init() {
 	// Create (single domain)
 	domainCmd.AddCommand(domainCreateCmd)
 	addWaitFlag(domainCreateCmd)
-	domainCreateCmd.Flags().StringVarP(&domainCreateAction, "action", "a", "", "Specify the action you want to commit")
+	domainCreateCmd.Flags().StringVarP(&domainCreateAction, "action", "a", "create", "Specify how the domain is created. Options are 'none' or 'create'")
 	domainCreateCmd.Flags().StringVarP(&domainCreateExternalInfo, "externalInfo", "", "", "Required when billableItemInfo for an organisation exist in db")
 	addDomainCommonPostFlags(domainCreateCmd)
 	//Required flags
@@ -444,7 +444,18 @@ func getDomainTypeForDomain(domain string) (string, string, l27.IntID, error) {
 var domainCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new domain",
-	Args:  cobra.ExactArgs(0),
+	Long: `Create a new domain
+
+This command is somewhat overloaded on ways of creating a domain in the control panel.
+The exact operation done is specified by --action.
+
+"--action create" (the default) means the domain is registered new with Level27.
+Full info for registration of a domain must be provided (such as domain contact info).
+
+"--action none" allows a domain entity to be created in the API without actually registering it anywhere.
+This means not all info must be provided.
+`,
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		requestData, err := getDomainRequestData()
 		if err != nil {

@@ -6,6 +6,7 @@
 * Fixed `lvl organisation get` sometimes giving an error due to API schema changes.
 * `lvl domain create` can now be used without licensee for certain actions like `none`.
 * `lvl domain create` now accepts organisation names for `--organisation`, instead of solely IDs.
+* Improved help for `lvl domain create` somewhat.
 
 ## 1.3.1
 
