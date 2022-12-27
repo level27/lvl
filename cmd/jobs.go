@@ -105,10 +105,12 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 			}
 
 			// filter jobs where status is not 50.
-			notCompleted := FindNotcompletedJobs(history)
+			rootJobs := FindNotcompletedJobsRoot(history)
+
+			shownJobs := []l27.Job{}
 
 			// check for every job without status 50. the subjobs who don't have status 50
-			for _, RootJob := range notCompleted {
+			for _, RootJob := range rootJobs {
 				fullData, err := Level27Client.JobHistoryRootGet(
 					RootJob.ID,
 					l27.JobHistoryGetParams{})
@@ -116,17 +118,19 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 					return err
 				}
 
+				shownJobs = append(shownJobs, fullData)
+
 				for _, subjob := range fullData.Jobs {
 					if subjob.Status != 50 {
-						notCompleted = append(notCompleted, subjob)
+						shownJobs = append(shownJobs, subjob)
 						if len(subjob.Jobs) != 0 {
-							notCompleted = append(notCompleted, FindNotcompletedJobs(subjob.Jobs)...)
+							shownJobs = append(shownJobs, FindNotcompletedJobs(subjob.Jobs)...)
 						}
 					}
 				}
 			}
 
-			outputFormatTable(notCompleted, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"ID", "Status", "Message", "Dt"})
+			outputFormatTable(shownJobs, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"ID", "Status", "Message", "DatetimeStamp"})
 			return nil
 		},
 	}
@@ -142,6 +146,16 @@ func CheckSubJobs(job l27.Job) bool {
 	}
 }
 
+func FindNotcompletedJobsRoot(jobs []l27.HistoryRootJob) []l27.HistoryRootJob {
+	var NotCompleted []l27.HistoryRootJob
+	for _, job := range jobs {
+		if job.Status != 50 {
+			NotCompleted = append(NotCompleted, job)
+		}
+	}
+	return NotCompleted
+}
+
 func FindNotcompletedJobs(jobs []l27.Job) []l27.Job {
 	var NotCompleted []l27.Job
 	for _, job := range jobs {
@@ -150,5 +164,4 @@ func FindNotcompletedJobs(jobs []l27.Job) []l27.Job {
 		}
 	}
 	return NotCompleted
-
 }

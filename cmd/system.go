@@ -522,12 +522,14 @@ var systemDescribeCmd = &cobra.Command{
 		}
 
 		if !systemDescribeHideJobs {
-			system.Jobs, err = Level27Client.EntityJobHistoryGet("system", systemID, l27.PageableParams{})
+			jobs, err := Level27Client.EntityJobHistoryGet("system", systemID, l27.PageableParams{})
 			if err != nil {
 				return err
 			}
 
-			for idx, j := range system.Jobs {
+			system.Jobs = make([]l27.Job, len(jobs))
+
+			for idx, j := range jobs {
 				system.Jobs[idx], err = Level27Client.JobHistoryRootGet(
 					j.ID,
 					l27.JobHistoryGetParams{})
