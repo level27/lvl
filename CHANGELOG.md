@@ -1,5 +1,7 @@
 ## Current (main branch)
 
+* Don't emit comments with `lvl system sshconfig` to avoid parsing issues on certain OpenSSH versions.
+
 ## 1.4.0
 
 * Fixed updating linked app components.

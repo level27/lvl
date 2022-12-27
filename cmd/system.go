@@ -2116,8 +2116,6 @@ The new host names are written into a separate ~/.ssh/lvl config file, which get
 			cfg.Hosts = append(cfg.Hosts, host)
 		}
 
-		host.EOLComment = fmt.Sprintf(" system ID: %d", systemID)
-
 		setSshConfigHostNode(host, "HostName", address)
 		setSshConfigHostNode(host, "User", "root")
 
