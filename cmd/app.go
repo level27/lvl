@@ -1410,12 +1410,17 @@ var AppComponentDeleteCmd = &cobra.Command{
 		}
 
 		if !optDeleteConfirmed {
+			app, err := Level27Client.App(appID)
+			if err != nil {
+				return err
+			}
+
 			appComponent, err := Level27Client.AppComponentGetSingle(appID, appComponentID)
 			if err != nil {
 				return err
 			}
 
-			if !confirmPrompt(fmt.Sprintf("Delete app component %s (%d) on app %s (%d)?", appComponent.Name, appComponent.ID, appComponent.App.Name, appComponent.App.ID)) {
+			if !confirmPrompt(fmt.Sprintf("Delete app component %s (%d) on app %s (%d)?", appComponent.Name, appComponent.ID, app.Name, app.ID)) {
 				return nil
 			}
 		}
