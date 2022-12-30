@@ -130,7 +130,7 @@ func addJobCmds(parent *cobra.Command, entityType string, resolve func(string) (
 				}
 			}
 
-			outputFormatTable(shownJobs, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"ID", "Status", "Message", "DatetimeStamp"})
+			outputFormatTable(shownJobs, []string{"ID", "STATUS", "MESSAGE", "DATE"}, []string{"ID", "Status", "Message", "Dt"})
 			return nil
 		},
 	}
