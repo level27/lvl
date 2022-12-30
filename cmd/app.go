@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -248,9 +247,11 @@ func init() {
 	appMigrationsActionCmd.AddCommand(appMigrationsActionDenyCmd)
 	// ---- MIGRATION ACTION RETRY
 	appMigrationsActionCmd.AddCommand(appMigrationsActionRetryCmd)
+
+	addBillingCmds(appCmd, "apps", resolveApp)
 }
 
-//------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
+// ------------------------------------------------- APP HELPER FUNCTIONS -------------------------------------------------
 // GET AN APPID BASED ON THE NAME
 func resolveApp(arg string) (l27.IntID, error) {
 	id, err := l27.ParseID(arg)
@@ -501,6 +502,7 @@ var appDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/app/delete.tmpl")
 		return nil
 	},
 }
@@ -554,7 +556,13 @@ var appUpdateCmd = &cobra.Command{
 			request.AutoTeams = appUpdateTeams
 		}
 
-		Level27Client.AppUpdate(appID, request)
+		err = Level27Client.AppUpdate(appID, request)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(request, "templates/entities/app/update.tmpl")
+
 		return nil
 	},
 }
@@ -608,7 +616,13 @@ var AppActionActivateCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppAction(appID, "activate")
+		err = Level27Client.AppAction(appID, "activate")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/app/activate.tmpl")
+
 		return nil
 	},
 }
@@ -626,7 +640,12 @@ var AppActionDeactivateCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppAction(appID, "deactivate")
+		err = Level27Client.AppAction(appID, "deactivate")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/app/deactivate.tmpl")
 		return nil
 	},
 }
@@ -840,7 +859,12 @@ var appSslDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppSslCertificatesDelete(appID, certID)
+		err = Level27Client.AppSslCertificatesDelete(appID, certID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appSslCertificate/delete.tmpl")
 		return nil
 	},
 }
@@ -879,7 +903,12 @@ var appSslUpdateCmd = &cobra.Command{
 		data := utils.RoundTripJson(put).(map[string]interface{})
 		data = mergeMaps(data, settings)
 
-		Level27Client.AppSslCertificatesUpdate(appID, certID, data)
+		err = Level27Client.AppSslCertificatesUpdate(appID, certID, data)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appSslCertificate/update.tmpl")
 		return nil
 	},
 }
@@ -902,7 +931,12 @@ var appSslFixCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppSslCertificatesFix(appID, certID)
+		cert, err := Level27Client.AppSslCertificatesFix(appID, certID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(cert, "templates/entities/appSslCertificate/fix.tmpl")
 		return nil
 	},
 }
@@ -928,7 +962,12 @@ var appSslActionRetryCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppSslCertificatesActions(appID, certID, "retry")
+		err = Level27Client.AppSslCertificatesActions(appID, certID, "retry")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appSslCertificate/retry.tmpl")
 		return nil
 	},
 }
@@ -948,7 +987,12 @@ var appSslActionValidateChallengeCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppSslCertificatesActions(appID, certID, "validateChallenge")
+		err = Level27Client.AppSslCertificatesActions(appID, certID, "validateChallenge")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appSslCertificate/validateChallenge.tmpl")
 		return nil
 	},
 }
@@ -976,14 +1020,14 @@ var appSslKeyCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Print(key.SslKey)
+		outputFormatTemplate(key, "templates/entities/appSslCertificate/key.tmpl")
 		return nil
 	},
 }
 
 // #endregion
 
-//------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
+// ------------------------------------------------- APP COMPONENTS (CREATE / GET / UPDATE / DELETE / DESCRIBE)-------------------------------------------------
 // ---- COMPONENT COMMAND
 var appComponentCmd = &cobra.Command{
 	Use:     "component",
@@ -1293,6 +1337,7 @@ var appComponentUpdateCmd = &cobra.Command{
 			return err
 		}
 
+		outputFormatTemplate(nil, "templates/entities/appComponent/update.tmpl")
 		return nil
 	},
 }
@@ -1404,7 +1449,12 @@ var AppComponentDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppComponentsDelete(appID, appComponentID)
+		err = Level27Client.AppComponentsDelete(appID, appComponentID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appComponent/delete.tmpl")
 		return nil
 	},
 }
@@ -1508,7 +1558,7 @@ var appComponentParametersCmd = &cobra.Command{
 
 // #endregion
 
-//-------------------------------------------------  APP COMPONENT RESTORE (GET / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
+// -------------------------------------------------  APP COMPONENT RESTORE (GET / CREATE / UPDATE / DELETE / DOWNLOAD) -------------------------------------------------
 // ---- RESTORE COMMAND
 var appComponentRestoreCmd = &cobra.Command{
 	Use:     "restores",
@@ -1576,7 +1626,7 @@ var appComponentRestoreCreateCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("Restore created. [ID: %v].", restore.ID)
+		outputFormatTemplate(restore, "templates/entities/appComponentRestore/create.tmpl")
 		return nil
 	},
 }
@@ -1611,7 +1661,12 @@ var appRestoreDeleteCmd = &cobra.Command{
 			}
 		}
 
-		Level27Client.AppComponentRestoresDelete(appID, restoreID)
+		err = Level27Client.AppComponentRestoresDelete(appID, restoreID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appComponentRestore/delete.tmpl")
 		return nil
 	},
 }
@@ -1636,12 +1691,16 @@ var appComponentRestoreDownloadCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppComponentRestoreDownload(appID, restoreID, appComponentRestoreDownloadName)
+		err = Level27Client.AppComponentRestoreDownload(appID, restoreID, appComponentRestoreDownloadName)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 }
 
-//-------------------------------------------------  APP COMPONENT BACKUPS (GET) -------------------------------------------------
+// -------------------------------------------------  APP COMPONENT BACKUPS (GET) -------------------------------------------------
 var appComponentBackupsCmd = &cobra.Command{
 	Use:     "backup",
 	Short:   "Commands for managing availableBackups.",
@@ -1681,7 +1740,7 @@ var appComponentBackupsGetCmd = &cobra.Command{
 	},
 }
 
-//-------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
+// -------------------------------------------------  APP MIGRATIONS (GET / DESCRIBE / CREATE / UPDATE) -------------------------------------------------
 // ---- MIGRATION COMMAND
 var appMigrationsCmd = &cobra.Command{
 	Use:     "migrations",
@@ -1756,7 +1815,7 @@ var appMigrationsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("migration created! [ID: '%v']", migration.ID)
+		outputFormatTemplate(migration, "templates/entities/appMigration/create.tmpl")
 		return nil
 	},
 }
@@ -1877,7 +1936,7 @@ var appMigrationsUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		log.Print("migration succesfully updated!")
+		outputFormatTemplate(nil, "templates/entities/appMigration/update.tmpl")
 		return nil
 	},
 }
@@ -1911,7 +1970,7 @@ var appMigrationDescribeCmd = &cobra.Command{
 	},
 }
 
-//-------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
+// -------------------------------------------------  APP MIGRATIONS ACTIONS (CONFIRM / DENY / RESTART) -------------------------------------------------
 // ---- MIGRATIONS ACTION COMMAND
 var appMigrationsActionCmd = &cobra.Command{
 	Use:     "action",
@@ -1938,7 +1997,12 @@ var appMigrationsActionConfirmCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppMigrationsAction(appID, migrationID, "confirm")
+		err = Level27Client.AppMigrationsAction(appID, migrationID, "confirm")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appMigration/confirm.tmpl")
 		return nil
 	},
 }
@@ -1962,7 +2026,12 @@ var appMigrationsActionDenyCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppMigrationsAction(appID, migrationID, "deny")
+		err = Level27Client.AppMigrationsAction(appID, migrationID, "deny")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appMigration/deny.tmpl")
 		return nil
 	},
 }
@@ -1986,7 +2055,12 @@ var appMigrationsActionRetryCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.AppMigrationsAction(appID, migrationID, "retry")
+		err = Level27Client.AppMigrationsAction(appID, migrationID, "retry")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appMigration/retry.tmpl")
 		return nil
 	},
 }
@@ -2166,6 +2240,7 @@ var appComponentUrlDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/appComponentUrl/delete.tmpl")
 		return nil
 	},
 }

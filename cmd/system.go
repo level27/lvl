@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"path"
@@ -761,7 +760,7 @@ var systemUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		log.Print("System succesfully updated!")
+		outputFormatTemplate(nil, "templates/entities/system/update.tmpl")
 		return nil
 	},
 }
@@ -810,6 +809,7 @@ var systemDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/system/delete.tmpl")
 		return nil
 	},
 }
@@ -923,7 +923,7 @@ var systemCheckAddCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("System check added! [Checktype: '%v' , ID: '%v']", check.CheckType, check.ID)
+		outputFormatTemplate(check, "templates/entities/systemCheck/add.tmpl")
 		return nil
 	},
 }
@@ -1013,7 +1013,12 @@ var systemCheckDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.SystemCheckDelete(systemID, checkID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemCheck/delete.tmpl")
+		return nil
 	},
 }
 
@@ -1083,7 +1088,12 @@ var systemCheckUpdateCmd = &cobra.Command{
 
 		//log.Print(updateCheckJson.StringIndent(""," "))
 		err = Level27Client.SystemCheckUpdate(systemID, checkID, updateCheckJson)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemCheck/update.tmpl")
+		return nil
 	},
 }
 
@@ -1115,7 +1125,7 @@ var systemMonitoringOnCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("Monitoring is turned on for system: '%v'", args[0])
+		outputFormatTemplate(nil, "templates/entities/system/monitoringOn.tmpl")
 		return nil
 	},
 }
@@ -1138,7 +1148,7 @@ var systemMonitoringOffCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("Monitoring is turned off for system: '%v'", args[0])
+		outputFormatTemplate(nil, "templates/entities/system/monitoringOff.tmpl")
 		return nil
 	},
 }
@@ -1212,7 +1222,12 @@ func runAction(action string, args []string) error {
 	}
 
 	_, err = Level27Client.SystemAction(id, action)
-	return err
+	if err != nil {
+		return err
+	}
+
+	outputFormatTemplate(nil, "templates/entities/system/action.tmpl")
+	return nil
 }
 
 // #endregion
@@ -1322,7 +1337,7 @@ var systemCookbookAddCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("Cookbook: '%v' succesfully added!", cookbook.CookbookType)
+		outputFormatTemplate(cookbook, "templates/entities/systemCookbook/add.tmpl")
 
 		//apply changes to cookbooks
 		err = Level27Client.SystemCookbookChangesApply(systemID)
@@ -1421,6 +1436,8 @@ var systemCookbookDeleteCmd = &cobra.Command{
 			return err
 		}
 
+		outputFormatTemplate(nil, "templates/entities/systemCookbook/delete.tmpl")
+
 		//apply changes
 		err = Level27Client.SystemCookbookChangesApply(systemID)
 		return err
@@ -1493,6 +1510,8 @@ var systemCookbookUpdateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		outputFormatTemplate(nil, "templates/entities/systemCookbook/update.tmpl")
 
 		// aplly changes to cookbooks
 		err = Level27Client.SystemCookbookChangesApply(systemID)
@@ -1665,7 +1684,7 @@ var SystemSystemgroupsAddCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("System succesfully linked to systemgroup!")
+		outputFormatTemplate(nil, "templates/entities/system/groupAdd.tmpl")
 		return nil
 	},
 }
@@ -1693,7 +1712,7 @@ var SystemSystemgroupsRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("System succesfully removed from systemgroup!")
+		outputFormatTemplate(nil, "templates/entities/system/groupRemove.tmpl")
 		return nil
 	},
 }
@@ -1766,12 +1785,12 @@ var systemSshKeysAddCmd = &cobra.Command{
 			keyID = system.ID
 		}
 
-		_, err = Level27Client.SystemAddSshKey(systemID, keyID)
+		key, err := Level27Client.SystemAddSshKey(systemID, keyID)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("SSH key added succesfully!")
+		outputFormatTemplate(key, "templates/entities/systemSshkey/add.tmpl")
 		return nil
 	},
 }
@@ -1803,7 +1822,12 @@ var systemSshKeysRemoveCmd = &cobra.Command{
 		}
 
 		err = Level27Client.SystemRemoveSshKey(systemID, keyID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemSshkey/remove.tmpl")
+		return nil
 	},
 }
 
@@ -2376,12 +2400,12 @@ var systemNetworkAddCmd = &cobra.Command{
 			return err
 		}
 
-		_, err = Level27Client.SystemAddHasNetwork(systemID, networkID)
+		network, err := Level27Client.SystemAddHasNetwork(systemID, networkID)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("Network succesfully added to system!")
+		outputFormatTemplate(network, "templates/entities/systemNetwork/add.tmpl")
 		return nil
 	},
 }
@@ -2407,7 +2431,7 @@ var systemNetworkRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("Network succesfully removed from network!")
+		outputFormatTemplate(nil, "templates/entities/systemNetwork/remove.tmpl")
 		return nil
 	},
 }
@@ -2549,8 +2573,13 @@ var systemNetworkIpAddCmd = &cobra.Command{
 			data.Hostname = systemNetworkIpAddHostname
 		}
 
-		_, err = Level27Client.SystemAddHasNetworkIps(systemID, hasNetworkID, data)
-		return err
+		ip, err := Level27Client.SystemAddHasNetworkIps(systemID, hasNetworkID, data)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(ip, "templates/entities/systemNetworkIp/add.tmpl")
+		return nil
 	},
 }
 
@@ -2576,7 +2605,12 @@ var systemNetworkIpRemoveCmd = &cobra.Command{
 		}
 
 		err = Level27Client.SystemRemoveHasNetworkIps(systemID, hasNetworkID, ipID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemNetworkIp/remove.tmpl")
+		return nil
 	},
 }
 
@@ -2618,6 +2652,11 @@ var systemNetworkIpUpdateCmd = &cobra.Command{
 		data := mergeSettingsWithEntity(ipPut, settings)
 
 		err = Level27Client.SystemHasNetworkIpUpdate(systemID, hasNetworkID, ipID, data)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemNetworkIp/update.tmpl")
 		return err
 	},
 }
@@ -2688,8 +2727,13 @@ var systemVolumeCreateCmd = &cobra.Command{
 			DeviceName:   systemVolumeCreateDeviceName,
 		}
 
-		_, err = Level27Client.VolumeCreate(create)
-		return err
+		volume, err := Level27Client.VolumeCreate(create)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(volume, "templates/entities/systemVolume/create.tmpl")
+		return nil
 	},
 }
 
@@ -2711,7 +2755,12 @@ var systemVolumeUnlinkCmd = &cobra.Command{
 		}
 
 		_, err = Level27Client.VolumeUnlink(volumeID, systemID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemVolume/unlink.tmpl")
+		return nil
 	},
 }
 
@@ -2744,7 +2793,12 @@ var systemVolumeLinkCmd = &cobra.Command{
 		deviceName := args[2]
 
 		_, err = Level27Client.VolumeLink(volumeID, systemID, deviceName)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemVolume/link.tmpl")
+		return nil
 	},
 }
 
@@ -2778,7 +2832,12 @@ var systemVolumeDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.VolumeDelete(volumeID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemVolume/delete.tmpl")
+		return nil
 	},
 }
 
@@ -2829,7 +2888,12 @@ var systemVolumeUpdateCmd = &cobra.Command{
 		}
 
 		err = Level27Client.VolumeUpdate(volumeID, data)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemVolume/update.tmpl")
+		return nil
 	},
 }
 

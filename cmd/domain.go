@@ -342,6 +342,7 @@ var domainDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/domain/delete.tmpl")
 		return nil
 	},
 }
@@ -497,7 +498,12 @@ var domainTransferCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.DomainTransfer(requestData)
+		domain, err := Level27Client.DomainTransfer(requestData)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(domain, "templates/entities/domain/transfer.tmpl")
 		return nil
 	},
 }
@@ -512,7 +518,12 @@ var domainInternalTransferCmd = &cobra.Command{
 			return err
 		}
 
-		Level27Client.DomainTransfer(requestData)
+		domain, err := Level27Client.DomainTransfer(requestData)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(domain, "templates/entities/domain/transfer.tmpl")
 		return nil
 	},
 }
@@ -608,14 +619,20 @@ var domainRecordCreateCmd = &cobra.Command{
 			return err
 		}
 
-		_, err = Level27Client.DomainRecordCreate(id, l27.DomainRecordRequest{
+		record, err := Level27Client.DomainRecordCreate(id, l27.DomainRecordRequest{
 			Name:     domainRecordCreateName,
 			Type:     domainRecordCreateType,
 			Priority: domainRecordCreatePriority,
 			Content:  domainRecordCreateContent,
 		})
 
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(record, "templates/entities/domainRecord/create.tmpl")
+
+		return nil
 	},
 }
 
@@ -637,7 +654,13 @@ var domainRecordDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.DomainRecordDelete(domainID, recordID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/domainRecord/delete.tmpl")
+
+		return nil
 	},
 }
 
@@ -684,7 +707,12 @@ var domainRecordUpdateCmd = &cobra.Command{
 			request.Priority = domainRecordUpdatePriority
 		}
 
-		Level27Client.DomainRecordUpdate(domainID, recordID, request)
+		err = Level27Client.DomainRecordUpdate(domainID, recordID, request)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/domainRecord/update.tmpl")
 		return nil
 	},
 }

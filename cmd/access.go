@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
@@ -63,15 +62,17 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 				return err
 			}
 
-			_, err = Level27Client.EntityAddAcl(entityType, entityID, l27.AclAdd{
+			acl, err := Level27Client.EntityAddAcl(entityType, entityID, l27.AclAdd{
 				Organisation: organisationID,
 			})
 
-			if err == nil {
-				log.Printf("Succesfully added access!")
+			if err != nil {
+				return err
 			}
 
-			return err
+			outputFormatTemplate(acl, "templates/entities/acl/added.tmpl")
+
+			return nil
 		},
 	}
 
@@ -93,12 +94,13 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 			}
 
 			err = Level27Client.EntityRemoveAcl(entityType, entityID, organisationID)
-
-			if err == nil {
-				log.Printf("%v's access removed!", args[1])
+			if err != nil {
+				return err
 			}
 
-			return err
+			outputFormatTemplate(nil, "templates/entities/acl/removed.tmpl")
+
+			return nil
 		},
 	}
 

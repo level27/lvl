@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
@@ -74,7 +73,7 @@ func resolveSystemgroup(arg string) (l27.IntID, error) {
 	return res.ID, err
 }
 
-//------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
+// ------------------------------------------------- SYSTEMSGROUPS (GET / CREATE  / UPDATE / DELETE)-------------------------------------------------
 // ---------------- DESCRIBE
 var systemgroupDescribeCmd = &cobra.Command{
 	Use: "describe",
@@ -136,9 +135,8 @@ var systemgroupsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		// will only print if systemgroup is created successfully
-		log.Printf("systemgroup succesfully created. [ID: '%v' - NAME: '%v'].", systemgroup.ID, systemgroup.Name)
-		return err
+		outputFormatTemplate(systemgroup, "templates/entities/systemgroup/create.tmpl")
+		return nil
 	},
 }
 
@@ -192,7 +190,12 @@ var systemgroupsUpdateCmd = &cobra.Command{
 		}
 
 		err = Level27Client.SystemgroupsUpdate(systemgroupID, request)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemgroup/update.tmpl")
+		return nil
 	},
 }
 
@@ -217,6 +220,11 @@ var systemgroupsDeleteCmd = &cobra.Command{
 		}
 
 		err = Level27Client.SystemgroupDelete(systemgroupID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemgroup/delete.tmpl")
+		return nil
 	},
 }

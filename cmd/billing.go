@@ -32,11 +32,12 @@ func addBillingCmds(parent *cobra.Command, entityType string, resolve func(strin
 				ExternalInfo: billingOnExternalInfo,
 			}
 
-			err = Level27Client.EntityBillableItemCreate(entityType, entityID, req)
+			item, err := Level27Client.EntityBillableItemCreate(entityType, entityID, req)
 			if err != nil {
 				return err
 			}
 
+			outputFormatTemplate(item, "templates/entities/billableItem/create.tmpl")
 			return nil
 		},
 	}
@@ -54,7 +55,12 @@ func addBillingCmds(parent *cobra.Command, entityType string, resolve func(strin
 				return err
 			}
 
-			Level27Client.EntityBillableItemDelete(entityType, entityID)
+			err = Level27Client.EntityBillableItemDelete(entityType, entityID)
+			if err != nil {
+				return err
+			}
+
+			outputFormatTemplate(nil, "templates/entities/billableItem/delete.tmpl")
 			return nil
 		},
 	}

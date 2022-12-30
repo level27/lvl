@@ -114,7 +114,11 @@ func addIntegrityCheckCmds(parent *cobra.Command, entityType string, resolve fun
 				return err
 			}
 
-			Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkID, integrityDownload)
+			err = Level27Client.EntityIntegrityCheckDownload(entityType, entityID, checkID, integrityDownload)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}

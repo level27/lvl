@@ -373,6 +373,8 @@ var mailDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/mail/delete.tmpl")
+
 		return nil
 	},
 }
@@ -415,7 +417,12 @@ var mailUpdateCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsUpdate(mailgroupID, data)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mail/update.tmpl")
+		return nil
 	},
 }
 
@@ -455,7 +462,12 @@ var mailActionsActivateCmd = &cobra.Command{
 		}
 
 		_, err = Level27Client.MailgroupsAction(mailgroupID, "activate")
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mail/activate.tmpl")
+		return nil
 	},
 }
 
@@ -471,7 +483,12 @@ var mailActionsDeactivateCmd = &cobra.Command{
 		}
 
 		_, err = Level27Client.MailgroupsAction(mailgroupID, "deactivate")
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mail/deactivate.tmpl")
+		return nil
 	},
 }
 
@@ -502,8 +519,12 @@ var mailDomainLinkCmd = &cobra.Command{
 			Domain:        domainID,
 			HandleMailDns: !mailDomainLinkNoHandleDns,
 		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		outputFormatTemplate(nil, "templates/entities/mailDomain/link.tmpl")
+		return nil
 	},
 }
 
@@ -525,7 +546,12 @@ var mailDomainUnlinkCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsDomainsUnlink(mailgroupID, domainID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailDomain/unlink.tmpl")
+		return nil
 	},
 }
 
@@ -547,7 +573,12 @@ var mailDomainSetPrimaryCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsDomainsSetPrimary(mailgroupID, domainID)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailDomain/setPrimary.tmpl")
+		return nil
 	},
 }
 
@@ -574,6 +605,11 @@ var mailDomainUpdateCmd = &cobra.Command{
 		}
 
 		err = Level27Client.MailgroupsDomainsPatch(mailgroupID, domainID, settings)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailDomain/update.tmpl")
 		return err
 	},
 }
@@ -737,6 +773,7 @@ var mailBoxDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/mailBox/delete.tmpl")
 		return nil
 	},
 }
@@ -779,7 +816,12 @@ var mailBoxUpdateCmd = &cobra.Command{
 		data = mergeMaps(data, settings)
 
 		err = Level27Client.MailgroupsMailboxesUpdate(mailgroupID, mailboxID, data)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailBox/update.tmpl")
+		return nil
 	},
 }
 
@@ -804,15 +846,19 @@ var mailBoxAddressAddCmd = &cobra.Command{
 			return err
 		}
 
-		_, err = Level27Client.MailgroupsMailboxesAddressesCreate(
+		address, err := Level27Client.MailgroupsMailboxesAddressesCreate(
 			mailgroupID,
 			mailboxID,
 			l27.MailboxAddressCreate{
 				Address: args[2],
 			},
 		)
+		if err != nil {
+			return err
+		}
 
-		return err
+		outputFormatTemplate(address, "templates/entities/mailBoxAddress/add.tmpl")
+		return nil
 	},
 }
 
@@ -842,6 +888,11 @@ var mailBoxAddressRemoveCmd = &cobra.Command{
 			mailboxID,
 			addressID,
 		)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailBoxAddress/remove.tmpl")
 		return err
 	},
 }
@@ -986,6 +1037,7 @@ var mailForwarderDeleteCmd = &cobra.Command{
 			}
 		}
 
+		outputFormatTemplate(nil, "templates/entities/mailForwarder/delete.tmpl")
 		return nil
 	},
 }
@@ -1026,7 +1078,12 @@ var mailForwarderUpdateCmd = &cobra.Command{
 		data = mergeMaps(data, settings)
 
 		err = Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailForwarder/update.tmpl")
+		return nil
 	},
 }
 
@@ -1069,7 +1126,12 @@ var mailForwarderDestinationAddCmd = &cobra.Command{
 
 		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
 		err = Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailForwarderDestination/add.tmpl")
+		return nil
 	},
 }
 
@@ -1113,6 +1175,11 @@ var mailForwarderDestinationRemoveCmd = &cobra.Command{
 
 		data := utils.RoundTripJson(mailforwarderPut).(map[string]interface{})
 		err = Level27Client.MailgroupsMailforwardersUpdate(mailgroupID, mailforwarderID, data)
-		return err
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/mailForwarderDestination/remove.tmpl")
+		return nil
 	},
 }
