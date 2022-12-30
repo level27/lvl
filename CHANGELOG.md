@@ -1,7 +1,7 @@
 ## Current (main branch)
 
 * Don't emit comments with `lvl system sshconfig` to avoid parsing issues on certain OpenSSH versions.
-* Fix `lvl system describe` failing due to a job fetching error.
+* Fix `lvl system describe` failing due to changes in API.
 
 ## 1.4.0
 

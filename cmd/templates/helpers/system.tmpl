@@ -1,3 +1,3 @@
 {{ define "statsSummary" }}
-{{- if (ne .Value nil) -}} ( {{- round ( divf .Value .Max | mulf 100) 1 }} %) {{- end -}}
+{{- if (ne .Value nil) -}} ( {{- round .Value 1 }} %) {{- end -}}
 {{ end }}
