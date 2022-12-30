@@ -372,12 +372,12 @@ var appGetCmd = &cobra.Command{
 	Example: "lvl app get -f FilterByName",
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIDs(args)
-		if err != nil {
-			return err
-		}
+		apps, err := resolveGets(
+			args,
+			Level27Client.AppLookup,
+			Level27Client.App,
+			Level27Client.Apps)
 
-		apps, err := getApps(ids)
 		if err != nil {
 			return err
 		}
@@ -389,24 +389,6 @@ var appGetCmd = &cobra.Command{
 
 		return nil
 	},
-}
-
-func getApps(ids []l27.IntID) ([]l27.App, error) {
-	c := Level27Client
-	if len(ids) == 0 {
-		return c.Apps(optGetParameters)
-	} else {
-		apps := make([]l27.App, len(ids))
-		for idx, id := range ids {
-			var err error
-			apps[idx], err = c.App(id)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return apps, nil
-	}
 }
 
 // ---- CREATE NEW APP
@@ -1048,41 +1030,30 @@ var appComponentGetCmd = &cobra.Command{
 			return err
 		}
 
-		ids, err := convertStringsToIDs(args[1:])
-		if err != nil {
-			return errors.New("nvalid component ID")
-		}
+		components, err := resolveGets(
+			// First arg is app ID.
+			args[1:],
+			func(name string) ([]l27.AppComponent, error) {
+				return Level27Client.AppComponentLookup(appID, name)
+			},
+			func(certID l27.IntID) (l27.AppComponent, error) {
+				return Level27Client.AppComponentGetSingle(appID, certID)
+			},
+			func(get l27.CommonGetParams) ([]l27.AppComponent, error) {
+				return Level27Client.AppComponentsGet(appID, get)
+			})
 
-		res, err := getComponents(appID, ids)
 		if err != nil {
 			return err
 		}
 
 		outputFormatTable(
-			res,
+			components,
 			[]string{"ID", "NAME", "STATUS"},
 			[]string{"ID", "Name", "Status"})
 
 		return nil
 	},
-}
-
-func getComponents(appID l27.IntID, ids []l27.IntID) ([]l27.AppComponent, error) {
-	c := Level27Client
-	if len(ids) == 0 {
-		return c.AppComponentsGet(appID, optGetParameters)
-	} else {
-		components := make([]l27.AppComponent, len(ids))
-		for idx, id := range ids {
-			var err error
-			components[idx], err = c.AppComponentGetSingle(appID, id)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return components, nil
-	}
 }
 
 // ---- CREATE COMPONENT

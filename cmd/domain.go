@@ -230,41 +230,23 @@ var domainGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a list of all current domains",
 	RunE: func(ccmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIDs(args)
-		if err != nil {
-			return err
-		}
+		domains, err := resolveGets(
+			args,
+			Level27Client.LookupDomain,
+			Level27Client.Domain,
+			Level27Client.Domains)
 
-		options, err := getDomains(ids)
 		if err != nil {
 			return err
 		}
 
 		outputFormatTable(
-			options,
+			domains,
 			[]string{"ID", "NAME", "STATUS"},
 			[]string{"ID", "Fullname", "Status"})
 
 		return nil
 	},
-}
-
-func getDomains(ids []l27.IntID) ([]l27.Domain, error) {
-	c := Level27Client
-	if len(ids) == 0 {
-		return c.Domains(optGetParameters)
-	} else {
-		domains := make([]l27.Domain, len(ids))
-		for idx, id := range ids {
-			var err error
-			domains[idx], err = c.Domain(id)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return domains, nil
-	}
 }
 
 // DESCRIBE DOMAIN (get detailed info from specific domain) - [lvl domain describe <id>]

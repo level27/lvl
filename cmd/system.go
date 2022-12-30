@@ -470,12 +470,12 @@ var systemGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "get a list of all curent systems",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ids, err := convertStringsToIDs(args)
-		if err != nil {
-			return err
-		}
+		systems, err := resolveGets(
+			args,
+			Level27Client.LookupSystem,
+			Level27Client.SystemGetSingle,
+			Level27Client.SystemGetList)
 
-		systems, err := getSystems(ids)
 		if err != nil {
 			return err
 		}
@@ -483,22 +483,6 @@ var systemGetCmd = &cobra.Command{
 		outputFormatTable(systems, []string{"ID", "NAME", "STATUS"}, []string{"ID", "Name", "Status"})
 		return nil
 	},
-}
-
-func getSystems(ids []l27.IntID) ([]l27.System, error) {
-	if len(ids) == 0 {
-		return Level27Client.SystemGetList(optGetParameters)
-	}
-
-	systems := make([]l27.System, len(ids))
-	for idx, id := range ids {
-		var err error
-		systems[idx], err = Level27Client.SystemGetSingle(id)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return systems, nil
 }
 
 // ----------------------------------------- DESCRIBE ---------------------------------------
