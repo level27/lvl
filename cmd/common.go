@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,7 +61,7 @@ func addWaitFlag(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&optWait, "wait", false, "Wait for the operation to finish on the API.")
 }
 
-//check for valid ID as type INT.
+// check for valid ID as type INT.
 func checkSingleIntID(arg string, entity string) (l27.IntID, error) {
 	id, err := l27.ParseID(arg)
 	if err != nil {
@@ -421,7 +421,7 @@ func resolveGets[T interface{}](
 					return nil, err
 				}
 
-				if lookedUp == nil {
+				if len(lookedUp) == 0 {
 					return nil, fmt.Errorf("unable to find '%s'", val)
 				}
 
