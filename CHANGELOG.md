@@ -1,5 +1,7 @@
 ## Current (main branch)
 
+## 1.5.0
+
 * Don't emit comments with `lvl system sshconfig` to avoid parsing issues on certain OpenSSH versions.
 * Fix `lvl system describe` failing due to changes in API.
 * New "id" output mode to print only IDs of values returned. This is for ease of use in scripts.
