@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,7 +64,7 @@ var RootCmd = &cobra.Command{
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		outputSet := viper.GetString("output")
-		if outputSet != "text" && outputSet != "json" && output != "yaml" {
+		if outputSet != "text" && outputSet != "json" && output != "yaml" && output != "id" {
 			return fmt.Errorf("invalid output mode specified: '%s'", outputSet)
 		}
 
@@ -102,7 +102,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lvl.yaml)")
 	RootCmd.PersistentFlags().StringVar(&apiKey, "apikey", "", "API key")
 	RootCmd.PersistentFlags().BoolVar(&traceRequests, "trace", false, "Do detailed network request logging. This is intended for debugging and should not be parsed.")
-	RootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "Specifies output mode for commands. Accepted values are text or json.")
+	RootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "Specifies output mode for commands. Accepted values are 'text', 'json', 'yaml' or 'id'.")
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("apikey", RootCmd.PersistentFlags().Lookup("apikey"))
@@ -204,6 +204,8 @@ func outputFormatTable(objects interface{}, titles []string, fields []string) {
 		outputFormatTableJson(objects)
 	case "yaml":
 		outputFormatTableYaml(objects)
+	case "id":
+		outputFormatTableId(objects)
 	}
 }
 
@@ -220,6 +222,8 @@ func outputFormatTableFuncs(objects interface{}, titles []string, fields []inter
 		outputFormatTableJson(objects)
 	case "yaml":
 		outputFormatTableYaml(objects)
+	case "id":
+		outputFormatTableId(objects)
 	}
 }
 
@@ -237,6 +241,8 @@ func outputFormatTemplate(object interface{}, templatePath string) {
 		outputFormatTemplateJson(object)
 	case "yaml":
 		outputFormatTemplateYaml(object)
+	case "id":
+		outputFormatTemplateId(object)
 	}
 }
 
@@ -292,6 +298,30 @@ func outputFormatTableYaml(objects interface{}) {
 	fmt.Println(string(b))
 }
 
+func outputFormatTableId(objects interface{}) {
+	s := reflect.ValueOf(objects)
+
+	// Automatically get the ID field out of each struct in the list.
+
+	if s.Kind() != reflect.Slice {
+		panic("outputFormatTable must be given a slice!")
+	}
+
+	for i := 0; i < s.Len(); i++ {
+		val := s.Index(i)
+		if val.Kind() != reflect.Struct {
+			break
+		}
+
+		fld := val.FieldByName("ID")
+		if fld.IsZero() {
+			break
+		}
+
+		fmt.Println(fld.Interface())
+	}
+}
+
 //go:embed templates
 var templates embed.FS
 
@@ -324,6 +354,22 @@ func outputFormatTemplateYaml(object interface{}) {
 		panic(err)
 	}
 	fmt.Println(string(b))
+}
+
+func outputFormatTemplateId(object interface{}) {
+	// Automatically get the ID field from the value.
+
+	val := reflect.ValueOf(object)
+	if val.Kind() != reflect.Struct {
+		return
+	}
+
+	fld := val.FieldByName("ID")
+	if fld.IsZero() {
+		return
+	}
+
+	fmt.Println(fld.Interface())
 }
 
 // Tries to convert a string command line argument to an integer ID
