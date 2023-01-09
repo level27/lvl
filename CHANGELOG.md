@@ -1,5 +1,9 @@
 ## Current (main branch)
 
+## 1.5.1
+
+* Invalid cookbook parameter names in `lvl system cookbooks update` and such now give an error again.
+
 ## 1.5.0
 
 * Don't emit comments with `lvl system sshconfig` to avoid parsing issues on certain OpenSSH versions.

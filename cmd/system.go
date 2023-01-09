@@ -1488,7 +1488,10 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 		// check for each set parameter if its one of the possible parameters for this cookbooktype
 		// als checks if values are valid in case of selectable parameter
-		checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, &baseRequestData)
+		err = checkForValidCookbookParameter(customParameterDict, cookbookData, currentSystem, &baseRequestData)
+		if err != nil {
+			return err
+		}
 
 		err = Level27Client.SystemCookbookUpdate(systemID, cookbookID, &baseRequestData)
 		if err != nil {
