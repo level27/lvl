@@ -111,6 +111,8 @@ func init() {
 	settingInt32(systemUpdateCmd, updateSettings, "limitWiops", "Set write IOPS limit")
 	settingInt32(systemUpdateCmd, updateSettings, "installSecurityUpdates", "Set security updates mode index")
 	settingString(systemUpdateCmd, updateSettings, "remarks", "")
+	settingInt32(systemUpdateCmd, updateSettings, "operatingsystemVersion", "")
+	settingStringS(systemUpdateCmd, updateSettings, "customerFqdn", "hostname", "")
 
 	// --- Delete
 
@@ -719,16 +721,37 @@ var systemUpdateCmd = &cobra.Command{
 			Disk:                        system.Disk,
 			ManagementType:              system.ManagementType,
 			Organisation:                system.Organisation.ID,
-			SystemImage:                 system.SystemImage.ID,
-			OperatingsystemVersion:      system.OperatingSystemVersion.ID,
-			SystemProviderConfiguration: system.SystemProviderConfiguration.ID,
-			Zone:                        system.Zone.ID,
+			SystemImage:                 nil,
+			OperatingsystemVersion:      nil,
+			SystemProviderConfiguration: nil,
+			Zone:                        nil,
 			PublicNetworking:            system.PublicNetworking,
-			Preferredparentsystem:       system.Preferredparentsystem.ID,
+			Preferredparentsystem:       nil,
 			Remarks:                     system.Remarks,
 			InstallSecurityUpdates:      system.InstallSecurityUpdates,
 			LimitRiops:                  system.LimitRiops,
 			LimitWiops:                  system.LimitWiops,
+			CustomerFqdn:                system.Hostname,
+		}
+
+		if system.SystemImage != nil {
+			systemPut.SystemImage = &system.SystemImage.ID
+		}
+
+		if system.Preferredparentsystem != nil {
+			systemPut.Preferredparentsystem = &system.Preferredparentsystem.ID
+		}
+
+		if system.SystemProviderConfiguration != nil {
+			systemPut.SystemProviderConfiguration = &system.SystemProviderConfiguration.ID
+		}
+
+		if system.Zone != nil {
+			systemPut.Zone = &system.Zone.ID
+		}
+
+		if system.OperatingSystemVersion != nil {
+			systemPut.OperatingsystemVersion = &system.OperatingSystemVersion.ID
 		}
 
 		data := utils.RoundTripJson(systemPut).(map[string]interface{})
