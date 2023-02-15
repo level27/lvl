@@ -148,6 +148,32 @@ func resolveOrganisationUser(organisationID l27.IntID, arg string) (l27.IntID, e
 	return res.ID, nil
 }
 
+func resolveOrganisationTeam(organisationID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.OrganisationTeamLookup(organisationID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
+		arg,
+		"team",
+		func(team l27.Team) string {
+			return fmt.Sprintf("%s (%d)", team.Name, team.ID)
+		})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
+}
+
 func getOrganisations(ids []l27.IntID) ([]l27.Organisation, error) {
 	c := Level27Client
 	if len(ids) == 0 {

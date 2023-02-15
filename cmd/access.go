@@ -115,4 +115,81 @@ func addAccessCmds(parent *cobra.Command, entityType string, resolve func(string
 	// <ENTITY> ACCESS REMOVE
 	accessCmd.AddCommand(accessRemoveCmd)
 
+	// <ENTITY> TEAM
+	var teamCmd = &cobra.Command{
+		Use:   "team",
+		Short: "Commands for managing teams that have access to an entity",
+	}
+
+	// <ENTITY> TEAM ADD
+	var teamAddCmd = &cobra.Command{
+		Use:   "add <entity> <organisation> <team>",
+		Short: "Add a team to this entity",
+
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
+
+			organisationID, err := resolveOrganisation(args[1])
+			if err != nil {
+				return err
+			}
+
+			teamID, err := resolveOrganisationTeam(organisationID, args[2])
+			if err != nil {
+				return err
+			}
+
+			teamEntity, err := Level27Client.OrganisationTeamEntityAdd(organisationID, teamID, entityType, entityID)
+			if err != nil {
+				return err
+			}
+
+			outputFormatTemplate(teamEntity, "templates/entities/organisationTeamEntity/add.tmpl")
+
+			return nil
+		},
+	}
+
+	// <ENTITY> TEAM REMOVE
+	var teamRemoveCmd = &cobra.Command{
+		Use:   "remove <entity> <organisation> <team>",
+		Short: "Add a team to this entity",
+
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			entityID, err := resolve(args[0])
+			if err != nil {
+				return err
+			}
+
+			organisationID, err := resolveOrganisation(args[1])
+			if err != nil {
+				return err
+			}
+
+			teamID, err := resolveOrganisationTeam(organisationID, args[2])
+			if err != nil {
+				return err
+			}
+
+			err = Level27Client.OrganisationTeamEntityRemove(organisationID, teamID, entityType, entityID)
+			if err != nil {
+				return err
+			}
+
+			outputFormatTemplate(nil, "templates/entities/organisationTeamEntity/remove.tmpl")
+
+			return nil
+		},
+	}
+
+	parent.AddCommand(teamCmd)
+
+	teamCmd.AddCommand(teamAddCmd)
+
+	teamCmd.AddCommand(teamRemoveCmd)
 }
