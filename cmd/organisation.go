@@ -7,6 +7,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	RootCmd.AddCommand(organisationCmd)
+
+	organisationCmd.AddCommand(organisationGetCmd)
+	addCommonGetFlags(organisationGetCmd)
+
+	organisationCmd.AddCommand(organisationUserCmd)
+
+	organisationUserCmd.AddCommand(organisationUserSshKeyCmd)
+
+	organisationUserSshKeyCmd.AddCommand(organisationUserSshKeyCreateCmd)
+	organisationUserSshKeyCreateCmd.Flags().StringVarP(&organisationUserSshKeyCreateDescription, "description", "d", "", "Description new SSH key")
+	organisationUserSshKeyCreateCmd.Flags().StringVarP(&organisationUserSshKeyCreateContent, "content", "c", "", "Content of the new SSH key, e.g. ssh-rsa ...")
+	organisationUserSshKeyCreateCmd.MarkFlagRequired("description")
+	organisationUserSshKeyCreateCmd.MarkFlagRequired("content")
+}
+
 var organisationCmd = &cobra.Command{
 	Use:   "organisation",
 	Short: "Commands for managing organisations",
@@ -32,11 +49,53 @@ var organisationGetCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	RootCmd.AddCommand(organisationCmd)
+var organisationUserCmd = &cobra.Command{
+	Use:   "user",
+	Short: "Commands for managing users on an organisation",
+}
 
-	organisationCmd.AddCommand(organisationGetCmd)
-	addCommonGetFlags(organisationGetCmd)
+var organisationUserSshKeyCmd = &cobra.Command{
+	Use:   "sshkey",
+	Short: "Commands for managing SSH keys on a user",
+}
+
+var organisationUserSshKeyCreateDescription string
+var organisationUserSshKeyCreateContent string
+var organisationUserSshKeyCreateCmd = &cobra.Command{
+	Use:   "create <organisation> <user> -d <key description> -c <key content>",
+	Short: "Add a new SSH key to a user",
+
+	Args: cobra.ExactArgs(2),
+	RunE: func(ccmd *cobra.Command, args []string) error {
+		organisation, err := resolveOrganisation(args[0])
+		if err != nil {
+			return err
+		}
+
+		user, err := resolveOrganisationUser(organisation, args[1])
+		if err != nil {
+			return err
+		}
+
+		content, err := readArgFileSupported(organisationUserSshKeyCreateContent)
+		if err != nil {
+			return err
+		}
+
+		create := l27.SshKeyCreate{
+			Content:     content,
+			Description: organisationUserSshKeyCreateDescription,
+		}
+
+		resp, err := Level27Client.OrganisationUserSshKeysCreate(organisation, user, create)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(resp, "templates/entities/organisationUserSshkey/create.tmpl")
+
+		return nil
+	},
 }
 
 func resolveOrganisation(arg string) (l27.IntID, error) {
@@ -55,6 +114,32 @@ func resolveOrganisation(arg string) (l27.IntID, error) {
 		arg,
 		"organisation",
 		func(app l27.Organisation) string { return fmt.Sprintf("%s (%d)", app.Name, app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, nil
+}
+
+func resolveOrganisationUser(organisationID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.LookupOrganisationUser(organisationID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
+		arg,
+		"user",
+		func(user l27.OrganisationUser) string {
+			return fmt.Sprintf("%s %s (%d)", user.FirstName, user.LastName, user.ID)
+		})
 
 	if err != nil {
 		return 0, err
