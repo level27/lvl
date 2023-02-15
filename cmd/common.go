@@ -217,6 +217,12 @@ func settingString(c *cobra.Command, settings map[string]interface{}, name strin
 	c.Flags().Var(&stringMapValue{Map: settings, Name: name}, name, usage)
 }
 
+// Add a string setting flag to a command, that will be stored in a map. Separate flag name version.
+// This is intended to be easily used with PATCH APIs.
+func settingStringS(c *cobra.Command, settings map[string]interface{}, name string, flagName string, usage string) {
+	c.Flags().Var(&stringMapValue{Map: settings, Name: name}, flagName, usage)
+}
+
 // Add a string setting flag to a command, that will be stored in a map. Shorthand version.
 // This is intended to be easily used with PATCH APIs.
 func settingStringP(c *cobra.Command, settings map[string]interface{}, name string, short string, usage string) {
