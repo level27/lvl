@@ -36,6 +36,10 @@ func init() {
 
 	networkCmd.AddCommand(networkGetCmd)
 	addCommonGetFlags(networkCmd)
+
+	networkCmd.AddCommand(networkZoneCmd)
+
+	networkZoneCmd.AddCommand(networkZoneAddCmd)
 }
 
 var networkCmd = &cobra.Command{
@@ -64,6 +68,58 @@ var networkGetCmd = &cobra.Command{
 			}
 			return ""
 		}, "Name", "Vlan", "Organisation.Name", "Zone.Name"})
+		return nil
+	},
+}
+
+var networkZoneCmd = &cobra.Command{
+	Use:   "zone",
+	Short: "Manage zones that networks available in",
+}
+
+var networkZoneAddCmd = &cobra.Command{
+	Use:   "add <network> <zone>",
+	Short: "Add a zone to a network",
+	Args:  cobra.ExactArgs(2),
+
+	RunE: func(cmd *cobra.Command, args []string) error {
+		networkId, err := resolveNetwork(args[0])
+		if err != nil {
+			return err
+		}
+
+		zoneId, _, err := resolveZoneRegion(args[1])
+		if err != nil {
+			return err
+		}
+
+		network, err := Level27Client.GetNetwork(networkId)
+		if err != nil {
+			return err
+		}
+
+		put := l27.NetworkPutRequest{
+			Remarks:     network.Remarks,
+			Description: network.Description,
+		}
+
+		for _, zone := range network.Zones {
+			if zone.ID == zoneId {
+				return fmt.Errorf("zone already has network")
+			}
+
+			put.Zones = append(put.Zones, zone.ID)
+		}
+
+		put.Zones = append(put.Zones, zoneId)
+
+		err = Level27Client.NetworkUpdate(networkId, put)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/network/update.tmpl")
+
 		return nil
 	},
 }
