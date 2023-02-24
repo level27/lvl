@@ -20,8 +20,14 @@ var sshKeyCmd = cobra.Command{
 }
 
 var sshKeyFavoriteCmd = cobra.Command{
-	Use:   "favorite",
+	Use:   "favorite <SSH key name>",
 	Short: "Favorite an SSH key for use in other lvl commands",
+	Long: `Favorite an SSH key for use in other lvl commands.
+This is used by commands like 'lvl system ssh' to automatically add your SSH key to a system.
+The SSH key must first be uploaded to your account on CP4:
+https://app.level27.eu/account/profile/ssh-keys`,
+
+	Example: "lvl sshkey favorite pieter-jan",
 
 	Args: cobra.ExactArgs(1),
 
