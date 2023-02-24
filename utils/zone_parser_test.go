@@ -35,6 +35,10 @@ bedrijfskat.be.	MX	20 smtp1.cp4staging.be.
 ; TXT
 amai IN TXT "asdfasdfasdf"
 bedrijfskat.be. IN TXT "v=spf1 include:_mail.cp4staging.be ?all"
+	TXT	foobar\036
+	TXT	foobar\"
+	TXT	"foobar\""
+	TXT	"foobar\036"
 
 ; SRV
 _autodiscover._tcp	SRV	0 5 443 autodiscover.cp4staging.be.
@@ -75,6 +79,10 @@ autoconfig	CNAME	autodiscover.cp4staging.be.
 	// TXT
 	assertRr(t, &parser, dom("amai"), dnsClass(utils.DnsClassIN), nil, utils.RecordTypeTXT, []string{"asdfasdfasdf"})
 	assertRr(t, &parser, dom("bedrijfskat.be."), dnsClass(utils.DnsClassIN), nil, utils.RecordTypeTXT, []string{"v=spf1 include:_mail.cp4staging.be ?all"})
+	assertRr(t, &parser, nil, nil, nil, utils.RecordTypeTXT, []string{"foobar$"})
+	assertRr(t, &parser, nil, nil, nil, utils.RecordTypeTXT, []string{"foobar\""})
+	assertRr(t, &parser, nil, nil, nil, utils.RecordTypeTXT, []string{"foobar\""})
+	assertRr(t, &parser, nil, nil, nil, utils.RecordTypeTXT, []string{"foobar$"})
 
 	// SRV
 	assertRr(t, &parser, dom("_autodiscover._tcp"), nil, nil, utils.RecordTypeSRV, []string{"0", "5", "443", "autodiscover.cp4staging.be."})
