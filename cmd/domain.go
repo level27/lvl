@@ -873,7 +873,7 @@ func zoneDomainImportParse(
 				warnedTtlDirective = true
 			}
 		} else if entryOrigin, ok := entry.(utils.ZoneEntryOrigin); ok {
-			currentOrigin = entryOrigin.DomainName
+			currentOrigin = strings.ToLower(entryOrigin.DomainName)
 		} else if rr, ok := entry.(utils.ZoneEntryRr); ok {
 			if rr.Ttl != nil && !warnedTtlRecord {
 				fmt.Printf("Note: Level27 does not support per-record TTL values, TTL values will be ignored.\n")
@@ -885,7 +885,7 @@ func zoneDomainImportParse(
 			}
 
 			if rr.DomainName != nil {
-				lastDomain = *rr.DomainName
+				lastDomain = strings.ToLower(*rr.DomainName)
 			}
 
 			if currentClass == 0 {
