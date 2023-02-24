@@ -582,7 +582,15 @@ func (z *ZoneParser) parseLooseItem() (string, error) {
 			break
 		}
 
-		// TODO: Escapes.
+		if chr == '\\' {
+			escaped, err := z.parseEscape()
+			if err != nil {
+				return "", err
+			}
+
+			item.WriteRune(escaped)
+			continue
+		}
 
 		item.WriteRune(chr)
 	}
@@ -601,7 +609,15 @@ func (z *ZoneParser) parseQuotedItem() (string, error) {
 			return "", err
 		}
 
-		// TODO: Escapes.
+		if chr == '\\' {
+			escaped, err := z.parseEscape()
+			if err != nil {
+				return "", err
+			}
+
+			item.WriteRune(escaped)
+			continue
+		}
 
 		if chr == '"' {
 			break
@@ -662,6 +678,42 @@ func (z *ZoneParser) readRune(state *zoneEntryParseState) (rune, error) {
 	}
 }
 */
+
+// Parse an escape sequence (after a backslash)
+func (z *ZoneParser) parseEscape() (rune, error) {
+	chr, _, err := z.reader.ReadRune()
+	if err != nil {
+		return 0, err
+	}
+
+	if !isAsciiDigit(byte(chr)) {
+		// Just return the character directly, nothing special!
+		return chr, nil
+	}
+
+	// Handle \DDD decimal escape codes.
+	chr2, _, err := z.reader.ReadRune()
+	if err != nil {
+		return 0, err
+	}
+
+	if !isAsciiDigit(byte(chr2)) {
+		return 0, errors.New("decimal escape code must be three digits")
+	}
+
+	chr3, _, err := z.reader.ReadRune()
+	if err != nil {
+		return 0, err
+	}
+
+	if !isAsciiDigit(byte(chr3)) {
+		return 0, errors.New("decimal escape code must be three digits")
+	}
+
+	decimal := string(chr) + string(chr2) + string(chr3)
+	parsed, _ := strconv.Atoi(decimal)
+	return rune(parsed), nil
+}
 
 type zoneEntryParseState struct {
 	ParenthesesStartLine *int32
