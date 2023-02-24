@@ -27,16 +27,6 @@ import (
 //      Parsing of record data is left to using code.
 //
 
-// $ORIGIN example.com.
-// foo\.bar IN A 1.1.1.1
-// Actions.domains@example.com
-// @   IN  SOA     VENERA      Action\.domains (
-//
-//	20     ; SERIAL
-//	7200   ; REFRESH
-//	600    ; RETRY
-//	3600000; EXPIRE
-//	60)    ; MINIMUM
 type RecordTtl uint32
 
 func (ttl RecordTtl) String() string {

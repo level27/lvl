@@ -144,6 +144,7 @@ func init() {
 	addIntegrityCheckCmds(domainCmd, "domains", resolveDomain)
 
 	domainCmd.AddCommand(domainZoneImportCmd)
+	domainZoneImportCmd.Flags().BoolVarP(&domainZoneImportYes, "yes", "y", false, "Confirm import of file without prompt")
 }
 
 // flag vars needed for all post or put requests on Domain level [Domains/]
@@ -771,14 +772,19 @@ var domainCheckCmd = &cobra.Command{
 	},
 }
 
+var domainZoneImportYes bool
 var domainZoneImportCmd = &cobra.Command{
-	Use:  "zoneimport <domain> <zone file>",
+	Use:   "zoneimport <domain> <zone file>",
+	Short: "Import DNS records for a domain from a zone file",
+
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		file, err := openArgFile(args[1])
 		if err != nil {
 			return fmt.Errorf("failed to open input: %s", err.Error())
 		}
+
+		defer file.Close()
 
 		domainID, err := resolveDomain(args[0])
 		if err != nil {
@@ -799,129 +805,18 @@ var domainZoneImportCmd = &cobra.Command{
 
 		// Build index to find records to replace.
 		existingRecordsIndex := zoneImportMakeExistingRecordsIndex(existingRecords)
-		toReplace := map[l27.IntID]bool{}
-		toCreate := []l27.DomainRecordRequest{}
+		toReplace, toCreate := zoneDomainImportParse(origin, file, existingRecordsIndex)
 
-		var currentClass utils.DnsClass = 0
-		currentOrigin := origin
-		warnedTtlDirective := false
-		warnedTtlRecord := false
-		warnedClass := false
+		fmt.Printf(
+			"%d existing records to delete (for replacement)\n%d records to create\n",
+			len(toReplace),
+			len(toCreate))
 
-		lastDomain := "@"
-
-		parser := utils.NewZoneParser(file)
-		for {
-			entry, err := parser.NextEntry()
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-
-				fmt.Printf("Error parsing record: %s\n", err.Error())
-			}
-
-			fmt.Printf("%v\n", entry)
-			if _, ok := entry.(utils.ZoneEntryTtl); ok {
-				if !warnedTtlDirective {
-					fmt.Printf("Note: TTL directives are not imported, set TTL manually after import.\n")
-					warnedTtlDirective = true
-				}
-			} else if entryOrigin, ok := entry.(utils.ZoneEntryOrigin); ok {
-				currentOrigin = entryOrigin.DomainName
-			} else if rr, ok := entry.(utils.ZoneEntryRr); ok {
-				if rr.Ttl != nil && !warnedTtlRecord {
-					fmt.Printf("Note: Level27 does not support per-record TTL values, TTL values will be ignored.\n")
-					warnedTtlRecord = true
-				}
-
-				if rr.Class != nil {
-					currentClass = *rr.Class
-				}
-
-				if rr.DomainName != nil {
-					lastDomain = *rr.DomainName
-				}
-
-				if currentClass == 0 {
-					fmt.Printf("Warning: no DNS class given for record: %v\n", rr)
-					continue
-				}
-
-				if currentClass != utils.DnsClassIN {
-					if !warnedClass {
-						fmt.Printf("Note: Level27 does not support non-IN records, these will be ignored.\n")
-						warnedClass = true
-					}
-
-					continue
-				}
-
-				finalName := zoneDomainNormalizeOrigin(lastDomain, currentOrigin, origin)
-
-				// Check if there is already an existing record in the API of this type/name.
-				// Add them to the list of records to delete on commit.
-				existingRecord := zoneImportingExistingRecord{
-					Type: rr.Type.String(),
-					Name: finalName,
-				}
-				for _, id := range existingRecordsIndex[existingRecord] {
-					toReplace[id] = true
-				}
-
-				request := l27.DomainRecordRequest{
-					Type: rr.Type.String(),
-					Name: finalName,
-				}
-
-				if request.Name == "@" {
-					request.Name = ""
-				}
-
-				switch rr.Type {
-				case utils.RecordTypeA:
-					request.Content = rr.Data[0]
-				case utils.RecordTypeAAAA:
-					request.Content = rr.Data[0]
-				case utils.RecordTypeMX:
-					priority, err := strconv.ParseInt(rr.Data[0], 10, 32)
-					if err != nil {
-						fmt.Printf("Invalid priority in MX record: '%s'\n", rr.Data[0])
-						continue
-					}
-
-					request.Priority = int32(priority)
-					request.Content = rr.Data[1]
-				case utils.RecordTypeTXT:
-					request.Content = strings.Join(rr.Data, "")
-				case utils.RecordTypeCNAME:
-					request.Content = rr.Data[0]
-				case utils.RecordTypeNS:
-					if request.Name == "" {
-						fmt.Printf("Note: NS record at domain origin ignored.\n")
-						continue
-					}
-					request.Content = rr.Data[0]
-				case utils.RecordTypeSRV:
-					request.Content = strings.Join(rr.Data, " ")
-				case utils.RecordTypeTLSA:
-					request.Content = strings.Join(rr.Data, " ")
-				case utils.RecordTypeCAA:
-					request.Content = strings.Join(rr.Data, " ")
-				case utils.RecordTypeDS:
-					request.Content = strings.Join(rr.Data, " ")
-				default:
-					fmt.Printf("Note: Level27 does not support importing %v records, ignoring.\n", rr.Type)
-					continue
-				}
-
-				toCreate = append(toCreate, request)
+		if !domainZoneImportYes {
+			if !confirmPrompt("Confirm importing records?") {
+				return nil
 			}
 		}
-
-		_ = origin
-
-		fmt.Printf("%d existing records to delete (replaced)\n%d records to create\n", len(toReplace), len(toCreate))
 
 		for id := range toReplace {
 			err := Level27Client.DomainRecordDelete(domainID, id)
@@ -937,8 +832,139 @@ var domainZoneImportCmd = &cobra.Command{
 			}
 		}
 
+		fmt.Printf("All records successfully imported")
+
 		return nil
 	},
+}
+
+func zoneDomainImportParse(
+	origin string,
+	file io.Reader,
+	existingRecordsIndex map[zoneImportingExistingRecord][]l27.IntID,
+) (map[l27.IntID]bool, []l27.DomainRecordRequest) {
+	toReplace := map[l27.IntID]bool{}
+	toCreate := []l27.DomainRecordRequest{}
+
+	var currentClass utils.DnsClass = 0
+	currentOrigin := origin
+	warnedTtlDirective := false
+	warnedTtlRecord := false
+	warnedClass := false
+
+	lastDomain := "@"
+
+	parser := utils.NewZoneParser(file)
+	for {
+		entry, err := parser.NextEntry()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			fmt.Printf("Error parsing record: %s\n", err.Error())
+			continue
+		}
+
+		// fmt.Printf("%v\n", entry)
+		if _, ok := entry.(utils.ZoneEntryTtl); ok {
+			if !warnedTtlDirective {
+				fmt.Printf("Note: TTL directives are not imported, set TTL manually after import.\n")
+				warnedTtlDirective = true
+			}
+		} else if entryOrigin, ok := entry.(utils.ZoneEntryOrigin); ok {
+			currentOrigin = entryOrigin.DomainName
+		} else if rr, ok := entry.(utils.ZoneEntryRr); ok {
+			if rr.Ttl != nil && !warnedTtlRecord {
+				fmt.Printf("Note: Level27 does not support per-record TTL values, TTL values will be ignored.\n")
+				warnedTtlRecord = true
+			}
+
+			if rr.Class != nil {
+				currentClass = *rr.Class
+			}
+
+			if rr.DomainName != nil {
+				lastDomain = *rr.DomainName
+			}
+
+			if currentClass == 0 {
+				fmt.Printf("Warning: no DNS class given for record: %v\n", rr)
+				continue
+			}
+
+			if currentClass != utils.DnsClassIN {
+				if !warnedClass {
+					fmt.Printf("Note: Level27 does not support non-IN records, ignoring.\n")
+					warnedClass = true
+				}
+
+				continue
+			}
+
+			finalName := zoneDomainNormalizeOrigin(lastDomain, currentOrigin, origin)
+
+			// Check if there is already an existing record in the API of this type/name.
+			// Add them to the list of records to delete on commit.
+			existingRecord := zoneImportingExistingRecord{
+				Type: rr.Type.String(),
+				Name: finalName,
+			}
+			for _, id := range existingRecordsIndex[existingRecord] {
+				toReplace[id] = true
+			}
+
+			request := l27.DomainRecordRequest{
+				Type: rr.Type.String(),
+				Name: finalName,
+			}
+
+			if request.Name == "@" {
+				request.Name = ""
+			}
+
+			switch rr.Type {
+			case utils.RecordTypeA:
+				request.Content = rr.Data[0]
+			case utils.RecordTypeAAAA:
+				request.Content = rr.Data[0]
+			case utils.RecordTypeMX:
+				priority, err := strconv.ParseInt(rr.Data[0], 10, 32)
+				if err != nil {
+					fmt.Printf("Invalid priority in MX record: '%s'\n", rr.Data[0])
+					continue
+				}
+
+				request.Priority = int32(priority)
+				request.Content = rr.Data[1]
+			case utils.RecordTypeTXT:
+				request.Content = strings.Join(rr.Data, "")
+			case utils.RecordTypeCNAME:
+				request.Content = rr.Data[0]
+			case utils.RecordTypeNS:
+				if request.Name == "" {
+					fmt.Printf("Note: NS record at domain origin ignored.\n")
+					continue
+				}
+				request.Content = rr.Data[0]
+			case utils.RecordTypeSRV:
+				request.Content = strings.Join(rr.Data, " ")
+			case utils.RecordTypeTLSA:
+				request.Content = strings.Join(rr.Data, " ")
+			case utils.RecordTypeCAA:
+				request.Content = strings.Join(rr.Data, " ")
+			case utils.RecordTypeDS:
+				request.Content = strings.Join(rr.Data, " ")
+			default:
+				fmt.Printf("Note: Level27 does not support importing %v records, ignoring.\n", rr.Type)
+				continue
+			}
+
+			toCreate = append(toCreate, request)
+		}
+	}
+
+	return toReplace, toCreate
 }
 
 func zoneDomainNormalizeOrigin(domain string, curOrigin string, destOrigin string) string {
