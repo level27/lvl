@@ -1877,7 +1877,7 @@ lvl system ssh my-awesome-server -- ls -l "~"`,
 		})
 
 		taskSshHost := taskRun(func() (string, error) {
-			return sshResolveHost(systemID)
+			return sshResolveHost(systemID, false)
 		})
 
 		sshHost := <-taskSshHost
@@ -1947,7 +1947,7 @@ func waitAddSshKey(systemID l27.IntID, sshKeyID l27.IntID) error {
 // Resolve the hostname to SSH into a system.
 // If the FQDN properly resolves, we use that.
 // Otherwise we try the IP addresses in the system's networks.
-func sshResolveHost(systemID l27.IntID) (string, error) {
+func sshResolveHost(systemID l27.IntID, preferIP bool) (string, error) {
 	system, err := Level27Client.SystemGetSingle(systemID)
 	if err != nil {
 		return "", err
@@ -1956,6 +1956,10 @@ func sshResolveHost(systemID l27.IntID) (string, error) {
 	ips, err := net.LookupIP(system.Fqdn)
 	if err == nil && len(ips) > 0 {
 		// FQDN resolves, pass it to the ssh command.
+		if preferIP {
+			return ips[0].String(), nil
+		}
+
 		return system.Fqdn, nil
 	}
 
@@ -2055,7 +2059,7 @@ var systemScpCommand = &cobra.Command{
 					// Send ID to SSH key channel so the SSH key gets added.
 					keyAddChannel <- systemID
 
-					host, err := sshResolveHost(systemID)
+					host, err := sshResolveHost(systemID, false)
 					if err != nil {
 						return err
 					}
@@ -2111,7 +2115,7 @@ The new host names are written into a separate ~/.ssh/lvl config file, which get
 			return err
 		}
 
-		address, err := sshResolveHost(systemID)
+		address, err := sshResolveHost(systemID, true)
 		if err != nil {
 			return err
 		}
