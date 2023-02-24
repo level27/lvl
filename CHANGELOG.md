@@ -1,5 +1,18 @@
 ## Current (main branch)
 
+## 1.6.0
+
+* `lvl system update` improvements:
+    * Can now be used on imported systems (previously errored).
+    * Fixed hostname getting cleared when used.
+    * Can be used to set operating system info for imported systems.
+* `lvl network zone add` command.
+* `lvl organisation user sshkey create` command.
+* `lvl domain zoneimport` command allows import DNS zone files into a domain.
+* Fixed output of `lvl domain record create`.
+* `lvl system sshconfig` stored IP addresses instead of FQDN.
+* Added command help for `lvl sshkey favorite`.
+
 ## 1.5.1
 
 * Invalid cookbook parameter names in `lvl system cookbooks update` and such now give an error again.
