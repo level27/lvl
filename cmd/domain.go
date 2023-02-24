@@ -776,6 +776,9 @@ var domainZoneImportYes bool
 var domainZoneImportCmd = &cobra.Command{
 	Use:   "zoneimport <domain> <zone file>",
 	Short: "Import DNS records for a domain from a zone file",
+	Long: `Import DNS records for a domain from a zone file.
+Existing records (same name/type) will be replaced by the new records.
+Pass '-' as file name to read from stdin.`,
 
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
