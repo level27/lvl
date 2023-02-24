@@ -23,6 +23,10 @@ $TTL 300
     3600)    ; minimum
 ;
 
+; NS
+	NS dns1.cp4staging.be.
+	NS dns2.cp4staging.be.
+
 ; MX
 bedrijfskat.be.	MX	10 smtp2.cp4staging.be.
 bedrijfskat.be.	MX	20 smtp1.cp4staging.be.
@@ -58,33 +62,37 @@ autoconfig	CNAME	autodiscover.cp4staging.be.
 	assertTtl(t, &parser, 300)
 
 	// SOA
-	assertRr(t, &parser, "@", dnsClass(utils.DnsClassIN), nil, utils.RecordTypeSOA, []string{"dns1.cp4staging.be.", "hostmaster.level27.be.", "2100000044", "14400", "3600", "1209600", "3600"})
+	assertRr(t, &parser, dom("@"), dnsClass(utils.DnsClassIN), nil, utils.RecordTypeSOA, []string{"dns1.cp4staging.be.", "hostmaster.level27.be.", "2100000044", "14400", "3600", "1209600", "3600"})
+
+	// NS
+	assertRr(t, &parser, nil, nil, nil, utils.RecordTypeNS, []string{"dns1.cp4staging.be."})
+	assertRr(t, &parser, nil, nil, nil, utils.RecordTypeNS, []string{"dns2.cp4staging.be."})
 
 	// MX
-	assertRr(t, &parser, "bedrijfskat.be.", nil, nil, utils.RecordTypeMX, []string{"10", "smtp2.cp4staging.be."})
-	assertRr(t, &parser, "bedrijfskat.be.", nil, nil, utils.RecordTypeMX, []string{"20", "smtp1.cp4staging.be."})
+	assertRr(t, &parser, dom("bedrijfskat.be."), nil, nil, utils.RecordTypeMX, []string{"10", "smtp2.cp4staging.be."})
+	assertRr(t, &parser, dom("bedrijfskat.be."), nil, nil, utils.RecordTypeMX, []string{"20", "smtp1.cp4staging.be."})
 
 	// TXT
-	assertRr(t, &parser, "amai", dnsClass(utils.DnsClassIN), nil, utils.RecordTypeTXT, []string{"asdfasdfasdf"})
-	assertRr(t, &parser, "bedrijfskat.be.", dnsClass(utils.DnsClassIN), nil, utils.RecordTypeTXT, []string{"v=spf1 include:_mail.cp4staging.be ?all"})
+	assertRr(t, &parser, dom("amai"), dnsClass(utils.DnsClassIN), nil, utils.RecordTypeTXT, []string{"asdfasdfasdf"})
+	assertRr(t, &parser, dom("bedrijfskat.be."), dnsClass(utils.DnsClassIN), nil, utils.RecordTypeTXT, []string{"v=spf1 include:_mail.cp4staging.be ?all"})
 
 	// SRV
-	assertRr(t, &parser, "_autodiscover._tcp", nil, nil, utils.RecordTypeSRV, []string{"0", "5", "443", "autodiscover.cp4staging.be."})
+	assertRr(t, &parser, dom("_autodiscover._tcp"), nil, nil, utils.RecordTypeSRV, []string{"0", "5", "443", "autodiscover.cp4staging.be."})
 
 	// A/AAAA/CNAME
-	assertRr(t, &parser, "urlfwtest-1", nil, nil, utils.RecordTypeA, []string{"172.29.17.26"})
-	assertRr(t, &parser, "urlfwtest-2", nil, nil, utils.RecordTypeA, []string{"195.225.166.11"})
-	assertRr(t, &parser, "urlfwtest-2", nil, nil, utils.RecordTypeAAAA, []string{"2a02:5b40:4:210::dddd:10"})
-	assertRr(t, &parser, "solr-vm-size-2", nil, nil, utils.RecordTypeA, []string{"172.29.17.29"})
-	assertRr(t, &parser, "solr-8-vm-size", nil, nil, utils.RecordTypeA, []string{"172.29.17.29"})
-	assertRr(t, &parser, "blabla", nil, nil, utils.RecordTypeA, []string{"195.225.166.14"})
-	assertRr(t, &parser, "letest", nil, nil, utils.RecordTypeA, []string{"172.29.17.31"})
-	assertRr(t, &parser, "cms-install-1-wp", nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
-	assertRr(t, &parser, "cms-install-2-drupal", nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
-	assertRr(t, &parser, "cms-install-3-magento", nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
-	assertRr(t, &parser, "scanner", nil, nil, utils.RecordTypeA, []string{"172.20.17.4"})
-	assertRr(t, &parser, "cms-install-4-shopware", nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
-	assertRr(t, &parser, "autoconfig", nil, nil, utils.RecordTypeCNAME, []string{"autodiscover.cp4staging.be."})
+	assertRr(t, &parser, dom("urlfwtest-1"), nil, nil, utils.RecordTypeA, []string{"172.29.17.26"})
+	assertRr(t, &parser, dom("urlfwtest-2"), nil, nil, utils.RecordTypeA, []string{"195.225.166.11"})
+	assertRr(t, &parser, dom("urlfwtest-2"), nil, nil, utils.RecordTypeAAAA, []string{"2a02:5b40:4:210::dddd:10"})
+	assertRr(t, &parser, dom("solr-vm-size-2"), nil, nil, utils.RecordTypeA, []string{"172.29.17.29"})
+	assertRr(t, &parser, dom("solr-8-vm-size"), nil, nil, utils.RecordTypeA, []string{"172.29.17.29"})
+	assertRr(t, &parser, dom("blabla"), nil, nil, utils.RecordTypeA, []string{"195.225.166.14"})
+	assertRr(t, &parser, dom("letest"), nil, nil, utils.RecordTypeA, []string{"172.29.17.31"})
+	assertRr(t, &parser, dom("cms-install-1-wp"), nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
+	assertRr(t, &parser, dom("cms-install-2-drupal"), nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
+	assertRr(t, &parser, dom("cms-install-3-magento"), nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
+	assertRr(t, &parser, dom("scanner"), nil, nil, utils.RecordTypeA, []string{"172.20.17.4"})
+	assertRr(t, &parser, dom("cms-install-4-shopware"), nil, nil, utils.RecordTypeA, []string{"195.225.166.15"})
+	assertRr(t, &parser, dom("autoconfig"), nil, nil, utils.RecordTypeCNAME, []string{"autodiscover.cp4staging.be."})
 
 	assertEof(t, &parser)
 }
@@ -109,7 +117,7 @@ func assertTtl(t *testing.T, parser *utils.ZoneParser, ttl utils.RecordTtl) {
 func assertRr(
 	t *testing.T,
 	parser *utils.ZoneParser,
-	domain string,
+	domain *string,
 	class *utils.DnsClass,
 	ttl *utils.RecordTtl,
 	recordType utils.RecordType,
@@ -124,8 +132,8 @@ func assertRr(
 		t.Fatal("Expected RR entry, got:", entry)
 	}
 
-	if entryRr.DomainName != domain {
-		t.Fatal("Unexpected domain. Expected", domain, "got", entryRr.DomainName)
+	if !ptrEq(entryRr.DomainName, domain) {
+		t.Fatal("Unexpected domain. Expected", domain, "got", printPtrStr(entryRr.DomainName))
 	}
 
 	if !ptrEq(entryRr.Class, class) {
@@ -160,12 +168,24 @@ func ttl(ttl utils.RecordTtl) *utils.RecordTtl {
 	return &ttl
 }
 
+func dom(domain string) *string {
+	return &domain
+}
+
 func printPtr[T fmt.Stringer](value *T) string {
 	if value == nil {
 		return "<nil>"
 	}
 
 	return (*value).String()
+}
+
+func printPtrStr(value *string) string {
+	if value == nil {
+		return "<nil>"
+	}
+
+	return (*value)
 }
 
 func ptrEq[T comparable](a *T, b *T) bool {
