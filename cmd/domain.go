@@ -808,6 +808,8 @@ var domainZoneImportCmd = &cobra.Command{
 		warnedTtlRecord := false
 		warnedClass := false
 
+		lastDomain := "@"
+
 		parser := utils.NewZoneParser(file)
 		for {
 			entry, err := parser.NextEntry()
@@ -837,6 +839,10 @@ var domainZoneImportCmd = &cobra.Command{
 					currentClass = *rr.Class
 				}
 
+				if rr.DomainName != nil {
+					lastDomain = *rr.DomainName
+				}
+
 				if currentClass == 0 {
 					fmt.Printf("Warning: no DNS class given for record: %v\n", rr)
 					continue
@@ -851,7 +857,7 @@ var domainZoneImportCmd = &cobra.Command{
 					continue
 				}
 
-				finalName := zoneDomainNormalizeOrigin(rr.DomainName, currentOrigin, origin)
+				finalName := zoneDomainNormalizeOrigin(lastDomain, currentOrigin, origin)
 
 				// Check if there is already an existing record in the API of this type/name.
 				// Add them to the list of records to delete on commit.
@@ -875,6 +881,8 @@ var domainZoneImportCmd = &cobra.Command{
 				switch rr.Type {
 				case utils.RecordTypeA:
 					request.Content = rr.Data[0]
+				case utils.RecordTypeAAAA:
+					request.Content = rr.Data[0]
 				case utils.RecordTypeMX:
 					priority, err := strconv.ParseInt(rr.Data[0], 10, 32)
 					if err != nil {
@@ -888,8 +896,22 @@ var domainZoneImportCmd = &cobra.Command{
 					request.Content = strings.Join(rr.Data, "")
 				case utils.RecordTypeCNAME:
 					request.Content = rr.Data[0]
+				case utils.RecordTypeNS:
+					if request.Name == "" {
+						fmt.Printf("Note: NS record at domain origin ignored.\n")
+						continue
+					}
+					request.Content = rr.Data[0]
+				case utils.RecordTypeSRV:
+					request.Content = strings.Join(rr.Data, " ")
+				case utils.RecordTypeTLSA:
+					request.Content = strings.Join(rr.Data, " ")
+				case utils.RecordTypeCAA:
+					request.Content = strings.Join(rr.Data, " ")
+				case utils.RecordTypeDS:
+					request.Content = strings.Join(rr.Data, " ")
 				default:
-					fmt.Printf("Note: Level27 does not support importing record type %v, these will be ignored.\n", rr.Type)
+					fmt.Printf("Note: Level27 does not support importing %v records, ignoring.\n", rr.Type)
 					continue
 				}
 

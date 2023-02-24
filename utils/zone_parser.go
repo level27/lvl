@@ -13,9 +13,9 @@ import (
 //
 // Parser for zone files.
 // References:
-// * RFC 1035 (section 5)
-// * RFC 2308 (section 4)
-// * RFC 2136
+// * RFC 1035 (section 5): https://datatracker.ietf.org/doc/html/rfc1035
+// * RFC 2308 (section 4): https://datatracker.ietf.org/doc/html/rfc2308
+// * RFC 2136:             https://datatracker.ietf.org/doc/html/rfc2136
 // * https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml
 // * https://bind9.readthedocs.io/en/v9_18_4/chapter3.html
 //
@@ -147,7 +147,8 @@ func (e ZoneEntryTtl) String() string {
 
 // Resource Record zone file entry.
 type ZoneEntryRr struct {
-	DomainName string
+	// Can be nil to indicate not given for record
+	DomainName *string
 	// Can be nil to indicate not given for record
 	Class *DnsClass
 	// Can be nil to indicate not given for record
@@ -161,6 +162,11 @@ type ZoneEntryRr struct {
 func (ZoneEntryRr) IsZoneEntry() {}
 
 func (e ZoneEntryRr) String() string {
+	domain := ""
+	if e.DomainName != nil {
+		domain = *e.DomainName
+	}
+
 	class := ""
 	if e.Class != nil {
 		class = e.Class.String()
@@ -173,7 +179,7 @@ func (e ZoneEntryRr) String() string {
 
 	value := strings.Join(e.Data, ", ")
 
-	return fmt.Sprintf("%s\t%s\t%s\t%v\t%s", e.DomainName, class, ttl, e.Type, value)
+	return fmt.Sprintf("%s\t%s\t%s\t%v\t%s", domain, class, ttl, e.Type, value)
 }
 
 func NewZoneParser(reader io.Reader) ZoneParser {
@@ -192,25 +198,44 @@ func (z *ZoneParser) NextEntry() (ZoneEntry, error) {
 	// it should be unread from the bufreader so we can skip to it.
 
 	// State for the current parsing operation. No parse state is carried through between entries.
-	state := &zoneEntryParseState{}
 
-	startLine := z.lineIndex
+	var startLine int32
+	var state *zoneEntryParseState
 
-	// nextEntryCore always leaves the current read position right before a newline.
-	// This allows us to consistently handle error and success scenarios
-	// for going to the next directive.
-	// It also means nextItem() will consistently "stick" at an EOL until moved up by this code.
-	entry, err := z.nextEntryCore(state)
-	if err != nil {
-		// We have to skip until the next line to hopefully allow the parser to recover.
-		// These may produce generic IO/EOL errors. If they do it's not a big deal.
-		z.skipUntilEol()
-		z.skipNewlines()
-		if err == io.EOF {
-			return nil, io.EOF
+	var entry ZoneEntry
+	for {
+		startLine = z.lineIndex
+		state = &zoneEntryParseState{}
+
+		// nextEntryCore always leaves the current read position right before a newline.
+		// This allows us to consistently handle error and success scenarios
+		// for going to the next directive.
+		// It also means nextItem() will consistently "stick" at an EOL until moved up by this code.
+		var err error
+		entry, err = z.nextEntryCore(state)
+		if err != nil {
+			// We have to skip until the next line to hopefully allow the parser to recover.
+			// These may produce generic IO/EOL errors. If they do it's not a big deal.
+			z.skipUntilEol()
+			z.skipNewlines()
+			if err == io.EOF {
+				return nil, io.EOF
+			}
+
+			return nil, fmt.Errorf("error on directive starting at line %d: %s", startLine+1, err)
 		}
 
-		return nil, fmt.Errorf("error on directive starting at line %d: %s", startLine+1, err)
+		if entry == nil {
+			// Empty line. Skip newlines and let the loop try to read a new
+			err = z.skipNewlines()
+			if err != nil {
+				return nil, err
+			}
+
+			continue
+		}
+
+		break
 	}
 
 	// Assuming a well-formed file, we should be at the end of a line (or EOF).
@@ -254,29 +279,14 @@ func (z *ZoneParser) NextEntry() (ZoneEntry, error) {
 
 // Core parsing code. Does not guarantee leaving read position in consistent state.
 func (z *ZoneParser) nextEntryCore(state *zoneEntryParseState) (ZoneEntry, error) {
-	var keyItem string
-	var err error
-	for {
-		// Read first keyItem to see if it's a special directive (starts with $).
-		// This will also chomp through blank lines until we either hit EOF or an actual item.
-		keyItem, err = z.nextItem(state)
-		if err != nil {
-			if err == errZoneParseEol {
-				// Just a blank line, try again after consuming the new line.
-				err = z.skipNewlines()
-				if err != nil {
-					return nil, err
-				}
-
-				continue
-			}
-
-			// Error, possibly EOF.
-			return nil, err
-		}
-
-		break
+	// Starting directives or domain names MUST be at the hard start of the line.
+	keyItem, err := z.parseLooseItem()
+	if err != nil {
+		return nil, err
 	}
+
+	// Note: keyItem will be an empty string if the start of the entry is blank.
+	// Which happens for an RR that inherits the domain from the previous RR.
 
 	if strings.HasPrefix(keyItem, "$") {
 		// Indeed a special directive.
@@ -307,11 +317,19 @@ func (z *ZoneParser) parseTtldirective(state *zoneEntryParseState) (ZoneEntry, e
 }
 
 func (z *ZoneParser) parseRrDirective(keyItem string, state *zoneEntryParseState) (ZoneEntry, error) {
+	// Note: keyItem may be empty string if RR has no specified domain name.
+
 	// Read first two items to allow us to clearly tell the order of [<class>], [<TTL>] and <type>.
 	// In the shortest form this may be part of the <RDATA> we're reading,
 	// that's fine since there should be always at least one item in RDATA.
 	firstItem, err := z.nextItem(state)
 	if err != nil {
+		if err == errZoneParseEol && keyItem == "" {
+			// No item at start of line and no items afterwards
+			// means there's actually just nothing on this line!
+			// Just return nil up the chain and let NextEntry() loop for the next line.
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed reading first directive item: %v", err)
 	}
 
@@ -371,11 +389,16 @@ func (z *ZoneParser) parseRrDirective(keyItem string, state *zoneEntryParseState
 	}
 
 	entry := ZoneEntryRr{
-		DomainName: keyItem,
-		Class:      class,
-		Ttl:        ttl,
-		Type:       *recType,
-		Data:       rdata,
+		Class: class,
+		Ttl:   ttl,
+		Type:  *recType,
+		Data:  rdata,
+	}
+
+	if keyItem == "" {
+		entry.DomainName = nil
+	} else {
+		entry.DomainName = &keyItem
 	}
 
 	return entry, nil
@@ -483,7 +506,16 @@ func (z *ZoneParser) nextItem(state *zoneEntryParseState) (string, error) {
 
 		// Non-special character, start reading it into an item.
 		z.reader.UnreadRune()
-		return z.parseLooseItem()
+		item, err := z.parseLooseItem()
+		if err != nil {
+			return "", err
+		}
+
+		if item == "" {
+			return "", errZoneParseEol
+		}
+
+		return item, nil
 	}
 }
 
@@ -563,10 +595,6 @@ func (z *ZoneParser) parseLooseItem() (string, error) {
 		// TODO: Escapes.
 
 		item.WriteRune(chr)
-	}
-
-	if item.Len() == 0 {
-		return "", errZoneParseEol
 	}
 
 	return item.String(), nil
