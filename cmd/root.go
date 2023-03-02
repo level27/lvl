@@ -162,10 +162,14 @@ func initConfig() {
 	apiKey = viper.GetString("apiKey")
 	apiUrl = viper.GetString("apiUrl")
 	Level27Client = l27.NewAPIClient(apiUrl, apiKey)
-	Level27Client.DefaultRequestHeaders["User-Agent"] = fmt.Sprintf("level27_lvl/%s", strings.TrimSpace(version))
+	Level27Client.DefaultRequestHeaders["User-Agent"] = getUserAgent()
 	if traceRequests {
 		Level27Client.TraceRequests(&colorRequestTracer{})
 	}
+}
+
+func getUserAgent() string {
+	return fmt.Sprintf("level27_lvl/%s", strings.TrimSpace(version))
 }
 
 // Viper doesn't consistently return a ConfigFileNotFoundError in all cases.

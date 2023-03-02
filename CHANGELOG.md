@@ -1,5 +1,9 @@
 ## Current (main branch)
 
+* New `app component cron` commands for the new crons feature.
+* `lvl login` now accepts username from command via `-u`, and can correctly read the password when piped via stdin. This allows automating it.
+* `lvl update` allows you to easily update `lvl` to the latest version.
+
 ## 1.6.0
 
 * `lvl system update` improvements:
