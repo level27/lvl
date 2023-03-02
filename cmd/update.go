@@ -7,18 +7,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	if runtime.GOOS == "windows" {
-		// Windows currently does not work.
-		return
-	}
-
 	RootCmd.AddCommand(updateCmd)
 	updateCmd.Flags().BoolVarP(&optUpdateCmdYes, "yes", "y", false, "Confirm update without prompt, if available")
 }
@@ -30,6 +24,7 @@ var updateCmd = &cobra.Command{
 	Long: `Update lvl to the latest version
 lvl will automatically download the latest version and replace the installed executable.`,
 
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apiClient := http.Client{}
 
@@ -90,13 +85,9 @@ lvl will automatically download the latest version and replace the installed exe
 			return fmt.Errorf("failed to download new release asset: %v", err)
 		}
 
-		if runtime.GOOS == "windows" {
-			panic("Windows updates currently unimplemented")
-		} else {
-			err := os.Rename(newExecPath, execPath)
-			if err != nil {
-				return fmt.Errorf("failed to move new executable into place: %v", err)
-			}
+		err = updateSwapFile(newExecPath, execPath)
+		if err != nil {
+			return fmt.Errorf("failed to move new executable into place: %v", err)
 		}
 
 		fmt.Println("Update success!")
@@ -227,26 +218,6 @@ func readJson[T any](response *http.Response) (T, error) {
 	}
 
 	return result, nil
-}
-
-// Get the appropriate release asset file name for our
-func getAssetFileName() string {
-	arch := runtime.GOARCH
-	platform := runtime.GOOS
-
-	if platform == "windows" {
-		return fmt.Sprintf("lvl-windows-%s.exe", arch)
-	}
-
-	if platform == "linux" {
-		return fmt.Sprintf("lvl-linux-%s", arch)
-	}
-
-	if platform == "darwin" {
-		return fmt.Sprintf("lvl-darwin-%s", arch)
-	}
-
-	panic("unknown platform for auto update!")
 }
 
 type GitHubRelease struct {
