@@ -1061,7 +1061,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 		var possibleParameters []string
 		// loop over current parameters for the check.
 		// if parameter value is not default -> it needs to be sent in put request again.
-		for key, value := range currentData.CheckParameters {
+		for key, value := range currentData.CheckParameters.Map {
 			// put each possible parrameter in array for later
 			possibleParameters = append(possibleParameters, key)
 
