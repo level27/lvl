@@ -465,6 +465,30 @@ func resolveSystemVolume(systemID l27.IntID, arg string) (l27.IntID, error) {
 	return ip.ID, nil
 }
 
+func resolveSystemCheck(systemID l27.IntID, arg string) (l27.IntID, error) {
+	id, err := l27.ParseID(arg)
+	if err == nil {
+		return id, nil
+	}
+
+	options, err := Level27Client.SystemCheckLookup(systemID, arg)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := resolveShared(
+		options,
+		arg,
+		"system check",
+		func(app l27.SystemCheckGet) string { return fmt.Sprintf("%d", app.ID) })
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ID, err
+}
+
 // ------------------------------------------------- SYSTEM TOPLEVEL (GET / DESCRIBE CREATE) ----------------------------------
 // #region SYSTEM TOPLEVEL (GET / DESCRIBE / CREATE)
 // ----------------------------------------- GET ---------------------------------------
@@ -975,7 +999,7 @@ var systemCheckGetSingleCmd = &cobra.Command{
 		}
 
 		//check for valid system checkID
-		checkID, err := checkSingleIntID(args[1], "check")
+		checkID, err := resolveSystemCheck(systemID, args[1])
 		if err != nil {
 			return err
 		}
@@ -1003,7 +1027,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 		}
 
 		//check for valid system checkID
-		checkID, err := checkSingleIntID(args[1], "check")
+		checkID, err := resolveSystemCheck(systemID, args[1])
 		if err != nil {
 			return err
 		}
@@ -1042,7 +1066,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 		}
 
 		// check for valid check ID
-		checkID, err := checkSingleIntID(args[1], "check")
+		checkID, err := resolveSystemCheck(systemID, args[1])
 		if err != nil {
 			return err
 		}

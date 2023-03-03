@@ -4,6 +4,7 @@
 * `lvl login` now accepts username from command via `-u`, and can correctly read the password when piped via stdin. This allows automating it.
 * `lvl update` allows you to easily update `lvl` to the latest version.
 * Fix API marshalling errors with system checks and app component types.
+* You can now refer to system checks by type in commands, e.g. `system check delete my.cool.system disk`
 
 ## 1.6.0
 
