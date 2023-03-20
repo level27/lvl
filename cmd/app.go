@@ -207,6 +207,7 @@ func init() {
 	appComponentUrlCreateCmd.Flags().Int32Var(&appComponentUrlCreateSslCertificate, "ssl-certificate", 0, "SSL certificate to use.")
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateHandleDns, "handle-dns", false, "Automatically create DNS records")
 	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateAutoSslCertificate, "auto-ssl-certificate", false, "Automatically create SSL certificate with Let's Encrypt")
+	appComponentUrlCreateCmd.Flags().BoolVar(&appComponentUrlCreateCaching, "caching", true, "Whether to enable caching on the URL, if the component has a linked Varnish component")
 
 	// APP COMPONENT URL DELETE
 	appComponentUrlCmd.AddCommand(appComponentUrlDeleteCmd)
@@ -2141,8 +2142,8 @@ var appComponentUrlGetCmd = &cobra.Command{
 
 		outputFormatTable(
 			results,
-			[]string{"ID", "CONTENT", "STATUS", "TYPE", "SSL CERT", "FORCE SSL", "HANDLE DNS", "AUTHENTICATE"},
-			[]string{"ID", "Content", "Status", "Type", "SslCertificate.Name", "SslForce", "HandleDNS", "Authentication"})
+			[]string{"ID", "CONTENT", "STATUS", "TYPE", "SSL CERT", "FORCE SSL", "HANDLE DNS", "AUTHENTICATE", "CACHING"},
+			[]string{"ID", "Content", "Status", "Type", "SslCertificate.Name", "SslForce", "HandleDNS", "Authentication", "Caching"})
 
 		return nil
 	},
@@ -2155,6 +2156,7 @@ var appComponentUrlCreateSslForce bool
 var appComponentUrlCreateSslCertificate l27.IntID
 var appComponentUrlCreateHandleDns bool
 var appComponentUrlCreateAutoSslCertificate bool
+var appComponentUrlCreateCaching bool
 var appComponentUrlCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an url for an appcomponent.",
@@ -2185,6 +2187,7 @@ var appComponentUrlCreateCmd = &cobra.Command{
 			SslCertificate:     cert,
 			HandleDns:          appComponentUrlCreateHandleDns,
 			AutoSslCertificate: appComponentUrlCreateAutoSslCertificate,
+			Caching:            appComponentUrlCreateCaching,
 		}
 
 		url, err := Level27Client.AppComponentUrlCreate(appID, componentID, create)
