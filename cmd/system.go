@@ -414,7 +414,7 @@ func resolveSystemHasNetwork(systemID l27.IntID, arg string) (l27.IntID, error) 
 		options,
 		arg,
 		"system network",
-		func(app l27.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Name, app.ID) })
+		func(app l27.SystemHasNetwork) string { return fmt.Sprintf("%s (%d)", app.Network.Description, app.ID) })
 
 	if err != nil {
 		return 0, err
