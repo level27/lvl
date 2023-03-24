@@ -22,8 +22,7 @@ func init() {
 
 	// ---- ADD cookbook (to system)
 	systemCookbookCmd.AddCommand(systemCookbookAddCmd)
-
-	// flags needed to add new cookbook to a system
+	addWaitFlag(systemCookbookAddCmd)
 	flags := systemCookbookAddCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
 	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
@@ -51,10 +50,11 @@ func init() {
 	// --- DELETE
 	systemCookbookCmd.AddCommand(systemCookbookDeleteCmd)
 	addDeleteConfirmFlag(systemCookbookDeleteCmd)
+	addWaitFlag(systemCookbookDeleteCmd)
 
 	// --- UPDATE
 	systemCookbookCmd.AddCommand(systemCookbookUpdateCmd)
-	// flags for update
+	addWaitFlag(systemCookbookUpdateCmd)
 	systemCookbookUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
 	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
 	// #endregion
@@ -191,10 +191,27 @@ var systemCookbookAddCmd = &cobra.Command{
 			return err
 		}
 
-		outputFormatTemplate(cookbook, "templates/entities/systemCookbook/add.tmpl")
-
 		//apply changes to cookbooks
 		err = Level27Client.SystemCookbookChangesApply(systemID)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			cookbook, err = waitForStatus(
+				func() (l27.Cookbook, error) { return Level27Client.SystemCookbookDescribe(systemID, cookbook.ID) },
+				func(s l27.Cookbook) string { return s.Status },
+				"ok",
+				[]string{"updating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on cookbook status failed: %s", err.Error())
+			}
+		}
+
+		outputFormatTemplate(cookbook, "templates/entities/systemCookbook/add.tmpl")
+
 		return err
 	},
 }
@@ -290,10 +307,26 @@ var systemCookbookDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		outputFormatTemplate(nil, "templates/entities/systemCookbook/delete.tmpl")
-
 		//apply changes
 		err = Level27Client.SystemCookbookChangesApply(systemID)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = waitForDelete(
+				func() (l27.Cookbook, error) { return Level27Client.SystemCookbookDescribe(systemID, cookbookID) },
+				func(s l27.Cookbook) string { return s.Status },
+				[]string{"deleting"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on system cookbook status failed: %s", err.Error())
+			}
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemCookbook/delete.tmpl")
+
 		return err
 	},
 }
@@ -372,6 +405,23 @@ var systemCookbookUpdateCmd = &cobra.Command{
 
 		// aplly changes to cookbooks
 		err = Level27Client.SystemCookbookChangesApply(systemID)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			_, err = waitForStatus(
+				func() (l27.Cookbook, error) { return Level27Client.SystemCookbookDescribe(systemID, cookbookID) },
+				func(s l27.Cookbook) string { return s.Status },
+				"ok",
+				[]string{"updating"},
+			)
+
+			if err != nil {
+				return fmt.Errorf("waiting on cookbook status failed: %s", err.Error())
+			}
+		}
+
 		return err
 	},
 }
