@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Jeffail/gabs/v2"
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
 )
@@ -47,6 +48,21 @@ func init() {
 	// --- DELETE
 	systemgroupCmd.AddCommand(systemgroupsDeleteCmd)
 	addDeleteConfirmFlag(systemgroupsDeleteCmd)
+
+	//-------------------------------------  SYSTEMS/GROUPS (get/ add / describe / delete) --------------------------------------
+	// #region SYSTEMS/GROUPS (get/ add / delete / describe)
+
+	systemCmd.AddCommand(SystemSystemgroupsCmd)
+
+	// --- GET
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsGetCmd)
+
+	// --- ADD
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsAddCmd)
+
+	// --- DELETE
+	SystemSystemgroupsCmd.AddCommand(SystemSystemgroupsRemoveCmd)
+
 }
 
 func resolveSystemgroup(arg string) (l27.IntID, error) {
@@ -228,3 +244,94 @@ var systemgroupsDeleteCmd = &cobra.Command{
 		return nil
 	},
 }
+
+// ------------------------------------------------- SYSTEMS/GROUPS (GET / ADD  / DELETE)-------------------------------------------------
+// ---------------- MAIN COMMAND (groups)
+var SystemSystemgroupsCmd = &cobra.Command{
+	Use:   "groups",
+	Short: "Manage a system's groups.",
+}
+
+// #region SYSTEMS/GROUPS (GET / ADD  / DELETE)
+
+// ---------------- GET GROUPS
+var SystemSystemgroupsGetCmd = &cobra.Command{
+	Use:   "get [systemID]",
+	Short: "Show list of all groups from a system.",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		//check for valid systemID
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		groups, err := Level27Client.SystemSystemgroupsGet(systemID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTable(groups, []string{"ID", "NAME"}, []string{"ID", "Name"})
+		return nil
+	},
+}
+
+// ---------------- LINK SYSTEM TO A GROUP (ADD)
+var SystemSystemgroupsAddCmd = &cobra.Command{
+	Use:   "add [systemID] [systemgroupID]",
+	Short: "Link a system with a systemgroup.",
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// check for valid systemID
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		// check for valid groupID type (int)
+		groupID, err := resolveSystemgroup(args[1])
+		if err != nil {
+			return err
+		}
+
+		jsonRequest := gabs.New()
+		jsonRequest.Set(groupID, "systemgroup")
+		err = Level27Client.SystemSystemgroupsAdd(systemID, jsonRequest)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/system/groupAdd.tmpl")
+		return nil
+	},
+}
+
+// ---------------- UNLINK SYSTEM FROM A GROUP (DELETE)
+var SystemSystemgroupsRemoveCmd = &cobra.Command{
+	Use:   "remove [systemID] [systemgroupID]",
+	Short: "Unlink a system from a systemgroup.",
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// check for valid systemID
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		// check for valid systemgroupID
+		groupID, err := resolveSystemgroup(args[1])
+		if err != nil {
+			return err
+		}
+
+		err = Level27Client.SystemSystemgroupsRemove(systemID, groupID)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/system/groupRemove.tmpl")
+		return nil
+	},
+}
+
+// #endregion
