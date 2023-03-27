@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/level27/l27-go"
 	"github.com/spf13/cobra"
@@ -26,6 +27,7 @@ func init() {
 	flags := systemCookbookAddCmd.Flags()
 	flags.StringVarP(&systemCreateCookbookType, "type", "t", "", "Cookbook type (non-editable). Cookbook types can't repeat for one system")
 	flags.StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for cookbook. SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
+	flags.BoolVar(&cookbookDeferApply, "defer", false, "Defer applying changes to cookbooks for lvl system cookbooks apply")
 
 	systemCookbookAddCmd.MarkFlagRequired("type")
 	// #endregion
@@ -51,13 +53,18 @@ func init() {
 	systemCookbookCmd.AddCommand(systemCookbookDeleteCmd)
 	addDeleteConfirmFlag(systemCookbookDeleteCmd)
 	addWaitFlag(systemCookbookDeleteCmd)
+	systemCookbookDeleteCmd.Flags().BoolVar(&cookbookDeferApply, "defer", false, "Defer applying changes to cookbooks for lvl system cookbooks apply")
 
 	// --- UPDATE
 	systemCookbookCmd.AddCommand(systemCookbookUpdateCmd)
 	addWaitFlag(systemCookbookUpdateCmd)
 	systemCookbookUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
 	systemCookbookUpdateCmd.MarkFlagRequired("parameters")
-	// #endregion
+	systemCookbookUpdateCmd.Flags().BoolVar(&cookbookDeferApply, "defer", false, "Defer applying changes to cookbooks for lvl system cookbooks apply")
+
+	// SYSTEM COOKBOOKS APPLY
+	systemCookbookCmd.AddCommand(systemCookbookApplyCmd)
+	addWaitFlag(systemCookbookApplyCmd)
 }
 
 func resolveSystemCookbook(systemID l27.IntID, arg string) (l27.IntID, error) {
@@ -85,6 +92,8 @@ func resolveSystemCookbook(systemID l27.IntID, arg string) (l27.IntID, error) {
 
 	return cookbook.ID, nil
 }
+
+var cookbookDeferApply bool
 
 // ------------------------------------------------- SYSTEM/COOKBOOKS TOPLEVEL (GET error / CREATE) ----------------------------------
 // ---------------- MAIN return COMMAND (cookbooks)
@@ -191,6 +200,11 @@ var systemCookbookAddCmd = &cobra.Command{
 			return err
 		}
 
+		if cookbookDeferApply {
+			outputFormatTemplate(cookbook, "templates/entities/systemCookbook/addDeferred.tmpl")
+			return nil
+		}
+
 		//apply changes to cookbooks
 		err = Level27Client.SystemCookbookChangesApply(systemID)
 		if err != nil {
@@ -212,7 +226,7 @@ var systemCookbookAddCmd = &cobra.Command{
 
 		outputFormatTemplate(cookbook, "templates/entities/systemCookbook/add.tmpl")
 
-		return err
+		return nil
 	},
 }
 
@@ -307,6 +321,11 @@ var systemCookbookDeleteCmd = &cobra.Command{
 			return err
 		}
 
+		if cookbookDeferApply {
+			outputFormatTemplate(nil, "templates/entities/systemCookbook/deleteDeferred.tmpl")
+			return nil
+		}
+
 		//apply changes
 		err = Level27Client.SystemCookbookChangesApply(systemID)
 		if err != nil {
@@ -327,7 +346,7 @@ var systemCookbookDeleteCmd = &cobra.Command{
 
 		outputFormatTemplate(nil, "templates/entities/systemCookbook/delete.tmpl")
 
-		return err
+		return nil
 	},
 }
 
@@ -401,7 +420,10 @@ var systemCookbookUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		outputFormatTemplate(nil, "templates/entities/systemCookbook/update.tmpl")
+		if cookbookDeferApply {
+			outputFormatTemplate(nil, "templates/entities/systemCookbook/updateDeferred.tmpl")
+			return nil
+		}
 
 		// aplly changes to cookbooks
 		err = Level27Client.SystemCookbookChangesApply(systemID)
@@ -422,8 +444,133 @@ var systemCookbookUpdateCmd = &cobra.Command{
 			}
 		}
 
-		return err
+		outputFormatTemplate(nil, "templates/entities/systemCookbook/update.tmpl")
+
+		return nil
 	},
+}
+
+var systemCookbookApplyCmd = &cobra.Command{
+	Use:   "apply <systemID>",
+	Short: "Apply pending cookbook changes to the system",
+	Long: `Apply pending cookbook changes to the system
+When the cookbooks of a system are modified with the --defer flag, they are not applied immediately.
+Cookbook changes may be manually applied with this command, allowing for multiple cookbook changes to be applied at once.
+If --wait is passed, this command will wait for all pending cookbook changes to complete.
+`,
+
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		systemID, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		// Get all the cookbooks on the system that have a pending change.
+		cookbooks, err := Level27Client.SystemCookbookGetList(systemID, l27.CommonGetParams{})
+		if err != nil {
+			return err
+		}
+
+		toApply := []l27.Cookbook{}
+		for _, cookbook := range cookbooks {
+			if cookbook.Status == "to_update" || cookbook.Status == "to_delete" || cookbook.Status == "to_create" {
+				toApply = append(toApply, cookbook)
+			}
+		}
+
+		if len(toApply) == 0 {
+			outputFormatTemplate(nil, "templates/entities/systemCookbook/applyNoPending.tmpl")
+			return nil
+		}
+
+		err = Level27Client.SystemCookbookChangesApply(systemID)
+		if err != nil {
+			return err
+		}
+
+		if optWait {
+			err = pollMultiCookbooksApplyWait(toApply)
+			if err != nil {
+				return fmt.Errorf("waiting on system cookbook status failed: %s", err.Error())
+			}
+		}
+
+		outputFormatTemplate(nil, "templates/entities/systemCookbook/apply.tmpl")
+
+		return nil
+	},
+}
+
+// Poll on status updates from many cookbooks at once.
+// If any cookbook gets an invalid status for its original status, an error occurs.
+// Takes in the original cookbooks from before an apply operating,
+// so a cookbook that was "to_create" will only have valid status of "ok" and "creating".
+func pollMultiCookbooksApplyWait(src []l27.Cookbook) error {
+	// Regular outer poll loop.
+	for i := 0; i < waitPollTotal; i += 1 {
+		any_waiting := false
+
+		// Go over every input cookbook sequentially.
+		for ck_i, cookbook := range src {
+			if cookbook.ID == 0 {
+				// Cookbook has been completed (see below), skip.
+				continue
+			}
+
+			polled, err := Level27Client.SystemCookbookDescribe(cookbook.System.ID, cookbook.ID)
+			if err != nil {
+				if cookbook.Status == "to_delete" {
+					// We want to delete this cookbook, so if it's a 404 that's good actually!
+					if errResp, ok := err.(l27.ErrorResponse); ok {
+						if errResp.HTTPCode == 404 || errResp.Code == 404 {
+							// Gone, great!
+							// See below for why = 0.
+							src[ck_i].ID = 0
+							continue
+						}
+					}
+				}
+
+				return err
+			}
+
+			newStatus := polled.Status
+
+			if newStatus == "ok" {
+				// This cookbook is done!
+				//
+				// Invalidate this cookbook entry by setting ID to 0.
+				// This will make the next iteration skip it to avoid wasting API time.
+				src[ck_i].ID = 0
+				continue
+			}
+
+			invalidStatus := true
+			switch cookbook.Status {
+			case "to_update", "to_create":
+				invalidStatus = newStatus != "updating"
+			case "to_delete":
+				invalidStatus = newStatus != "deleting"
+			}
+
+			if invalidStatus {
+				return fmt.Errorf("got unexpected status on cookbook '%s': %s", cookbook.CookbookType, newStatus)
+			}
+
+			// We're still waiting on something, don't abort the outer loop after all this.
+			any_waiting = true
+		}
+
+		if !any_waiting {
+			// Not waiting on anything anymore, we're done here!
+			return nil
+		}
+
+		time.Sleep(waitPollInterval)
+	}
+
+	return fmt.Errorf("timed out")
 }
 
 // #endregion
