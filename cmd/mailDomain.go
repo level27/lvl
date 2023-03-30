@@ -23,6 +23,15 @@ func init() {
 	mailDomainCmd.AddCommand(mailDomainUpdateCmd)
 	settingsFileFlag(mailDomainUpdateCmd)
 	settingString(mailDomainUpdateCmd, updateSettings, "handleMailDns", "")
+
+	// MAIL DOMAIN DKIM
+	mailDomainCmd.AddCommand(mailDomainDkimCmd)
+
+	// MAIL DOMAIN DKIM ENABLE
+	mailDomainDkimCmd.AddCommand(mailDomainDkimEnableCmd)
+
+	// MAIL DOMAIN DKIM DISABLE
+	mailDomainDkimCmd.AddCommand(mailDomainDkimDisableCmd)
 }
 
 // MAIL DOMAIN
@@ -144,5 +153,65 @@ var mailDomainUpdateCmd = &cobra.Command{
 
 		outputFormatTemplate(nil, "templates/entities/mailDomain/update.tmpl")
 		return err
+	},
+}
+
+// MAIL DOMAIN DKIM
+var mailDomainDkimCmd = &cobra.Command{
+	Use:   "dkim",
+	Short: "Commands to manage DKIM on mail domains",
+}
+
+// MAIL DOMAIN DKIM ENABLE
+var mailDomainDkimEnableCmd = &cobra.Command{
+	Use:   "enable <mail group> <mail domain>",
+	Short: "Enable DKIM on a mail domain",
+
+	Args: cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
+
+		domainID, err := resolveDomain(args[1])
+		if err != nil {
+			return err
+		}
+
+		result, err := Level27Client.MailgroupsDomainAction(mailgroupID, domainID, "createDkim")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(result, "templates/entities/mailDomain/enableDkim.tmpl")
+		return nil
+	},
+}
+
+// MAIL DOMAIN DKIM DISABLE
+var mailDomainDkimDisableCmd = &cobra.Command{
+	Use:   "disable <mail group> <mail domain>",
+	Short: "Disable DKIM on a mail domain",
+
+	Args: cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		mailgroupID, err := resolveMailgroup(args[0])
+		if err != nil {
+			return err
+		}
+
+		domainID, err := resolveDomain(args[1])
+		if err != nil {
+			return err
+		}
+
+		result, err := Level27Client.MailgroupsDomainAction(mailgroupID, domainID, "deleteDkim")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(result, "templates/entities/mailDomain/disableDkim.tmpl")
+		return nil
 	},
 }
