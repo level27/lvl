@@ -53,7 +53,7 @@ cat password.txt | lvl login -u my.awesome.email@level27.be`,
 			return err
 		}
 
-		client := l27.NewAPIClient(apiUrl, "")
+		client := makeApiClient(apiUrl, "")
 
 		login, err = client.Login(username, password)
 		if err != nil {

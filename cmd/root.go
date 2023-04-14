@@ -161,11 +161,18 @@ func initConfig() {
 	// Load values from config.
 	apiKey = viper.GetString("apiKey")
 	apiUrl = viper.GetString("apiUrl")
-	Level27Client = l27.NewAPIClient(apiUrl, apiKey)
-	Level27Client.DefaultRequestHeaders["User-Agent"] = getUserAgent()
+
+	Level27Client = makeApiClient(apiUrl, apiKey)
+}
+
+func makeApiClient(apiUrl string, apiKey string) *l27.Client {
+	client := l27.NewAPIClient(apiUrl, apiKey)
+	client.DefaultRequestHeaders["User-Agent"] = getUserAgent()
 	if traceRequests {
-		Level27Client.TraceRequests(&colorRequestTracer{})
+		client.TraceRequests(&colorRequestTracer{})
 	}
+
+	return client
 }
 
 func getUserAgent() string {
