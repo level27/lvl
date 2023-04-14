@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -48,6 +49,7 @@ Log in automatically:
 cat password.txt | lvl login -u my.awesome.email@level27.be`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var login l27.Login
+		var err error
 		username, password, err := loginPromptCredentials()
 		if err != nil {
 			return err
@@ -55,9 +57,43 @@ cat password.txt | lvl login -u my.awesome.email@level27.be`,
 
 		client := makeApiClient(apiUrl, "")
 
-		login, err = client.Login(username, password)
+		request := l27.LoginRequest{
+			Username:   username,
+			Password:   password,
+			TwoFAToken: viper.GetString("2faKey"),
+		}
+
+		login, err = client.Login2FA(&request)
 		if err != nil {
-			return err
+			// Check if it's a 2FA-related error we can handle appropriately.
+			var l27err l27.ErrorResponse
+			var ok bool
+			if l27err, ok = err.(l27.ErrorResponse); !ok {
+				return err
+			}
+
+			if l27err.Message == "2FA is requested" {
+				// User pressed the button on the control panel
+				// to try to set up 2FA but didn't finish yet.
+				fmt.Printf("You are currently setting up 2-factor authorization. Please finish setting up 2FA on the website before trying to log in.\n")
+				return nil
+			}
+
+			if l27err.Message == "2FA is required" {
+				// 2FA required by organisation but not set up yet by user.
+				fmt.Printf("Your organisation requires you to set up 2-factor authentication before logging in again. Please proceed on the website to do this.\n")
+				return nil
+			}
+
+			if l27err.Message == "6digitCode is invalid" || l27err.Message == "2FA token is invalid" {
+				// "2FA token is invalid": 2FA is enabled, "Trust this device" token is invalid
+				// "6digitCode is invalid": 2FA is enabled
+				// In both cases we need to re-enter a 2FA code from the authenticator.
+				login, err = login2fa(client, username, password)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		fmt.Println()
@@ -66,8 +102,8 @@ cat password.txt | lvl login -u my.awesome.email@level27.be`,
 		fmt.Println()
 		fmt.Printf("Successfully logged in using: %s\n", username)
 
-		// fmt.Println(login.Hash)
 		utils.SaveConfig("apikey", login.Hash)
+		utils.SaveConfig("2faKey", login.Hash2FA)
 		utils.SaveConfig("user_id", login.User.ID)
 		utils.SaveConfig("org_id", login.User.Organisation.ID)
 		return nil
@@ -125,4 +161,63 @@ func loginPromptCredentials() (string, string, error) {
 
 	password := strings.TrimSpace(string(bytePassword))
 	return strings.TrimSpace(username), strings.TrimSpace(password), nil
+}
+
+// 1st return value: 2FA code
+// 2nd return value: "trust this device?"
+func loginPrompt2fa() (string, bool, error) {
+	if !term.IsTerminal(int(syscall.Stdin)) {
+		return "", false, errors.New("cannot prompt 2FA if piping input. Log in manually and trust device instead to avoid 2FA prompts and automate login")
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+
+	// Prompt 2FA code
+	var code string
+	var err error
+	for {
+		fmt.Print("Enter 2FA authenticator code: ")
+		code, err = reader.ReadString('\n')
+		if err != nil {
+			return "", false, err
+		}
+
+		code = strings.TrimSpace(code)
+		if len(code) != 6 {
+			fmt.Println("Code must be exactly 6 digits")
+			continue
+		}
+
+		break
+	}
+
+	fmt.Printf("Trust this device? [y]es/[n]o (default: no): ")
+	resp, err := reader.ReadString('\n')
+	if err != nil {
+		return "", false, err
+	}
+
+	resp = strings.TrimSpace(resp)
+	resp = strings.ToLower(resp)
+
+	trustDevice := resp == "y" || resp == "yes"
+
+	return code, trustDevice, nil
+}
+
+func login2fa(client *l27.Client, username string, password string) (l27.Login, error) {
+	code, trust, err := loginPrompt2fa()
+	if err != nil {
+		return l27.Login{}, err
+	}
+
+	request := l27.LoginRequest{
+		Username:        username,
+		Password:        password,
+		TrustThisDevice: trust,
+		SixDigitCode:    code,
+	}
+
+	login, err := client.Login2FA(&request)
+	return login, err
 }

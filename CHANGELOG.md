@@ -7,6 +7,7 @@
 * You can now refer to system checks by type in commands, e.g. `system check delete my.cool.system disk`
 * You can now enable or disable DKIM on mail domains with `lvl mail domain dkim`.
 * `lvl login` now supports `--trace` and passes the correct `User-Agent` to the API.
+* Logging in with 2FA is now supported.
 
 ## 1.6.0
 
