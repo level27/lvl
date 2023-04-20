@@ -1,5 +1,10 @@
 ## Current (main branch)
 
+## 1.7.1
+* Fixed `lvl update` not working on Linux/macOS.
+
+## 1.7.0
+
 * New `app component cron` commands for the new crons feature.
 * `lvl login` now accepts username from command via `-u`, and can correctly read the password when piped via stdin. This allows automating it.
 * `lvl update` allows you to easily update `lvl` to the latest version.

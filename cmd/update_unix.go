@@ -18,5 +18,5 @@ func updateSwapFile(new string, old string) error {
 }
 
 func getAssetFileName() string {
-	return fmt.Sprintf("lvl-%s-%s.exe", runtime.GOOS, runtime.GOARCH)
+	return fmt.Sprintf("lvl-%s-%s", runtime.GOOS, runtime.GOARCH)
 }
