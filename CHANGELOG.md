@@ -1,5 +1,8 @@
 ## Current (main branch)
 
+## 1.7.2
+* Fixed `lvl app delete` not accepting `-y` to confirm deletion.
+
 ## 1.7.1
 * Fixed `lvl update` not working on Linux/macOS.
 

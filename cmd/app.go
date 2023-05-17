@@ -29,7 +29,7 @@ func init() {
 
 	// APP DELETE
 	appCmd.AddCommand(appDeleteCmd)
-	addDeleteConfirmFlag(appCmd)
+	addDeleteConfirmFlag(appDeleteCmd)
 	addWaitFlag(appDeleteCmd)
 
 	// APP UPDATE
