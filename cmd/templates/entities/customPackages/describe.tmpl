@@ -1,0 +1,20 @@
+Name: {{ .Name }}
+Type: {{ .Type }}
+Base: {{ .CustomPackageName }}
+
+Params: {{ range $key, $_ := .Params }}
+  {{ $key }}:
+    Type:     {{ .Type }}
+    Required: {{ .Required }}
+{{- end }}
+
+Templates: {{ range .CustomPackageTemplates }}
+- {{ vt "cyan" }}{{ .Template }}{{ vt "reset" }}
+  ID:         {{ .ID }}
+  Predefined: {{ .Predefined }}
+  Status:       {{template "statusVt" .StatusCategory}}{{ .Status }}{{ vt "reset" }}
+  Params: {{ range $key, $_ := .Params.Map }}
+    {{ $key }}: {{ . }}
+  {{- end }}
+{{- end }}
+

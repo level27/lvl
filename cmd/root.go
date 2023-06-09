@@ -291,8 +291,17 @@ func outputFormatTableText(objects interface{}, titles []string, fields []interf
 				fmt.Fprintf(w, "\t")
 			}
 
+			fldInterface := fld.Interface()
+
+			// Try to present localized strings by showing the English name.
+			if loc, ok := fldInterface.(l27.LocalizedString); ok {
+				if en, ok := loc["en"]; ok {
+					fldInterface = en
+				}
+			}
+
 			first = false
-			fmt.Fprintf(w, "%v", fld.Interface())
+			fmt.Fprintf(w, "%v", fldInterface)
 		}
 
 		fmt.Fprintf(w, "\n")

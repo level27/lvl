@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/spf13/viper"
 	"io"
 	"log"
 	"os"
@@ -588,4 +589,14 @@ func waitIndicator(block func()) {
 			continue
 		}
 	}
+}
+
+// Resolves an organisation with resolveOrganisation.
+// If no value is passed, use the organisation the user is in as default.
+func resolveOrgOrUserOrg(arg string) (l27.IntID, error) {
+	if arg == "" {
+		return viper.GetInt32("org_id"), nil
+	}
+
+	return resolveOrganisation(arg)
 }
