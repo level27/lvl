@@ -261,10 +261,17 @@ var appComponentUpdateCmd = &cobra.Command{
 		data["appcomponenttype"] = appComponent.Appcomponenttype
 		data["name"] = appComponent.Name
 		data["category"] = appComponent.Category
-		data["systemgroup"] = appComponent.Systemgroup
-		data["system"] = nil
+
 		if appComponent.Systemgroup == nil {
 			data["system"] = appComponent.Systems[0].ID
+			data["systemgroup"] = nil
+		} else {
+			data["system"] = nil
+			data["systemgroup"] = appComponent.Systemgroup.ID
+		}
+
+		if appComponent.SelectedSystem != nil {
+			data["selectedSystem"] = appComponent.SelectedSystem.ID
 		}
 
 		for k, v := range appComponent.Appcomponentparameters {
