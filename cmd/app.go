@@ -25,7 +25,6 @@ func init() {
 	flags.Int32SliceVar(&appCreateTeams, "autoTeams", appCreateTeams, "A csv list of team ID's.")
 	flags.StringVar(&appCreateExtInfo, "externalInfo", "", "ExternalInfo (required when billableItemInfo entities for an organisation exist in DB.)")
 	appCreateCmd.MarkFlagRequired("name")
-	appCreateCmd.MarkFlagRequired("organisation")
 
 	// APP DELETE
 	appCmd.AddCommand(appDeleteCmd)
@@ -136,7 +135,7 @@ var appCreateCmd = &cobra.Command{
 		}
 
 		// fill in all the props needed for the post request
-		organisation, err := resolveOrganisation(appCreateOrg)
+		organisation, err := resolveOrgOrUserOrg(appCreateOrg)
 		if err != nil {
 			return err
 		}

@@ -1,5 +1,7 @@
 ## Current (main branch)
 
+* `lvl app create`: if no organisation is given, your current organisation is used as default.
+
 ## 1.7.2
 * Fixed `lvl app delete` not accepting `-y` to confirm deletion.
 
