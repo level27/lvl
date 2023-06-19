@@ -274,6 +274,9 @@ var appComponentUpdateCmd = &cobra.Command{
 			data["selectedSystem"] = appComponent.SelectedSystem.ID
 		}
 
+		// Limit group implies Agency Hosting.
+		isAgency := appComponent.LimitGroup != nil
+
 		for k, v := range appComponent.Appcomponentparameters {
 			param, ok := parameterTypes[k]
 			if !ok {
@@ -283,7 +286,7 @@ var appComponentUpdateCmd = &cobra.Command{
 
 			paramType := parameterTypes[k].Type
 
-			if param.Readonly || param.DisableEdit {
+			if param.Readonly || param.DisableEdit || (isAgency && param.DisableEditAgency) {
 				continue
 			}
 
