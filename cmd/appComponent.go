@@ -28,6 +28,7 @@ func init() {
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystem, "system", "", "")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystemgroup, "systemgroup", "", "")
 	appComponentCreateCmd.Flags().Int32Var(&appComponentCreateSystemprovider, "systemprovider", 0, "")
+	appComponentCreateCmd.Flags().Int32Var(&appComponentCreateAttachment, "attachment", 0, "ID of the attachment to use with the appcomponent. Used for some components, such as solr config upload. Attachments may be managed with the 'lvl app component attachment' set of commands.")
 	appComponentCreateParams = appComponentCreateCmd.Flags().StringArray("param", nil, "")
 	appComponentCreateCmd.MarkFlagRequired("name")
 	appComponentCreateCmd.MarkFlagRequired("type")
@@ -87,6 +88,7 @@ var appComponentCreateType string
 var appComponentCreateSystem string
 var appComponentCreateSystemgroup string
 var appComponentCreateSystemprovider l27.IntID
+var appComponentCreateAttachment l27.IntID
 var appComponentCreateParams *[]string
 var appComponentCreateCmd = &cobra.Command{
 	Use:     "create",
@@ -159,6 +161,10 @@ var appComponentCreateCmd = &cobra.Command{
 
 		if appComponentCreateSystemprovider != 0 {
 			create["systemprovider"] = appComponentCreateSystemprovider
+		}
+
+		if appComponentCreateAttachment != 0 {
+			create["attachment"] = appComponentCreateAttachment
 		}
 
 		// Go over specified commands in app component types to validate and map data.
