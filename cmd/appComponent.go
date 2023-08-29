@@ -27,6 +27,7 @@ func init() {
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateType, "type", "", "")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystem, "system", "", "")
 	appComponentCreateCmd.Flags().StringVar(&appComponentCreateSystemgroup, "systemgroup", "", "")
+	appComponentCreateCmd.Flags().StringVar(&appComponentCreateLimitgroup, "limitgroup", "", "For Agency Hosting applications, which limit group the component will be added to.")
 	appComponentCreateCmd.Flags().Int32Var(&appComponentCreateSystemprovider, "systemprovider", 0, "")
 	appComponentCreateCmd.Flags().Int32Var(&appComponentCreateAttachment, "attachment", 0, "ID of the attachment to use with the appcomponent. Used for some components, such as solr config upload. Attachments may be managed with the 'lvl app component attachment' set of commands.")
 	appComponentCreateParams = appComponentCreateCmd.Flags().StringArray("param", nil, "")
@@ -87,6 +88,7 @@ var appComponentCreateName string
 var appComponentCreateType string
 var appComponentCreateSystem string
 var appComponentCreateSystemgroup string
+var appComponentCreateLimitgroup string
 var appComponentCreateSystemprovider l27.IntID
 var appComponentCreateAttachment l27.IntID
 var appComponentCreateParams *[]string
@@ -97,7 +99,7 @@ var appComponentCreateCmd = &cobra.Command{
 
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if appComponentCreateSystem == "" && appComponentCreateSystemgroup == "" {
+		if appComponentCreateSystem == "" && appComponentCreateSystemgroup == "" && appComponentCreateLimitgroup == "" {
 			return errors.New("must specify either a system or a system group")
 		}
 
@@ -144,6 +146,10 @@ var appComponentCreateCmd = &cobra.Command{
 		create["name"] = appComponentCreateName
 		create["category"] = "config"
 		create["appcomponenttype"] = appComponentCreateType
+
+		if appComponentCreateLimitgroup != "" {
+			create["limitGroup"] = appComponentCreateLimitgroup
+		}
 
 		if appComponentCreateSystem != "" {
 			create["system"], err = resolveSystem(appComponentCreateSystem)

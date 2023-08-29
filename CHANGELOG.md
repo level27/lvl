@@ -2,6 +2,7 @@
 
 * `lvl app create`: if no organisation is given, your current organisation is used as default.
 * Basic support for app component attachments.
+* Added the ability to specify limit groups when adding components to Agency applications.
 
 ## 1.7.2
 * Fixed `lvl app delete` not accepting `-y` to confirm deletion.
