@@ -4,6 +4,7 @@
 * Basic support for app component attachments.
 * Added the ability to specify limit groups when adding components to Agency applications.
 * `lvl task create` command.
+* Added support for cron (de)activation.
 
 ## 1.7.2
 * Fixed `lvl app delete` not accepting `-y` to confirm deletion.

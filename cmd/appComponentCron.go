@@ -34,6 +34,12 @@ func init() {
 	// APP COMPONENT CRON DELETE
 	appComponentCronCmd.AddCommand(appComponentCronDeleteCmd)
 	addWaitFlag(appComponentCronDeleteCmd)
+
+	// APP COMPONENT CRON ACTIVATE
+	appComponentCronCmd.AddCommand(appComponentCronActivateCmd)
+
+	// APP COMPONENT CRON DEACTIVATE
+	appComponentCronCmd.AddCommand(appComponentCronDeactivateCmd)
 }
 
 // Resolve the ID of an app component cron based on user-provided name or ID.
@@ -299,6 +305,68 @@ var appComponentCronDeleteCmd = &cobra.Command{
 		}
 
 		outputFormatTemplate(nil, "templates/entities/appComponentCron/delete.tmpl")
+		return nil
+	},
+}
+
+var appComponentCronActivateCmd = &cobra.Command{
+	Use:   "activate <app> <component> <cron>",
+	Short: "Re-activate a deactivated cron",
+
+	Args: cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		componentID, err := resolveAppComponent(appID, args[1])
+		if err != nil {
+			return err
+		}
+
+		cronID, err := resolveAppComponentCron(appID, componentID, args[2])
+		if err != nil {
+			return err
+		}
+
+		_, err = Level27Client.AppComponentCronAction(appID, componentID, cronID, "activate")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appComponentCron/activated.tmpl")
+		return nil
+	},
+}
+
+var appComponentCronDeactivateCmd = &cobra.Command{
+	Use:   "deactivate <app> <component> <cron>",
+	Short: "deactivate a cron, so it will not fire until reactivated",
+
+	Args: cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		appID, err := resolveApp(args[0])
+		if err != nil {
+			return err
+		}
+
+		componentID, err := resolveAppComponent(appID, args[1])
+		if err != nil {
+			return err
+		}
+
+		cronID, err := resolveAppComponentCron(appID, componentID, args[2])
+		if err != nil {
+			return err
+		}
+
+		_, err = Level27Client.AppComponentCronAction(appID, componentID, cronID, "deactivate")
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(nil, "templates/entities/appComponentCron/deactivated.tmpl")
 		return nil
 	},
 }

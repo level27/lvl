@@ -74,6 +74,7 @@ func init() {
 	systemActionsCmd.AddCommand(systemActionsDeactivateCmd)
 	systemActionsCmd.AddCommand(systemActionsActivateCmd)
 	systemActionsCmd.AddCommand(systemActionsAutoInstallCmd)
+	systemActionsCmd.AddCommand(systemActionsHypervisorFailedCmd)
 
 	// --- UPDATE
 
@@ -577,6 +578,12 @@ var systemActionsAutoInstallCmd = &cobra.Command{
 	Use:  "autoInstall",
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error { return runAction("autoInstall", args) },
+}
+
+var systemActionsHypervisorFailedCmd = &cobra.Command{
+	Use:  "hypervisorFailed",
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("hypervisorFailed", args) },
 }
 
 func runAction(action string, args []string) error {
