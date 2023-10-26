@@ -52,7 +52,7 @@ func init() {
 
 	// flag needed to update a specific check
 	systemCheckUpdateCmd.Flags().StringArrayVarP(&systemDynamicParams, "parameters", "p", systemDynamicParams, "Add custom parameters for a check. Usage -> SINGLE PAR: [ -p waf=true ], MULTIPLE PAR: [ -p waf=true -p timeout=200 ], MULTIPLE VALUES: [ -p versions=''7, 5.4'']")
-	systemCheckUpdateCmd.MarkFlagRequired("parameters")
+	systemCheckUpdateCmd.Flags().StringArrayVarP(&systemCheckUnsetParams, "unset", "u", systemCheckUnsetParams, "Unset an existing parameter on a check, restoring it to its default value")
 
 	// #endregion
 
@@ -297,6 +297,7 @@ var systemCheckDeleteCmd = &cobra.Command{
 }
 
 // -------------- UPDATE SPECIFIC CHECK
+var systemCheckUnsetParams []string
 var systemCheckUpdateCmd = &cobra.Command{
 	Use:   "update [SystemID] [CheckID]",
 	Short: "update a specific check from a system",
@@ -332,7 +333,7 @@ var systemCheckUpdateCmd = &cobra.Command{
 			// put each possible parrameter in array for later
 			possibleParameters = append(possibleParameters, key)
 
-			if !value.Default {
+			if !value.Default && !sliceContains(systemCheckUnsetParams, key) {
 				updateCheckJson.Set(value.Value, key)
 			}
 		}

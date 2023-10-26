@@ -5,6 +5,7 @@
 * Added the ability to specify limit groups when adding components to Agency applications.
 * `lvl task create` command.
 * Added support for cron (de)activation.
+* `system check update --unset` allows you to reset check parameters to their default values.
 
 ## 1.7.2
 * Fixed `lvl app delete` not accepting `-y` to confirm deletion.
