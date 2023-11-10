@@ -6,6 +6,7 @@
 * `lvl task create` command.
 * Added support for cron (de)activation.
 * `system check update --unset` allows you to reset check parameters to their default values.
+* `lvl app component domain` allows managing domains linked to mail components.
 
 ## 1.7.2
 * Fixed `lvl app delete` not accepting `-y` to confirm deletion.
