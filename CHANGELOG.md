@@ -1,5 +1,8 @@
 ## Current (main branch)
 
+## 1.8.1
+* `lvl package instantiate --wait -o json` only returns a single JSON blob.
+
 ## 1.8.0
 * `lvl app create`: if no organisation is given, your current organisation is used as default.
 * Basic support for app component attachments.

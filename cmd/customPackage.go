@@ -309,8 +309,6 @@ the resulting entities will be listed.`,
 			return err
 		}
 
-		outputFormatTemplate(task, "templates/entities/customPackages/instantiate.tmpl")
-
 		if optWait {
 			task, err = waitForStatus[l27.RootTask](
 				func() (l27.RootTask, error) {
@@ -326,6 +324,8 @@ the resulting entities will be listed.`,
 			}
 
 			outputFormatTemplate(task, "templates/entities/customPackages/instantiate_full.tmpl")
+		} else {
+			outputFormatTemplate(task, "templates/entities/customPackages/instantiate.tmpl")
 		}
 
 		return nil
