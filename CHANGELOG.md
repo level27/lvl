@@ -1,5 +1,6 @@
 ## Current (main branch)
 
+## 1.8.0
 * `lvl app create`: if no organisation is given, your current organisation is used as default.
 * Basic support for app component attachments.
 * Added the ability to specify limit groups when adding components to Agency applications.
