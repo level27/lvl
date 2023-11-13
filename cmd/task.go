@@ -16,6 +16,8 @@ func init() {
 	taskCreateCmd.Flags().StringVarP(&taskCreateTemplate, "template", "t", "", "")
 	taskCreateCmd.Flags().StringVarP(&taskCreatePackage, "package", "P", "", "")
 	taskCreateCmd.Flags().StringArrayVarP(&taskCreateParameters, "param", "p", nil, "")
+
+	taskCmd.AddCommand(taskDescribeCmd)
 }
 
 var taskCmd = &cobra.Command{
@@ -78,6 +80,28 @@ var taskCreateCmd = &cobra.Command{
 		}
 
 		outputFormatTemplate(task, "templates/entities/task/create.tmpl")
+
+		return nil
+	},
+}
+
+var taskDescribeCmd = &cobra.Command{
+	Use:  "describe <root task ID>",
+	Args: cobra.ExactArgs(1),
+	// Temporary thing I made to test some templates.
+	Hidden: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := l27.ParseID(args[0])
+		if err != nil {
+			return err
+		}
+
+		task, err := Level27Client.RootTaskGetSingle(id)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(task, "templates/entities/customPackages/instantiate_full.tmpl")
 
 		return nil
 	},

@@ -1,0 +1,10 @@
+Created entities:{{ range .RootTaskHasEntities }}
+- {{ vt "cyan" }}{{ .EntityClass }}{{ vt "reset" }}
+  ID:         {{ .EntityId }}
+  {{- if eq .EntityClass "Level27\\AppBundle\\Entity\\App" }}
+  Name:       {{ .ExtraData.name }}
+  {{- else if eq .EntityClass "Level27\\AppBundle\\Entity\\Appcomponent" }}
+  Name:       {{ .ExtraData.name }}
+  Type:       {{ .ExtraData.appcomponenttype }}
+  {{- end }}
+{{- end }}

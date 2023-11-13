@@ -7,6 +7,7 @@
 * Added support for cron (de)activation.
 * `system check update --unset` allows you to reset check parameters to their default values.
 * `lvl app component domain` allows managing domains linked to mail components.
+* Add `lvl package` commands for basic management of Agency packages: basic `get`, `describe`, `create`, `remove` and `instantiate`. No commands yet for managing templates on them.
 
 ## 1.7.2
 * Fixed `lvl app delete` not accepting `-y` to confirm deletion.
