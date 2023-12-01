@@ -298,7 +298,7 @@ var appComponentUpdateCmd = &cobra.Command{
 
 			paramType := parameterTypes[k].Type
 
-			if param.Readonly || param.DisableEdit || (isAgency && param.DisableEditAgency) {
+			if param.Readonly || param.DisableEdit || (isAgency && param.DisableEditAgency) || (!isAgency && param.DisableEditClassic) {
 				continue
 			}
 
