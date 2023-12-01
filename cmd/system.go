@@ -75,6 +75,9 @@ func init() {
 	systemActionsCmd.AddCommand(systemActionsActivateCmd)
 	systemActionsCmd.AddCommand(systemActionsAutoInstallCmd)
 	systemActionsCmd.AddCommand(systemActionsHypervisorFailedCmd)
+	systemActionsStartMaintenanceCmd.Flags().Int32VarP(&systemActionsStartMaintenanceDuration, "duration", "d", 1440, "How long maintenance should last, in minutes")
+	systemActionsCmd.AddCommand(systemActionsStartMaintenanceCmd)
+	systemActionsCmd.AddCommand(systemActionsStopMaintenanceCmd)
 
 	// --- UPDATE
 
@@ -529,75 +532,116 @@ var systemActionsCmd = &cobra.Command{
 var systemActionsStartCmd = &cobra.Command{
 	Use:  "start",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("start", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("start", args, false) },
 }
 
 var systemActionsStopCmd = &cobra.Command{
 	Use:  "stop",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("stop", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("stop", args, false) },
 }
 
 var systemActionsShutdownCmd = &cobra.Command{
 	Use:  "shutdown",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("shutdown", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("shutdown", args, false) },
 }
 
 var systemActionsRebootCmd = &cobra.Command{
 	Use:  "reboot",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("reboot", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("reboot", args, false) },
 }
 
 var systemActionsResetCmd = &cobra.Command{
 	Use:  "reset",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("reset", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("reset", args, false) },
 }
 
 var systemActionsEmergencyPowerOffCmd = &cobra.Command{
 	Use:  "emergencyPowerOff",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("emergencyPowerOff", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("emergencyPowerOff", args, false) },
 }
 
 var systemActionsDeactivateCmd = &cobra.Command{
 	Use:  "deactivate",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("deactivate", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("deactivate", args, false) },
 }
 
 var systemActionsActivateCmd = &cobra.Command{
 	Use:  "activate",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("activate", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("activate", args, false) },
 }
 
 var systemActionsAutoInstallCmd = &cobra.Command{
 	Use:  "autoInstall",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("autoInstall", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("autoInstall", args, false) },
 }
 
 var systemActionsHypervisorFailedCmd = &cobra.Command{
 	Use:  "hypervisorFailed",
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error { return runAction("hypervisorFailed", args) },
+	RunE: func(cmd *cobra.Command, args []string) error { return runAction("hypervisorFailed", args, false) },
 }
 
-func runAction(action string, args []string) error {
+var systemActionsStartMaintenanceDuration int32
+var systemActionsStartMaintenanceCmd = &cobra.Command{
+	Use:   "startMaintenance <system>",
+	Short: "Mark the system as being in maintenance",
+	Long: `Mark the system as being in maintenance
+
+Marking a system as maintenance silences alerts on it.
+`,
+	Example: `Put a system in maintenance:
+  lvl system actions startMaintenance web1
+Put a system in maintenance for one hour:
+  lvl system actions startMaintenance web1 --duration 60
+`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := resolveSystem(args[0])
+		if err != nil {
+			return err
+		}
+
+		system, err := Level27Client.SystemActionStartMaintenance(id, systemActionsStartMaintenanceDuration)
+		if err != nil {
+			return err
+		}
+
+		outputFormatTemplate(system, "templates/entities/system/actions/startMaintenance.tmpl")
+		return nil
+	},
+}
+
+var systemActionsStopMaintenanceCmd = &cobra.Command{
+	Use:   "stopMaintenance <system>",
+	Short: "Mark a system as no longer being in maintenance",
+	Args:  cobra.ExactArgs(1),
+	RunE:  func(cmd *cobra.Command, args []string) error { return runAction("stopMaintenance", args, true) },
+}
+
+func runAction(action string, args []string, templateResponse bool) error {
 	id, err := resolveSystem(args[0])
 	if err != nil {
 		return err
 	}
 
-	_, err = Level27Client.SystemAction(id, action)
+	system, err := Level27Client.SystemAction(id, action)
 	if err != nil {
 		return err
 	}
 
-	outputFormatTemplate(nil, "templates/entities/system/action.tmpl")
+	template := "templates/entities/system/action.tmpl"
+	if templateResponse {
+		template = fmt.Sprintf("templates/entities/system/actions/%s.tmpl", action)
+	}
+	outputFormatTemplate(system, template)
 	return nil
 }
 
