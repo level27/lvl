@@ -1,5 +1,9 @@
 ## Current (main branch)
 
+## 1.9.0
+* `lvl system actions startMaintenance/stopMaintenance` to start/stop maintenance on a system.
+* Fixed updating classic PHP components.
+
 ## 1.8.1
 * `lvl package instantiate --wait -o json` only returns a single JSON blob.
 
