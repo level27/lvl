@@ -404,13 +404,23 @@ func addSshKeyParameter(appComponentType *l27.AppcomponenttypeServicetype) {
 	// which would make the existing parameter parsing code far less elegant.
 	// I've decided the best solution is to add an SSH key parameter back to the list locally.
 
+
+	type keys struct {
+		En string `json:"en"`
+		Nl string `json:"nl"`
+	}
+
+
 	if appComponentType.Servicetype.SSHKeyPossible {
 		appComponentType.Servicetype.Parameters = append(
 			appComponentType.Servicetype.Parameters,
 			l27.AppComponentTypeParameter{
 				Name:           "sshkeys",
-				DisplayName:    "SSH Keys",
-				Description:    "The SSH keys that can be used to log into the component",
+				DisplayName:  keys{
+				En:	"SSH Keys",
+				Nl:	"SSH Sleutel",
+				},
+				Description:   keys{En: "The SSH keys that can be used to log into the component", Nl: ""},
 				Type:           "sshkey[]",
 				DefaultValue:   nil,
 				Readonly:       false,
