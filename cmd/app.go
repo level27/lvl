@@ -806,7 +806,6 @@ var appComponentCreateCmd = &cobra.Command{
 
 		create := map[string]interface{}{}
 		create["name"] = appComponentCreateName
-		create["category"] = "config"
 		create["appcomponenttype"] = appComponentCreateType
 
 		if appComponentCreateSystem != "" {
@@ -852,7 +851,7 @@ var appComponentCreateCmd = &cobra.Command{
 var appComponentUpdateParams *[]string
 var appComponentUpdateCmd = &cobra.Command{
 	Use:     "update",
-	Short:   "Update a new appcomponent.",
+	Short:   "Update a new appcomponent.", 
 	Example: "",
 
 	Args: cobra.ExactArgs(2),

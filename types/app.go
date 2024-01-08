@@ -162,7 +162,7 @@ type AppcomponenttypeServicetype struct {
 	Servicetype struct {
 		Name                    string        `json:"name"`
 		Cookbook                string        `json:"cookbook"`
-		DisplayName             string        `json:"displayName"`
+		DisplayName             interface{}        `json:"displayName"`
 		Description             string        `json:"description"`
 		URLPossible             bool          `json:"urlPossible"`
 		RestorePossible         bool          `json:"restorePossible"`
@@ -171,7 +171,7 @@ type AppcomponenttypeServicetype struct {
 		DisabledOnProduction    bool          `json:"disabledOnProduction"`
 		InvisibleOnProduction   bool          `json:"invisibleOnProduction"`
 		Runlist                 string        `json:"runlist"`
-		AllowedActions          []interface{} `json:"allowedActions"`
+		// AllowedActions          []interface{} `json:"allowedActions"`
 		Category                string        `json:"category"`
 		Parameters              []AppComponentTypeParameter `json:"parameters"`
 	} `json:"servicetype"`
@@ -179,8 +179,14 @@ type AppcomponenttypeServicetype struct {
 
 type AppComponentTypeParameter struct {
 	Name           string      `json:"name"`
-	DisplayName    string      `json:"displayName"`
-	Description    string      `json:"description"`
+	DisplayName struct{
+		En string `json:"en"`
+		Nl string `json:"nl"`
+	}      `json:"displayName"`
+	Description struct{
+		En string `json:"en"`
+		Nl string `json:"nl"`
+	}      `json:"description"`
 	Type           string      `json:"type"`
 	DefaultValue   interface{} `json:"defaultValue"`
 	Readonly       bool        `json:"readonly"`
